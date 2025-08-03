@@ -1,0 +1,153 @@
+<!-- templates/admin/bulk_create.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}إنشاء حزم متعددة{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">الصفحة الرئيسية</a>
+    &rsaquo; <a href="{% url 'admin:games_gamepackage_changelist' %}">الحزم</a>
+    &rsaquo; إنشاء حزم متعددة
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module aligned">
+    <h1>إنشاء حزم متعددة بسرعة</h1>
+    
+    <div class="form-row">
+        <div class="help">
+            <p><strong>هذه الأداة تساعدك على:</strong></p>
+            <ul>
+                <li>إنشاء عدة حزم مرة واحدة</li>
+                <li>توفير الوقت في الإعداد الأولي</li>
+                <li>ترقيم تلقائي للحزم</li>
+            </ul>
+            <p><strong>ملاحظة:</strong> الحزم ستكون غير فعالة حتى تتم إضافة الأسئلة وتفعيلها.</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-row">
+            <div class="field-box">
+                <label for="game_type">نوع اللعبة:</label>
+                <select name="game_type" id="game_type" required>
+                    <option value="">-- اختر نوع اللعبة --</option>
+                    <option value="letters">خلية الحروف</option>
+                    <option value="images">تحدي الصور</option>
+                    <option value="quiz">سؤال وجواب</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field-box">
+                <label for="start_number">رقم البداية:</label>
+                <input type="number" name="start_number" id="start_number" min="1" value="2" required>
+                <p class="help-text">الرقم الذي ستبدأ منه ترقيم الحزم</p>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field-box">
+                <label for="count">عدد الحزم:</label>
+                <input type="number" name="count" id="count" min="1" max="50" value="10" required>
+                <p class="help-text">كم حزمة تريد إنشاؤها (الحد الأقصى 50)</p>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="field-box">
+                <label for="price">السعر (بالريال):</label>
+                <input type="number" name="price" id="price" min="0" step="0.01" value="10.00" required>
+                <p class="help-text">سعر الحزمة الواحدة</p>
+            </div>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="إنشاء الحزم" class="default">
+            <a href="{% url 'admin:games_gamepackage_changelist' %}" class="button cancel-link">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.help {
+    background: #f0f8e7;
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.help ul {
+    margin: 10px 0;
+    padding-right: 20px;
+}
+
+.field-box {
+    margin-bottom: 20px;
+}
+
+.field-box label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.field-box select,
+.field-box input {
+    width: 100%;
+    max-width: 300px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.help-text {
+    font-size: 0.9em;
+    color: #666;
+    margin: 5px 0 0 0;
+    font-style: italic;
+}
+
+.submit-row {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const gameType = document.getElementById('game_type');
+    const startNumber = document.getElementById('start_number');
+    const count = document.getElementById('count');
+    
+    function updatePreview() {
+        const start = parseInt(startNumber.value) || 1;
+        const num = parseInt(count.value) || 1;
+        const end = start + num - 1;
+        
+        const preview = document.getElementById('preview');
+        if (preview) {
+            preview.textContent = `سيتم إنشاء الحزم من رقم ${start} إلى رقم ${end}`;
+        }
+    }
+    
+    startNumber.addEventListener('input', updatePreview);
+    count.addEventListener('input', updatePreview);
+    
+    // Add preview element
+    const previewDiv = document.createElement('div');
+    previewDiv.id = 'preview';
+    previewDiv.style.cssText = 'background: #e3f2fd; padding: 10px; border-radius: 4px; margin-top: 10px; font-weight: bold;';
+    count.parentNode.appendChild(previewDiv);
+    
+    updatePreview();
+});
+</script>
+{% endblock %}

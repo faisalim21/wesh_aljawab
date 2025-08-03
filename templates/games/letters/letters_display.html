@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة العرض - خلية الحروف</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .hex-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 100px);
+            gap: 10px;
+            position: relative;
+        }
+
+        .hex-cell {
+            width: 100px;
+            height: 86px;
+            background: white;
+            color: #2d3748;
+            clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .hex-cell:hover {
+            transform: scale(1.1);
+            background: #e0e7ff;
+        }
+
+        .row-offset {
+            margin-right: 50px;
+        }
+
+        .question-box {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2d3748;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            text-align: center;
+        }
+
+        .question-box h4 {
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .alt-questions {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alt-questions button {
+            border: none;
+            background: #edf2f7;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #4a5568;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="mb-4">خلية الحروف</h1>
+
+    <div class="hex-grid" id="hexGrid">
+        <!-- الخلايا ستُولد تلقائياً عبر JS -->
+    </div>
+
+    <div class="question-box d-none" id="questionBox">
+        <h4 id="questionText">...</h4>
+        <div class="alt-questions">
+            <button onclick="loadAlt(1)">سؤال بديل 1</button>
+            <button onclick="loadAlt(2)">سؤال بديل 2</button>
+        </div>
+    </div>
+
+    <script>
+        const letters = ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن'];
+        const shuffled = letters.sort(() => Math.random() - 0.5);
+
+        const hexGrid = document.getElementById('hexGrid');
+        const questionBox = document.getElementById('questionBox');
+        const questionText = document.getElementById('questionText');
+
+        let selectedLetter = null;
+
+        for (let i = 0; i < 5; i++) {
+            const row = document.createElement('div');
+            row.className = 'd-flex justify-content-center ' + (i % 2 !== 0 ? 'row-offset' : '');
+            for (let j = 0; j < 5; j++) {
+                const index = i * 5 + j;
+                if (index >= shuffled.length) break;
+                const cell = document.createElement('div');
+                cell.className = 'hex-cell';
+                cell.textContent = shuffled[index];
+                cell.dataset.letter = shuffled[index];
+                cell.addEventListener('click', () => {
+                    selectedLetter = shuffled[index];
+                    fetch(`/api/question/?letter=${selectedLetter}&type=main`)
+                        .then(res => res.json())
+                        .then(data => {
+                            questionText.textContent = data.question;
+                            questionBox.classList.remove('d-none');
+                        });
+                });
+                row.appendChild(cell);
+            }
+            hexGrid.appendChild(row);
+        }
+
+        function loadAlt(num) {
+            if (!selectedLetter) return;
+            fetch(`/api/question/?letter=${selectedLetter}&type=alt${num}`)
+                .then(res => res.json())
+                .then(data => {
+                    questionText.textContent = data.question;
+                });
+        }
+    </script>
+</body>
+</html>

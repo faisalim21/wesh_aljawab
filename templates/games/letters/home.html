@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خلية الحروف - الحزم المتاحة</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Tajawal', sans-serif;
+      color: #2d3748;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .packages-section {
+      background: rgba(255, 255, 255, 0.96);
+      padding: 80px 0;
+    }
+    .section-title {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+    .section-title h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .package-card {
+      background: white;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+      transition: all 0.4s ease;
+      margin-bottom: 2rem;
+      border: 1px solid rgba(139, 92, 246, 0.1);
+    }
+    .package-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 30px 60px rgba(139, 92, 246, 0.2);
+    }
+    .package-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .package-desc {
+      text-align: center;
+      color: #718096;
+      margin-bottom: 1rem;
+    }
+    .btn-play {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-align: center;
+    }
+    .btn-play:hover {
+      box-shadow: 0 10px 20px rgba(139, 92, 246, 0.3);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  {% include 'header.html' %}
+
+  <section class="packages-section">
+    <div class="container">
+      <div class="section-title">
+        <h2>اختر الحزمة المناسبة</h2>
+        <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب خلية الحروف</p>
+      </div>
+      <div class="row justify-content-center">
+        {% if free_package %}
+        <div class="col-md-6 col-lg-4">
+          <div class="package-card">
+            <div class="package-title">حزمة مجانية</div>
+            <p class="package-desc">جولة واحدة للتجربة</p>
+            <form method="post" action="{% url 'games:create_letters_session' %}">
+              {% csrf_token %}
+              <input type="hidden" name="package_id" value="{{ free_package.id }}">
+              <button class="btn-play" type="submit">ابدأ الجولة المجانية</button>
+            </form>
+          </div>
+        </div>
+        {% endif %}
+
+        {% for package in paid_packages %}
+        <div class="col-md-6 col-lg-4">
+          <div class="package-card">
+            <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+            <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
+            {% if package.id in user_purchases %}
+              <form method="post" action="{% url 'games:create_letters_session' %}">
+                {% csrf_token %}
+                <input type="hidden" name="package_id" value="{{ package.id }}">
+                <button class="btn-play" type="submit">ابدأ اللعب</button>
+              </form>
+            {% else %}
+              <a href="{% url 'payments:purchase' package.id %}" class="btn-play">اشترِ هذه الحزمة</a>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% include 'footer.html' %}
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!-- templates/admin/رفع_ملف_للحزمة.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}رفع أسئلة للحزمة رقم {{ package.package_number }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+.upload-container {
+    max-width: 900px;
+    margin: 20px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.package-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.package-info h2 {
+    margin: 0 0 10px 0;
+    font-size: 1.8em;
+}
+
+.package-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.stat-item {
+    background: rgba(255,255,255,0.2);
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5em;
+    font-weight: bold;
+    display: block;
+}
+
+.instructions {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    border-left: 4px solid #28a745;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.quick-action-btn {
+    background: #17a2b8;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.quick-action-btn:hover {
+    background: #138496;
+    color: white;
+}
+
+.upload-form {
+    background: #fff;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.upload-form:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+}
+
+.file-input-container {
+    position: relative;
+    display: inline-block;
+    margin: 20px 0;
+}
+
+.file-input {
+    position: absolute;
+    left: -9999px;
+}
+
+.file-input-label {
+    background: #007bff;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 1.1em;
+    transition: background 0.3s;
+}
+
+.file-input-label:hover {
+    background: #0056b3;
+}
+
+.file-selected {
+    margin-top: 15px;
+    padding: 10px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 5px;
+    display: none;
+}
+
+.options-section {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.submit-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.upload-btn {
+    background: #28a745;
+    color: white;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    margin: 0 10px;
+    transition: background 0.3s;
+}
+
+.upload-btn:hover {
+    background: #218838;
+}
+
+.upload-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    padding: 15px 30px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    margin: 0 10px;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #e9ecef;
+    border-radius: 2px;
+    margin: 15px 0;
+    overflow: hidden;
+    display: none;
+}
+
+.progress-fill {
+    height: 100%;
+    background: #007bff;
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .upload-container {
+        margin: 10px;
+        padding: 20px;
+    }
+    
+    .package-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .submit-section {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .upload-btn, .cancel-btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">🏠 الرئيسية</a>
+    &rsaquo; <a href="{% url 'admin:games_gamepackage_changelist' %}">🔤 حزم الحروف</a>
+    &rsaquo; حزمة رقم {{ package.package_number }}
+    &rsaquo; رفع أسئلة
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <!-- معلومات الحزمة -->
+    <div class="package-info">
+        <h2>🔤 حزمة خلية الحروف رقم {{ package.package_number }}</h2>
+        <div class="package-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ package.letters_questions.count }}</span>
+                <span>سؤال موجود</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ package.price }}{% if package.is_free %}مجاني{% else %} ريال{% endif %}</span>
+                <span>السعر</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{% if package.is_active %}🟢{% else %}🔴{% endif %}</span>
+                <span>{% if package.is_active %}فعالة{% else %}غير فعالة{% endif %}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإرشادات -->
+    <div class="instructions">
+        <h3>📋 تعليمات الرفع:</h3>
+        <p><strong>تنسيق الملف المطلوب:</strong></p>
+        <p>الحرف | نوع السؤال | السؤال | الإجابة | التصنيف</p>
+        <p><strong>أنواع الأسئلة المقبولة:</strong> رئيسي، بديل1، بديل2</p>
+        <p><strong>صيغ الملفات المدعومة:</strong> Excel (.xlsx) أو CSV (.csv)</p>
+    </div>
+
+    <!-- إجراءات سريعة -->
+    <div class="quick-actions">
+        <a href="{% url 'admin:تحميل_قالب_اكسل' %}" class="quick-action-btn">
+            📥 تحميل قالب Excel
+        </a>
+        {% if package.letters_questions.exists %}
+        <a href="{% url 'admin:تصدير_اسئلة_الحزمة' package.id %}" class="quick-action-btn">
+            📤 تصدير الأسئلة الحالية
+        </a>
+        {% endif %}
+        <a href="{% url 'admin:games_gamepackage_change' package.id %}" class="quick-action-btn">
+            ✏️ تعديل الحزمة
+        </a>
+    </div>
+
+    <!-- نموذج الرفع -->
+    <form method="post" enctype="multipart/form-data" class="upload-form" id="uploadForm">
+        {% csrf_token %}
+        
+        <h3>📁 رفع ملف الأسئلة</h3>
+        
+        <div class="file-input-container">
+            <input type="file" name="ملف_الاسئلة" id="ملف_الاسئلة" class="file-input" 
+                   accept=".xlsx,.csv" required onchange="handleFileSelect(this)">
+            <label for="ملف_الاسئلة" class="file-input-label">
+                🗂️ اختر ملف الأسئلة
+            </label>
+        </div>
+        
+        <div class="file-selected" id="fileSelected">
+            <strong>الملف المختار:</strong> <span id="fileName"></span>
+        </div>
+
+        {% if package.letters_questions.exists %}
+        <div class="options-section">
+            <h4>⚙️ خيارات إضافية:</h4>
+            <div class="checkbox-container">
+                <input type="checkbox" name="استبدال_الموجود" id="استبدال_الموجود">
+                <label for="استبدال_الموجود">
+                    <strong>استبدال الأسئلة الموجودة</strong>
+                    <br><small>سيتم حذف جميع الأسئلة الحالية واستبدالها بأسئلة الملف الجديد</small>
+                </label>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="submit-section">
+            <button type="submit" class="upload-btn" id="submitBtn">
+                🚀 رفع الأسئلة
+            </button>
+            <a href="{% url 'admin:games_gamepackage_changelist' %}" class="cancel-btn">
+                ❌ إلغاء
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+function handleFileSelect(input) {
+    const fileSelected = document.getElementById('fileSelected');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileName.textContent = file.name;
+        fileSelected.style.display = 'block';
+        submitBtn.disabled = false;
+        
+        // تحقق من نوع الملف
+        const validTypes = ['.xlsx', '.csv'];
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        if (!validTypes.includes(fileExtension)) {
+            alert('نوع الملف غير مدعوم. يرجى اختيار ملف Excel (.xlsx) أو CSV (.csv)');
+            input.value = '';
+            fileSelected.style.display = 'none';
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        // تحقق من حجم الملف (أقل من 10 ميجا)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('حجم الملف كبير جداً. يرجى اختيار ملف أصغر من 10 ميجابايت');
+            input.value = '';
+            fileSelected.style.display = 'none';
+            submitBtn.disabled = true;
+            return;
+        }
+    } else {
+        fileSelected.style.display = 'none';
+        submitBtn.disabled = true;
+    }
+}
+
+// معالج إرسال النموذج
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    
+    // تعطيل الزر وإظهار شريط التقدم
+    submitBtn.disabled = true;
+    submitBtn.textContent = '⏳ جاري الرفع...';
+    progressBar.style.display = 'block';
+    
+    // محاكاة شريط التقدم
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 90) progress = 90;
+        progressFill.style.width = progress + '%';
+    }, 200);
+    
+    // إيقاف المحاكاة عند اكتمال الإرسال
+    setTimeout(() => {
+        clearInterval(interval);
+        progressFill.style.width = '100%';
+    }, 3000);
+});
+
+// منع إرسال النموذج إذا لم يتم اختيار ملف
+document.addEventListener('DOMContentLoaded', function() {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+});
+</script>
+{% endblock %}

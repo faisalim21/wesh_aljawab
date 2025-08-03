@@ -1,0 +1,65 @@
+<!-- templates/admin/upload_questions.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}رفع أسئلة - حزمة {{ package.package_number }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">الرئيسية</a>
+    &rsaquo; <a href="{% url 'admin:games_gamepackage_changelist' %}">الحزم</a>
+    &rsaquo; رفع أسئلة
+</div>
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px;">
+    <h1>📁 رفع أسئلة للحزمة رقم {{ package.package_number }}</h1>
+    
+    <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>معلومات الحزمة:</strong></p>
+        <p>عدد الأسئلة الحالية: {{ package.letters_questions.count }} سؤال</p>
+        <p>السعر: {% if package.is_free %}مجانية{% else %}{{ package.price }} ريال{% endif %}</p>
+    </div>
+
+    <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <h3>📋 التعليمات:</h3>
+        <p>1. حمل القالب: <a href="{% url 'admin:download_template' %}" style="color: #007cba;">📥 تحميل قالب Excel</a></p>
+        <p>2. املأ الأسئلة بالتنسيق: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف</p>
+        <p>3. أنواع الأسئلة: رئيسي، بديل1، بديل2</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div style="margin: 20px 0;">
+            <label for="file" style="display: block; font-weight: bold; margin-bottom: 5px;">
+                اختر ملف الأسئلة:
+            </label>
+            <input type="file" name="file" id="file" accept=".xlsx,.csv" required
+                   style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        {% if package.letters_questions.exists %}
+        <div style="margin: 20px 0;">
+            <label style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" name="replace">
+                <strong>استبدال الأسئلة الموجودة</strong>
+            </label>
+            <small style="color: #666;">سيتم حذف جميع الأسئلة الحالية</small>
+        </div>
+        {% endif %}
+
+        <div style="margin: 30px 0; text-align: center;">
+            <button type="submit" 
+                    style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
+                🚀 رفع الأسئلة
+            </button>
+            <a href="{% url 'admin:games_gamepackage_changelist' %}" 
+               style="background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin-left: 10px;">
+                إلغاء
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>خلية الحروف بـ SVG - مثالية 100%</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script>
+  // متغيرات عامة من Django
+  window.sessionData = {
+    sessionId: '{{ session.id }}',
+    csrfToken: '{{ csrf_token }}',
+    team1Name: '{{ session.team1_name }}',
+    team2Name: '{{ session.team2_name }}',
+    displayUrl: '{% url "games:letters_display" session.display_link %}',
+    contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
+    packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}'
+  };
+</script>
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: 'Tajawal', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .honeycomb-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 40px 0;
+    }
+
+    .honeycomb-svg {
+      max-width: 900px;
+      width: 100%;
+      height: auto;
+    }
+
+    .hex-cell {
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .hex-cell:hover .hex-shape {
+      fill: #f0f9ff;
+      stroke-width: 4;
+      transform: scale(1.05);
+    }
+
+    .hex-cell.team1 .hex-shape {
+      fill: #22c55e;
+      stroke: #15803d;
+    }
+
+    .hex-cell.team1 .hex-text {
+      fill: white;
+    }
+
+    .hex-cell.team2 .hex-shape {
+      fill: #f97316;
+      stroke: #c2410c;
+    }
+
+    .hex-cell.team2 .hex-text {
+      fill: white;
+    }
+
+    .hex-shape {
+      fill: white;
+      stroke: #6b46c1;
+      stroke-width: 3;
+      transition: all 0.3s ease;
+      transform-origin: center;
+    }
+
+    .hex-text {
+      fill: #6b46c1;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 28px;
+      font-weight: bold;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+
+    .info-panel {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .question-panel {
+      background: #f8fafc;
+      border: 2px solid #4c51bf;
+      border-radius: 15px;
+      padding: 25px;
+      margin-top: 20px;
+      display: none;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4c51bf, #667eea);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-weight: bold;
+    }
+
+    .score-display {
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      padding: 15px;
+      border-radius: 10px;
+      margin: 10px 0;
+    }
+
+    .team1-score {
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      color: #22c55e;
+      border: 2px solid #22c55e;
+    }
+
+    .team2-score {
+      background: linear-gradient(135deg, #fed7aa, #fdba74);
+      color: #f97316;
+      border: 2px solid #f97316;
+    }
+
+    .timer-display {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #dc2626;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 class="text-center mb-4">🎯 خلية الحروف - مطابقة 100%</h2>
+    
+    <!-- النقاط -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="score-display team1-score">
+          الفريق الأخضر: <span id="team1Score">0</span>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team1', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="score-display team2-score">
+          الفريق البرتقالي: <span id="team2Score">0</span>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team2', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- المؤقت -->
+    <div class="text-center mb-4">
+      <div class="timer-display" id="timerDisplay">3</div>
+      <button class="btn btn-danger btn-lg" id="timerBtn" onclick="startTimer()">
+        ▶️ ابدأ العد التنازلي
+      </button>
+    </div>
+
+    <!-- خلية الحروف SVG المُصححة والموسطة -->
+    <div class="honeycomb-container">
+      <svg class="honeycomb-svg" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg">
+        <!-- الخلفية المضلعة الصحيحة -->
+        <defs>
+          <!-- الخلفية الأخضر أعلى وأسفل، برتقالي يمين ويسار -->
+          <polygon id="greenTop" points="0,0 700,0 550,150 150,150"/>
+          <polygon id="greenBottom" points="150,350 550,350 700,500 0,500"/>
+          <polygon id="orangeLeft" points="0,0 150,150 150,350 0,500"/>
+          <polygon id="orangeRight" points="550,150 700,0 700,500 550,350"/>
+        </defs>
+        
+        <!-- رسم الخلفية -->
+        <rect width="700" height="500" rx="40" fill="#4ade80"/>
+        <use href="#orangeLeft" fill="#fb923c"/>
+        <use href="#orangeRight" fill="#fb923c"/>
+        <use href="#greenTop" fill="#4ade80"/>
+        <use href="#greenBottom" fill="#4ade80"/>
+        
+        <!-- الخلايا موسطة بشكل مثالي -->
+        <!-- الصف الأول: 5 خلايا -->
+        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
+          <polygon class="hex-shape" points="200,100 230,85 260,100 260,130 230,145 200,130"/>
+          <text class="hex-text" x="230" y="115">م</text>
+        </g>
+        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
+          <polygon class="hex-shape" points="260,100 290,85 320,100 320,130 290,145 260,130"/>
+          <text class="hex-text" x="290" y="115">ق</text>
+        </g>
+        <g class="hex-cell" data-letter="أ" onclick="selectLetter('أ', this)">
+          <polygon class="hex-shape" points="320,100 350,85 380,100 380,130 350,145 320,130"/>
+          <text class="hex-text" x="350" y="115">أ</text>
+        </g>
+        <g class="hex-cell" data-letter="ي" onclick="selectLetter('ي', this)">
+          <polygon class="hex-shape" points="380,100 410,85 440,100 440,130 410,145 380,130"/>
+          <text class="hex-text" x="410" y="115">ي</text>
+        </g>
+        <g class="hex-cell" data-letter="و" onclick="selectLetter('و', this)">
+          <polygon class="hex-shape" points="440,100 470,85 500,100 500,130 470,145 440,130"/>
+          <text class="hex-text" x="470" y="115">و</text>
+        </g>
+
+        <!-- الصف الثاني: 5 خلايا (مزاحة) -->
+        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
+          <polygon class="hex-shape" points="230,145 260,130 290,145 290,175 260,190 230,175"/>
+          <text class="hex-text" x="260" y="160">ث</text>
+        </g>
+        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
+          <polygon class="hex-shape" points="290,145 320,130 350,145 350,175 320,190 290,175"/>
+          <text class="hex-text" x="320" y="160">ق</text>
+        </g>
+        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
+          <polygon class="hex-shape" points="350,145 380,130 410,145 410,175 380,190 350,175"/>
+          <text class="hex-text" x="380" y="160">ع</text>
+        </g>
+        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
+          <polygon class="hex-shape" points="410,145 440,130 470,145 470,175 440,190 410,175"/>
+          <text class="hex-text" x="440" y="160">ش</text>
+        </g>
+        <g class="hex-cell" data-letter="ز" onclick="selectLetter('ز', this)">
+          <polygon class="hex-shape" points="470,145 500,130 530,145 530,175 500,190 470,175"/>
+          <text class="hex-text" x="500" y="160">ز</text>
+        </g>
+
+        <!-- الصف الثالث: 5 خلايا -->
+        <g class="hex-cell" data-letter="ل" onclick="selectLetter('ل', this)">
+          <polygon class="hex-shape" points="200,190 230,175 260,190 260,220 230,235 200,220"/>
+          <text class="hex-text" x="230" y="205">ل</text>
+        </g>
+        <g class="hex-cell" data-letter="س" onclick="selectLetter('س', this)">
+          <polygon class="hex-shape" points="260,190 290,175 320,190 320,220 290,235 260,220"/>
+          <text class="hex-text" x="290" y="205">س</text>
+        </g>
+        <g class="hex-cell" data-letter="ب" onclick="selectLetter('ب', this)">
+          <polygon class="hex-shape" points="320,190 350,175 380,190 380,220 350,235 320,220"/>
+          <text class="hex-text" x="350" y="205">ب</text>
+        </g>
+        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
+          <polygon class="hex-shape" points="380,190 410,175 440,190 440,220 410,235 380,220"/>
+          <text class="hex-text" x="410" y="205">ث</text>
+        </g>
+        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
+          <polygon class="hex-shape" points="440,190 470,175 500,190 500,220 470,235 440,220"/>
+          <text class="hex-text" x="470" y="205">ش</text>
+        </g>
+
+        <!-- الصف الرابع: 5 خلايا (مزاحة) -->
+        <g class="hex-cell" data-letter="ض" onclick="selectLetter('ض', this)">
+          <polygon class="hex-shape" points="230,235 260,220 290,235 290,265 260,280 230,265"/>
+          <text class="hex-text" x="260" y="250">ض</text>
+        </g>
+        <g class="hex-cell" data-letter="ه" onclick="selectLetter('ه', this)">
+          <polygon class="hex-shape" points="290,235 320,220 350,235 350,265 320,280 290,265"/>
+          <text class="hex-text" x="320" y="250">ه</text>
+        </g>
+        <g class="hex-cell" data-letter="ح" onclick="selectLetter('ح', this)">
+          <polygon class="hex-shape" points="350,235 380,220 410,235 410,265 380,280 350,265"/>
+          <text class="hex-text" x="380" y="250">ح</text>
+        </g>
+        <g class="hex-cell" data-letter="ط" onclick="selectLetter('ط', this)">
+          <polygon class="hex-shape" points="410,235 440,220 470,235 470,265 440,280 410,265"/>
+          <text class="hex-text" x="440" y="250">ط</text>
+        </g>
+        <g class="hex-cell" data-letter="ت" onclick="selectLetter('ت', this)">
+          <polygon class="hex-shape" points="470,235 500,220 530,235 530,265 500,280 470,265"/>
+          <text class="hex-text" x="500" y="250">ت</text>
+        </g>
+
+        <!-- الصف الخامس: 5 خلايا -->
+        <g class="hex-cell" data-letter="ك" onclick="selectLetter('ك', this)">
+          <polygon class="hex-shape" points="200,280 230,265 260,280 260,310 230,325 200,310"/>
+          <text class="hex-text" x="230" y="295">ك</text>
+        </g>
+        <g class="hex-cell" data-letter="د" onclick="selectLetter('د', this)">
+          <polygon class="hex-shape" points="260,280 290,265 320,280 320,310 290,325 260,310"/>
+          <text class="hex-text" x="290" y="295">د</text>
+        </g>
+        <g class="hex-cell" data-letter="غ" onclick="selectLetter('غ', this)">
+          <polygon class="hex-shape" points="320,280 350,265 380,280 380,310 350,325 320,310"/>
+          <text class="hex-text" x="350" y="295">غ</text>
+        </g>
+        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
+          <polygon class="hex-shape" points="380,280 410,265 440,280 440,310 410,325 380,310"/>
+          <text class="hex-text" x="410" y="295">ع</text>
+        </g>
+        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
+          <polygon class="hex-shape" points="440,280 470,265 500,280 500,310 470,325 440,310"/>
+          <text class="hex-text" x="470" y="295">م</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- لوحة الأسئلة -->
+    <div class="question-panel" id="questionPanel">
+      <h4>❓ السؤال - حرف <span id="currentLetter">أ</span></h4>
+      <div class="mb-3">
+        <strong>السؤال:</strong> <span id="mainQuestion">السؤال سيظهر هنا</span>
+      </div>
+      <div class="mb-3">
+        <strong>الإجابة:</strong> <span id="mainAnswer" style="color: #22c55e; font-weight: bold;">الإجابة</span>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt1')">
+            <div class="card-body">
+              <h6>💡 البديل الأول</h6>
+              <p id="alt1Question">سؤال بديل</p>
+              <small><strong>الإجابة:</strong> <span id="alt1Answer">إجابة</span></small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt2')">
+            <div class="card-body">
+              <h6>💡 البديل الثاني</h6>
+              <p id="alt2Question">سؤال بديل</p>
+              <small><strong>الإجابة:</strong> <span id="alt2Answer">إجابة</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // متغيرات اللعبة
+    let clickCount = {};
+    let team1Score = 0;
+    let team2Score = 0;
+    let currentLetter = '';
+    let currentQuestionData = null;
+    let isTimerRunning = false;
+    
+    // الحصول على session_id من URL أو متغير عام
+    const sessionId = '{{ session.id }}' || window.location.pathname.split('/').pop();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+
+    // دالة لجلب السؤال من السيرفر
+    async function fetchQuestionFromServer(letter) {
+      try {
+        const response = await fetch(`/api/get-question/?letter=${letter}&session_id=${sessionId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data;
+      } catch (error) {
+        console.error('خطأ في جلب السؤال:', error);
+        return null;
+      }
+    }
+
+    // اختيار حرف
+    async function selectLetter(letter, element) {
+      if (isTimerRunning) return;
+      
+      console.log(`تم اختيار الحرف: ${letter}`);
+      clickCount[letter] = (clickCount[letter] || 0) + 1;
+      
+      if (clickCount[letter] === 1) {
+        // النقرة الأولى: جلب وعرض السؤال من السيرفر
+        await showQuestion(letter);
+      } else if (clickCount[letter] === 2) {
+        // النقرة الثانية: أخضر
+        element.classList.remove('team2');
+        element.classList.add('team1');
+        // إرسال تحديث للسيرفر
+        updateCellState(letter, 'team1');
+      } else if (clickCount[letter] === 3) {
+        // النقرة الثالثة: برتقالي
+        element.classList.remove('team1');
+        element.classList.add('team2');
+        updateCellState(letter, 'team2');
+      } else {
+        // النقرة الرابعة: العودة للعادي
+        element.classList.remove('team1', 'team2');
+        clickCount[letter] = 0;
+        updateCellState(letter, 'normal');
+      }
+    }
+
+    // عرض السؤال
+    async function showQuestion(letter) {
+      currentLetter = letter;
+      
+      // إظهار loading
+      document.getElementById('currentLetter').textContent = letter;
+      document.getElementById('mainQuestion').textContent = 'جاري تحميل السؤال...';
+      document.getElementById('mainAnswer').textContent = '...';
+      document.getElementById('questionPanel').style.display = 'block';
+      
+      // جلب البيانات من السيرفر
+      const data = await fetchQuestionFromServer(letter);
+      
+      if (!data || !data.questions) {
+        document.getElementById('mainQuestion').textContent = 'لا يوجد سؤال متاح لهذا الحرف';
+        document.getElementById('mainAnswer').textContent = '';
+        document.getElementById('alt1Question').textContent = '';
+        document.getElementById('alt1Answer').textContent = '';
+        document.getElementById('alt2Question').textContent = '';
+        document.getElementById('alt2Answer').textContent = '';
+        return;
+      }
+      
+      currentQuestionData = data.questions;
+      
+      // عرض الأسئلة
+      document.getElementById('mainQuestion').textContent = currentQuestionData.main.question;
+      document.getElementById('mainAnswer').textContent = currentQuestionData.main.answer;
+      document.getElementById('alt1Question').textContent = currentQuestionData.alt1.question;
+      document.getElementById('alt1Answer').textContent = currentQuestionData.alt1.answer;
+      document.getElementById('alt2Question').textContent = currentQuestionData.alt2.question;
+      document.getElementById('alt2Answer').textContent = currentQuestionData.alt2.answer;
+    }
+
+    // إرسال تحديث حالة الخلية للسيرفر
+    async function updateCellState(letter, state) {
+      try {
+        const response = await fetch('/api/update-cell-state/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            letter: letter,
+            state: state
+          })
+        });
+        
+        if (!response.ok) {
+          console.error('خطأ في تحديث حالة الخلية');
+        }
+      } catch (error) {
+        console.error('خطأ في الاتصال بالسيرفر:', error);
+      }
+    }
+
+    // تبديل السؤال
+    function switchQuestion(type) {
+      if (currentQuestionData && currentQuestionData[type]) {
+        document.getElementById('mainQuestion').textContent = currentQuestionData[type].question;
+        document.getElementById('mainAnswer').textContent = currentQuestionData[type].answer;
+      }
+    }
+
+    // تحديث النقاط
+    async function updateScore(team, change) {
+      if (team === 'team1') {
+        team1Score = Math.max(0, team1Score + change);
+        document.getElementById('team1Score').textContent = team1Score;
+      } else {
+        team2Score = Math.max(0, team2Score + change);
+        document.getElementById('team2Score').textContent = team2Score;
+      }
+      
+      // إرسال النقاط المحدثة للسيرفر
+      try {
+        await fetch('/api/update-scores/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            team1_score: team1Score,
+            team2_score: team2Score
+          })
+        });
+      } catch (error) {
+        console.error('خطأ في تحديث النقاط:', error);
+      }
+    }
+
+    // المؤقت
+    function startTimer() {
+      if (isTimerRunning) return;
+      
+      isTimerRunning = true;
+      const btn = document.getElementById('timerBtn');
+      const display = document.getElementById('timerDisplay');
+      
+      btn.textContent = '⏸️ جاري العد...';
+      btn.disabled = true;
+      
+      let time = 3;
+      const interval = setInterval(() => {
+        time--;
+        display.textContent = time;
+        
+        if (time <= 0) {
+          clearInterval(interval);
+          
+          // صوت التنبيه
+          try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+          } catch (error) {
+            console.log('لا يمكن تشغيل الصوت');
+          }
+          
+          btn.textContent = '▶️ ابدأ العد التنازلي';
+          btn.disabled = false;
+          isTimerRunning = false;
+          display.textContent = '3';
+        }
+      }, 1000);
+    }
+
+    // تحميل الحالة الحالية للجلسة عند بدء الصفحة
+    async function loadSessionState() {
+      try {
+        const response = await fetch(`/api/session-state/?session_id=${sessionId}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // تحديث النقاط
+          team1Score = data.team1_score || 0;
+          team2Score = data.team2_score || 0;
+          document.getElementById('team1Score').textContent = team1Score;
+          document.getElementById('team2Score').textContent = team2Score;
+          
+          // تحديث حالة الخلايا
+          if (data.cell_states) {
+            for (const [letter, state] of Object.entries(data.cell_states)) {
+              const element = document.querySelector(`[data-letter="${letter}"]`);
+              if (element && state !== 'normal') {
+                element.classList.add(state);
+                clickCount[letter] = state === 'team1' ? 2 : 3;
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('خطأ في تحميل حالة الجلسة:', error);
+      }
+    }
+
+    // تشغيل التطبيق عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('تم تحميل صفحة خلية الحروف');
+      loadSessionState();
+    });
+  </script>
+</body>
+</html>

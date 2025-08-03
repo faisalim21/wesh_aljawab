@@ -1,0 +1,228 @@
+<!-- templates/admin/upload_questions.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static %}
+
+{% block title %}رفع أسئلة - حزمة {{ package.package_number }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">الرئيسية</a>
+    &rsaquo; <a href="{% url 'admin:games_gamepackage_changelist' %}">الحزم</a>
+    &rsaquo; رفع أسئلة
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <h1>📁 رفع أسئلة للحزمة رقم {{ package.package_number }}</h1>
+    
+    <div class="info-box">
+        <h3>معلومات الحزمة</h3>
+        <p>عدد الأسئلة الحالية: <strong>{{ package.letters_questions.count }} سؤال</strong></p>
+        <p>السعر: <strong>{% if package.is_free %}مجانية{% else %}{{ package.price }} ريال{% endif %}</strong></p>
+    </div>
+
+    <div class="instructions-box">
+        <h3>📋 التعليمات</h3>
+        <ul>
+            <li>حمل القالب: <a href="{% url 'admin:download_template' %}" class="download-link">📥 تحميل قالب Excel</a></li>
+            <li>التنسيق: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف</li>
+            <li>أنواع الأسئلة: رئيسي، بديل1، بديل2</li>
+        </ul>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="upload-form">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>رفع الملف</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="file" class="required">ملف الأسئلة:</label>
+                    <input type="file" name="file" id="file" accept=".xlsx,.csv" required class="vTextField">
+                    <p class="help">يدعم: Excel (.xlsx) أو CSV (.csv)</p>
+                </div>
+            </div>
+
+            {% if package.letters_questions.exists %}
+            <div class="form-row">
+                <div>
+                    <label for="replace">
+                        <input type="checkbox" name="replace" id="replace"> 
+                        استبدال الأسئلة الموجودة
+                    </label>
+                    <p class="help">سيتم حذف جميع الأسئلة الحالية واستبدالها بالجديدة</p>
+                </div>
+            </div>
+            {% endif %}
+        </fieldset>
+
+        <div class="submit-row">
+            <input type="submit" value="🚀 رفع الأسئلة" class="default">
+            <a href="{% url 'admin:games_gamepackage_changelist' %}" class="button cancel-link">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.upload-container {
+    margin: 20px;
+    max-width: 800px;
+}
+
+.upload-container h1 {
+    color: #ffc;
+    margin-bottom: 20px;
+    font-size: 18px;
+    font-weight: normal;
+}
+
+.info-box {
+    background: #205067;
+    border: 1px solid #417690;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.info-box h3 {
+    color: #ffc;
+    margin: 0 0 10px 0;
+    font-size: 14px;
+}
+
+.info-box p {
+    color: #e1f0f5;
+    margin: 5px 0;
+    font-size: 13px;
+}
+
+.instructions-box {
+    background: #2b5b84;
+    border: 1px solid #417690;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.instructions-box h3 {
+    color: #ffc;
+    margin: 0 0 10px 0;
+    font-size: 14px;
+}
+
+.instructions-box ul {
+    color: #e1f0f5;
+    margin: 0;
+    padding-right: 20px;
+    font-size: 13px;
+}
+
+.instructions-box li {
+    margin-bottom: 5px;
+}
+
+.download-link {
+    color: #5b80b2 !important;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.download-link:hover {
+    color: #7ca0d2 !important;
+    text-decoration: underline;
+}
+
+.upload-form .module {
+    background: #205067;
+    border: 1px solid #417690;
+}
+
+.upload-form .module h2 {
+    background: #417690;
+    color: #ffc;
+    padding: 8px 10px;
+    margin: 0;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.upload-form .form-row {
+    padding: 10px;
+    border-bottom: 1px solid #417690;
+}
+
+.upload-form .form-row:last-child {
+    border-bottom: none;
+}
+
+.upload-form label {
+    color: #e1f0f5;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.upload-form .vTextField {
+    width: 100%;
+    max-width: 400px;
+    padding: 6px;
+    border: 1px solid #417690;
+    background: #0c3953;
+    color: #e1f0f5;
+    border-radius: 3px;
+}
+
+.upload-form .help {
+    color: #9bb8cc;
+    font-size: 11px;
+    margin: 5px 0 0 0;
+    font-style: italic;
+}
+
+.submit-row {
+    background: #205067;
+    border: 1px solid #417690;
+    padding: 10px;
+    text-align: left;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.submit-row .default {
+    background: #417690;
+    color: #fff;
+    border: 1px solid #205067;
+    padding: 8px 15px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.submit-row .default:hover {
+    background: #5b90b7;
+}
+
+.submit-row .cancel-link {
+    background: #6c757d;
+    color: #fff;
+    padding: 8px 15px;
+    text-decoration: none;
+    border-radius: 3px;
+    font-size: 12px;
+    border: 1px solid #495057;
+}
+
+.submit-row .cancel-link:hover {
+    background: #868e96;
+    color: #fff;
+}
+
+input[type="checkbox"] {
+    margin-left: 5px;
+}
+</style>
+{% endblock %}
