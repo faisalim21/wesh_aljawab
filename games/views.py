@@ -1,4 +1,4 @@
-# games/views.py - الملف الكامل
+# games/views.py - الملف الكامل مع إصلاح بسيط
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -15,7 +15,7 @@ from .models import (
 
 def games_home(request):
     """الصفحة الرئيسية للألعاب"""
-    return render(request, 'games/home.html', {
+    return render(request, 'home.html', {  # إصلاح المسار هنا
         'letters_available': True,
         'images_available': False,  # سنفعلها لاحقاً
         'quiz_available': False,    # سنفعلها لاحقاً
@@ -187,7 +187,7 @@ def quiz_game_home(request):
     return render(request, 'games/coming_soon.html', {'game_name': 'سؤال وجواب'})
 
 # =============================================================================
-# API ENDPOINTS - الـ APIs الجديدة
+# API ENDPOINTS - الـ APIs الأساسية
 # =============================================================================
 
 @require_http_methods(["GET"])
@@ -197,7 +197,7 @@ def get_question(request):
     session_id = request.GET.get('session_id')
     
     if not letter or not session_id:
-        return JsonResponse({'error': 'المعاملات مطلوبة'}, status=400)
+        return JsonResponse({'success': False, 'error': 'المعاملات مطلوبة'}, status=400)
     
     try:
         # جلب الجلسة
@@ -270,9 +270,9 @@ def get_question(request):
         })
         
     except GameSession.DoesNotExist:
-        return JsonResponse({'error': 'الجلسة غير موجودة'}, status=404)
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': f'خطأ داخلي: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -285,7 +285,7 @@ def update_cell_state(request):
         state = data.get('state')  # 'normal', 'team1', 'team2'
         
         if not all([session_id, letter, state]):
-            return JsonResponse({'error': 'جميع المعاملات مطلوبة'}, status=400)
+            return JsonResponse({'success': False, 'error': 'جميع المعاملات مطلوبة'}, status=400)
         
         # جلب الجلسة
         session = GameSession.objects.get(id=session_id)
@@ -319,11 +319,11 @@ def update_cell_state(request):
         })
         
     except GameSession.DoesNotExist:
-        return JsonResponse({'error': 'الجلسة غير موجودة'}, status=404)
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'بيانات JSON غير صحيحة'}, status=400)
+        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': f'خطأ داخلي: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -336,7 +336,7 @@ def update_scores(request):
         team2_score = data.get('team2_score', 0)
         
         if not session_id:
-            return JsonResponse({'error': 'معرف الجلسة مطلوب'}, status=400)
+            return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
         
         # جلب وتحديث الجلسة
         session = GameSession.objects.get(id=session_id)
@@ -365,11 +365,11 @@ def update_scores(request):
         })
         
     except GameSession.DoesNotExist:
-        return JsonResponse({'error': 'الجلسة غير موجودة'}, status=404)
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except ValueError:
-        return JsonResponse({'error': 'قيم النقاط يجب أن تكون أرقام'}, status=400)
+        return JsonResponse({'success': False, 'error': 'قيم النقاط يجب أن تكون أرقام'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': f'خطأ داخلي: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
 @require_http_methods(["GET"])
 def session_state(request):
@@ -377,7 +377,7 @@ def session_state(request):
     session_id = request.GET.get('session_id')
     
     if not session_id:
-        return JsonResponse({'error': 'معرف الجلسة مطلوب'}, status=400)
+        return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
     
     try:
         # جلب الجلسة
@@ -419,9 +419,9 @@ def session_state(request):
         })
         
     except GameSession.DoesNotExist:
-        return JsonResponse({'error': 'الجلسة غير موجودة'}, status=404)
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': f'خطأ داخلي: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -434,10 +434,10 @@ def add_contestant(request):
         team = data.get('team')  # 'team1' أو 'team2'
         
         if not all([session_id, name, team]):
-            return JsonResponse({'error': 'جميع المعاملات مطلوبة'}, status=400)
+            return JsonResponse({'success': False, 'error': 'جميع المعاملات مطلوبة'}, status=400)
         
         if team not in ['team1', 'team2']:
-            return JsonResponse({'error': 'الفريق يجب أن يكون team1 أو team2'}, status=400)
+            return JsonResponse({'success': False, 'error': 'الفريق يجب أن يكون team1 أو team2'}, status=400)
         
         session = GameSession.objects.get(id=session_id)
         
@@ -459,6 +459,6 @@ def add_contestant(request):
         })
         
     except GameSession.DoesNotExist:
-        return JsonResponse({'error': 'الجلسة غير موجودة'}, status=404)
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': f'خطأ: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'خطأ: {str(e)}'}, status=500)

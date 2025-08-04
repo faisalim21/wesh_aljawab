@@ -1,0 +1,443 @@
+INFO 2025-08-04 17:00:33,678 autoreload 10228 13136 Watching for file changes with StatReloader
+INFO 2025-08-04 17:00:37,199 basehttp 10228 11560 "GET /games/ HTTP/1.1" 200 47966
+INFO 2025-08-04 17:00:38,841 basehttp 10228 11560 "GET /games/letters/ HTTP/1.1" 200 35252
+INFO 2025-08-04 17:00:39,985 basehttp 10228 11560 "POST /games/letters/create/ HTTP/1.1" 302 0
+INFO 2025-08-04 17:00:40,054 basehttp 10228 11560 "GET /games/letters/session/3df61991-6758-4701-9139-f3dccb07be26/ HTTP/1.1" 200 23087
+WARNING 2025-08-04 17:00:40,117 log 10228 11560 Not Found: /api/session-state/
+WARNING 2025-08-04 17:00:40,118 basehttp 10228 11560 "GET /api/session-state/?session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3231
+WARNING 2025-08-04 17:00:44,890 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:00:44,891 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%B9&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:04,635 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:04,636 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%A8&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:05,481 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:05,482 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:07,365 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:07,366 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%BA&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:08,234 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:08,235 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%AD&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:08,891 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:08,892 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:09,276 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:09,277 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:09,617 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:09,618 basehttp 10228 11560 "GET /api/get-question/?letter=%D9%87&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:09,876 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:09,877 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:10,106 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:10,107 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:10,347 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:10,348 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:10,524 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:10,525 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:10,665 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:10,666 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:10,874 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:10,874 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%AD&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:11,035 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:11,036 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:29,593 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:29,595 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:30,131 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:30,132 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:30,435 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:30,436 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:31,006 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:31,007 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%B9&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:32,907 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:32,908 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%AB&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:34,183 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:34,184 basehttp 10228 11560 "GET /api/get-question/?letter=%D9%82&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:34,865 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:34,866 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:36,053 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:36,054 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:36,422 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:36,423 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:37,427 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:01:37,428 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:01:38,114 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:01:38,115 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%AB&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:01:42,635 log 10228 11560 Not Found: /api/update-scores/
+WARNING 2025-08-04 17:01:42,636 basehttp 10228 11560 "POST /api/update-scores/ HTTP/1.1" 404 3184
+WARNING 2025-08-04 17:01:45,215 log 10228 11560 Not Found: /favicon.ico
+WARNING 2025-08-04 17:01:45,215 basehttp 10228 11560 "GET /favicon.ico HTTP/1.1" 404 3162
+WARNING 2025-08-04 17:01:46,090 log 10228 11560 Not Found: /api/update-scores/
+WARNING 2025-08-04 17:01:46,091 basehttp 10228 11560 "POST /api/update-scores/ HTTP/1.1" 404 3184
+WARNING 2025-08-04 17:02:15,344 log 10228 11560 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 17:02:15,344 basehttp 10228 11560 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 17:04:00,821 log 10228 11560 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 17:04:00,822 basehttp 10228 11560 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 17:04:02,365 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:02,365 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:03,651 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:03,652 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:04,051 log 10228 11560 Not Found: /api/get-question/
+WARNING 2025-08-04 17:04:04,052 basehttp 10228 11560 "GET /api/get-question/?letter=%D8%AD&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:04:05,635 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:05,636 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:06,137 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:06,138 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:06,903 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:06,904 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:07,429 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:07,429 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:08,040 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:08,041 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 17:04:08,809 log 10228 11560 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 17:04:08,809 basehttp 10228 11560 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+INFO 2025-08-04 17:15:40,702 basehttp 10228 4648 "GET /games/letters/session/3df61991-6758-4701-9139-f3dccb07be26/ HTTP/1.1" 200 23893
+WARNING 2025-08-04 17:15:40,746 log 10228 4648 Not Found: /api/session-state/
+WARNING 2025-08-04 17:15:40,746 basehttp 10228 4648 "GET /api/session-state/?session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3231
+WARNING 2025-08-04 17:15:43,778 log 10228 3264 Not Found: /api/get-question/
+WARNING 2025-08-04 17:15:43,779 basehttp 10228 3264 "GET /api/get-question/?letter=%D8%B7&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 17:15:50,253 log 10228 3264 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 17:15:50,254 basehttp 10228 3264 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 17:15:59,392 log 10228 3264 Not Found: /favicon.ico
+WARNING 2025-08-04 17:15:59,392 basehttp 10228 3264 "GET /favicon.ico HTTP/1.1" 404 3162
+WARNING 2025-08-04 19:09:05,340 log 10228 16940 Not Found: /api/get-question/
+WARNING 2025-08-04 19:09:05,341 basehttp 10228 16940 "GET /api/get-question/?letter=%D9%85&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:09:30,652 log 10228 16544 Not Found: /api/get-question/
+WARNING 2025-08-04 19:09:30,653 basehttp 10228 16544 "GET /api/get-question/?letter=%D9%87&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:09:31,465 log 10228 16544 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 19:09:31,466 basehttp 10228 16544 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 19:09:32,552 log 10228 16544 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 19:09:32,553 basehttp 10228 16544 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 19:09:32,712 log 10228 16544 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 19:09:32,713 basehttp 10228 16544 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+INFO 2025-08-04 19:10:51,721 basehttp 10228 16544 "GET /games/letters/session/3df61991-6758-4701-9139-f3dccb07be26/ HTTP/1.1" 200 23893
+WARNING 2025-08-04 19:10:51,763 log 10228 16544 Not Found: /api/session-state/
+WARNING 2025-08-04 19:10:51,764 basehttp 10228 16544 "GET /api/session-state/?session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3231
+WARNING 2025-08-04 19:10:51,775 log 10228 17784 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 19:10:51,776 basehttp 10228 17784 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 19:14:40,729 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:14:40,730 basehttp 10228 17784 "GET /api/get-question/?letter=%D8%B9&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:14:58,097 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:14:58,099 basehttp 10228 17784 "GET /api/get-question/?letter=%D8%AD&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:14:58,704 log 10228 17784 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 19:14:58,706 basehttp 10228 17784 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 19:14:59,353 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:14:59,354 basehttp 10228 17784 "GET /api/get-question/?letter=%D8%BA&session_id=3df61991-6758-4701-9139-f3dccb07be26 HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:15:00,200 log 10228 17784 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 19:15:00,202 basehttp 10228 17784 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 19:15:25,981 log 10228 17784 Not Found: /favicon.ico
+WARNING 2025-08-04 19:15:25,982 basehttp 10228 17784 "GET /favicon.ico HTTP/1.1" 404 3162
+INFO 2025-08-04 19:15:40,822 basehttp 10228 17784 "GET /games/letters/ HTTP/1.1" 200 35252
+INFO 2025-08-04 19:15:42,364 basehttp 10228 17784 "GET / HTTP/1.1" 200 47966
+INFO 2025-08-04 19:15:53,282 basehttp 10228 17784 "GET /games/letters/ HTTP/1.1" 200 35252
+INFO 2025-08-04 19:15:54,890 basehttp 10228 17784 "POST /games/letters/create/ HTTP/1.1" 302 0
+INFO 2025-08-04 19:15:54,908 basehttp 10228 17784 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 23893
+WARNING 2025-08-04 19:15:54,950 log 10228 17784 Not Found: /api/session-state/
+WARNING 2025-08-04 19:15:54,951 basehttp 10228 17784 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 19:15:58,404 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:15:58,405 basehttp 10228 17784 "GET /api/get-question/?letter=%D8%A3&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:16:00,477 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:16:00,478 basehttp 10228 17784 "GET /api/get-question/?letter=%D8%AB&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 19:16:26,729 log 10228 17784 Not Found: /api/get-question/
+WARNING 2025-08-04 19:16:26,730 basehttp 10228 17784 "GET /api/get-question/?letter=%D9%85&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 20:14:38,025 basehttp 10228 8020 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 25044
+WARNING 2025-08-04 20:14:38,058 log 10228 8020 Not Found: /api/session-state/
+WARNING 2025-08-04 20:14:38,095 basehttp 10228 8020 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:17:07,857 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26103
+WARNING 2025-08-04 20:17:07,910 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:17:07,911 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:17:20,936 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26103
+WARNING 2025-08-04 20:17:20,980 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:17:20,980 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 20:17:58,365 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:17:58,365 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-04 20:18:36,657 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26352
+WARNING 2025-08-04 20:18:36,692 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:18:36,692 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:18:36,731 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:18:36,732 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:18:40,342 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26352
+WARNING 2025-08-04 20:18:40,386 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:18:40,387 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:18:40,416 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:18:40,418 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:18:57,351 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26364
+WARNING 2025-08-04 20:18:57,401 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:18:57,402 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:18:57,421 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:18:57,422 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:20:56,510 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26386
+WARNING 2025-08-04 20:20:56,621 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:20:56,623 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:20:56,661 log 10228 6352 Not Found: /api/session-state/
+WARNING 2025-08-04 20:20:56,662 basehttp 10228 6352 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:21:37,471 basehttp 10228 6352 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26386
+WARNING 2025-08-04 20:21:37,517 log 10228 6352 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:21:37,517 basehttp 10228 6352 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:21:37,524 log 10228 8116 Not Found: /api/session-state/
+WARNING 2025-08-04 20:21:37,525 basehttp 10228 8116 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:21:37,677 basehttp 10228 8116 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26386
+WARNING 2025-08-04 20:21:37,722 log 10228 8116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:21:37,723 basehttp 10228 8116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:21:37,770 log 10228 8116 Not Found: /api/session-state/
+WARNING 2025-08-04 20:21:37,771 basehttp 10228 8116 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 20:22:28,488 basehttp 10228 8116 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26395
+WARNING 2025-08-04 20:22:28,518 log 10228 8116 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 20:22:28,519 basehttp 10228 8116 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 20:22:28,559 log 10228 8116 Not Found: /api/session-state/
+WARNING 2025-08-04 20:22:28,559 basehttp 10228 8116 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 21:46:13,165 basehttp 10228 3164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 25830
+WARNING 2025-08-04 21:46:13,216 log 10228 17704 Not Found: /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/
+WARNING 2025-08-04 21:46:13,217 basehttp 10228 17704 "GET /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 404 3273
+INFO 2025-08-04 21:46:41,388 basehttp 10228 3164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 26364
+WARNING 2025-08-04 21:46:41,437 log 10228 3164 Not Found: /api/session-state/
+WARNING 2025-08-04 21:46:41,438 basehttp 10228 3164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 21:46:42,628 log 10228 3164 Not Found: /api/get-question/
+WARNING 2025-08-04 21:46:42,629 basehttp 10228 3164 "GET /api/get-question/?letter=%D8%B6&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 21:46:44,216 log 10228 3164 Not Found: /api/get-question/
+WARNING 2025-08-04 21:46:44,218 basehttp 10228 3164 "GET /api/get-question/?letter=%D8%AD&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 21:46:50,581 log 10228 3164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 21:46:50,581 basehttp 10228 3164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-04 22:01:44,860 basehttp 10228 4448 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 33457
+WARNING 2025-08-04 22:01:46,538 log 10228 4448 Not Found: /api/session-state/
+WARNING 2025-08-04 22:01:46,539 basehttp 10228 4448 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:01:57,979 log 10228 4448 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:01:57,980 basehttp 10228 4448 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:02:12,769 log 10228 4448 Not Found: /api/get-question/
+WARNING 2025-08-04 22:02:12,770 basehttp 10228 4448 "GET /api/get-question/?letter=%D9%85&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 22:21:01,716 basehttp 10228 8344 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31095
+WARNING 2025-08-04 22:21:01,770 log 10228 8344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:21:01,771 basehttp 10228 8344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:21:01,798 log 10228 8344 Not Found: /api/session-state/
+WARNING 2025-08-04 22:21:01,799 basehttp 10228 8344 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:21:14,278 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:14,279 basehttp 10228 8344 "GET /api/get-question/?letter=%D9%8A&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:24,775 log 10228 8344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:21:24,775 basehttp 10228 8344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:21:36,411 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:36,412 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%B9&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:40,094 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:40,095 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%A3&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:42,939 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:42,940 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%A8&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:49,847 log 10228 8344 Not Found: /api/update-scores/
+WARNING 2025-08-04 22:21:49,848 basehttp 10228 8344 "POST /api/update-scores/ HTTP/1.1" 404 3184
+WARNING 2025-08-04 22:21:50,953 log 10228 8344 Not Found: /api/update-scores/
+WARNING 2025-08-04 22:21:50,954 basehttp 10228 8344 "POST /api/update-scores/ HTTP/1.1" 404 3184
+WARNING 2025-08-04 22:21:56,194 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:56,195 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%AD&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:56,742 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:21:56,743 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:21:57,582 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:21:57,583 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:21:58,477 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:21:58,478 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:21:59,183 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:21:59,185 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%AD&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:21:59,693 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:21:59,694 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:00,365 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:22:00,367 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:00,697 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:22:00,698 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:01,657 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:22:01,659 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:02,593 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:22:02,594 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:02,926 log 10228 8344 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:22:02,927 basehttp 10228 8344 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:22:03,317 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:22:03,319 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%A8&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:22:12,306 log 10228 8344 Not Found: /favicon.ico
+WARNING 2025-08-04 22:22:12,308 basehttp 10228 8344 "GET /favicon.ico HTTP/1.1" 404 3162
+INFO 2025-08-04 22:26:00,638 basehttp 10228 8344 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31256
+WARNING 2025-08-04 22:26:00,675 log 10228 8344 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:26:00,676 basehttp 10228 8344 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:26:00,708 log 10228 8344 Not Found: /api/session-state/
+WARNING 2025-08-04 22:26:00,709 basehttp 10228 8344 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:26:16,910 log 10228 8344 Not Found: /api/get-question/
+WARNING 2025-08-04 22:26:16,911 basehttp 10228 8344 "GET /api/get-question/?letter=%D8%B9&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 22:30:54,906 basehttp 10228 5364 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31307
+WARNING 2025-08-04 22:30:54,945 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:30:54,946 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:30:54,972 log 10228 5364 Not Found: /api/session-state/
+WARNING 2025-08-04 22:30:54,973 basehttp 10228 5364 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:30:55,996 basehttp 10228 5364 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31307
+WARNING 2025-08-04 22:30:56,045 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:30:56,046 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:30:56,084 log 10228 5364 Not Found: /api/session-state/
+WARNING 2025-08-04 22:30:56,085 basehttp 10228 5364 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:31:03,631 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:31:03,632 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:31:10,263 log 10228 5364 Not Found: /api/get-question/
+WARNING 2025-08-04 22:31:10,265 basehttp 10228 5364 "GET /api/get-question/?letter=%D9%82&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 22:31:14,141 basehttp 10228 5364 "GET /games/letters/ HTTP/1.1" 200 35252
+WARNING 2025-08-04 22:31:14,181 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:31:14,181 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:31:16,387 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:31:16,387 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:31:16,452 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:31:16,453 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:31:22,517 log 10228 5364 Not Found: /api/get-question/
+WARNING 2025-08-04 22:31:22,518 basehttp 10228 5364 "GET /api/get-question/?letter=%D8%B6&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:31:22,893 log 10228 5364 Not Found: /api/get-question/
+WARNING 2025-08-04 22:31:22,894 basehttp 10228 5364 "GET /api/get-question/?letter=%D9%87&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:31:23,563 log 10228 5364 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:31:23,565 basehttp 10228 5364 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:31:24,285 log 10228 5364 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:31:24,286 basehttp 10228 5364 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:31:24,805 log 10228 5364 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:31:24,806 basehttp 10228 5364 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+INFO 2025-08-04 22:34:06,897 basehttp 10228 5364 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31315
+WARNING 2025-08-04 22:34:06,971 log 10228 5364 Not Found: /api/session-state/
+WARNING 2025-08-04 22:34:06,971 basehttp 10228 5364 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:34:13,272 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:34:13,273 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-04 22:36:39,757 basehttp 10228 5364 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31181
+WARNING 2025-08-04 22:36:39,818 log 10228 5364 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:36:39,832 basehttp 10228 5364 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:36:39,858 log 10228 5364 Not Found: /api/session-state/
+WARNING 2025-08-04 22:36:39,859 basehttp 10228 5364 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:42:29,453 basehttp 10228 6220 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31368
+WARNING 2025-08-04 22:42:29,492 log 10228 6220 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:42:29,493 basehttp 10228 6220 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:42:29,519 log 10228 6220 Not Found: /api/session-state/
+WARNING 2025-08-04 22:42:29,519 basehttp 10228 6220 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:42:35,771 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:42:35,772 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%AB&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:41,395 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:41,396 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%A8&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:41,979 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:41,980 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:42,861 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:42,861 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:43,882 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:43,883 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:44,526 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:44,528 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%A8&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:45,244 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:45,245 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:45,796 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:45,798 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:46,640 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:46,641 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:47,340 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:47,341 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:48,828 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:48,829 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:49,833 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:49,834 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:50,699 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:50,700 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%AB&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:51,894 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:51,895 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%A8&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:52,799 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:52,801 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%BA&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:54,700 log 10228 6220 Not Found: /api/get-question/
+WARNING 2025-08-04 22:43:54,701 basehttp 10228 6220 "GET /api/get-question/?letter=%D8%AD&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-04 22:43:55,940 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:55,940 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:57,509 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:57,510 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-04 22:43:58,196 log 10228 6220 Not Found: /api/update-cell-state/
+WARNING 2025-08-04 22:43:58,197 basehttp 10228 6220 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+INFO 2025-08-04 22:46:19,460 basehttp 10228 6220 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31494
+WARNING 2025-08-04 22:46:19,501 log 10228 6220 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:46:19,502 basehttp 10228 6220 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:46:19,523 log 10228 6220 Not Found: /api/session-state/
+WARNING 2025-08-04 22:46:19,524 basehttp 10228 6220 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:48:22,544 basehttp 10228 6220 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31430
+WARNING 2025-08-04 22:48:22,600 log 10228 6220 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:48:22,601 basehttp 10228 6220 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:48:22,612 log 10228 11164 Not Found: /api/session-state/
+WARNING 2025-08-04 22:48:22,613 basehttp 10228 11164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:49:09,551 basehttp 10228 11164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31430
+WARNING 2025-08-04 22:49:09,609 log 10228 11164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:49:09,609 basehttp 10228 11164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:49:09,636 log 10228 11164 Not Found: /api/session-state/
+WARNING 2025-08-04 22:49:09,637 basehttp 10228 11164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:51:26,790 basehttp 10228 11164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31541
+WARNING 2025-08-04 22:51:26,847 log 10228 11164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:51:26,848 basehttp 10228 11164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:51:26,877 log 10228 11164 Not Found: /api/session-state/
+WARNING 2025-08-04 22:51:26,878 basehttp 10228 11164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 22:51:29,835 log 10228 11164 Not Found: /api/get-question/
+WARNING 2025-08-04 22:51:29,836 basehttp 10228 11164 "GET /api/get-question/?letter=%D8%B7&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 22:54:33,509 basehttp 10228 11164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31482
+WARNING 2025-08-04 22:54:33,547 log 10228 11164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:54:33,548 basehttp 10228 11164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:54:33,576 log 10228 11164 Not Found: /api/session-state/
+WARNING 2025-08-04 22:54:33,577 basehttp 10228 11164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:57:25,930 basehttp 10228 11164 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31569
+WARNING 2025-08-04 22:57:25,967 log 10228 11164 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:57:25,968 basehttp 10228 11164 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:57:25,993 log 10228 11164 Not Found: /api/session-state/
+WARNING 2025-08-04 22:57:25,994 basehttp 10228 11164 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 22:59:26,272 basehttp 10228 8524 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31605
+WARNING 2025-08-04 22:59:26,392 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 22:59:26,395 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 22:59:26,474 log 10228 8524 Not Found: /api/session-state/
+WARNING 2025-08-04 22:59:26,476 basehttp 10228 8524 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:02:05,323 basehttp 10228 8524 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31521
+WARNING 2025-08-04 23:02:05,441 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:02:05,443 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:02:05,524 log 10228 8524 Not Found: /api/session-state/
+WARNING 2025-08-04 23:02:05,527 basehttp 10228 8524 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:04:10,426 basehttp 10228 8524 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:04:10,548 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:04:10,550 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:04:10,622 log 10228 8524 Not Found: /api/session-state/
+WARNING 2025-08-04 23:04:10,625 basehttp 10228 8524 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 23:07:33,514 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:07:33,517 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-04 23:10:09,449 basehttp 10228 8524 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31564
+WARNING 2025-08-04 23:10:09,511 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:09,513 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:09,592 log 10228 8524 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:09,594 basehttp 10228 8524 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:10:19,570 basehttp 10228 8524 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31446
+WARNING 2025-08-04 23:10:19,620 log 10228 8524 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:19,626 basehttp 10228 8524 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:19,636 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:19,637 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:10:24,109 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31446
+WARNING 2025-08-04 23:10:24,223 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:24,225 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:24,310 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:24,313 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:10:31,682 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31521
+WARNING 2025-08-04 23:10:31,782 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:31,785 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:31,861 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:31,862 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:10:39,165 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:10:39,283 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:39,285 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:39,379 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:39,382 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:10:39,720 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:10:39,769 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:10:39,770 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:10:39,843 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:10:39,844 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:13:09,329 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31462
+WARNING 2025-08-04 23:13:09,394 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:13:09,395 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:13:09,462 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:13:09,463 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:16:10,467 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:16:10,580 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:16:10,582 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:16:10,644 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:16:10,645 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:20:45,671 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 36346
+WARNING 2025-08-04 23:20:45,789 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:20:45,791 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:20:45,848 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:20:45,849 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-04 23:20:54,438 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:20:54,547 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:20:54,549 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-04 23:20:54,663 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:20:54,665 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 23:21:25,375 log 10228 15544 Not Found: /api/get-question/
+WARNING 2025-08-04 23:21:25,376 basehttp 10228 15544 "GET /api/get-question/?letter=%D8%B9&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-04 23:25:30,007 basehttp 10228 15544 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31523
+WARNING 2025-08-04 23:25:30,119 log 10228 15544 Not Found: /api/session-state/
+WARNING 2025-08-04 23:25:30,120 basehttp 10228 15544 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-04 23:25:37,561 log 10228 15544 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-04 23:25:37,562 basehttp 10228 15544 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273

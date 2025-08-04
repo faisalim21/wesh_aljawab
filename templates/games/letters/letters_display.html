@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شاشة العرض - خلية الحروف</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        window.sessionData = {
+            sessionId: '{{ session.id }}',
+        };
+    </script>
+
     <style>
         body {
             background: linear-gradient(135deg, #667eea, #764ba2);
@@ -138,6 +144,41 @@
                     questionText.textContent = data.question;
                 });
         }
+
+        document.addEventListener('DOMContentLoaded', function() {
+        console.log('تم تحميل صفحة خلية الحروف');
+        loadSessionState();
+        });
+
+        // WebSocket للعرض
+        const socket = new WebSocket(
+        `wss://${window.location.host}/ws/letters/${sessionId}/`
+        );
+
+        socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        // مثال: تغيير لون خلية بناءً على التحديث
+        if (data.type === 'update_cell') {
+            const { letter, state } = data;
+            const element = document.querySelector(`[data-letter="${letter}"]`);
+            if (element) {
+            element.classList.remove('team1', 'team2');
+            if (state === 'team1') element.classList.add('team1');
+            else if (state === 'team2') element.classList.add('team2');
+            }
+        }
+
+        // تحديث النقاط
+        if (data.type === 'update_score') {
+            document.getElementById('team1Score').textContent = data.team1_score;
+            document.getElementById('team2Score').textContent = data.team2_score;
+        }
+
+        // عرض سؤال جديد (اختياري إذا حاب)
+        };
+
+
     </script>
 </body>
 </html>

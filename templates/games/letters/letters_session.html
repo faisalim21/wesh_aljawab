@@ -5,46 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>خلية الحروف بـ SVG - مثالية 100%</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  
   <script>
-  // متغيرات عامة من Django
-  window.sessionData = {
-    sessionId: '{{ session.id }}',
-    csrfToken: '{{ csrf_token }}',
-    team1Name: '{{ session.team1_name }}',
-    team2Name: '{{ session.team2_name }}',
-    displayUrl: '{% url "games:letters_display" session.display_link %}',
-    contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
-    packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}'
-  };
-</script>
+    // متغيرات عامة من Django
+    window.sessionData = {
+      sessionId: '{{ session.id }}',
+      csrfToken: '{{ csrf_token }}',
+      team1Name: '{{ session.team1_name }}',
+      team2Name: '{{ session.team2_name }}',
+      displayUrl: '{% url "games:letters_display" session.display_link %}',
+      contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
+      packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}'
+    };
+
+    // WebSocket لاستقبال ضغطات المتسابقين
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const buzzSocket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/`);
+
+    buzzSocket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      if (data.type === "buzz") {
+        const name = data.name || "متسابق";
+        const notif = document.getElementById("buzzNotification");
+        notif.innerHTML = `🚨 <strong>${name}</strong> ضغط الزر!`;
+        notif.style.display = "block";
+        setTimeout(() => notif.style.display = "none", 3000);
+      }
+    };
+  </script>
 
   <style>
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       font-family: 'Tajawal', sans-serif;
       min-height: 100vh;
-      padding: 20px;
+      padding: 10px;
+      margin: 0;
     }
 
     .container {
       background: rgba(255, 255, 255, 0.95);
       border-radius: 20px;
-      padding: 30px;
-      max-width: 1000px;
+      padding: 15px;
+      max-width: 100%;
       margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
+    /* تحسين شكل الخلية للجوال */
     .honeycomb-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin: 40px 0;
+      margin: 15px 0;
+      padding: 10px;
     }
 
     .honeycomb-svg {
-      max-width: 900px;
       width: 100%;
+      max-width: 100vw;
       height: auto;
+      display: block;
+      margin: 0 auto;
     }
 
     .hex-cell {
@@ -61,19 +84,23 @@
     .hex-cell.team1 .hex-shape {
       fill: #22c55e;
       stroke: #15803d;
+      stroke-width: 4;
     }
 
     .hex-cell.team1 .hex-text {
       fill: white;
+      font-weight: bold;
     }
 
     .hex-cell.team2 .hex-shape {
       fill: #f97316;
       stroke: #c2410c;
+      stroke-width: 4;
     }
 
     .hex-cell.team2 .hex-text {
       fill: white;
+      font-weight: bold;
     }
 
     .hex-shape {
@@ -87,8 +114,8 @@
     .hex-text {
       fill: #6b46c1;
       font-family: 'Tajawal', sans-serif;
-      font-size: 28px;
-      font-weight: bold;
+      font-size: 160px;
+      font-weight: 900;
       text-anchor: middle;
       dominant-baseline: central;
       pointer-events: none;
@@ -97,8 +124,8 @@
     .info-panel {
       background: white;
       border-radius: 15px;
-      padding: 20px;
-      margin: 20px 0;
+      padding: 12px;
+      margin: 10px 0;
       box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
@@ -106,8 +133,8 @@
       background: #f8fafc;
       border: 2px solid #4c51bf;
       border-radius: 15px;
-      padding: 25px;
-      margin-top: 20px;
+      padding: 15px;
+      margin: 15px 0;
       display: none;
       animation: slideIn 0.3s ease-out;
     }
@@ -121,17 +148,18 @@
       background: linear-gradient(135deg, #4c51bf, #667eea);
       border: none;
       border-radius: 10px;
-      padding: 10px 20px;
+      padding: 8px 12px;
       font-weight: bold;
+      font-size: 14px;
     }
 
     .score-display {
-      font-size: 2rem;
+      font-size: 1.1rem;
       font-weight: bold;
       text-align: center;
-      padding: 15px;
+      padding: 8px;
       border-radius: 10px;
-      margin: 10px 0;
+      margin: 3px;
     }
 
     .team1-score {
@@ -147,22 +175,348 @@
     }
 
     .timer-display {
-      font-size: 3rem;
+      font-size: 2rem;
       font-weight: bold;
       color: #dc2626;
       text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    /* تحسينات خاصة للجوال */
+    @media (max-width: 768px) {
+      body {
+        padding: 5px;
+      }
+      
+      .container {
+        padding: 10px;
+        border-radius: 15px;
+      }
+      
+      .honeycomb-container {
+        margin: 10px 0;
+        padding: 5px;
+      }
+      
+      .honeycomb-svg {
+        max-width: 95vw;
+        width: 100%;
+      }
+      
+      .hex-text {
+        font-size: 135px;
+        font-weight: 900;
+      }
+      
+      .score-display {
+        font-size: 1rem;
+        padding: 6px;
+        margin: 2px;
+      }
+      
+      .timer-display {
+        font-size: 1.8rem;
+      }
+      
+      .question-panel {
+        padding: 12px;
+        margin: 10px 0;
+      }
+      
+      /* تجميع بطاقات الفريقين جنباً إلى جنب في الجوال */
+      .scores-mobile {
+        display: flex;
+        gap: 8px;
+        margin: 10px 0;
+      }
+      
+      .scores-mobile .score-display {
+        flex: 1;
+        font-size: 0.95rem;
+        padding: 6px 4px;
+      }
+
+      .scores-mobile .btn {
+        font-size: 12px;
+        padding: 2px 6px;
+        margin: 0 1px;
+      }
+
+      .info-panel {
+        padding: 8px;
+        margin: 8px 0;
+      }
+
+      .btn-primary {
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      h2 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+      }
+    }
+
+    /* تحسينات للشاشات الكبيرة */
+    @media (min-width: 769px) {
+      .container {
+        max-width: 1200px;
+        padding: 20px;
+      }
+      
+      .honeycomb-svg {
+        max-width: 1000px;
+      }
+      
+      .hex-text {
+        font-size: 175px;
+      }
+      
+      .score-display {
+        font-size: 1.3rem;
+        padding: 12px;
+      }
+      
+      .timer-display {
+        font-size: 2.5rem;
+      }
+      
+      .question-panel {
+        padding: 20px;
+        margin: 20px 0;
+      }
+    }
+
+    /* تحسين تفاعلي للمس */
+    @media (hover: none) {
+      .hex-cell:active .hex-shape {
+        fill: #e0f2fe;
+        stroke-width: 5;
+        transform: scale(1.1);
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2 class="text-center mb-4">🎯 خلية الحروف - مطابقة 100%</h2>
+    <h2 class="text-center mb-3">🎯 خلية الحروف مع وش الجواب</h2>
     
-    <!-- النقاط -->
-    <div class="row mb-4">
+    <!-- معلومات الجلسة -->
+    <div class="row justify-content-center mb-3">
+      <div class="col-12">
+        <div class="card shadow-sm border-0" style="background: #f9fafb;">
+          <div class="card-body text-center p-2">
+            <p class="mb-2 fw-bold fs-6">🔗 روابط الجلسة:</p>
+            <div class="d-flex flex-wrap justify-content-center gap-1">
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.sessionData.contestantsUrl)">
+                👥 المتسابقين
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.sessionData.displayUrl)">
+                🖥️ شاشة العرض
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">
+                🧑‍🏫 المقدم
+              </button>
+            </div>
+            <small id="copySuccess" style="display: none;" class="text-success mt-1 d-block">✅ تم النسخ!</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- المؤقت -->
+    <div class="text-center mb-3">
+      <div class="timer-display" id="timerDisplay">3</div>
+      <button class="btn btn-danger btn-lg" id="timerBtn" onclick="startTimer()">
+        ▶️ ابدأ العد التنازلي
+      </button>
+    </div>
+
+    <!-- خلية الحروف SVG - الكمال المطلق! -->
+    <div class="honeycomb-container">
+      <svg class="honeycomb-svg" viewBox="0 0 3200 2400" xmlns="http://www.w3.org/2000/svg">
+        <!-- الإطار البرتقالي والأخضر مكبر للكمال المطلق -->
+        <defs>
+          <polygon id="greenTop" points="0,0 3200,0 2560,540 640,540"/>
+          <polygon id="greenBottom" points="640,1860 2560,1860 3200,2400 0,2400"/>
+          <polygon id="orangeLeft" points="0,0 640,540 640,1860 0,2400"/>
+          <polygon id="orangeRight" points="2560,540 3200,0 3200,2400 2560,1860"/>
+        </defs>
+        
+        <!-- رسم الخلفية المكبرة للكمال -->
+        <rect width="3200" height="2400" rx="80" fill="#4ade80"/>
+        <use href="#orangeLeft" fill="#fb923c"/>
+        <use href="#orangeRight" fill="#fb923c"/>
+        <use href="#greenTop" fill="#4ade80"/>
+        <use href="#greenBottom" fill="#4ade80"/>
+        
+        <!-- الخلايا السداسية ممددة أكثر لليسار للكمال النهائي -->
+        <!-- الصف الأول: 5 خلايا ممددة أكثر لليسار -->
+        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
+          <polygon class="hex-shape" points="540,550 740,450 940,550 940,750 740,850 540,750"/>
+          <text class="hex-text" x="740" y="650">م</text>
+        </g>
+        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
+          <polygon class="hex-shape" points="940,550 1140,450 1340,550 1340,750 1140,850 940,750"/>
+          <text class="hex-text" x="1140" y="650">ق</text>
+        </g>
+        <g class="hex-cell" data-letter="أ" onclick="selectLetter('أ', this)">
+          <polygon class="hex-shape" points="1340,550 1540,450 1740,550 1740,750 1540,850 1340,750"/>
+          <text class="hex-text" x="1540" y="650">أ</text>
+        </g>
+        <g class="hex-cell" data-letter="ي" onclick="selectLetter('ي', this)">
+          <polygon class="hex-shape" points="1740,550 1940,450 2140,550 2140,750 1940,850 1740,750"/>
+          <text class="hex-text" x="1940" y="650">ي</text>
+        </g>
+        <g class="hex-cell" data-letter="و" onclick="selectLetter('و', this)">
+          <polygon class="hex-shape" points="2140,550 2340,450 2540,550 2540,750 2340,850 2140,750"/>
+          <text class="hex-text" x="2340" y="650">و</text>
+        </g>
+
+        <!-- الصف الثاني: 5 خلايا (مزاحة وممددة أكثر لليسار) -->
+        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
+          <polygon class="hex-shape" points="740,850 940,750 1140,850 1140,1050 940,1150 740,1050"/>
+          <text class="hex-text" x="940" y="950">ث</text>
+        </g>
+        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
+          <polygon class="hex-shape" points="1140,850 1340,750 1540,850 1540,1050 1340,1150 1140,1050"/>
+          <text class="hex-text" x="1340" y="950">ق</text>
+        </g>
+        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
+          <polygon class="hex-shape" points="1540,850 1740,750 1940,850 1940,1050 1740,1150 1540,1050"/>
+          <text class="hex-text" x="1740" y="950">ع</text>
+        </g>
+        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
+          <polygon class="hex-shape" points="1940,850 2140,750 2340,850 2340,1050 2140,1150 1940,1050"/>
+          <text class="hex-text" x="2140" y="950">ش</text>
+        </g>
+        <g class="hex-cell" data-letter="ز" onclick="selectLetter('ز', this)">
+          <polygon class="hex-shape" points="2340,850 2540,750 2740,850 2740,1050 2540,1150 2340,1050"/>
+          <text class="hex-text" x="2540" y="950">ز</text>
+        </g>
+
+        <!-- الصف الثالث: 5 خلايا ممددة أكثر لليسار -->
+        <g class="hex-cell" data-letter="ل" onclick="selectLetter('ل', this)">
+          <polygon class="hex-shape" points="540,1150 740,1050 940,1150 940,1350 740,1450 540,1350"/>
+          <text class="hex-text" x="740" y="1250">ل</text>
+        </g>
+        <g class="hex-cell" data-letter="س" onclick="selectLetter('س', this)">
+          <polygon class="hex-shape" points="940,1150 1140,1050 1340,1150 1340,1350 1140,1450 940,1350"/>
+          <text class="hex-text" x="1140" y="1250">س</text>
+        </g>
+        <g class="hex-cell" data-letter="ب" onclick="selectLetter('ب', this)">
+          <polygon class="hex-shape" points="1340,1150 1540,1050 1740,1150 1740,1350 1540,1450 1340,1350"/>
+          <text class="hex-text" x="1540" y="1250">ب</text>
+        </g>
+        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
+          <polygon class="hex-shape" points="1740,1150 1940,1050 2140,1150 2140,1350 1940,1450 1740,1350"/>
+          <text class="hex-text" x="1940" y="1250">ث</text>
+        </g>
+        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
+          <polygon class="hex-shape" points="2140,1150 2340,1050 2540,1150 2540,1350 2340,1450 2140,1350"/>
+          <text class="hex-text" x="2340" y="1250">ش</text>
+        </g>
+
+        <!-- الصف الرابع: 5 خلايا (مزاحة وممددة أكثر لليسار) -->
+        <g class="hex-cell" data-letter="ض" onclick="selectLetter('ض', this)">
+          <polygon class="hex-shape" points="740,1450 940,1350 1140,1450 1140,1650 940,1750 740,1650"/>
+          <text class="hex-text" x="940" y="1550">ض</text>
+        </g>
+        <g class="hex-cell" data-letter="ه" onclick="selectLetter('ه', this)">
+          <polygon class="hex-shape" points="1140,1450 1340,1350 1540,1450 1540,1650 1340,1750 1140,1650"/>
+          <text class="hex-text" x="1340" y="1550">هـ</text>
+        </g>
+        <g class="hex-cell" data-letter="ح" onclick="selectLetter('ح', this)">
+          <polygon class="hex-shape" points="1540,1450 1740,1350 1940,1450 1940,1650 1740,1750 1540,1650"/>
+          <text class="hex-text" x="1740" y="1550">ح</text>
+        </g>
+        <g class="hex-cell" data-letter="ط" onclick="selectLetter('ط', this)">
+          <polygon class="hex-shape" points="1940,1450 2140,1350 2340,1450 2340,1650 2140,1750 1940,1650"/>
+          <text class="hex-text" x="2140" y="1550">ط</text>
+        </g>
+        <g class="hex-cell" data-letter="ت" onclick="selectLetter('ت', this)">
+          <polygon class="hex-shape" points="2340,1450 2540,1350 2740,1450 2740,1650 2540,1750 2340,1650"/>
+          <text class="hex-text" x="2540" y="1550">ت</text>
+        </g>
+
+        <!-- الصف الخامس: 5 خلايا ممددة أكثر لليسار -->
+        <g class="hex-cell" data-letter="ك" onclick="selectLetter('ك', this)">
+          <polygon class="hex-shape" points="540,1750 740,1650 940,1750 940,1950 740,2050 540,1950"/>
+          <text class="hex-text" x="740" y="1850">ك</text>
+        </g>
+        <g class="hex-cell" data-letter="د" onclick="selectLetter('د', this)">
+          <polygon class="hex-shape" points="940,1750 1140,1650 1340,1750 1340,1950 1140,2050 940,1950"/>
+          <text class="hex-text" x="1140" y="1850">د</text>
+        </g>
+        <g class="hex-cell" data-letter="غ" onclick="selectLetter('غ', this)">
+          <polygon class="hex-shape" points="1340,1750 1540,1650 1740,1750 1740,1950 1540,2050 1340,1950"/>
+          <text class="hex-text" x="1540" y="1850">غ</text>
+        </g>
+        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
+          <polygon class="hex-shape" points="1740,1750 1940,1650 2140,1750 2140,1950 1940,2050 1740,1950"/>
+          <text class="hex-text" x="1940" y="1850">ع</text>
+        </g>
+        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
+          <polygon class="hex-shape" points="2140,1750 2340,1650 2540,1750 2540,1950 2340,2050 2140,1950"/>
+          <text class="hex-text" x="2340" y="1850">م</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- لوحة الأسئلة (قبل النقاط) -->
+    <div class="question-panel" id="questionPanel">
+      <h4 class="mb-3">❓ السؤال - حرف <span id="currentLetter">أ</span></h4>
+      <div class="mb-3">
+        <strong>السؤال:</strong> <span id="mainQuestion">السؤال سيظهر هنا</span>
+      </div>
+      <div class="mb-3">
+        <strong>الإجابة:</strong> <span id="mainAnswer" style="color: #22c55e; font-weight: bold;">الإجابة</span>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-2">
+          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt1')">
+            <div class="card-body p-2">
+              <h6 class="mb-1">💡 البديل الأول</h6>
+              <p class="mb-1 small" id="alt1Question">سؤال بديل</p>
+              <small><strong>الإجابة:</strong> <span id="alt1Answer">إجابة</span></small>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 mb-2">
+          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt2')">
+            <div class="card-body p-2">
+              <h6 class="mb-1">💡 البديل الثاني</h6>
+              <p class="mb-1 small" id="alt2Question">سؤال بديل</p>
+              <small><strong>الإجابة:</strong> <span id="alt2Answer">إجابة</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- النقاط (تم نقلها للأسفل تحت الأسئلة) -->
+    <div class="scores-mobile d-md-none">
+      <div class="score-display team1-score">
+        🟢 الأخضر: <span id="team1Score">0</span>
+        <div class="mt-1">
+          <button class="btn btn-sm btn-light" onclick="updateScore('team1', 1)">+</button>
+          <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
+        </div>
+      </div>
+      <div class="score-display team2-score">
+        🟠 البرتقالي: <span id="team2Score">0</span>
+        <div class="mt-1">
+          <button class="btn btn-sm btn-light" onclick="updateScore('team2', 1)">+</button>
+          <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- النقاط للشاشات الكبيرة -->
+    <div class="row d-none d-md-flex mb-3">
       <div class="col-md-6">
         <div class="score-display team1-score">
-          الفريق الأخضر: <span id="team1Score">0</span>
+          الفريق الأخضر: <span id="team1ScoreDesktop">0</span>
           <div class="mt-2">
             <button class="btn btn-sm btn-light me-2" onclick="updateScore('team1', 1)">+</button>
             <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
@@ -171,7 +525,7 @@
       </div>
       <div class="col-md-6">
         <div class="score-display team2-score">
-          الفريق البرتقالي: <span id="team2Score">0</span>
+          الفريق البرتقالي: <span id="team2ScoreDesktop">0</span>
           <div class="mt-2">
             <button class="btn btn-sm btn-light me-2" onclick="updateScore('team2', 1)">+</button>
             <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
@@ -180,175 +534,23 @@
       </div>
     </div>
 
-    <!-- المؤقت -->
-    <div class="text-center mb-4">
-      <div class="timer-display" id="timerDisplay">3</div>
-      <button class="btn btn-danger btn-lg" id="timerBtn" onclick="startTimer()">
-        ▶️ ابدأ العد التنازلي
-      </button>
-    </div>
-
-    <!-- خلية الحروف SVG المُصححة والموسطة -->
-    <div class="honeycomb-container">
-      <svg class="honeycomb-svg" viewBox="0 0 700 500" xmlns="http://www.w3.org/2000/svg">
-        <!-- الخلفية المضلعة الصحيحة -->
-        <defs>
-          <!-- الخلفية الأخضر أعلى وأسفل، برتقالي يمين ويسار -->
-          <polygon id="greenTop" points="0,0 700,0 550,150 150,150"/>
-          <polygon id="greenBottom" points="150,350 550,350 700,500 0,500"/>
-          <polygon id="orangeLeft" points="0,0 150,150 150,350 0,500"/>
-          <polygon id="orangeRight" points="550,150 700,0 700,500 550,350"/>
-        </defs>
-        
-        <!-- رسم الخلفية -->
-        <rect width="700" height="500" rx="40" fill="#4ade80"/>
-        <use href="#orangeLeft" fill="#fb923c"/>
-        <use href="#orangeRight" fill="#fb923c"/>
-        <use href="#greenTop" fill="#4ade80"/>
-        <use href="#greenBottom" fill="#4ade80"/>
-        
-        <!-- الخلايا موسطة بشكل مثالي -->
-        <!-- الصف الأول: 5 خلايا -->
-        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
-          <polygon class="hex-shape" points="200,100 230,85 260,100 260,130 230,145 200,130"/>
-          <text class="hex-text" x="230" y="115">م</text>
-        </g>
-        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
-          <polygon class="hex-shape" points="260,100 290,85 320,100 320,130 290,145 260,130"/>
-          <text class="hex-text" x="290" y="115">ق</text>
-        </g>
-        <g class="hex-cell" data-letter="أ" onclick="selectLetter('أ', this)">
-          <polygon class="hex-shape" points="320,100 350,85 380,100 380,130 350,145 320,130"/>
-          <text class="hex-text" x="350" y="115">أ</text>
-        </g>
-        <g class="hex-cell" data-letter="ي" onclick="selectLetter('ي', this)">
-          <polygon class="hex-shape" points="380,100 410,85 440,100 440,130 410,145 380,130"/>
-          <text class="hex-text" x="410" y="115">ي</text>
-        </g>
-        <g class="hex-cell" data-letter="و" onclick="selectLetter('و', this)">
-          <polygon class="hex-shape" points="440,100 470,85 500,100 500,130 470,145 440,130"/>
-          <text class="hex-text" x="470" y="115">و</text>
-        </g>
-
-        <!-- الصف الثاني: 5 خلايا (مزاحة) -->
-        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
-          <polygon class="hex-shape" points="230,145 260,130 290,145 290,175 260,190 230,175"/>
-          <text class="hex-text" x="260" y="160">ث</text>
-        </g>
-        <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
-          <polygon class="hex-shape" points="290,145 320,130 350,145 350,175 320,190 290,175"/>
-          <text class="hex-text" x="320" y="160">ق</text>
-        </g>
-        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
-          <polygon class="hex-shape" points="350,145 380,130 410,145 410,175 380,190 350,175"/>
-          <text class="hex-text" x="380" y="160">ع</text>
-        </g>
-        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
-          <polygon class="hex-shape" points="410,145 440,130 470,145 470,175 440,190 410,175"/>
-          <text class="hex-text" x="440" y="160">ش</text>
-        </g>
-        <g class="hex-cell" data-letter="ز" onclick="selectLetter('ز', this)">
-          <polygon class="hex-shape" points="470,145 500,130 530,145 530,175 500,190 470,175"/>
-          <text class="hex-text" x="500" y="160">ز</text>
-        </g>
-
-        <!-- الصف الثالث: 5 خلايا -->
-        <g class="hex-cell" data-letter="ل" onclick="selectLetter('ل', this)">
-          <polygon class="hex-shape" points="200,190 230,175 260,190 260,220 230,235 200,220"/>
-          <text class="hex-text" x="230" y="205">ل</text>
-        </g>
-        <g class="hex-cell" data-letter="س" onclick="selectLetter('س', this)">
-          <polygon class="hex-shape" points="260,190 290,175 320,190 320,220 290,235 260,220"/>
-          <text class="hex-text" x="290" y="205">س</text>
-        </g>
-        <g class="hex-cell" data-letter="ب" onclick="selectLetter('ب', this)">
-          <polygon class="hex-shape" points="320,190 350,175 380,190 380,220 350,235 320,220"/>
-          <text class="hex-text" x="350" y="205">ب</text>
-        </g>
-        <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
-          <polygon class="hex-shape" points="380,190 410,175 440,190 440,220 410,235 380,220"/>
-          <text class="hex-text" x="410" y="205">ث</text>
-        </g>
-        <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
-          <polygon class="hex-shape" points="440,190 470,175 500,190 500,220 470,235 440,220"/>
-          <text class="hex-text" x="470" y="205">ش</text>
-        </g>
-
-        <!-- الصف الرابع: 5 خلايا (مزاحة) -->
-        <g class="hex-cell" data-letter="ض" onclick="selectLetter('ض', this)">
-          <polygon class="hex-shape" points="230,235 260,220 290,235 290,265 260,280 230,265"/>
-          <text class="hex-text" x="260" y="250">ض</text>
-        </g>
-        <g class="hex-cell" data-letter="ه" onclick="selectLetter('ه', this)">
-          <polygon class="hex-shape" points="290,235 320,220 350,235 350,265 320,280 290,265"/>
-          <text class="hex-text" x="320" y="250">ه</text>
-        </g>
-        <g class="hex-cell" data-letter="ح" onclick="selectLetter('ح', this)">
-          <polygon class="hex-shape" points="350,235 380,220 410,235 410,265 380,280 350,265"/>
-          <text class="hex-text" x="380" y="250">ح</text>
-        </g>
-        <g class="hex-cell" data-letter="ط" onclick="selectLetter('ط', this)">
-          <polygon class="hex-shape" points="410,235 440,220 470,235 470,265 440,280 410,265"/>
-          <text class="hex-text" x="440" y="250">ط</text>
-        </g>
-        <g class="hex-cell" data-letter="ت" onclick="selectLetter('ت', this)">
-          <polygon class="hex-shape" points="470,235 500,220 530,235 530,265 500,280 470,265"/>
-          <text class="hex-text" x="500" y="250">ت</text>
-        </g>
-
-        <!-- الصف الخامس: 5 خلايا -->
-        <g class="hex-cell" data-letter="ك" onclick="selectLetter('ك', this)">
-          <polygon class="hex-shape" points="200,280 230,265 260,280 260,310 230,325 200,310"/>
-          <text class="hex-text" x="230" y="295">ك</text>
-        </g>
-        <g class="hex-cell" data-letter="د" onclick="selectLetter('د', this)">
-          <polygon class="hex-shape" points="260,280 290,265 320,280 320,310 290,325 260,310"/>
-          <text class="hex-text" x="290" y="295">د</text>
-        </g>
-        <g class="hex-cell" data-letter="غ" onclick="selectLetter('غ', this)">
-          <polygon class="hex-shape" points="320,280 350,265 380,280 380,310 350,325 320,310"/>
-          <text class="hex-text" x="350" y="295">غ</text>
-        </g>
-        <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
-          <polygon class="hex-shape" points="380,280 410,265 440,280 440,310 410,325 380,310"/>
-          <text class="hex-text" x="410" y="295">ع</text>
-        </g>
-        <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
-          <polygon class="hex-shape" points="440,280 470,265 500,280 500,310 470,325 440,310"/>
-          <text class="hex-text" x="470" y="295">م</text>
-        </g>
-      </svg>
-    </div>
-
-    <!-- لوحة الأسئلة -->
-    <div class="question-panel" id="questionPanel">
-      <h4>❓ السؤال - حرف <span id="currentLetter">أ</span></h4>
-      <div class="mb-3">
-        <strong>السؤال:</strong> <span id="mainQuestion">السؤال سيظهر هنا</span>
-      </div>
-      <div class="mb-3">
-        <strong>الإجابة:</strong> <span id="mainAnswer" style="color: #22c55e; font-weight: bold;">الإجابة</span>
-      </div>
-      <div class="row">
-        <div class="col-md-6">
-          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt1')">
-            <div class="card-body">
-              <h6>💡 البديل الأول</h6>
-              <p id="alt1Question">سؤال بديل</p>
-              <small><strong>الإجابة:</strong> <span id="alt1Answer">إجابة</span></small>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt2')">
-            <div class="card-body">
-              <h6>💡 البديل الثاني</h6>
-              <p id="alt2Question">سؤال بديل</p>
-              <small><strong>الإجابة:</strong> <span id="alt2Answer">إجابة</span></small>
-            </div>
-          </div>
-        </div>
-      </div>
+    <!-- إشعار ضغط الزر -->
+    <div id="buzzNotification" style="
+      position: fixed;
+      top: 15px;
+      right: 15px;
+      background-color: #4ade80;
+      color: #1e3a8a;
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-weight: bold;
+      display: none;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      z-index: 9999;
+      font-size: 16px;
+      max-width: 90%;
+    ">
+      🚨 المتسابق ضغط الزر!
     </div>
   </div>
 
@@ -362,7 +564,7 @@
     let isTimerRunning = false;
     
     // الحصول على session_id من URL أو متغير عام
-    const sessionId = '{{ session.id }}' || window.location.pathname.split('/').pop();
+    const sessionId = window.sessionData?.sessionId || '{{ session.id }}' || window.location.pathname.split('/').pop();
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
 
     // دالة لجلب السؤال من السيرفر
@@ -488,9 +690,13 @@
       if (team === 'team1') {
         team1Score = Math.max(0, team1Score + change);
         document.getElementById('team1Score').textContent = team1Score;
+        const desktopElement = document.getElementById('team1ScoreDesktop');
+        if (desktopElement) desktopElement.textContent = team1Score;
       } else {
         team2Score = Math.max(0, team2Score + change);
         document.getElementById('team2Score').textContent = team2Score;
+        const desktopElement = document.getElementById('team2ScoreDesktop');
+        if (desktopElement) desktopElement.textContent = team2Score;
       }
       
       // إرسال النقاط المحدثة للسيرفر
@@ -578,6 +784,11 @@
           document.getElementById('team1Score').textContent = team1Score;
           document.getElementById('team2Score').textContent = team2Score;
           
+          const team1Desktop = document.getElementById('team1ScoreDesktop');
+          const team2Desktop = document.getElementById('team2ScoreDesktop');
+          if (team1Desktop) team1Desktop.textContent = team1Score;
+          if (team2Desktop) team2Desktop.textContent = team2Score;
+          
           // تحديث حالة الخلايا
           if (data.cell_states) {
             for (const [letter, state] of Object.entries(data.cell_states)) {
@@ -594,11 +805,64 @@
       }
     }
 
+    // نسخ الرابط
+    function copyLink(link) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(() => {
+          showCopySuccess();
+        }).catch(() => {
+          fallbackCopyTextToClipboard(link);
+        });
+      } else {
+        fallbackCopyTextToClipboard(link);
+      }
+    }
+
+    // طريقة بديلة لنسخ النص
+    function fallbackCopyTextToClipboard(text) {
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.top = "0";
+      textArea.style.left = "0";
+      textArea.style.position = "fixed";
+      
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        showCopySuccess();
+      } catch (err) {
+        console.error('فشل في نسخ النص');
+      }
+      
+      document.body.removeChild(textArea);
+    }
+
+    // إظهار رسالة نجاح النسخ
+    function showCopySuccess() {
+      const msg = document.getElementById('copySuccess');
+      msg.style.display = 'block';
+      setTimeout(() => msg.style.display = 'none', 1500);
+    }
+
     // تشغيل التطبيق عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
       console.log('تم تحميل صفحة خلية الحروف');
       loadSessionState();
     });
+
+    // منع الزوم عند الضغط المزدوج في الجوال
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+      const now = (new Date()).getTime();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+
   </script>
 </body>
 </html>
