@@ -701,3 +701,94 @@ WARNING 2025-08-05 19:21:36,388 log 1132 9724 Not Found: /api/session-state/
 WARNING 2025-08-05 19:21:36,389 basehttp 1132 9724 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
 WARNING 2025-08-05 19:21:39,284 log 1132 9724 Not Found: /.well-known/appspecific/com.chrome.devtools.json
 WARNING 2025-08-05 19:21:39,285 basehttp 1132 9724 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-05 19:31:40,035 autoreload 18924 18540 Watching for file changes with StatReloader
+INFO 2025-08-05 19:31:44,862 basehttp 18924 18196 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31666
+WARNING 2025-08-05 19:31:44,928 log 18924 18196 Not Found: /api/session-state/
+WARNING 2025-08-05 19:31:44,929 basehttp 18924 18196 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-05 19:31:45,552 basehttp 18924 18196 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31666
+WARNING 2025-08-05 19:31:45,615 log 18924 18196 Not Found: /api/session-state/
+WARNING 2025-08-05 19:31:45,616 basehttp 18924 18196 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+ERROR 2025-08-05 19:31:50,513 log 18924 18196 Internal Server Error: /games/letters/contestants/contestants-b5f7c557/
+Traceback (most recent call last):
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\user\wesh_aljawab\games\views.py", line 154, in letters_contestants
+    return render(request, 'games/letters/contestants.html', {
+        'session': session,
+    })
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: games/letters/contestants.html
+ERROR 2025-08-05 19:31:50,522 basehttp 18924 18196 "GET /games/letters/contestants/contestants-b5f7c557/ HTTP/1.1" 500 86324
+INFO 2025-08-05 19:32:55,548 autoreload 18924 18540 C:\Users\user\wesh_aljawab\games\views.py changed, reloading.
+INFO 2025-08-05 19:32:56,665 autoreload 10092 14084 Watching for file changes with StatReloader
+INFO 2025-08-05 19:32:59,255 basehttp 10092 21144 "GET /games/letters/contestants/contestants-b5f7c557/ HTTP/1.1" 200 2057
+WARNING 2025-08-05 19:32:59,299 log 10092 10784 Not Found: /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/
+WARNING 2025-08-05 19:32:59,300 basehttp 10092 10784 "GET /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 404 3273
+ERROR 2025-08-05 19:33:23,853 log 10092 21144 Internal Server Error: /games/letters/display/display-b5f7c557/
+Traceback (most recent call last):
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\core\handlers\base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "C:\Users\user\wesh_aljawab\games\views.py", line 145, in letters_display
+    return render(request, 'games/letters/display.html', {
+        'session': session,
+        'arabic_letters': arabic_letters,
+    })
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\shortcuts.py", line 25, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\template\loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "C:\Users\user\wesh_aljawab\venv\Lib\site-packages\django\template\loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: games/letters/display.html
+ERROR 2025-08-05 19:33:23,862 basehttp 10092 21144 "GET /games/letters/display/display-b5f7c557/ HTTP/1.1" 500 88739
+INFO 2025-08-05 19:34:20,996 autoreload 10092 14084 C:\Users\user\wesh_aljawab\games\views.py changed, reloading.
+INFO 2025-08-05 19:34:22,138 autoreload 11056 2500 Watching for file changes with StatReloader
+INFO 2025-08-05 19:34:24,302 basehttp 11056 1472 "GET /games/letters/display/display-b5f7c557/ HTTP/1.1" 200 6031
+INFO 2025-08-05 19:34:47,672 basehttp 11056 1472 "GET /games/letters/contestants/contestants-b5f7c557/ HTTP/1.1" 200 2057
+WARNING 2025-08-05 19:34:47,733 log 11056 8412 Not Found: /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/
+WARNING 2025-08-05 19:34:47,734 basehttp 11056 8412 "GET /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 404 3273
+INFO 2025-08-05 19:42:24,263 basehttp 11056 10600 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 32147
+WARNING 2025-08-05 19:42:24,322 log 11056 10600 Not Found: /api/session-state/
+WARNING 2025-08-05 19:42:24,323 basehttp 11056 10600 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-05 19:42:25,861 log 11056 10600 Not Found: /api/get-question/
+WARNING 2025-08-05 19:42:25,862 basehttp 11056 10600 "GET /api/get-question/?letter=%D8%AB&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-05 19:42:29,020 log 11056 10600 Not Found: /api/get-question/
+WARNING 2025-08-05 19:42:29,021 basehttp 11056 10600 "GET /api/get-question/?letter=%D8%A3&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-05 19:42:31,679 log 11056 10600 Not Found: /api/update-cell-state/
+WARNING 2025-08-05 19:42:31,680 basehttp 11056 10600 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-05 19:42:32,205 log 11056 10600 Not Found: /api/get-question/
+WARNING 2025-08-05 19:42:32,207 basehttp 11056 10600 "GET /api/get-question/?letter=%D8%B4&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+WARNING 2025-08-05 19:42:33,293 log 11056 10600 Not Found: /api/update-cell-state/
+WARNING 2025-08-05 19:42:33,295 basehttp 11056 10600 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+WARNING 2025-08-05 19:42:33,397 log 11056 10600 Not Found: /api/update-cell-state/
+WARNING 2025-08-05 19:42:33,398 basehttp 11056 10600 "POST /api/update-cell-state/ HTTP/1.1" 404 3196
+INFO 2025-08-05 19:42:50,990 basehttp 11056 10600 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 32147
+WARNING 2025-08-05 19:42:51,063 log 11056 10600 Not Found: /api/session-state/
+WARNING 2025-08-05 19:42:51,064 basehttp 11056 10600 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-05 19:43:03,165 basehttp 11056 10600 "GET /games/letters/display/display-b5f7c557/ HTTP/1.1" 200 6031
+INFO 2025-08-05 19:43:07,306 basehttp 11056 10600 "GET /games/letters/contestants/contestants-b5f7c557/ HTTP/1.1" 200 2057
+WARNING 2025-08-05 19:43:07,330 log 11056 20720 Not Found: /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/
+WARNING 2025-08-05 19:43:07,331 basehttp 11056 20720 "GET /ws/letters/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 404 3273
+INFO 2025-08-05 19:44:10,541 basehttp 11056 16560 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 32346
+WARNING 2025-08-05 19:44:10,601 log 11056 16560 Not Found: /api/session-state/
+WARNING 2025-08-05 19:44:10,602 basehttp 11056 16560 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+INFO 2025-08-05 19:44:32,964 basehttp 11056 16560 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 32346
+WARNING 2025-08-05 19:44:33,034 log 11056 16560 Not Found: /api/session-state/
+WARNING 2025-08-05 19:44:33,034 basehttp 11056 16560 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-05 19:44:36,735 log 11056 16560 Not Found: /api/get-question/
+WARNING 2025-08-05 19:44:36,736 basehttp 11056 16560 "GET /api/get-question/?letter=%D8%B4&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246
+INFO 2025-08-05 19:46:17,830 basehttp 11056 16560 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 31969
+INFO 2025-08-05 19:46:34,046 basehttp 11056 16560 "GET /games/letters/session/b5f7c557-636d-4f53-98ef-480046bfef6e/ HTTP/1.1" 200 32346
+WARNING 2025-08-05 19:46:34,115 log 11056 16560 Not Found: /api/session-state/
+WARNING 2025-08-05 19:46:34,116 basehttp 11056 16560 "GET /api/session-state/?session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3231
+WARNING 2025-08-05 19:46:35,021 log 11056 16560 Not Found: /api/get-question/
+WARNING 2025-08-05 19:46:35,022 basehttp 11056 16560 "GET /api/get-question/?letter=%D8%AD&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 404 3246

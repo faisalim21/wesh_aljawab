@@ -142,7 +142,7 @@ def letters_display(request, display_link):
         'ق', 'ك', 'ل', 'م', 'ن'
     ]
     
-    return render(request, 'games/letters/display.html', {
+    return render(request, 'games/letters/letters_display.html', {
         'session': session,
         'arabic_letters': arabic_letters,
     })
@@ -151,7 +151,7 @@ def letters_contestants(request, contestants_link):
     """صفحة المتسابقين لخلية الحروف"""
     session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True)
     
-    return render(request, 'games/letters/contestants.html', {
+    return render(request, 'games/letters/letters_contestants.html', {
         'session': session,
     })
 

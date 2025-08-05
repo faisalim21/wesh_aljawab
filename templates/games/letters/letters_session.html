@@ -33,6 +33,26 @@
         setTimeout(() => notif.style.display = "none", 3000);
       }
     };
+
+    const socket = new WebSocket(
+  `wss://${window.location.host}/ws/letters/${window.sessionData.sessionId}/`
+);
+
+    socket.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "broadcast_question") {
+        document.getElementById("question").innerText = data.question;
+      }
+    };
+
+    function selectLetter(letter) {
+      socket.send(JSON.stringify({
+        type: "select_letter",
+        letter: letter
+      }));
+    }
+
   </script>
 
   <style>
@@ -313,15 +333,16 @@
           <div class="card-body text-center p-2">
             <p class="mb-2 fw-bold fs-6">🔗 روابط الجلسة:</p>
             <div class="d-flex flex-wrap justify-content-center gap-1">
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.sessionData.contestantsUrl)">
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.contestantsUrl)">
                 👥 المتسابقين
               </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.sessionData.displayUrl)">
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.displayUrl)">
                 🖥️ شاشة العرض
               </button>
               <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">
                 🧑‍🏫 المقدم
               </button>
+
             </div>
             <small id="copySuccess" style="display: none;" class="text-success mt-1 d-block">✅ تم النسخ!</small>
           </div>
@@ -335,6 +356,10 @@
       <button class="btn btn-danger btn-lg" id="timerBtn" onclick="startTimer()">
         ▶️ ابدأ العد التنازلي
       </button>
+    </div>
+      <!-- عرض السؤال -->
+    <div id="questionDisplay" class="alert alert-light text-dark mt-4 text-center fs-4 fw-bold">
+      اضغط على أي حرف لعرض السؤال
     </div>
 
     <!-- خلية الحروف SVG - مُحسنة ومنتصفة بدون تداخل -->
