@@ -219,12 +219,7 @@ def get_question(request):
                 'category': main_q.category
             }
         except LettersGameQuestion.DoesNotExist:
-            questions['main'] = {
-                'question': f'سؤال تجريبي: شيء يبدأ بحرف {letter}؟',
-                'answer': 'إجابة تجريبية',
-                'category': 'عام'
-            }
-        
+            questions['main'] = None
         # السؤال البديل الأول
         try:
             alt1_q = LettersGameQuestion.objects.get(
@@ -238,11 +233,7 @@ def get_question(request):
                 'category': alt1_q.category
             }
         except LettersGameQuestion.DoesNotExist:
-            questions['alt1'] = {
-                'question': f'سؤال بديل أول: مهنة تبدأ بحرف {letter}؟',
-                'answer': 'مهنة تجريبية',
-                'category': 'مهن'
-            }
+            questions['alt1'] = None
             
         # السؤال البديل الثاني
         try:
@@ -257,11 +248,8 @@ def get_question(request):
                 'category': alt2_q.category
             }
         except LettersGameQuestion.DoesNotExist:
-            questions['alt2'] = {
-                'question': f'سؤال بديل ثاني: حيوان يبدأ بحرف {letter}؟',
-                'answer': 'حيوان تجريبي', 
-                'category': 'حيوانات'
-            }
+            questions['alt2'] = None
+
         
         return JsonResponse({
             'success': True,
