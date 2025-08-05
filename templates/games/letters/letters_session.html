@@ -114,7 +114,7 @@
     .hex-text {
       fill: #6b46c1;
       font-family: 'Tajawal', sans-serif;
-      font-size: 160px;
+      font-size: 130px;
       font-weight: 900;
       text-anchor: middle;
       dominant-baseline: central;
@@ -181,7 +181,7 @@
       text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
     }
 
-    /* تحسينات خاصة للجوال */
+    /* تحسينات خاصة للجوال - خلايا أكبر + مستطيل أصغر */
     @media (max-width: 768px) {
       body {
         padding: 5px;
@@ -200,10 +200,13 @@
       .honeycomb-svg {
         max-width: 95vw;
         width: 100%;
+        /* بدون تكبير إضافي - نكبر الخلايا نفسها */
+        transform: scale(1.0);
+        transform-origin: center;
       }
       
       .hex-text {
-        font-size: 135px;
+        font-size: 150px; /* تقليل حجم النص للجوال */
         font-weight: 900;
       }
       
@@ -260,16 +263,18 @@
     /* تحسينات للشاشات الكبيرة */
     @media (min-width: 769px) {
       .container {
-        max-width: 1200px;
+        max-width: 1000px;
         padding: 20px;
       }
       
       .honeycomb-svg {
-        max-width: 1000px;
+        max-width: 650px; /* تصغير أكثر */
+        transform: scale(0.85); /* تقليل أكثر */
+        transform-origin: center;
       }
       
       .hex-text {
-        font-size: 175px;
+        font-size: 110px; /* تقليل حجم النص للشاشات الكبيرة */
       }
       
       .score-display {
@@ -332,133 +337,133 @@
       </button>
     </div>
 
-    <!-- خلية الحروف SVG - الكمال المطلق! -->
+    <!-- خلية الحروف SVG - مُحسنة ومنتصفة بدون تداخل -->
     <div class="honeycomb-container">
-      <svg class="honeycomb-svg" viewBox="0 0 3200 2400" xmlns="http://www.w3.org/2000/svg">
-        <!-- الإطار البرتقالي والأخضر مكبر للكمال المطلق -->
+      <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg">
+        <!-- الإطار بألوان أغمق وأكثر عصرية -->
         <defs>
-          <polygon id="greenTop" points="0,0 3200,0 2560,540 640,540"/>
-          <polygon id="greenBottom" points="640,1860 2560,1860 3200,2400 0,2400"/>
-          <polygon id="orangeLeft" points="0,0 640,540 640,1860 0,2400"/>
-          <polygon id="orangeRight" points="2560,540 3200,0 3200,2400 2560,1860"/>
+          <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
+          <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
+          <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
+          <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
         </defs>
         
-        <!-- رسم الخلفية المكبرة للكمال -->
-        <rect width="3200" height="2400" rx="80" fill="#4ade80"/>
+        <!-- رسم الخلفية بالألوان الأصلية -->
+        <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
         <use href="#orangeLeft" fill="#fb923c"/>
         <use href="#orangeRight" fill="#fb923c"/>
         <use href="#greenTop" fill="#4ade80"/>
         <use href="#greenBottom" fill="#4ade80"/>
         
-        <!-- الخلايا السداسية ممددة أكثر لليسار للكمال النهائي -->
-        <!-- الصف الأول: 5 خلايا ممددة أكثر لليسار -->
+        <!-- الخلايا السداسية مرفوعة قليلاً جداً لأعلى مع عدم تداخل الحدود -->
+        <!-- الصف الأول: 5 خلايا -->
         <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
-          <polygon class="hex-shape" points="540,550 740,450 940,550 940,750 740,850 540,750"/>
-          <text class="hex-text" x="740" y="650">م</text>
+          <polygon class="hex-shape" points="250,200 380,140 510,200 510,320 380,380 250,320"/>
+          <text class="hex-text" x="380" y="260">م</text>
         </g>
         <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
-          <polygon class="hex-shape" points="940,550 1140,450 1340,550 1340,750 1140,850 940,750"/>
-          <text class="hex-text" x="1140" y="650">ق</text>
+          <polygon class="hex-shape" points="500,200 630,140 760,200 760,320 630,380 500,320"/>
+          <text class="hex-text" x="630" y="260">ق</text>
         </g>
         <g class="hex-cell" data-letter="أ" onclick="selectLetter('أ', this)">
-          <polygon class="hex-shape" points="1340,550 1540,450 1740,550 1740,750 1540,850 1340,750"/>
-          <text class="hex-text" x="1540" y="650">أ</text>
+          <polygon class="hex-shape" points="750,200 880,140 1010,200 1010,320 880,380 750,320"/>
+          <text class="hex-text" x="880" y="260">أ</text>
         </g>
         <g class="hex-cell" data-letter="ي" onclick="selectLetter('ي', this)">
-          <polygon class="hex-shape" points="1740,550 1940,450 2140,550 2140,750 1940,850 1740,750"/>
-          <text class="hex-text" x="1940" y="650">ي</text>
+          <polygon class="hex-shape" points="1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"/>
+          <text class="hex-text" x="1130" y="260">ي</text>
         </g>
         <g class="hex-cell" data-letter="و" onclick="selectLetter('و', this)">
-          <polygon class="hex-shape" points="2140,550 2340,450 2540,550 2540,750 2340,850 2140,750"/>
-          <text class="hex-text" x="2340" y="650">و</text>
+          <polygon class="hex-shape" points="1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"/>
+          <text class="hex-text" x="1380" y="260">و</text>
         </g>
 
-        <!-- الصف الثاني: 5 خلايا (مزاحة وممددة أكثر لليسار) -->
+        <!-- الصف الثاني: 5 خلايا (مزاحة قليلاً) -->
         <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
-          <polygon class="hex-shape" points="740,850 940,750 1140,850 1140,1050 940,1150 740,1050"/>
-          <text class="hex-text" x="940" y="950">ث</text>
+          <polygon class="hex-shape" points="375,380 505,320 635,380 635,500 505,560 375,500"/>
+          <text class="hex-text" x="505" y="440">ث</text>
         </g>
         <g class="hex-cell" data-letter="ق" onclick="selectLetter('ق', this)">
-          <polygon class="hex-shape" points="1140,850 1340,750 1540,850 1540,1050 1340,1150 1140,1050"/>
-          <text class="hex-text" x="1340" y="950">ق</text>
+          <polygon class="hex-shape" points="625,380 755,320 885,380 885,500 755,560 625,500"/>
+          <text class="hex-text" x="755" y="440">ق</text>
         </g>
         <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
-          <polygon class="hex-shape" points="1540,850 1740,750 1940,850 1940,1050 1740,1150 1540,1050"/>
-          <text class="hex-text" x="1740" y="950">ع</text>
+          <polygon class="hex-shape" points="875,380 1005,320 1135,380 1135,500 1005,560 875,500"/>
+          <text class="hex-text" x="1005" y="440">ع</text>
         </g>
         <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
-          <polygon class="hex-shape" points="1940,850 2140,750 2340,850 2340,1050 2140,1150 1940,1050"/>
-          <text class="hex-text" x="2140" y="950">ش</text>
+          <polygon class="hex-shape" points="1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"/>
+          <text class="hex-text" x="1255" y="440">ش</text>
         </g>
         <g class="hex-cell" data-letter="ز" onclick="selectLetter('ز', this)">
-          <polygon class="hex-shape" points="2340,850 2540,750 2740,850 2740,1050 2540,1150 2340,1050"/>
-          <text class="hex-text" x="2540" y="950">ز</text>
+          <polygon class="hex-shape" points="1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"/>
+          <text class="hex-text" x="1505" y="440">ز</text>
         </g>
 
-        <!-- الصف الثالث: 5 خلايا ممددة أكثر لليسار -->
+        <!-- الصف الثالث: 5 خلايا -->
         <g class="hex-cell" data-letter="ل" onclick="selectLetter('ل', this)">
-          <polygon class="hex-shape" points="540,1150 740,1050 940,1150 940,1350 740,1450 540,1350"/>
-          <text class="hex-text" x="740" y="1250">ل</text>
+          <polygon class="hex-shape" points="250,560 380,500 510,560 510,680 380,740 250,680"/>
+          <text class="hex-text" x="380" y="620">ل</text>
         </g>
         <g class="hex-cell" data-letter="س" onclick="selectLetter('س', this)">
-          <polygon class="hex-shape" points="940,1150 1140,1050 1340,1150 1340,1350 1140,1450 940,1350"/>
-          <text class="hex-text" x="1140" y="1250">س</text>
+          <polygon class="hex-shape" points="500,560 630,500 760,560 760,680 630,740 500,680"/>
+          <text class="hex-text" x="630" y="620">س</text>
         </g>
         <g class="hex-cell" data-letter="ب" onclick="selectLetter('ب', this)">
-          <polygon class="hex-shape" points="1340,1150 1540,1050 1740,1150 1740,1350 1540,1450 1340,1350"/>
-          <text class="hex-text" x="1540" y="1250">ب</text>
+          <polygon class="hex-shape" points="750,560 880,500 1010,560 1010,680 880,740 750,680"/>
+          <text class="hex-text" x="880" y="620">ب</text>
         </g>
         <g class="hex-cell" data-letter="ث" onclick="selectLetter('ث', this)">
-          <polygon class="hex-shape" points="1740,1150 1940,1050 2140,1150 2140,1350 1940,1450 1740,1350"/>
-          <text class="hex-text" x="1940" y="1250">ث</text>
+          <polygon class="hex-shape" points="1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"/>
+          <text class="hex-text" x="1130" y="620">ث</text>
         </g>
         <g class="hex-cell" data-letter="ش" onclick="selectLetter('ش', this)">
-          <polygon class="hex-shape" points="2140,1150 2340,1050 2540,1150 2540,1350 2340,1450 2140,1350"/>
-          <text class="hex-text" x="2340" y="1250">ش</text>
+          <polygon class="hex-shape" points="1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"/>
+          <text class="hex-text" x="1380" y="620">ش</text>
         </g>
 
-        <!-- الصف الرابع: 5 خلايا (مزاحة وممددة أكثر لليسار) -->
+        <!-- الصف الرابع: 5 خلايا (مزاحة قليلاً) -->
         <g class="hex-cell" data-letter="ض" onclick="selectLetter('ض', this)">
-          <polygon class="hex-shape" points="740,1450 940,1350 1140,1450 1140,1650 940,1750 740,1650"/>
-          <text class="hex-text" x="940" y="1550">ض</text>
+          <polygon class="hex-shape" points="375,740 505,680 635,740 635,860 505,920 375,860"/>
+          <text class="hex-text" x="505" y="800">ض</text>
         </g>
         <g class="hex-cell" data-letter="ه" onclick="selectLetter('ه', this)">
-          <polygon class="hex-shape" points="1140,1450 1340,1350 1540,1450 1540,1650 1340,1750 1140,1650"/>
-          <text class="hex-text" x="1340" y="1550">هـ</text>
+          <polygon class="hex-shape" points="625,740 755,680 885,740 885,860 755,920 625,860"/>
+          <text class="hex-text" x="755" y="800">هـ</text>
         </g>
         <g class="hex-cell" data-letter="ح" onclick="selectLetter('ح', this)">
-          <polygon class="hex-shape" points="1540,1450 1740,1350 1940,1450 1940,1650 1740,1750 1540,1650"/>
-          <text class="hex-text" x="1740" y="1550">ح</text>
+          <polygon class="hex-shape" points="875,740 1005,680 1135,740 1135,860 1005,920 875,860"/>
+          <text class="hex-text" x="1005" y="800">ح</text>
         </g>
         <g class="hex-cell" data-letter="ط" onclick="selectLetter('ط', this)">
-          <polygon class="hex-shape" points="1940,1450 2140,1350 2340,1450 2340,1650 2140,1750 1940,1650"/>
-          <text class="hex-text" x="2140" y="1550">ط</text>
+          <polygon class="hex-shape" points="1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"/>
+          <text class="hex-text" x="1255" y="800">ط</text>
         </g>
         <g class="hex-cell" data-letter="ت" onclick="selectLetter('ت', this)">
-          <polygon class="hex-shape" points="2340,1450 2540,1350 2740,1450 2740,1650 2540,1750 2340,1650"/>
-          <text class="hex-text" x="2540" y="1550">ت</text>
+          <polygon class="hex-shape" points="1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"/>
+          <text class="hex-text" x="1505" y="800">ت</text>
         </g>
 
-        <!-- الصف الخامس: 5 خلايا ممددة أكثر لليسار -->
+        <!-- الصف الخامس: 5 خلايا -->
         <g class="hex-cell" data-letter="ك" onclick="selectLetter('ك', this)">
-          <polygon class="hex-shape" points="540,1750 740,1650 940,1750 940,1950 740,2050 540,1950"/>
-          <text class="hex-text" x="740" y="1850">ك</text>
+          <polygon class="hex-shape" points="250,920 380,860 510,920 510,1040 380,1100 250,1040"/>
+          <text class="hex-text" x="380" y="980">ك</text>
         </g>
         <g class="hex-cell" data-letter="د" onclick="selectLetter('د', this)">
-          <polygon class="hex-shape" points="940,1750 1140,1650 1340,1750 1340,1950 1140,2050 940,1950"/>
-          <text class="hex-text" x="1140" y="1850">د</text>
+          <polygon class="hex-shape" points="500,920 630,860 760,920 760,1040 630,1100 500,1040"/>
+          <text class="hex-text" x="630" y="980">د</text>
         </g>
         <g class="hex-cell" data-letter="غ" onclick="selectLetter('غ', this)">
-          <polygon class="hex-shape" points="1340,1750 1540,1650 1740,1750 1740,1950 1540,2050 1340,1950"/>
-          <text class="hex-text" x="1540" y="1850">غ</text>
+          <polygon class="hex-shape" points="750,920 880,860 1010,920 1010,1040 880,1100 750,1040"/>
+          <text class="hex-text" x="880" y="980">غ</text>
         </g>
         <g class="hex-cell" data-letter="ع" onclick="selectLetter('ع', this)">
-          <polygon class="hex-shape" points="1740,1750 1940,1650 2140,1750 2140,1950 1940,2050 1740,1950"/>
-          <text class="hex-text" x="1940" y="1850">ع</text>
+          <polygon class="hex-shape" points="1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"/>
+          <text class="hex-text" x="1130" y="980">ع</text>
         </g>
         <g class="hex-cell" data-letter="م" onclick="selectLetter('م', this)">
-          <polygon class="hex-shape" points="2140,1750 2340,1650 2540,1750 2540,1950 2340,2050 2140,1950"/>
-          <text class="hex-text" x="2340" y="1850">م</text>
+          <polygon class="hex-shape" points="1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"/>
+          <text class="hex-text" x="1380" y="980">م</text>
         </g>
       </svg>
     </div>
@@ -604,7 +609,6 @@
         // النقرة الثانية: أخضر
         element.classList.remove('team2');
         element.classList.add('team1');
-        // إرسال تحديث للسيرفر
         updateCellState(letter, 'team1');
       } else if (clickCount[letter] === 3) {
         // النقرة الثالثة: برتقالي
