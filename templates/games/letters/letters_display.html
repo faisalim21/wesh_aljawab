@@ -4,181 +4,573 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>شاشة العرض - خلية الحروف</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <script>
+        // بيانات الجلسة من Django
         window.sessionData = {
             sessionId: '{{ session.id }}',
+            team1Name: '{{ session.team1_name }}',
+            team2Name: '{{ session.team2_name }}',
+            displayLink: '{{ session.display_link }}',
+            packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}',
+            arabicLetters: {{ arabic_letters|safe }}
         };
     </script>
 
     <style>
         body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
+            font-family: 'Tajawal', sans-serif;
             min-height: 100vh;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            color: white;
+        }
+
+        .main-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-direction: column;
-            font-family: 'Tajawal', sans-serif;
         }
 
-        .hex-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 100px);
+        /* النقاط في الزاوية اليسرى العلوية */
+        .scores-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
             gap: 10px;
-            position: relative;
+        }
+
+        .score-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 12px;
+            padding: 8px 12px;
+            text-align: center;
+            border: 2px solid;
+            min-width: 90px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .score-card.team1 {
+            border-color: #22c55e;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
+        }
+
+        .score-card.team2 {
+            border-color: #f97316;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
+        }
+
+        .team-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .team1 .team-name {
+            color: #22c55e;
+        }
+
+        .team2 .team-name {
+            color: #f97316;
+        }
+
+        .team-score {
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* اللوجو في الزاوية اليمنى العلوية */
+        .logo-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 12px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .logo-container img {
+            max-height: 60px;
+            width: auto;
+            display: block;
+        }
+
+        /* خلية الحروف - مركز الشاشة */
+        .honeycomb-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .honeycomb-svg {
+            width: 90vw;
+            height: 90vh;
+            max-width: 1000px;
+            max-height: 800px;
+            display: block;
+            margin: 0 auto;
         }
 
         .hex-cell {
-            width: 100px;
-            height: 86px;
-            background: white;
-            color: #2d3748;
-            clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            transition: transform 0.2s;
-            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .hex-cell:hover {
-            transform: scale(1.1);
-            background: #e0e7ff;
+        .hex-cell.team1 .hex-shape {
+            fill: #22c55e;
+            stroke: #15803d;
+            stroke-width: 4;
         }
 
-        .row-offset {
-            margin-right: 50px;
+        .hex-cell.team1 .hex-text {
+            fill: white;
+            font-weight: bold;
         }
 
-        .question-box {
-            margin-top: 30px;
+        .hex-cell.team2 .hex-shape {
+            fill: #f97316;
+            stroke: #c2410c;
+            stroke-width: 4;
+        }
+
+        .hex-cell.team2 .hex-text {
+            fill: white;
+            font-weight: bold;
+        }
+
+        .hex-shape {
+            fill: white;
+            stroke: #6b46c1;
+            stroke-width: 3;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+
+        .hex-text {
+            fill: #6b46c1;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 120px;
+            font-weight: 900;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+        }
+
+        /* السؤال الحالي */
+        .current-question {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.95);
-            color: #2d3748;
-            padding: 20px;
+            color: #1e293b;
             border-radius: 15px;
-            width: 80%;
+            padding: 15px 20px;
             text-align: center;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 150;
         }
 
-        .question-box h4 {
-            font-weight: 700;
-            font-size: 1.3rem;
+        .current-question.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
         }
 
-        .alt-questions {
-            margin-top: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
 
-        .alt-questions button {
-            border: none;
-            background: #edf2f7;
-            padding: 10px;
-            border-radius: 10px;
+        .question-letter {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #6b46c1;
+            margin-bottom: 10px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
             font-weight: 600;
-            color: #4a5568;
-            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .question-answer {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #22c55e;
+        }
+
+        /* إشعار ضغط الزر */
+        .buzz-notification {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.5rem;
+            display: none;
+            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
+            z-index: 200;
+            animation: buzzPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes buzzPulse {
+            from { transform: translate(-50%, -50%) scale(1); }
+            to { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* تحسينات للشاشات الكبيرة */
+        @media (min-width: 1200px) {
+            .hex-text {
+                font-size: 140px;
+            }
+            
+            .logo-container img {
+                max-height: 70px;
+            }
+            
+            .scores-container {
+                top: 30px;
+                left: 30px;
+            }
+            
+            .score-card {
+                min-width: 100px;
+                padding: 10px 15px;
+            }
+            
+            .team-name {
+                font-size: 0.9rem;
+            }
+            
+            .team-score {
+                font-size: 1.6rem;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .hex-text {
+                font-size: 160px;
+            }
+            
+            .logo-container img {
+                max-height: 80px;
+            }
+        }
+
+        /* إخفاء العناصر في الشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .scores-container,
+            .logo-container {
+                display: none;
+            }
+            
+            .hex-text {
+                font-size: 100px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1 class="mb-4">خلية الحروف</h1>
+    <div class="main-container">
+        <!-- النقاط في الزاوية اليسرى -->
+        <div class="scores-container">
+            <div class="score-card team1">
+                <div class="team-name">{{ session.team1_name }}</div>
+                <div class="team-score" id="team1Score">0</div>
+            </div>
+            <div class="score-card team2">
+                <div class="team-name">{{ session.team2_name }}</div>
+                <div class="team-score" id="team2Score">0</div>
+            </div>
+        </div>
 
-    <div class="hex-grid" id="hexGrid">
-        <!-- الخلايا ستُولد تلقائياً عبر JS -->
-    </div>
+        <!-- اللوجو في الزاوية اليمنى -->
+        <div class="logo-container">
+            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
+                 alt="وش الجواب" 
+                 class="img-fluid">
+        </div>
 
-    <div class="question-box d-none" id="questionBox">
-        <h4 id="questionText">...</h4>
-        <div class="alt-questions">
-            <button onclick="loadAlt(1)">سؤال بديل 1</button>
-            <button onclick="loadAlt(2)">سؤال بديل 2</button>
+        <!-- خلية الحروف - مركز الشاشة -->
+        <div class="honeycomb-container">
+            <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
+                <!-- الإطار بألوان أغمق وأكثر عصرية -->
+                <defs>
+                    <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
+                    <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
+                    <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
+                    <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
+                </defs>
+                
+                <!-- رسم الخلفية بالألوان الأصلية -->
+                <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
+                <use href="#orangeLeft" fill="#fb923c"/>
+                <use href="#orangeRight" fill="#fb923c"/>
+                <use href="#greenTop" fill="#4ade80"/>
+                <use href="#greenBottom" fill="#4ade80"/>
+                
+                <!-- الخلايا السداسية - سيتم إنشاؤها ديناميكياً من JavaScript -->
+            </svg>
+        </div>
+
+        <!-- السؤال الحالي -->
+        <div class="current-question" id="currentQuestion">
+            <div class="question-letter" id="questionLetter">أ</div>
+            <div class="question-text" id="questionText">السؤال سيظهر هنا</div>
+            <div class="question-answer" id="questionAnswer">الإجابة ستظهر هنا</div>
+        </div>
+
+        <!-- إشعار ضغط الزر -->
+        <div class="buzz-notification" id="buzzNotification">
+            🚨 <span id="contestantName">متسابق</span> ضغط الزر!
         </div>
     </div>
 
     <script>
-        const letters = ['أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر', 'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف', 'ق', 'ك', 'ل', 'م', 'ن'];
-        const shuffled = letters.sort(() => Math.random() - 0.5);
+        // متغيرات العرض
+        let currentQuestionData = null;
+        let cellStates = {};
+        
+        const sessionId = window.sessionData?.sessionId || '{{ session.id }}';
 
-        const hexGrid = document.getElementById('hexGrid');
-        const questionBox = document.getElementById('questionBox');
-        const questionText = document.getElementById('questionText');
-
-        let selectedLetter = null;
-
-        for (let i = 0; i < 5; i++) {
-            const row = document.createElement('div');
-            row.className = 'd-flex justify-content-center ' + (i % 2 !== 0 ? 'row-offset' : '');
-            for (let j = 0; j < 5; j++) {
-                const index = i * 5 + j;
-                if (index >= shuffled.length) break;
-                const cell = document.createElement('div');
-                cell.className = 'hex-cell';
-                cell.textContent = shuffled[index];
-                cell.dataset.letter = shuffled[index];
-                cell.addEventListener('click', () => {
-                    selectedLetter = shuffled[index];
-                    fetch(`/api/question/?letter=${selectedLetter}&type=main`)
-                        .then(res => res.json())
-                        .then(data => {
-                            questionText.textContent = data.question;
-                            questionBox.classList.remove('d-none');
-                        });
-                });
-                row.appendChild(cell);
+        // إنشاء الخلايا السداسية ديناميكياً
+        function createHoneycombCells() {
+            const svg = document.getElementById('honeycombSvg');
+            const arabicLetters = window.sessionData.arabicLetters || [];
+            
+            // إحداثيات الخلايا السداسية (نفس الأماكن بالضبط)
+            const cellPositions = [
+                // الصف الأول: 5 خلايا
+                {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
+                {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
+                {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
+                {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
+                {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
+                
+                // الصف الثاني: 5 خلايا (مزاحة قليلاً)
+                {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
+                {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
+                {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
+                {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
+                {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
+                
+                // الصف الثالث: 5 خلايا
+                {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
+                {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
+                {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
+                {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
+                {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
+                
+                // الصف الرابع: 5 خلايا (مزاحة قليلاً)
+                {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
+                {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
+                {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
+                {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
+                {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
+                
+                // الصف الخامس: 5 خلايا
+                {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
+                {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
+                {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
+                {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
+                {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
+            ];
+            
+            // إنشاء الخلايا السداسية
+            for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
+                const letter = arabicLetters[i];
+                const position = cellPositions[i];
+                
+                // إنشاء المجموعة
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.setAttribute('class', 'hex-cell');
+                group.setAttribute('data-letter', letter);
+                
+                // إنشاء الشكل السداسي
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('class', 'hex-shape');
+                polygon.setAttribute('points', position.points);
+                
+                // إنشاء النص
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('class', 'hex-text');
+                text.setAttribute('x', position.x);
+                text.setAttribute('y', position.y);
+                text.textContent = letter;
+                
+                // إضافة العناصر للمجموعة
+                group.appendChild(polygon);
+                group.appendChild(text);
+                
+                // إضافة المجموعة للـ SVG
+                svg.appendChild(group);
             }
-            hexGrid.appendChild(row);
-        }
-
-        function loadAlt(num) {
-            if (!selectedLetter) return;
-            fetch(`/api/question/?letter=${selectedLetter}&type=alt${num}`)
-                .then(res => res.json())
-                .then(data => {
-                    questionText.textContent = data.question;
-                });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-        console.log('تم تحميل صفحة خلية الحروف');
-        loadSessionState();
-        });
-
-        // WebSocket للعرض
-        const socket = new WebSocket(
-        `wss://${window.location.host}/ws/letters/${sessionId}/`
-        );
-
-        socket.onmessage = function (event) {
-        const data = JSON.parse(event.data);
-
-        // مثال: تغيير لون خلية بناءً على التحديث
-        if (data.type === 'update_cell') {
-            const { letter, state } = data;
-            const element = document.querySelector(`[data-letter="${letter}"]`);
-            if (element) {
-            element.classList.remove('team1', 'team2');
-            if (state === 'team1') element.classList.add('team1');
-            else if (state === 'team2') element.classList.add('team2');
-            }
+            
+            console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية للعرض بالحروف:`, arabicLetters.slice(0, 25));
         }
 
         // تحديث النقاط
-        if (data.type === 'update_score') {
-            document.getElementById('team1Score').textContent = data.team1_score;
-            document.getElementById('team2Score').textContent = data.team2_score;
+        function updateScores(team1Score, team2Score) {
+            document.getElementById('team1Score').textContent = team1Score;
+            document.getElementById('team2Score').textContent = team2Score;
         }
 
-        // عرض سؤال جديد (اختياري إذا حاب)
+        // تحديث حالة الخلايا
+        function updateCellState(letter, state) {
+            const element = document.querySelector(`[data-letter="${letter}"]`);
+            if (element) {
+                element.classList.remove('team1', 'team2');
+                if (state !== 'normal') {
+                    element.classList.add(state);
+                }
+                cellStates[letter] = state;
+            }
+        }
+
+        // عرض السؤال
+        function showQuestion(letter, questionData) {
+            if (!questionData) return;
+            
+            const questionDiv = document.getElementById('currentQuestion');
+            const letterSpan = document.getElementById('questionLetter');
+            const textSpan = document.getElementById('questionText');
+            const answerSpan = document.getElementById('questionAnswer');
+            
+            letterSpan.textContent = `حرف ${letter}`;
+            textSpan.textContent = questionData.question;
+            answerSpan.textContent = questionData.answer;
+            
+            questionDiv.classList.add('show');
+            
+            // إخفاء السؤال بعد 10 ثوان
+            setTimeout(() => {
+                questionDiv.classList.remove('show');
+            }, 10000);
+        }
+
+        // إظهار إشعار ضغط الزر
+        function showBuzzNotification(contestantName) {
+            const notification = document.getElementById('buzzNotification');
+            const nameSpan = document.getElementById('contestantName');
+            
+            nameSpan.textContent = contestantName || 'متسابق';
+            notification.style.display = 'block';
+            
+            // إخفاء الإشعار بعد 3 ثوان
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // تحميل حالة الجلسة من السيرفر
+        async function loadSessionState() {
+            try {
+                const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // تحديث النقاط
+                    updateScores(data.team1_score || 0, data.team2_score || 0);
+
+                    // تحديث حالة الخلايا
+                    if (data.cell_states) {
+                        for (const [letter, state] of Object.entries(data.cell_states)) {
+                            updateCellState(letter, state);
+                        }
+                    }
+                } else if (response.status === 410) {
+                    // الجلسة منتهية الصلاحية
+                    document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1><p>الجلسة المجانية صالحة لمدة ساعة واحدة فقط</p></div>';
+                }
+            } catch (error) {
+                console.error('خطأ في تحميل حالة الجلسة:', error);
+            }
+        }
+
+        // WebSocket للتحديثات المباشرة
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/`);
+
+        socket.onopen = function(event) {
+            console.log('✅ WebSocket متصل لشاشة العرض');
         };
 
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('📨 تحديث مباشر:', data);
 
+            switch(data.type) {
+                case 'update_cell':
+                    updateCellState(data.letter, data.state);
+                    break;
+                    
+                case 'update_score':
+                    updateScores(data.team1_score, data.team2_score);
+                    break;
+                    
+                case 'show_question':
+                    showQuestion(data.letter, data.question_data);
+                    break;
+                    
+                case 'contestant_buzz':
+                    showBuzzNotification(data.contestant_name);
+                    break;
+            }
+        };
+
+        socket.onclose = function(event) {
+            console.log('❌ WebSocket مقطوع - محاولة إعادة الاتصال...');
+            setTimeout(() => {
+                location.reload(); // إعادة تحميل الصفحة للاتصال مجدداً
+            }, 3000);
+        };
+
+        socket.onerror = function(error) {
+            console.error('❌ خطأ WebSocket:', error);
+        };
+
+        // تحديث دوري لحالة الجلسة كـ backup
+        setInterval(loadSessionState, 10000); // كل 10 ثوان
+
+        // بدء التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('تم تحميل شاشة العرض - خلية الحروف');
+            createHoneycombCells();
+            loadSessionState();
+        });
     </script>
 </body>
 </html>

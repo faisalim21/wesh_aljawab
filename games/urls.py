@@ -1,4 +1,4 @@
-# games/urls.py - الملف الكامل
+# games/urls.py - الملف المُصحح
 from django.urls import path
 from . import views
 
@@ -12,7 +12,7 @@ urlpatterns = [
     path('letters/', views.letters_game_home, name='letters_home'),
     path('letters/create/', views.create_letters_session, name='create_letters_session'),
     path('letters/session/<uuid:session_id>/', views.letters_session, name='letters_session'),
-    path('letters/host/<uuid:session_id>/', views.letters_host, name='letters_host'),
+    # تم حذف letters_host لأنه غير موجود في views.py الجديد
     path('letters/display/<str:display_link>/', views.letters_display, name='letters_display'),
     path('letters/contestants/<str:contestants_link>/', views.letters_contestants, name='letters_contestants'),
     
@@ -22,6 +22,7 @@ urlpatterns = [
     
     # API endpoints
     path('api/get-question/', views.get_question, name='api_get_question'),
+    path('api/get-session-letters/', views.get_session_letters, name='api_get_session_letters'),
     path('api/update-cell-state/', views.update_cell_state, name='api_update_cell_state'),
     path('api/update-scores/', views.update_scores, name='api_update_scores'),
     path('api/session-state/', views.session_state, name='api_session_state'),

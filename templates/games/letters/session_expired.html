@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>انتهت صلاحية الجلسة</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Tajawal', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .expired-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .expired-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .expired-title {
+            color: #dc3545;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .expired-message {
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+            color: white;
+        }
+
+        .session-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .countdown {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #dc3545;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .expired-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .expired-icon {
+                font-size: 3rem;
+            }
+            
+            .expired-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="expired-container">
+        <div class="expired-icon">⏰</div>
+        
+        <h1 class="expired-title">انتهت صلاحية الجلسة</h1>
+        
+        <div class="session-info">
+            <strong>نوع الجلسة:</strong> {{ session_type }}
+            <br>
+            <strong>السبب:</strong> {{ message }}
+        </div>
+        
+        <p class="expired-message">
+            الجلسات المجانية تستمر لمدة ساعة واحدة فقط لحماية الموقع من الاستخدام المفرط.
+            <br><br>
+            يمكنك إنشاء جلسة مجانية جديدة أو شراء حزمة مدفوعة للاستمتاع بوقت غير محدود!
+        </p>
+        
+        <div class="countdown" id="redirectCountdown"></div>
+        
+        <a href="/games/letters/" class="btn-home">
+            🏠 إنشاء جلسة جديدة
+        </a>
+        
+        <div class="mt-4">
+            <small class="text-muted">
+                💡 <strong>نصيحة:</strong> الحزم المدفوعة لا تنتهي صلاحيتها وتحتوي على حروف وأسئلة متنوعة أكثر!
+            </small>
+        </div>
+    </div>
+
+    <script>
+        // إعادة توجيه تلقائية بعد 10 ثوان
+        let countdown = 10;
+        const countdownElement = document.getElementById('redirectCountdown');
+        
+        function updateCountdown() {
+            if (countdown > 0) {
+                countdownElement.textContent = `سيتم التوجيه تلقائياً خلال ${countdown} ثانية...`;
+                countdown--;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                window.location.href = '/games/letters/';
+            }
+        }
+        
+        // بدء العد التنازلي
+        updateCountdown();
+        
+        // منع الرجوع للخلف
+        history.pushState(null, null, location.href);
+        window.onpopstate = function () {
+            history.go(1);
+        };
+    </script>
+</body>
+</html>

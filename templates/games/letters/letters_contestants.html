@@ -2,70 +2,688 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>المتسابق</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المتسابق - خلية الحروف</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <script>
+    // بيانات الجلسة من Django
+    window.sessionData = {
+      sessionId: '{{ session.id }}',
+      team1Name: '{{ session.team1_name }}',
+      team2Name: '{{ session.team2_name }}',
+      contestantsLink: '{{ session.contestants_link }}',
+      packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}'
+    };
+  </script>
+
   <style>
     body {
-      background: linear-gradient(135deg, #c084fc, #7c3aed);
+      background: linear-gradient(135deg, #c084fc 0%, #7c3aed 50%, #5b21b6 100%);
       font-family: 'Tajawal', sans-serif;
-      padding: 30px;
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
       color: white;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: rgba(255,255,255,0.1);
-      padding: 30px;
-      border-radius: 20px;
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      position: relative;
+    }
+
+    /* اللوجو */
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 8px 12px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      backdrop-filter: blur(10px);
+    }
+
+    .logo-container img {
+      max-height: 50px;
+      width: auto;
+      display: block;
+    }
+
+    /* العنوان الرئيسي */
+    .main-title {
       text-align: center;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
     }
 
-    input, button {
-      margin-top: 15px;
+    .main-title h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
     }
 
-    .buzzed {
-      background-color: #dc2626 !important;
+    .main-title .subtitle {
+      font-size: 1.1rem;
+      color: #e2e8f0;
+      margin-top: 8px;
+    }
+
+    /* كارت المتسابق */
+    .contestant-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 25px;
+      padding: 40px 30px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .contestant-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    /* حقل الاسم */
+    .name-input {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 15px 20px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      color: #2d3748;
+      width: 100%;
+      margin-bottom: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .name-input:focus {
+      outline: none;
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+      transform: scale(1.02);
+    }
+
+    .name-input::placeholder {
+      color: #718096;
+    }
+
+    /* اختيار الفريق */
+    .team-selection {
+      margin-bottom: 30px;
+    }
+
+    .team-selection label {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #e2e8f0;
+    }
+
+    .team-options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    .team-option {
+      flex: 1;
+      position: relative;
+    }
+
+    .team-radio {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .team-label {
+      display: block;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 15px;
+      padding: 15px 10px;
+      text-align: center;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .team-radio:checked + .team-label.team1 {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
+      border-color: #22c55e;
+      color: #22c55e;
+      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
+    }
+
+    .team-radio:checked + .team-label.team2 {
+      background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
+      border-color: #f97316;
+      color: #f97316;
+      box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+    }
+
+    .team-label:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    /* زر الجواب الرئيسي */
+    .buzz-button {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 20px 40px;
+      font-size: 1.5rem;
+      font-weight: 900;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .buzz-button:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+    }
+
+    .buzz-button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+    }
+
+    .buzz-button:disabled {
+      background: linear-gradient(135deg, #6b7280, #4b5563);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* حالة الضغط */
+    .buzz-button.buzzed {
+      background: linear-gradient(135deg, #059669, #047857);
+      animation: buzzSuccess 0.5s ease-in-out;
+    }
+
+    @keyframes buzzSuccess {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    /* رسائل الحالة */
+    .status-message {
+      margin-top: 20px;
+      padding: 15px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+      display: none;
+    }
+
+    .status-message.success {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid #22c55e;
+      color: #22c55e;
+    }
+
+    .status-message.error {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+    }
+
+    .status-message.info {
+      background: rgba(59, 130, 246, 0.2);
+      border: 1px solid #3b82f6;
+      color: #3b82f6;
+    }
+
+    /* حالة الاتصال */
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      z-index: 1000;
+    }
+
+    .connection-status.connected {
+      background: rgba(34, 197, 94, 0.8);
+    }
+
+    .connection-status.disconnected {
+      background: rgba(239, 68, 68, 0.8);
+    }
+
+    /* تحسينات للجوال */
+    @media (max-width: 768px) {
+      .main-container {
+        padding: 15px;
+      }
+      
+      .main-title h1 {
+        font-size: 2rem;
+      }
+      
+      .contestant-card {
+        padding: 30px 20px;
+      }
+      
+      .name-input {
+        font-size: 1.1rem;
+        padding: 12px 15px;
+      }
+      
+      .buzz-button {
+        font-size: 1.3rem;
+        padding: 18px 30px;
+      }
+      
+      .team-options {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .logo-container {
+        top: 15px;
+        right: 15px;
+      }
+      
+      .logo-container img {
+        max-height: 40px;
+      }
+    }
+
+    /* تأثيرات إضافية */
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>🎤 المتسابق</h2>
-    <input type="text" class="form-control" id="contestantName" placeholder="اكتب اسمك هنا" />
-    <button id="buzzBtn" class="btn btn-light btn-lg w-100">📣 جاوب!</button>
+  <!-- حالة الاتصال -->
+  <div class="connection-status" id="connectionStatus">
+    🔗 جاري الاتصال...
+  </div>
+
+  <!-- اللوجو -->
+  <div class="logo-container">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
+         alt="وش الجواب" 
+         class="img-fluid">
+  </div>
+
+  <div class="main-container">
+    <!-- العنوان الرئيسي -->
+    <div class="main-title fade-in">
+      <h1>🎤 صفحة المتسابق</h1>
+      <div class="subtitle">{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}</div>
+    </div>
+
+    <!-- كارت المتسابق -->
+    <div class="contestant-card fade-in">
+      <!-- حقل الاسم -->
+      <input type="text" 
+             class="name-input" 
+             id="contestantName" 
+             placeholder="🏷️ اكتب اسمك هنا" 
+             maxlength="20"
+             autocomplete="off" />
+
+      <!-- اختيار الفريق -->
+      <div class="team-selection">
+        <label>اختر فريقك:</label>
+        <div class="team-options">
+          <div class="team-option">
+            <input type="radio" 
+                   class="team-radio" 
+                   id="team1" 
+                   name="team" 
+                   value="team1">
+            <label for="team1" class="team-label team1">
+              🟢 {{ session.team1_name }}
+            </label>
+          </div>
+          <div class="team-option">
+            <input type="radio" 
+                   class="team-radio" 
+                   id="team2" 
+                   name="team" 
+                   value="team2">
+            <label for="team2" class="team-label team2">
+              🟠 {{ session.team2_name }}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- زر الجواب -->
+      <button class="buzz-button" id="buzzBtn" onclick="buzzAnswer()">
+        📣 أعرف الجواب!
+      </button>
+
+      <!-- رسائل الحالة -->
+      <div class="status-message" id="statusMessage"></div>
+    </div>
   </div>
 
   <script>
-    const sessionId = "{{ session.id }}";
+    // متغيرات اللعبة
+    let isConnected = false;
+    let contestantName = '';
+    let selectedTeam = '';
+    let buzzCooldown = false;
+    
+    const sessionId = window.sessionData?.sessionId || '{{ session.id }}';
+
+    // عناصر DOM
+    const connectionStatus = document.getElementById('connectionStatus');
+    const nameInput = document.getElementById('contestantName');
+    const buzzButton = document.getElementById('buzzBtn');
+    const statusMessage = document.getElementById('statusMessage');
+
+    // WebSocket للاتصال المباشر
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/`);
 
+    // إعداد WebSocket
+    socket.onopen = function(event) {
+      console.log('✅ WebSocket متصل للمتسابق');
+      isConnected = true;
+      updateConnectionStatus('connected', '✅ متصل');
+    };
 
-    document.getElementById("buzzBtn").addEventListener("click", () => {
-      const name = document.getElementById("contestantName").value.trim();
-      if (!name) {
-        alert("رجاءً أدخل اسمك أولًا");
+    socket.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      console.log('📨 رسالة مستقبلة:', data);
+
+      // معالجة الرسائل المختلفة
+      switch(data.type) {
+        case 'buzz_received':
+          if (data.contestant_name === contestantName) {
+            showBuzzSuccess();
+          }
+          break;
+          
+        case 'game_reset':
+          resetBuzzState();
+          break;
+          
+        case 'session_update':
+          // تحديثات عامة للجلسة
+          break;
+      }
+    };
+
+    socket.onclose = function(event) {
+      console.log('❌ WebSocket مقطوع');
+      isConnected = false;
+      updateConnectionStatus('disconnected', '❌ انقطع الاتصال');
+      
+      // محاولة إعادة الاتصال بعد 3 ثوان
+      setTimeout(() => {
+        location.reload();
+      }, 3000);
+    };
+
+    socket.onerror = function(error) {
+      console.error('❌ خطأ WebSocket:', error);
+      updateConnectionStatus('error', '⚠️ خطأ في الاتصال');
+    };
+
+    // تحديث حالة الاتصال
+    function updateConnectionStatus(status, message) {
+      connectionStatus.className = `connection-status ${status}`;
+      connectionStatus.textContent = message;
+    }
+
+    // الحصول على الفريق المختار
+    function getSelectedTeam() {
+      const teamRadios = document.querySelectorAll('input[name="team"]');
+      for (const radio of teamRadios) {
+        if (radio.checked) {
+          return radio.value;
+        }
+      }
+      return '';
+    }
+
+    // التحقق من صحة البيانات
+    function validateInput() {
+      contestantName = nameInput.value.trim();
+      selectedTeam = getSelectedTeam();
+
+      if (!contestantName) {
+        showStatusMessage('error', '⚠️ يرجى كتابة اسمك أولاً');
+        nameInput.focus();
+        return false;
+      }
+
+      if (contestantName.length < 2) {
+        showStatusMessage('error', '⚠️ الاسم قصير جداً (أقل من حرفين)');
+        nameInput.focus();
+        return false;
+      }
+
+      if (!selectedTeam) {
+        showStatusMessage('error', '⚠️ يرجى اختيار فريقك أولاً');
+        return false;
+      }
+
+      if (!isConnected) {
+        showStatusMessage('error', '❌ لا يوجد اتصال بالخادم');
+        return false;
+      }
+
+      return true;
+    }
+
+    // دالة الضغط على زر الجواب
+    function buzzAnswer() {
+      // التحقق من حالة الضغط السابق
+      if (buzzCooldown) {
+        showStatusMessage('info', '⏳ انتظر قليلاً قبل الضغط مرة أخرى');
         return;
       }
 
-      // أرسل إلى WebSocket
-      socket.send(JSON.stringify({
-        type: "buzz",
-        name: name,
-      }));
+      // التحقق من صحة البيانات
+      if (!validateInput()) {
+        return;
+      }
 
-      // غلق الزر مؤقتًا
-      const btn = document.getElementById("buzzBtn");
-      btn.disabled = true;
-      btn.classList.add("buzzed");
-      btn.innerText = "⏳ تم الضغط، انتظر...";
+      // تعطيل الزر مؤقتاً
+      buzzCooldown = true;
+      buzzButton.disabled = true;
+      buzzButton.textContent = '⏳ جاري الإرسال...';
+
+      // إرسال الضغطة عبر WebSocket
+      const buzzData = {
+        type: 'contestant_buzz',
+        contestant_name: contestantName,
+        team: selectedTeam,
+        timestamp: new Date().toISOString(),
+        session_id: sessionId
+      };
+
+      try {
+        socket.send(JSON.stringify(buzzData));
+        console.log('📤 تم إرسال الضغطة:', buzzData);
+        
+        // تسجيل المتسابق إذا لم يكن مسجلاً
+        registerContestant();
+        
+      } catch (error) {
+        console.error('❌ خطأ في إرسال الضغطة:', error);
+        showStatusMessage('error', '❌ فشل في إرسال الضغطة');
+        resetBuzzState();
+      }
+    }
+
+    // تسجيل المتسابق في النظام
+    async function registerContestant() {
+      try {
+        const response = await fetch('/games/api/add-contestant/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+          },
+          body: JSON.stringify({
+            session_id: sessionId,
+            name: contestantName,
+            team: selectedTeam
+          })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ تم تسجيل المتسابق بنجاح');
+        } else {
+          console.log('ℹ️ المتسابق مسجل مسبقاً أو خطأ في التسجيل');
+        }
+      } catch (error) {
+        console.error('❌ خطأ في تسجيل المتسابق:', error);
+      }
+    }
+
+    // إظهار نجاح الضغطة
+    function showBuzzSuccess() {
+      buzzButton.classList.add('buzzed');
+      buzzButton.textContent = '✅ تم الإرسال!';
+      showStatusMessage('success', `🎉 تم إرسال إجابتك يا ${contestantName}!`);
+      
+      // الحفاظ على الحالة لمدة 5 ثوان
+      setTimeout(() => {
+        resetBuzzState();
+      }, 5000);
+    }
+
+    // إعادة تعيين حالة الزر
+    function resetBuzzState() {
+      buzzCooldown = false;
+      buzzButton.disabled = false;
+      buzzButton.classList.remove('buzzed');
+      buzzButton.textContent = '📣 أعرف الجواب!';
+      hideStatusMessage();
+    }
+
+    // إظهار رسائل الحالة
+    function showStatusMessage(type, message) {
+      statusMessage.className = `status-message ${type}`;
+      statusMessage.textContent = message;
+      statusMessage.style.display = 'block';
+    }
+
+    // إخفاء رسائل الحالة
+    function hideStatusMessage() {
+      statusMessage.style.display = 'none';
+    }
+
+    // الحصول على CSRF Token
+    function getCsrfToken() {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'csrftoken') {
+          return value;
+        }
+      }
+      return '';
+    }
+
+    // تأثيرات تفاعلية
+    nameInput.addEventListener('keypress', function(event) {
+      if (event.key === 'Enter') {
+        buzzAnswer();
+      }
     });
 
-    socket.onopen = () => console.log("✅ WebSocket مفتوح");
-    socket.onclose = () => console.log("❌ WebSocket مغلق");
+    // منع الإرسال المتكرر
+    document.addEventListener('keydown', function(event) {
+      if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault();
+        if (!buzzCooldown) {
+          buzzAnswer();
+        }
+      }
+    });
+
+    // تأثير النبض على الزر عند التركيز
+    nameInput.addEventListener('focus', function() {
+      buzzButton.classList.add('pulse-animation');
+    });
+
+    nameInput.addEventListener('blur', function() {
+      buzzButton.classList.remove('pulse-animation');
+    });
+
+    // تحديث دوري لحالة الاتصال
+    setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        if (!isConnected) {
+          isConnected = true;
+          updateConnectionStatus('connected', '✅ متصل');
+        }
+      } else {
+        if (isConnected) {
+          isConnected = false;
+          updateConnectionStatus('disconnected', '❌ انقطع الاتصال');
+        }
+      }
+    }, 2000);
+
+    // تهيئة الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('تم تحميل صفحة المتسابق - خلية الحروف');
+      nameInput.focus();
+    });
   </script>
 </body>
 </html>

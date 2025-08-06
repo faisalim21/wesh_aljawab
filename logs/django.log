@@ -1171,3 +1171,1611 @@ INFO 2025-08-05 22:25:54,505 basehttp 144 16600 "POST /games/api/update-cell-sta
 INFO 2025-08-05 22:25:54,628 basehttp 144 16600 "POST /games/api/update-cell-state/ HTTP/1.1" 200 175
 INFO 2025-08-05 22:25:54,811 basehttp 144 16600 "POST /games/api/update-cell-state/ HTTP/1.1" 200 176
 INFO 2025-08-05 22:25:55,234 basehttp 144 16600 "GET /games/api/get-question/?letter=%D8%AF&session_id=b5f7c557-636d-4f53-98ef-480046bfef6e HTTP/1.1" 200 1001
+INFO 2025-08-06 02:08:10,967 autoreload 6444 3020 Watching for file changes with StatReloader
+INFO 2025-08-06 02:09:18,169 autoreload 6444 3020 C:\Users\user\wesh_aljawab\games\views.py changed, reloading.
+INFO 2025-08-06 02:09:20,983 autoreload 13188 8588 Watching for file changes with StatReloader
+INFO 2025-08-06 02:09:41,768 autoreload 11592 2064 Watching for file changes with StatReloader
+INFO 2025-08-06 02:10:43,062 autoreload 11592 2064 C:\Users\user\wesh_aljawab\games\urls.py changed, reloading.
+INFO 2025-08-06 02:10:44,859 autoreload 9796 9624 Watching for file changes with StatReloader
+INFO 2025-08-06 02:10:48,065 basehttp 9796 7704 "GET / HTTP/1.1" 200 45932
+WARNING 2025-08-06 02:10:48,398 log 9796 7704 Not Found: /favicon.ico
+WARNING 2025-08-06 02:10:48,399 basehttp 9796 7704 "GET /favicon.ico HTTP/1.1" 404 3162
+INFO 2025-08-06 02:10:51,195 basehttp 9796 7704 "GET /games/letters/ HTTP/1.1" 200 33218
+INFO 2025-08-06 02:10:52,216 basehttp 9796 7704 "POST /games/letters/create/ HTTP/1.1" 302 0
+INFO 2025-08-06 02:10:52,341 basehttp 9796 7704 "GET /accounts/login/?next=/games/letters/create/ HTTP/1.1" 200 21202
+WARNING 2025-08-06 02:10:58,719 views 9796 7704 Failed login attempt for username: FGahiaszaall
+INFO 2025-08-06 02:10:58,722 basehttp 9796 7704 "POST /accounts/login/ HTTP/1.1" 200 21210
+WARNING 2025-08-06 02:11:05,020 views 9796 7704 Failed login attempt for username: FGahiaszaall
+INFO 2025-08-06 02:11:05,024 basehttp 9796 7704 "POST /accounts/login/ HTTP/1.1" 200 21210
+INFO 2025-08-06 02:11:12,948 views 9796 7704 User FGahiaszaall logged in successfully
+INFO 2025-08-06 02:11:12,957 basehttp 9796 7704 "POST /accounts/login/ HTTP/1.1" 302 0
+INFO 2025-08-06 02:11:12,990 basehttp 9796 7704 "GET / HTTP/1.1" 200 47966
+INFO 2025-08-06 02:11:17,182 basehttp 9796 7704 "GET /games/letters/ HTTP/1.1" 200 35252
+INFO 2025-08-06 02:11:18,597 views 9796 7704 New letters session created: 0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d by FGahiaszaall
+INFO 2025-08-06 02:11:18,611 basehttp 9796 7704 "POST /games/letters/create/ HTTP/1.1" 302 0
+INFO 2025-08-06 02:11:18,835 basehttp 9796 7704 "GET /games/letters/session/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 200 27822
+WARNING 2025-08-06 02:11:18,967 log 9796 2496 Not Found: /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/
+WARNING 2025-08-06 02:11:18,969 basehttp 9796 2496 "GET /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:11:19,040 log 9796 13328 Not Found: /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/
+WARNING 2025-08-06 02:11:19,046 basehttp 9796 13328 "GET /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:11:19,052 basehttp 9796 13328 - Broken pipe from ('127.0.0.1', 56549)
+INFO 2025-08-06 02:11:19,083 basehttp 9796 7704 "GET /games/api/session-state/?session_id=0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d HTTP/1.1" 200 906
+INFO 2025-08-06 02:11:22,054 views 9796 7704 Questions fetched for letter Ö in session 0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d
+INFO 2025-08-06 02:11:22,064 basehttp 9796 7704 "GET /games/api/get-question/?letter=%D8%B6&session_id=0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d HTTP/1.1" 200 1427
+INFO 2025-08-06 02:11:51,654 views 9796 7704 Questions fetched for letter Ó in session 0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d
+INFO 2025-08-06 02:11:51,702 basehttp 9796 7704 "GET /games/api/get-question/?letter=%D8%B3&session_id=0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d HTTP/1.1" 200 1152
+INFO 2025-08-06 02:13:04,432 autoreload 9796 9624 C:\Users\user\wesh_aljawab\games\views.py changed, reloading.
+INFO 2025-08-06 02:13:06,723 autoreload 3036 11368 Watching for file changes with StatReloader
+INFO 2025-08-06 02:13:07,144 basehttp 3036 4740 "GET /games/letters/session/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 200 27822
+WARNING 2025-08-06 02:13:07,213 log 3036 4712 Not Found: /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/
+WARNING 2025-08-06 02:13:07,215 basehttp 3036 4712 "GET /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:13:07,223 basehttp 3036 4740 "GET /games/api/session-state/?session_id=0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d HTTP/1.1" 200 906
+WARNING 2025-08-06 02:13:07,251 log 3036 15084 Not Found: /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/
+WARNING 2025-08-06 02:13:07,253 basehttp 3036 15084 "GET /ws/letters/0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:13:11,976 views 3036 4740 Questions fetched for letter Õ in session 0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d
+INFO 2025-08-06 02:13:11,985 basehttp 3036 4740 "GET /games/api/get-question/?letter=%D8%B5&session_id=0efd6e5d-b7ee-493c-9be9-d4f806bd6d1d HTTP/1.1" 200 1297
+WARNING 2025-08-06 02:13:33,253 log 3036 4740 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:13:33,254 basehttp 3036 4740 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:16:26,847 autoreload 3036 11368 C:\Users\user\wesh_aljawab\games\views.py changed, reloading.
+INFO 2025-08-06 02:16:29,460 autoreload 8696 2068 Watching for file changes with StatReloader
+INFO 2025-08-06 02:23:10,194 basehttp 8696 9128 "GET /games/letters/ HTTP/1.1" 200 35252
+WARNING 2025-08-06 02:23:10,240 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:10,241 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:23:15,194 basehttp 8696 9128 "GET /games/letters/ HTTP/1.1" 200 35252
+WARNING 2025-08-06 02:23:15,231 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:15,232 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:23:16,104 views 8696 9128 New letters session created: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca by FGahiaszaall
+INFO 2025-08-06 02:23:16,111 basehttp 8696 9128 "POST /games/letters/create/ HTTP/1.1" 302 0
+INFO 2025-08-06 02:23:16,197 basehttp 8696 9128 "GET /games/letters/session/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 200 30197
+WARNING 2025-08-06 02:23:16,236 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:16,251 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:16,330 log 8696 7924 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:23:16,331 basehttp 8696 7924 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:23:16,340 basehttp 8696 9128 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:23:16,362 log 8696 11136 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:23:16,363 basehttp 8696 11136 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:20,856 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:20,857 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:20,888 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:20,890 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:23:21,226 basehttp 8696 9128 "GET / HTTP/1.1" 200 47966
+WARNING 2025-08-06 02:23:21,265 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:21,266 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:23,748 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:23,749 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:23,781 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:23,782 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:24,293 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:24,294 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:24,320 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:24,321 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:24,458 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:24,458 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:24,476 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:24,477 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:23:41,654 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:23:41,654 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:28:36,196 basehttp 8696 9128 "GET /games/letters/session/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 200 30197
+WARNING 2025-08-06 02:28:36,257 log 8696 11076 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:28:36,258 basehttp 8696 11076 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:28:36,280 basehttp 8696 9128 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:28:36,289 log 8696 4108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:28:36,290 basehttp 8696 4108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:29:19,132 basehttp 8696 9128 "GET /games/letters/session/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 200 31628
+WARNING 2025-08-06 02:29:19,182 log 8696 11012 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:29:19,183 basehttp 8696 11012 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:29:19,194 basehttp 8696 9128 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:29:19,206 log 8696 12664 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:29:19,207 basehttp 8696 12664 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:29:25,395 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:29:25,396 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:31:24,043 basehttp 8696 9128 "GET /games/letters/session/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 200 31389
+WARNING 2025-08-06 02:31:24,100 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:31:24,102 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:31:24,131 log 8696 3540 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:31:24,133 basehttp 8696 3540 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:31:24,154 basehttp 8696 9128 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:31:24,166 log 8696 14020 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:31:24,167 basehttp 8696 14020 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:31:53,474 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:31:53,475 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 02:32:23,047 views 8696 9128 Questions fetched for letter Ì in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:32:23,066 basehttp 8696 9128 "GET /games/api/get-question/?letter=%D8%AC&session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 1356
+INFO 2025-08-06 02:33:31,010 basehttp 8696 9128 "GET /games/letters/session/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 200 31443
+WARNING 2025-08-06 02:33:31,060 log 8696 9128 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 02:33:31,061 basehttp 8696 9128 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:33:31,082 log 8696 9576 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:33:31,084 basehttp 8696 9576 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:33:31,097 basehttp 8696 9128 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:33:31,128 log 8696 5236 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:33:31,129 basehttp 8696 5236 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:34:02,114 views 8696 9128 Questions fetched for letter ß in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:34:02,120 basehttp 8696 9128 "GET /games/api/get-question/?letter=%D9%83&session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 1424
+INFO 2025-08-06 02:38:20,931 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:20,994 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:21,052 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:21,059 log 8696 3188 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:21,060 basehttp 8696 3188 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:24,101 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:24,118 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:38:24,156 log 8696 5044 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:24,157 basehttp 8696 5044 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:24,168 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:38:27,169 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:27,188 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:38:27,227 log 8696 8332 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:27,228 basehttp 8696 8332 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:27,238 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:38:30,477 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:30,485 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:30,534 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:30,549 log 8696 15172 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:30,550 basehttp 8696 15172 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:33,571 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:33,588 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:38:33,635 log 8696 2884 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:33,636 basehttp 8696 2884 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:33,652 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:38:36,654 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:36,662 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:36,702 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:36,720 log 8696 6816 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:36,720 basehttp 8696 6816 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:39,741 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:39,759 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:39,792 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:39,802 log 8696 14316 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:39,803 basehttp 8696 14316 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:42,820 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:42,829 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:42,861 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:42,877 log 8696 9708 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:42,877 basehttp 8696 9708 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:45,900 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:45,918 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:45,954 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:45,962 log 8696 1312 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:45,963 basehttp 8696 1312 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:48,974 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:48,983 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:49,014 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:49,042 log 8696 9356 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:49,043 basehttp 8696 9356 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:52,052 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:52,070 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:52,100 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:52,176 log 8696 13512 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:52,176 basehttp 8696 13512 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:55,186 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:55,202 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:55,234 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:55,355 log 8696 13088 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:55,356 basehttp 8696 13088 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:38:58,365 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:38:58,384 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:38:58,411 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:38:58,525 log 8696 3116 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:38:58,526 basehttp 8696 3116 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:01,535 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:01,554 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:01,585 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:01,923 log 8696 3380 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:01,923 basehttp 8696 3380 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:04,936 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:04,954 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:04,984 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:05,386 log 8696 11436 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:05,386 basehttp 8696 11436 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:08,401 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:08,420 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:08,447 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:09,998 log 8696 8512 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:09,998 basehttp 8696 8512 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:13,014 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:13,033 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:13,061 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:14,798 log 8696 12316 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:14,798 basehttp 8696 12316 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:17,815 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:17,833 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:17,867 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:20,604 log 8696 4568 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:20,605 basehttp 8696 4568 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:23,617 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:23,622 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:23,658 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:25,807 log 8696 2864 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:25,808 basehttp 8696 2864 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:28,825 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:28,844 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:28,876 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:30,178 log 8696 5064 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:30,179 basehttp 8696 5064 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:33,198 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:33,205 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:33,238 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:37,247 log 8696 2124 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:37,248 basehttp 8696 2124 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:40,268 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:40,287 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:40,320 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:44,538 log 8696 5980 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:44,538 basehttp 8696 5980 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:47,549 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:47,558 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:47,590 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:50,500 log 8696 8340 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:50,501 basehttp 8696 8340 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:53,511 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:53,531 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:53,559 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:39:55,036 log 8696 9244 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:39:55,037 basehttp 8696 9244 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:39:58,059 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:39:58,080 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:39:58,107 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:01,863 log 8696 2904 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:01,863 basehttp 8696 2904 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:04,883 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:04,902 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:04,929 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:08,670 log 8696 9100 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:08,670 basehttp 8696 9100 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:11,680 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:11,698 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:11,725 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:13,112 log 8696 10012 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:13,113 basehttp 8696 10012 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:16,130 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:16,150 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:16,186 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:20,886 log 8696 10488 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:20,886 basehttp 8696 10488 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:23,897 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:23,914 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:23,961 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:23,982 log 8696 11404 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:23,983 basehttp 8696 11404 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:27,005 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:27,025 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:40:27,067 log 8696 3468 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:27,068 basehttp 8696 3468 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:27,083 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:40:30,085 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:30,104 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:40:30,140 log 8696 9684 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:30,142 basehttp 8696 9684 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:30,149 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:40:33,151 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:33,161 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+WARNING 2025-08-06 02:40:33,193 log 8696 9552 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:33,194 basehttp 8696 9552 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:33,213 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:40:36,211 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:36,230 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:36,265 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:36,287 log 8696 3424 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:36,287 basehttp 8696 3424 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:39,309 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:39,329 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:39,369 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:39,379 log 8696 13308 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:39,380 basehttp 8696 13308 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:42,939 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:42,959 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:42,991 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:43,000 log 8696 2304 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:43,001 basehttp 8696 2304 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:43,764 views 8696 6592 Scores updated in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca: Team1=1, Team2=0
+INFO 2025-08-06 02:40:43,769 basehttp 8696 6592 "POST /games/api/update-scores/ HTTP/1.1" 200 187
+INFO 2025-08-06 02:40:46,013 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:46,029 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:46,060 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:46,073 log 8696 14916 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:46,074 basehttp 8696 14916 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:49,095 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:49,100 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:49,131 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:49,154 log 8696 13108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:49,155 basehttp 8696 13108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:52,944 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:52,963 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:52,988 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:53,002 log 8696 12192 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:53,003 basehttp 8696 12192 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:56,949 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:40:56,966 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:40:56,999 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:40:57,057 log 8696 8960 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:40:57,058 basehttp 8696 8960 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:40:58,940 views 8696 6592 Scores updated in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca: Team1=0, Team2=0
+INFO 2025-08-06 02:40:58,949 basehttp 8696 6592 "POST /games/api/update-scores/ HTTP/1.1" 200 187
+INFO 2025-08-06 02:41:00,079 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:00,089 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:00,128 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:00,210 log 8696 15324 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:00,210 basehttp 8696 15324 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:02,954 views 8696 6592 Scores updated in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca: Team1=0, Team2=1
+INFO 2025-08-06 02:41:02,960 basehttp 8696 6592 "POST /games/api/update-scores/ HTTP/1.1" 200 187
+INFO 2025-08-06 02:41:03,945 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:03,963 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:03,998 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:04,163 log 8696 772 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:04,164 basehttp 8696 772 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:07,176 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:07,195 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:07,224 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:07,701 log 8696 10084 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:07,701 basehttp 8696 10084 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:10,711 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:10,729 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:10,760 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:11,186 log 8696 10396 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:11,187 basehttp 8696 10396 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:14,211 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:14,225 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:14,256 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:14,829 log 8696 14676 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:14,830 basehttp 8696 14676 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:17,844 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:17,862 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:17,893 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:21,254 log 8696 3308 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:21,255 basehttp 8696 3308 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:24,279 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:24,297 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:24,327 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:28,573 log 8696 8564 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:28,574 basehttp 8696 8564 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:31,594 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:31,610 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:31,645 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:33,582 log 8696 9204 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:33,583 basehttp 8696 9204 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:36,593 views 8696 6592 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:36,616 basehttp 8696 6592 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:36,644 basehttp 8696 6592 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:41,026 log 8696 11156 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:41,026 basehttp 8696 11156 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:44,184 views 8696 2732 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:44,191 basehttp 8696 2732 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:44,220 basehttp 8696 2732 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:47,780 log 8696 10408 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:47,781 basehttp 8696 10408 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:50,807 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:50,815 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:50,849 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:55,209 log 8696 4036 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:55,210 basehttp 8696 4036 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:41:58,233 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:41:58,252 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:41:58,292 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:41:59,364 log 8696 9676 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:41:59,365 basehttp 8696 9676 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:02,939 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:02,949 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21983
+INFO 2025-08-06 02:42:02,976 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:42:06,011 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:06,063 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:06,088 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:07,605 log 8696 12068 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:07,606 basehttp 8696 12068 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:10,627 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:10,643 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:10,675 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:14,514 log 8696 9792 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:14,515 basehttp 8696 9792 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:17,524 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:17,542 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:17,569 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:21,981 log 8696 11360 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:21,982 basehttp 8696 11360 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:25,009 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:25,026 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:25,089 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:25,095 log 8696 2004 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:25,096 basehttp 8696 2004 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:28,104 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:28,122 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+WARNING 2025-08-06 02:42:28,156 log 8696 2460 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:28,157 basehttp 8696 2460 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:28,174 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:42:31,178 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:31,197 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:31,236 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:31,254 log 8696 9020 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:31,255 basehttp 8696 9020 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:34,274 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:34,294 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:34,328 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:34,337 log 8696 4236 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:34,338 basehttp 8696 4236 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:37,347 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:37,356 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+WARNING 2025-08-06 02:42:37,395 log 8696 8440 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:37,396 basehttp 8696 8440 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:37,403 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:42:40,417 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:40,435 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+WARNING 2025-08-06 02:42:40,472 log 8696 6176 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:40,473 basehttp 8696 6176 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:40,491 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:42:43,491 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:43,509 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:43,541 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:43,550 log 8696 15304 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:43,552 basehttp 8696 15304 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:43,554 basehttp 8696 15304 - Broken pipe from ('127.0.0.1', 57248)
+INFO 2025-08-06 02:42:46,563 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:46,580 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:46,611 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:46,620 log 8696 6004 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:46,621 basehttp 8696 6004 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:49,631 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:49,641 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:49,669 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:49,690 log 8696 14020 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:49,691 basehttp 8696 14020 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:52,713 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:52,732 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:52,763 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:52,787 log 8696 13016 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:52,788 basehttp 8696 13016 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:55,800 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:55,819 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:55,846 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:55,880 log 8696 1392 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:55,881 basehttp 8696 1392 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:42:58,903 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:42:58,911 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:42:58,940 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:42:58,984 log 8696 7748 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:42:58,985 basehttp 8696 7748 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:02,006 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:02,026 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:02,054 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:02,226 log 8696 10688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:02,226 basehttp 8696 10688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:05,235 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:05,253 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:05,281 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:05,834 log 8696 2948 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:05,835 basehttp 8696 2948 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:08,855 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:08,872 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:08,909 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:09,438 log 8696 3424 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:09,439 basehttp 8696 3424 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:12,449 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:12,469 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:12,496 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:13,902 log 8696 11880 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:13,903 basehttp 8696 11880 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:16,921 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:16,927 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:16,958 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:18,448 log 8696 14916 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:18,448 basehttp 8696 14916 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:21,461 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:21,480 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:21,508 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:22,598 log 8696 5936 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:22,601 basehttp 8696 5936 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:25,619 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:25,638 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:25,669 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:28,242 log 8696 5064 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:28,242 basehttp 8696 5064 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:31,269 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:31,288 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:31,322 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:35,703 log 8696 13104 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:35,703 basehttp 8696 13104 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:38,715 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:38,725 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:38,758 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:40,635 log 8696 4160 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:40,636 basehttp 8696 4160 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:43,652 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:43,672 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:43,699 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:46,788 log 8696 8624 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:46,788 basehttp 8696 8624 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:49,810 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:49,830 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:49,867 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:54,136 log 8696 4740 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:54,137 basehttp 8696 4740 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:43:57,154 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:43:57,171 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:43:57,199 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:43:59,976 log 8696 9088 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:43:59,977 basehttp 8696 9088 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:02,987 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:02,995 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:03,027 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:05,517 log 8696 9840 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:05,517 basehttp 8696 9840 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:08,535 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:08,554 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:08,590 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:12,989 log 8696 9116 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:12,990 basehttp 8696 9116 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:16,002 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:16,017 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:16,052 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:18,182 log 8696 10312 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:18,183 basehttp 8696 10312 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:21,195 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:21,213 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:21,244 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:25,900 log 8696 11848 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:25,900 basehttp 8696 11848 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:28,919 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:28,936 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:28,966 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:31,805 log 8696 11788 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:31,806 basehttp 8696 11788 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:34,818 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:34,837 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:34,874 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:37,189 log 8696 4300 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:37,190 basehttp 8696 4300 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:40,199 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:40,209 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:40,245 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:41,851 log 8696 10276 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:41,852 basehttp 8696 10276 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:44,865 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:44,885 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:44,912 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:46,123 log 8696 10688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:46,124 basehttp 8696 10688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:49,138 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:49,158 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:49,187 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:50,731 log 8696 11996 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:50,731 basehttp 8696 11996 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:44:53,755 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:44:53,764 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:44:53,793 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:44:57,531 log 8696 3424 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:44:57,532 basehttp 8696 3424 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:00,550 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:00,568 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:45:00,600 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:04,815 log 8696 1724 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:04,816 basehttp 8696 1724 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:07,829 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:07,838 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 23566
+INFO 2025-08-06 02:45:07,874 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:10,468 log 8696 6504 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:10,469 basehttp 8696 6504 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:13,483 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:13,549 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:13,580 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:16,383 log 8696 13264 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:16,384 basehttp 8696 13264 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:19,391 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:19,407 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:19,437 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:20,987 log 8696 11104 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:20,988 basehttp 8696 11104 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:24,001 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:24,020 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:24,051 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:25,483 log 8696 13956 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:25,484 basehttp 8696 13956 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:28,505 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:28,523 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:28,552 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:31,723 log 8696 8564 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:31,724 basehttp 8696 8564 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:34,737 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:34,755 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:34,791 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:37,171 log 8696 14688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:37,171 basehttp 8696 14688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:40,185 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:40,202 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:40,233 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:43,497 log 8696 10928 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:43,498 basehttp 8696 10928 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:46,516 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:46,536 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:46,576 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:51,536 log 8696 1580 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:51,537 basehttp 8696 1580 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:45:54,545 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:45:54,565 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:45:54,602 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:45:58,946 log 8696 9468 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:45:58,947 basehttp 8696 9468 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:01,970 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:01,980 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:02,012 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:03,584 log 8696 8576 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:03,585 basehttp 8696 8576 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:06,615 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:06,635 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:06,668 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:08,446 log 8696 2360 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:08,447 basehttp 8696 2360 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:11,461 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:11,481 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:11,512 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:13,597 log 8696 1828 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:13,598 basehttp 8696 1828 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:16,619 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:16,630 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:16,664 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:18,756 log 8696 2336 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:18,756 basehttp 8696 2336 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:21,767 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:21,786 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:21,815 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:26,380 log 8696 10188 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:26,380 basehttp 8696 10188 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:29,403 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:29,421 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:29,451 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:31,348 log 8696 6588 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:31,349 basehttp 8696 6588 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:34,359 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:34,378 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:34,410 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:38,244 log 8696 3976 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:38,245 basehttp 8696 3976 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:41,253 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:41,262 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:41,301 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:44,413 log 8696 1388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:44,413 basehttp 8696 1388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:47,436 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:47,455 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:47,487 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:51,797 log 8696 12964 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:51,797 basehttp 8696 12964 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:46:54,812 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:46:54,821 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:46:54,850 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:46:58,309 log 8696 14272 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:46:58,310 basehttp 8696 14272 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:01,327 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:01,345 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:01,383 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:04,463 log 8696 4028 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:04,464 basehttp 8696 4028 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:07,479 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:07,497 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:07,527 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:10,675 log 8696 9816 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:10,676 basehttp 8696 9816 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:13,697 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:13,717 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:13,750 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:15,109 log 8696 2496 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:15,110 basehttp 8696 2496 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:18,127 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:18,143 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:18,179 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:21,673 log 8696 1664 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:21,674 basehttp 8696 1664 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:24,690 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:24,708 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:24,740 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:26,543 log 8696 8624 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:26,544 basehttp 8696 8624 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:29,559 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:29,578 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:29,609 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:31,382 log 8696 1128 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:31,383 basehttp 8696 1128 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:34,395 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:34,404 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:34,434 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:37,074 log 8696 11108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:37,075 basehttp 8696 11108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:40,094 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:40,112 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28448
+INFO 2025-08-06 02:47:40,145 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:44,495 log 8696 9684 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:44,496 basehttp 8696 9684 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:47,510 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:47,568 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:47:47,598 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:51,673 log 8696 15132 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:51,673 basehttp 8696 15132 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:51,842 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:51,850 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:47:51,879 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:47:56,527 log 8696 12388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:47:56,527 basehttp 8696 12388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:47:59,545 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:47:59,554 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:47:59,585 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:03,979 log 8696 3956 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:03,980 basehttp 8696 3956 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:06,992 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:07,011 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:07,040 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:11,008 log 8696 4216 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:11,009 basehttp 8696 4216 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:14,020 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:14,029 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:14,059 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:17,942 log 8696 8100 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:17,943 basehttp 8696 8100 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:20,956 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:21,005 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:21,078 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:25,876 log 8696 1280 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:25,877 basehttp 8696 1280 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:28,892 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:28,910 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:28,942 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:32,961 log 8696 2360 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:32,962 basehttp 8696 2360 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:35,974 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:35,991 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:36,019 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:37,874 log 8696 13600 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:37,874 basehttp 8696 13600 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:40,891 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:40,909 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:40,935 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:44,846 log 8696 1480 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:44,847 basehttp 8696 1480 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:47,863 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:47,882 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:47,911 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:51,723 log 8696 8912 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:51,724 basehttp 8696 8912 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:48:54,743 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:48:54,763 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:48:54,796 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:48:58,496 log 8696 3656 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:48:58,497 basehttp 8696 3656 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:01,512 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:01,531 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:01,562 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:03,849 log 8696 9672 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:03,850 basehttp 8696 9672 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:06,862 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:06,875 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:06,914 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:10,734 log 8696 1376 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:10,734 basehttp 8696 1376 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:13,756 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:13,767 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:13,800 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:15,287 log 8696 15140 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:15,287 basehttp 8696 15140 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:18,305 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:18,322 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:18,358 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:22,838 log 8696 1688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:22,839 basehttp 8696 1688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:25,861 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:25,873 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:25,917 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:29,425 log 8696 13204 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:29,426 basehttp 8696 13204 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:32,440 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:32,460 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:32,492 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:35,617 log 8696 14080 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:35,618 basehttp 8696 14080 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:38,637 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:38,646 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:38,684 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:40,853 log 8696 13444 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:40,854 basehttp 8696 13444 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:43,870 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:43,876 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:43,911 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:45,586 log 8696 9840 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:45,587 basehttp 8696 9840 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:48,605 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:48,623 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:48,652 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:49,820 log 8696 12992 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:49,821 basehttp 8696 12992 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:52,838 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:52,857 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:52,888 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:49:55,727 log 8696 4192 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:49:55,728 basehttp 8696 4192 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:49:58,751 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:49:58,760 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:49:58,794 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:03,806 log 8696 13108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:03,807 basehttp 8696 13108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:06,819 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:06,835 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:06,870 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:11,483 log 8696 3432 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:11,484 basehttp 8696 3432 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:14,501 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:14,517 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:14,553 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:18,455 log 8696 9108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:18,456 basehttp 8696 9108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:21,470 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:21,486 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:21,520 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:25,191 log 8696 6556 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:25,192 basehttp 8696 6556 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:28,203 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:28,222 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:28,249 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:32,351 log 8696 14688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:32,352 basehttp 8696 14688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:35,366 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:35,386 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:35,415 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:37,665 log 8696 7152 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:37,666 basehttp 8696 7152 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:40,683 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:40,702 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:40,727 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:45,356 log 8696 1688 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:45,357 basehttp 8696 1688 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:48,367 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:48,384 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:48,418 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:51,798 log 8696 5152 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:51,799 basehttp 8696 5152 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:54,816 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:54,822 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:54,852 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:50:55,987 log 8696 11596 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:50:55,988 basehttp 8696 11596 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:50:59,003 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:50:59,021 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:50:59,051 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:00,337 log 8696 11340 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:00,338 basehttp 8696 11340 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:03,354 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:03,371 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:51:03,405 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:05,448 log 8696 7460 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:05,448 basehttp 8696 7460 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:08,938 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:08,957 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 28957
+INFO 2025-08-06 02:51:08,988 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:51:11,001 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:11,048 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:11,075 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:14,337 log 8696 13512 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:14,338 basehttp 8696 13512 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:17,355 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:17,374 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:17,406 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:19,763 log 8696 8432 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:19,764 basehttp 8696 8432 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:22,781 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:22,799 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:22,826 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:27,657 log 8696 11776 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:27,657 basehttp 8696 11776 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:30,667 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:30,685 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:30,715 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:35,057 log 8696 12816 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:35,058 basehttp 8696 12816 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:38,083 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:38,099 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:38,136 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:42,739 log 8696 14916 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:42,740 basehttp 8696 14916 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:45,750 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:45,769 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:45,804 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:49,345 log 8696 9884 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:49,346 basehttp 8696 9884 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:52,364 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:52,382 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:52,412 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:51:55,611 log 8696 14952 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:51:55,612 basehttp 8696 14952 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:51:58,634 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:51:58,653 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:51:58,687 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:00,293 log 8696 4548 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:00,294 basehttp 8696 4548 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:03,303 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:03,323 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:03,355 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:05,680 log 8696 10440 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:05,681 basehttp 8696 10440 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:08,698 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:08,707 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:08,743 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:10,052 log 8696 13108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:10,053 basehttp 8696 13108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:13,065 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:13,084 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:13,115 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:14,234 log 8696 4992 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:14,235 basehttp 8696 4992 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:17,248 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:17,264 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:17,299 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:20,702 log 8696 11416 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:20,703 basehttp 8696 11416 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:23,723 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:23,742 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:23,772 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:25,609 log 8696 9024 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:25,610 basehttp 8696 9024 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:28,630 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:28,648 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:28,680 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:33,578 log 8696 9108 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:33,578 basehttp 8696 9108 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:36,594 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:36,612 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:36,653 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:41,421 log 8696 832 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:41,422 basehttp 8696 832 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:44,445 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:44,461 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:44,499 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:46,883 log 8696 8668 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:46,884 basehttp 8696 8668 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:46,885 basehttp 8696 8668 - Broken pipe from ('127.0.0.1', 57460)
+INFO 2025-08-06 02:52:49,894 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:49,915 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:49,948 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:52:54,461 log 8696 7116 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:52:54,461 basehttp 8696 7116 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:52:57,474 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:52:57,482 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:52:57,518 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:02,064 log 8696 2864 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:02,065 basehttp 8696 2864 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:05,085 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:05,104 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:05,135 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:09,126 log 8696 10436 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:09,127 basehttp 8696 10436 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:12,152 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:12,174 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:12,205 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:16,295 log 8696 3680 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:16,295 basehttp 8696 3680 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:19,306 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:19,314 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:19,350 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:22,704 log 8696 13948 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:22,705 basehttp 8696 13948 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:25,728 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:25,749 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:25,780 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:29,643 log 8696 12256 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:29,644 basehttp 8696 12256 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:32,666 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:32,684 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:32,718 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:34,010 log 8696 11776 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:34,011 basehttp 8696 11776 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:37,030 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:37,039 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 31044
+INFO 2025-08-06 02:53:37,074 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:41,261 log 8696 1608 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:41,262 basehttp 8696 1608 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:43,874 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:43,922 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:53:43,947 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:46,107 log 8696 8020 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:46,108 basehttp 8696 8020 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:49,128 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:49,146 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:53:49,173 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:53,224 log 8696 15200 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:53,225 basehttp 8696 15200 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:53:56,246 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:53:56,263 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:53:56,290 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:53:57,436 log 8696 8148 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:53:57,436 basehttp 8696 8148 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:00,452 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:00,472 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:00,496 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:03,792 log 8696 5936 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:03,793 basehttp 8696 5936 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:06,808 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:06,826 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:06,858 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:07,941 log 8696 5080 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:07,942 basehttp 8696 5080 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:10,957 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:10,974 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:11,004 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:15,247 log 8696 8484 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:15,248 basehttp 8696 8484 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:18,269 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:18,290 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:18,315 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:20,077 log 8696 10396 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:20,077 basehttp 8696 10396 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:23,100 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:23,118 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:23,148 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:27,270 log 8696 4504 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:27,270 basehttp 8696 4504 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:30,295 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:30,302 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:30,331 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:33,589 log 8696 9152 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:33,589 basehttp 8696 9152 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:36,599 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:36,617 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:36,647 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:37,971 log 8696 12656 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:37,972 basehttp 8696 12656 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:40,990 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:40,997 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:41,030 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:42,884 log 8696 10816 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:42,884 basehttp 8696 10816 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:45,898 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:45,916 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:45,946 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:47,482 log 8696 11652 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:47,483 basehttp 8696 11652 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:50,501 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:50,523 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:50,550 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:52,901 log 8696 3980 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:52,902 basehttp 8696 3980 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:54:55,914 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:54:55,959 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:54:55,986 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:54:59,727 log 8696 2168 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:54:59,728 basehttp 8696 2168 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:02,736 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:02,782 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:02,809 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:55:06,326 views 8696 2748 Scores updated in session f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca: Team1=0, Team2=2
+INFO 2025-08-06 02:55:06,333 basehttp 8696 2748 "POST /games/api/update-scores/ HTTP/1.1" 200 187
+WARNING 2025-08-06 02:55:06,340 log 8696 4152 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:06,340 basehttp 8696 4152 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:09,353 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:09,362 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:09,391 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:12,966 log 8696 7120 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:12,967 basehttp 8696 7120 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:15,986 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:15,997 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:16,026 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:19,212 log 8696 12024 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:19,212 basehttp 8696 12024 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:22,234 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:22,253 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:22,281 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:27,116 log 8696 9572 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:27,116 basehttp 8696 9572 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:30,141 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:30,185 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:30,211 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:32,930 log 8696 4008 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:32,931 basehttp 8696 4008 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:35,947 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:35,966 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:35,994 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:40,422 log 8696 5692 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:40,423 basehttp 8696 5692 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:43,432 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:43,450 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:43,477 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:45,753 log 8696 13388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:45,754 basehttp 8696 13388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:48,766 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:48,785 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:48,810 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:52,216 log 8696 2896 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:52,216 basehttp 8696 2896 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:55:55,225 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:55:55,243 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:55:55,269 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:55:59,222 log 8696 2732 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:55:59,222 basehttp 8696 2732 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:02,232 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:02,241 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:02,272 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:05,256 log 8696 7572 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:05,257 basehttp 8696 7572 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:08,267 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:08,285 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:08,312 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:11,965 log 8696 7116 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:11,965 basehttp 8696 7116 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:14,977 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:14,996 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:15,025 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:17,027 log 8696 2844 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:17,028 basehttp 8696 2844 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:20,041 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:20,058 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:20,084 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:22,277 log 8696 6588 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:22,277 basehttp 8696 6588 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:25,288 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:25,307 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:25,341 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:25,347 log 8696 5684 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:25,348 basehttp 8696 5684 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:28,358 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:28,377 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:28,413 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:28,419 log 8696 14224 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:28,420 basehttp 8696 14224 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:31,435 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:31,451 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 02:56:31,500 log 8696 1088 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:31,500 basehttp 8696 1088 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:31,519 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:56:34,511 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:34,520 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 02:56:34,568 log 8696 3972 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:34,569 basehttp 8696 3972 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:34,585 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:56:37,593 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:37,602 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 02:56:37,639 log 8696 13244 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:37,640 basehttp 8696 13244 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:37,646 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:56:40,651 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:40,669 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:40,695 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:40,712 log 8696 2028 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:40,713 basehttp 8696 2028 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:40,714 basehttp 8696 2028 - Broken pipe from ('127.0.0.1', 57514)
+INFO 2025-08-06 02:56:43,727 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:43,745 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:43,779 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:43,786 log 8696 2472 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:43,787 basehttp 8696 2472 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:46,800 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:46,817 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:46,847 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:46,861 log 8696 6428 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:46,862 basehttp 8696 6428 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:49,880 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:49,897 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:49,925 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:49,939 log 8696 1508 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:49,940 basehttp 8696 1508 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:52,953 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:52,973 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:52,999 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:53,041 log 8696 11584 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:53,041 basehttp 8696 11584 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:56,055 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:56,065 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:56,094 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:56,109 log 8696 9700 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:56,110 basehttp 8696 9700 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:56:59,119 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:56:59,136 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:56:59,164 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:56:59,271 log 8696 4440 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:56:59,271 basehttp 8696 4440 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:02,286 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:02,304 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:02,332 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:02,609 log 8696 6528 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:02,609 basehttp 8696 6528 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:05,619 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:05,626 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:05,656 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:06,035 log 8696 4288 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:06,035 basehttp 8696 4288 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:09,046 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:09,064 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:09,095 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:09,515 log 8696 14764 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:09,515 basehttp 8696 14764 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:12,535 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:12,542 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:12,569 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:14,550 log 8696 12272 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:14,550 basehttp 8696 12272 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:17,940 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:17,950 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:17,985 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:21,368 log 8696 14052 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:21,369 basehttp 8696 14052 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:24,948 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:24,965 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:24,989 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:29,887 log 8696 10936 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:29,888 basehttp 8696 10936 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:32,933 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:32,950 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:32,975 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:36,416 log 8696 13064 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:36,417 basehttp 8696 13064 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:39,944 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:39,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:39,989 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:44,615 log 8696 10444 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:44,616 basehttp 8696 10444 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:47,941 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:47,958 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:47,988 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:50,312 log 8696 10048 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:50,313 basehttp 8696 10048 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:53,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:53,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:53,992 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:57:55,368 log 8696 1388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:57:55,369 basehttp 8696 1388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:57:58,946 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:57:58,965 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:57:58,991 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:02,478 log 8696 14220 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:02,478 basehttp 8696 14220 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:05,931 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:05,940 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:05,966 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:09,085 log 8696 5936 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:09,086 basehttp 8696 5936 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:12,946 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:12,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:12,992 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:14,211 log 8696 5080 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:14,211 basehttp 8696 5080 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:17,932 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:17,950 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:17,978 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:20,587 log 8696 10792 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:20,587 basehttp 8696 10792 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:23,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:23,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:23,992 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:26,030 log 8696 8852 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:26,031 basehttp 8696 8852 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:29,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:29,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:29,990 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:31,356 log 8696 10016 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:31,357 basehttp 8696 10016 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:34,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:34,960 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:34,998 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:39,509 log 8696 10396 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:39,510 basehttp 8696 10396 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:42,946 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:42,954 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:42,982 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:44,362 log 8696 13272 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:44,362 basehttp 8696 13272 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:47,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:47,969 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:47,995 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:52,227 log 8696 9076 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:52,228 basehttp 8696 9076 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:58:55,947 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:58:55,965 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:58:55,993 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:58:59,426 log 8696 11652 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:58:59,427 basehttp 8696 11652 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:02,943 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:02,959 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:02,989 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:06,859 log 8696 3744 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:06,860 basehttp 8696 3744 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:06,861 basehttp 8696 3744 - Broken pipe from ('127.0.0.1', 57555)
+INFO 2025-08-06 02:59:09,943 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:09,959 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:09,999 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:12,128 log 8696 14148 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:12,128 basehttp 8696 14148 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:15,943 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:15,962 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:16,008 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:19,028 log 8696 12072 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:19,029 basehttp 8696 12072 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:22,944 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:22,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:23,003 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:25,392 log 8696 3664 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:25,393 basehttp 8696 3664 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:28,933 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:28,953 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:28,995 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:33,286 log 8696 11588 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:33,287 basehttp 8696 11588 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:36,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:36,964 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:36,988 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:38,299 log 8696 9464 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:38,300 basehttp 8696 9464 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:41,946 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:41,963 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:42,024 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 02:59:44,281 log 8696 8296 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:44,282 basehttp 8696 8296 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:47,323 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:47,384 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 02:59:47,435 log 8696 9564 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:47,435 basehttp 8696 9564 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:47,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:47,952 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:47,985 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:59:50,479 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:50,487 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 02:59:50,521 log 8696 9112 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:50,523 basehttp 8696 9112 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:59:52,429 log 8696 10304 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:52,430 basehttp 8696 10304 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:53,545 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:53,563 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 02:59:53,596 log 8696 5536 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:53,596 basehttp 8696 5536 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:55,943 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:55,961 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 02:59:55,987 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 02:59:56,611 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:56,628 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 02:59:56,659 log 8696 10868 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:56,660 basehttp 8696 10868 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 02:59:59,617 log 8696 9244 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:59,618 basehttp 8696 9244 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 02:59:59,679 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 02:59:59,686 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 02:59:59,717 log 8696 10096 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 02:59:59,717 basehttp 8696 10096 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:02,744 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:02,763 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:02,806 log 8696 10772 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:02,807 basehttp 8696 10772 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:02,945 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:02,951 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:02,986 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:05,815 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:05,834 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:05,872 log 8696 13832 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:05,875 basehttp 8696 13832 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:00:07,083 log 8696 11360 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:07,084 basehttp 8696 11360 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:08,898 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:08,917 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:08,959 log 8696 11740 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:08,960 basehttp 8696 11740 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:10,943 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:10,952 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:10,981 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:11,971 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:11,981 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:12,027 log 8696 1388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:12,028 basehttp 8696 1388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:15,045 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:15,056 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:15,140 log 8696 12876 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:15,141 basehttp 8696 12876 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:00:15,458 log 8696 5824 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:15,459 basehttp 8696 5824 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:18,164 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:18,184 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:18,238 log 8696 5304 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:18,239 basehttp 8696 5304 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:18,935 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:18,953 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:18,979 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:21,260 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:21,277 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:21,366 log 8696 14236 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:21,367 basehttp 8696 14236 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:00:22,340 log 8696 13012 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:22,341 basehttp 8696 13012 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:24,390 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:24,407 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:24,529 log 8696 5080 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:24,530 basehttp 8696 5080 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:25,932 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:25,950 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:25,989 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:26,009 log 8696 3272 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:26,009 basehttp 8696 3272 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:27,539 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:27,558 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:27,587 log 8696 14788 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:27,588 basehttp 8696 14788 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:29,933 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:29,942 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 03:00:29,975 log 8696 10520 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:29,976 basehttp 8696 10520 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:29,992 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:30,625 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:30,643 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:30,675 log 8696 10792 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:30,677 basehttp 8696 10792 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:33,692 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:33,710 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:33,741 log 8696 2444 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:33,742 basehttp 8696 2444 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:33,942 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:33,948 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:33,980 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:33,992 log 8696 1672 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:33,992 basehttp 8696 1672 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:36,757 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:36,775 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:36,806 log 8696 10436 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:36,807 basehttp 8696 10436 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:37,933 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:37,951 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 03:00:37,988 log 8696 2496 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:37,989 basehttp 8696 2496 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:38,006 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:39,820 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:39,839 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:39,865 log 8696 5564 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:39,865 basehttp 8696 5564 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:41,937 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:41,955 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+WARNING 2025-08-06 03:00:41,987 log 8696 1152 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:41,988 basehttp 8696 1152 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:42,007 basehttp 8696 2748 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:00:42,874 views 8696 2748 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:42,892 basehttp 8696 2748 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:42,934 log 8696 4644 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:42,936 basehttp 8696 4644 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:45,939 views 8696 2748 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:45,956 basehttp 8696 2748 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:45,961 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:45,971 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+INFO 2025-08-06 03:00:46,005 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:46,012 log 8696 8388 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:46,013 basehttp 8696 8388 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:00:46,038 log 8696 7548 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:46,038 basehttp 8696 7548 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:49,060 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:49,078 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:49,119 log 8696 4504 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:49,120 basehttp 8696 4504 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:49,937 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:49,944 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:49,972 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:49,986 log 8696 10008 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:49,987 basehttp 8696 10008 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:52,147 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:52,156 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:52,200 log 8696 13160 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:52,201 basehttp 8696 13160 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:53,946 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:53,963 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:53,996 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:54,009 log 8696 15004 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:54,009 basehttp 8696 15004 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:55,224 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:55,232 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:55,296 log 8696 14104 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:55,297 basehttp 8696 14104 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:57,933 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:57,952 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:00:57,978 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:00:57,994 log 8696 4800 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:57,994 basehttp 8696 4800 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:00:58,305 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:00:58,322 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:00:58,412 log 8696 12172 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:00:58,413 basehttp 8696 12172 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:01,433 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:01,442 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:01,596 log 8696 8204 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:01,597 basehttp 8696 8204 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:01,940 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:01,958 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:01,983 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:01,998 log 8696 2852 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:01,999 basehttp 8696 2852 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:04,607 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:04,625 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:04,727 log 8696 14416 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:04,727 basehttp 8696 14416 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:05,937 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:05,954 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:05,982 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:06,043 log 8696 3804 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:06,044 basehttp 8696 3804 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:07,745 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:07,762 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:08,011 log 8696 10500 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:08,012 basehttp 8696 10500 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:09,950 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:09,958 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:09,986 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:10,029 log 8696 14148 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:10,029 basehttp 8696 14148 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:11,023 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:11,031 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:11,471 log 8696 3896 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:11,472 basehttp 8696 3896 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:13,941 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:13,959 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:13,987 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:14,186 log 8696 12824 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:14,187 basehttp 8696 12824 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:14,491 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:14,513 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:15,673 log 8696 1444 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:15,674 basehttp 8696 1444 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:17,940 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:17,946 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:17,976 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:18,323 log 8696 12072 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:18,324 basehttp 8696 12072 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:18,691 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:18,708 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:20,789 log 8696 11660 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:20,789 basehttp 8696 11660 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:21,941 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:21,950 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:21,973 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:22,306 log 8696 14924 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:22,307 basehttp 8696 14924 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:23,807 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:23,826 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+INFO 2025-08-06 03:01:25,940 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:25,946 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:25,970 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:27,290 log 8696 4436 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:27,291 basehttp 8696 4436 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:27,348 log 8696 11008 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:27,349 basehttp 8696 11008 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:30,306 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:30,324 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+INFO 2025-08-06 03:01:30,939 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:30,956 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:30,983 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:33,388 log 8696 3664 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:33,389 basehttp 8696 3664 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:35,086 log 8696 2336 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:35,086 basehttp 8696 2336 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:35,506 log 8696 11672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 03:01:35,506 basehttp 8696 11672 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:36,407 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:36,425 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:36,463 log 8696 11672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 03:01:36,463 basehttp 8696 11672 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:38,944 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:38,961 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:38,989 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:41,006 log 8696 5324 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:41,007 basehttp 8696 5324 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:42,176 log 8696 5436 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:42,176 basehttp 8696 5436 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:44,022 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:44,040 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:44,075 log 8696 11672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 03:01:44,075 basehttp 8696 11672 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:45,860 log 8696 2540 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:45,861 basehttp 8696 2540 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:45,945 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:45,953 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:45,984 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+INFO 2025-08-06 03:01:48,874 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:48,894 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:48,907 log 8696 2260 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:48,908 basehttp 8696 2260 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+WARNING 2025-08-06 03:01:48,937 log 8696 11672 Not Found: /.well-known/appspecific/com.chrome.devtools.json
+WARNING 2025-08-06 03:01:48,938 basehttp 8696 11672 "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:51,937 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:51,944 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:51,972 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:01:53,483 log 8696 13736 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:53,484 basehttp 8696 13736 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:56,506 views 8696 11672 Contestants page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:56,524 basehttp 8696 11672 "GET /games/letters/contestants/contestants-f61f9d92/ HTTP/1.1" 200 18880
+WARNING 2025-08-06 03:01:56,572 log 8696 12192 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+WARNING 2025-08-06 03:01:56,573 basehttp 8696 12192 "GET /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/ HTTP/1.1" 404 3273
+INFO 2025-08-06 03:01:59,939 views 8696 11672 Display page accessed for session: f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca
+INFO 2025-08-06 03:01:59,956 basehttp 8696 11672 "GET /games/letters/display/display-f61f9d92/ HTTP/1.1" 200 21704
+INFO 2025-08-06 03:01:59,981 basehttp 8696 11672 "GET /games/api/session-state/?session_id=f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca HTTP/1.1" 200 938
+WARNING 2025-08-06 03:02:00,529 log 8696 2844 Not Found: /ws/letters/f61f9d92-0481-4c89-b1e3-8cbfcd93b5ca/
+INFO 2025-08-06 03:02:00,532 basehttp 8696 2844 - Broken pipe from ('127.0.0.1', 57650)
