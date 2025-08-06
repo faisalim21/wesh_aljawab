@@ -17,7 +17,7 @@
       packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}'
     };
   </script>
-
+  
   <style>
     body {
       background: linear-gradient(135deg, #c084fc 0%, #7c3aed 50%, #5b21b6 100%);
@@ -189,32 +189,60 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     }
 
-    /* زر الجواب الرئيسي */
+    /* زر الجواب الجديد - دائري أحمر */
     .buzz-button {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
       border: none;
-      border-radius: 20px;
-      padding: 20px 40px;
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
       font-size: 1.5rem;
       font-weight: 900;
       cursor: pointer;
-      width: 100%;
       transition: all 0.3s ease;
-      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4),
+                  0 0 0 10px rgba(239, 68, 68, 0.2),
+                  0 0 0 20px rgba(239, 68, 68, 0.1);
       text-transform: uppercase;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .buzz-button::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: rotate(45deg);
+      transition: all 0.6s ease;
     }
 
     .buzz-button:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6);
+      transform: scale(1.1) translateY(-5px);
+      box-shadow: 0 15px 40px rgba(239, 68, 68, 0.6),
+                  0 0 0 15px rgba(239, 68, 68, 0.3),
+                  0 0 0 30px rgba(239, 68, 68, 0.1);
       background: linear-gradient(135deg, #dc2626, #b91c1c);
     }
 
+    .buzz-button:hover:not(:disabled)::before {
+      left: 100%;
+    }
+
     .buzz-button:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+      transform: scale(0.95) translateY(0);
+      box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4),
+                  0 0 0 5px rgba(239, 68, 68, 0.2),
+                  0 0 0 10px rgba(239, 68, 68, 0.1);
     }
 
     .buzz-button:disabled {
@@ -276,6 +304,9 @@
       border-radius: 8px;
       font-size: 0.9rem;
       z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .connection-status.connected {
@@ -284,6 +315,13 @@
 
     .connection-status.disconnected {
       background: rgba(239, 68, 68, 0.8);
+      animation: pulseWarning 1.5s infinite;
+    }
+
+    @keyframes pulseWarning {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
     }
 
     /* تحسينات للجوال */
@@ -306,8 +344,9 @@
       }
       
       .buzz-button {
+        width: 100px;
+        height: 100px;
         font-size: 1.3rem;
-        padding: 18px 30px;
       }
       
       .team-options {
@@ -349,7 +388,8 @@
 <body>
   <!-- حالة الاتصال -->
   <div class="connection-status" id="connectionStatus">
-    🔗 جاري الاتصال...
+    <span id="connectionIcon">🔗</span>
+    <span id="connectionText">جاري الاتصال...</span>
   </div>
 
   <!-- اللوجو -->
@@ -403,9 +443,9 @@
         </div>
       </div>
 
-      <!-- زر الجواب -->
+      <!-- زر الجواب الجديد -->
       <button class="buzz-button" id="buzzBtn" onclick="buzzAnswer()">
-        📣 أعرف الجواب!
+          <span id="buzzText">جاوب</span>
       </button>
 
       <!-- رسائل الحالة -->
@@ -419,68 +459,93 @@
     let contestantName = '';
     let selectedTeam = '';
     let buzzCooldown = false;
+    let socket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
     
     const sessionId = window.sessionData?.sessionId || '{{ session.id }}';
 
     // عناصر DOM
     const connectionStatus = document.getElementById('connectionStatus');
+    const connectionIcon = document.getElementById('connectionIcon');
+    const connectionText = document.getElementById('connectionText');
     const nameInput = document.getElementById('contestantName');
     const buzzButton = document.getElementById('buzzBtn');
+    const buzzText = document.getElementById('buzzText');
     const statusMessage = document.getElementById('statusMessage');
 
-    // WebSocket للاتصال المباشر
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/`);
+    // إنشاء اتصال WebSocket
+    function connectWebSocket() {
+      try {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const socketUrl = `${protocol}://${window.location.host}/ws/letters/${sessionId}/`;
+        
+        updateConnectionStatus('connecting', '🔄', 'جاري الاتصال...');
+        
+        socket = new WebSocket(socketUrl);
 
-    // إعداد WebSocket
-    socket.onopen = function(event) {
-      console.log('✅ WebSocket متصل للمتسابق');
-      isConnected = true;
-      updateConnectionStatus('connected', '✅ متصل');
-    };
+        socket.onopen = function(event) {
+          console.log('✅ WebSocket متصل للمتسابق');
+          isConnected = true;
+          reconnectAttempts = 0;
+          updateConnectionStatus('connected', '✅', 'متصل - جاهز');
+        };
 
-    socket.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      console.log('📨 رسالة مستقبلة:', data);
-
-      // معالجة الرسائل المختلفة
-      switch(data.type) {
-        case 'buzz_received':
-          if (data.contestant_name === contestantName) {
-            showBuzzSuccess();
+        socket.onmessage = function(event) {
+          try {
+            const data = JSON.parse(event.data);
+            console.log('📨 رسالة واردة:', data);
+            
+            switch(data.type) {
+              case 'buzz_confirmed':
+                showBuzzSuccess();
+                break;
+                
+              case 'error':
+                showStatusMessage('error', `❌ ${data.message}`);
+                resetBuzzState();
+                break;
+                
+              default:
+                console.log('رسالة غير معروفة:', data);
+            }
+          } catch (error) {
+            console.error('خطأ في معالجة الرسالة:', error);
           }
-          break;
+        };
+
+        socket.onclose = function(event) {
+          console.log('❌ WebSocket منقطع');
+          isConnected = false;
+          updateConnectionStatus('disconnected', '❌', 'منقطع');
           
-        case 'game_reset':
-          resetBuzzState();
-          break;
-          
-        case 'session_update':
-          // تحديثات عامة للجلسة
-          break;
+          // محاولة إعادة الاتصال
+          if (reconnectAttempts < maxReconnectAttempts) {
+            reconnectAttempts++;
+            updateConnectionStatus('connecting', '🔄', `إعادة اتصال ${reconnectAttempts}...`);
+            setTimeout(() => connectWebSocket(), 2000 * reconnectAttempts);
+          } else {
+            updateConnectionStatus('disconnected', '❌', 'فشل الاتصال');
+            showStatusMessage('error', '❌ لا يمكن الاتصال بالخادم. تحقق من اتصالك بالإنترنت.');
+          }
+        };
+
+        socket.onerror = function(error) {
+          console.error('❌ خطأ WebSocket:', error);
+          isConnected = false;
+        };
+
+      } catch (error) {
+        console.error('خطأ في إنشاء WebSocket:', error);
+        updateConnectionStatus('disconnected', '❌', 'خطأ في الاتصال');
       }
-    };
-
-    socket.onclose = function(event) {
-      console.log('❌ WebSocket مقطوع');
-      isConnected = false;
-      updateConnectionStatus('disconnected', '❌ انقطع الاتصال');
-      
-      // محاولة إعادة الاتصال بعد 3 ثوان
-      setTimeout(() => {
-        location.reload();
-      }, 3000);
-    };
-
-    socket.onerror = function(error) {
-      console.error('❌ خطأ WebSocket:', error);
-      updateConnectionStatus('error', '⚠️ خطأ في الاتصال');
-    };
+    }
 
     // تحديث حالة الاتصال
-    function updateConnectionStatus(status, message) {
+    function updateConnectionStatus(status, icon, message) {
       connectionStatus.className = `connection-status ${status}`;
-      connectionStatus.textContent = message;
+      connectionIcon.textContent = icon;
+      connectionText.textContent = message;
     }
 
     // الحصول على الفريق المختار
@@ -524,7 +589,7 @@
       return true;
     }
 
-    // دالة الضغط على زر الجواب
+    // دالة الضغط على زر الجواب - مُحسنة
     function buzzAnswer() {
       // التحقق من حالة الضغط السابق
       if (buzzCooldown) {
@@ -540,7 +605,7 @@
       // تعطيل الزر مؤقتاً
       buzzCooldown = true;
       buzzButton.disabled = true;
-      buzzButton.textContent = '⏳ جاري الإرسال...';
+      buzzText.textContent = '⏳ جاري الإرسال...';
 
       // إرسال الضغطة عبر WebSocket
       const buzzData = {
@@ -552,51 +617,23 @@
       };
 
       try {
-        socket.send(JSON.stringify(buzzData));
-        console.log('📤 تم إرسال الضغطة:', buzzData);
-        
-        // تسجيل المتسابق إذا لم يكن مسجلاً
-        registerContestant();
-        
-      } catch (error) {
-        console.error('❌ خطأ في إرسال الضغطة:', error);
-        showStatusMessage('error', '❌ فشل في إرسال الضغطة');
-        resetBuzzState();
-      }
-    }
-
-    // تسجيل المتسابق في النظام
-    async function registerContestant() {
-      try {
-        const response = await fetch('/games/api/add-contestant/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCsrfToken()
-          },
-          body: JSON.stringify({
-            session_id: sessionId,
-            name: contestantName,
-            team: selectedTeam
-          })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('✅ تم تسجيل المتسابق بنجاح');
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify(buzzData));
+          console.log('📤 تم إرسال الضغطة:', buzzData);
         } else {
-          console.log('ℹ️ المتسابق مسجل مسبقاً أو خطأ في التسجيل');
+          throw new Error('الاتصال غير متاح');
         }
       } catch (error) {
-        console.error('❌ خطأ في تسجيل المتسابق:', error);
+        console.error('❌ خطأ في إرسال الضغطة:', error);
+        showStatusMessage('error', '❌ فشل في إرسال الضغطة - تحقق من اتصالك');
+        resetBuzzState();
       }
     }
 
     // إظهار نجاح الضغطة
     function showBuzzSuccess() {
       buzzButton.classList.add('buzzed');
-      buzzButton.textContent = '✅ تم الإرسال!';
+      buzzText.textContent = '✅ تم الإرسال!';
       showStatusMessage('success', `🎉 تم إرسال إجابتك يا ${contestantName}!`);
       
       // الحفاظ على الحالة لمدة 5 ثوان
@@ -610,7 +647,7 @@
       buzzCooldown = false;
       buzzButton.disabled = false;
       buzzButton.classList.remove('buzzed');
-      buzzButton.textContent = '📣 أعرف الجواب!';
+      buzzText.textContent = 'جاوب';
       hideStatusMessage();
     }
 
@@ -624,18 +661,6 @@
     // إخفاء رسائل الحالة
     function hideStatusMessage() {
       statusMessage.style.display = 'none';
-    }
-
-    // الحصول على CSRF Token
-    function getCsrfToken() {
-      const cookies = document.cookie.split(';');
-      for (let cookie of cookies) {
-        const [name, value] = cookie.trim().split('=');
-        if (name === 'csrftoken') {
-          return value;
-        }
-      }
-      return '';
     }
 
     // تأثيرات تفاعلية
@@ -664,25 +689,20 @@
       buzzButton.classList.remove('pulse-animation');
     });
 
-    // تحديث دوري لحالة الاتصال
-    setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) {
-        if (!isConnected) {
-          isConnected = true;
-          updateConnectionStatus('connected', '✅ متصل');
-        }
-      } else {
-        if (isConnected) {
-          isConnected = false;
-          updateConnectionStatus('disconnected', '❌ انقطع الاتصال');
-        }
-      }
-    }, 2000);
-
-    // تهيئة الصفحة
+    // بدء الاتصال عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
       console.log('تم تحميل صفحة المتسابق - خلية الحروف');
       nameInput.focus();
+      connectWebSocket();
+      
+      // التحقق الدوري من حالة الاتصال
+      setInterval(() => {
+        if (!isConnected && socket.readyState !== WebSocket.CONNECTING) {
+          if (reconnectAttempts < maxReconnectAttempts) {
+            connectWebSocket();
+          }
+        }
+      }, 10000); // كل 10 ثواني
     });
   </script>
 </body>

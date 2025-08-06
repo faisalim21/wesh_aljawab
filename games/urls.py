@@ -27,4 +27,8 @@ urlpatterns = [
     path('api/update-scores/', views.update_scores, name='api_update_scores'),
     path('api/session-state/', views.session_state, name='api_session_state'),
     path('api/add-contestant/', views.add_contestant, name='api_add_contestant'),
+    path('api/check-eligibility/', views.api_check_free_session_eligibility, name='api_check_eligibility'),
+    path('api/session-expiry-info/', views.api_session_expiry_info, name='api_session_expiry_info'),
+    path('api/user-session-stats/', views.api_user_session_stats, name='api_user_session_stats'),
+    
 ]

@@ -71,6 +71,21 @@ DATABASES = {
     )
 }
 
+GAME_SETTINGS = {
+    'FREE_SESSION_DURATION_HOURS': 1,
+    'PAID_SESSION_DURATION_DAYS': 3,
+    'MAX_FREE_SESSIONS_PER_GAME_TYPE': 1,
+    'SESSION_WARNING_THRESHOLDS': {
+        'FREE': {
+            'DANGER': 5,  # دقائق
+            'WARNING': 10,
+        },
+        'PAID': {
+            'DANGER': 2,  # ساعات  
+            'WARNING': 6,
+        }
+    }
+}
 # إعدادات Channels (WebSocket + Redis)
 CHANNEL_LAYERS = {
     'default': {

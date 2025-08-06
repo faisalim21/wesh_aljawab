@@ -30,6 +30,79 @@
             color: white;
         }
 
+        /* طبقة عرض ضغطة المتسابق */
+        .buzzed-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            animation: buzzOverlayPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        .buzzed-overlay.show {
+            display: flex;
+        }
+
+        @keyframes buzzOverlayPulse {
+            from { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); }
+            to { background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1)); }
+        }
+
+        .buzzed-name {
+            font-size: 4rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            animation: nameGlow 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes nameGlow {
+            from { text-shadow: 3px 3px 6px rgba(0,0,0,0.5); }
+            to { text-shadow: 3px 3px 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.6); }
+        }
+
+        .team-indicator {
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            border: 3px solid rgba(255,255,255,0.8);
+        }
+
+        .team-indicator.team1 {
+            background: rgba(34, 197, 94, 0.8);
+            color: white;
+        }
+
+        .team-indicator.team2 {
+            background: rgba(249, 115, 22, 0.8);
+            color: white;
+        }
+
+        .countdown {
+            font-size: 8rem;
+            font-weight: 900;
+            margin-top: 20px;
+            text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
+            animation: countdownPulse 1s ease-in-out;
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         .main-container {
             position: fixed;
             top: 0;
@@ -111,6 +184,34 @@
             max-height: 60px;
             width: auto;
             display: block;
+        }
+
+        /* مؤشر حالة الزر */
+        .buzz-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            z-index: 150;
+            display: none;
+        }
+
+        .buzz-status.available {
+            background: rgba(34, 197, 94, 0.8);
+        }
+
+        .buzz-status.locked {
+            background: rgba(239, 68, 68, 0.8);
+            animation: statusPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
         }
 
         /* خلية الحروف - مركز الشاشة */
@@ -222,29 +323,6 @@
             color: #22c55e;
         }
 
-        /* إشعار ضغط الزر */
-        .buzz-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            color: white;
-            padding: 20px 40px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.5rem;
-            display: none;
-            box-shadow: 0 10px 30px rgba(239, 68, 68, 0.5);
-            z-index: 200;
-            animation: buzzPulse 0.5s ease-in-out infinite alternate;
-        }
-
-        @keyframes buzzPulse {
-            from { transform: translate(-50%, -50%) scale(1); }
-            to { transform: translate(-50%, -50%) scale(1.1); }
-        }
-
         /* تحسينات للشاشات الكبيرة */
         @media (min-width: 1200px) {
             .hex-text {
@@ -272,6 +350,14 @@
             .team-score {
                 font-size: 1.6rem;
             }
+            
+            .buzzed-name {
+                font-size: 5rem;
+            }
+            
+            .countdown {
+                font-size: 10rem;
+            }
         }
 
         @media (min-width: 1600px) {
@@ -293,6 +379,14 @@
             
             .hex-text {
                 font-size: 100px;
+            }
+            
+            .buzzed-name {
+                font-size: 3rem;
+            }
+            
+            .countdown {
+                font-size: 6rem;
             }
         }
     </style>
@@ -316,6 +410,18 @@
             <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
                  alt="وش الجواب" 
                  class="img-fluid">
+        </div>
+
+        <!-- مؤشر حالة الزر -->
+        <div class="buzz-status" id="buzzStatus">
+            🟢 الزر متاح للضغط
+        </div>
+
+        <!-- طبقة عرض ضغطة المتسابق -->
+        <div id="buzzedOverlay" class="buzzed-overlay">
+            <div id="buzzedName" class="buzzed-name">اسم المتسابق</div>
+            <div id="teamIndicator" class="team-indicator">الفريق</div>
+            <div id="countdown" class="countdown">3</div>
         </div>
 
         <!-- خلية الحروف - مركز الشاشة -->
@@ -346,17 +452,16 @@
             <div class="question-text" id="questionText">السؤال سيظهر هنا</div>
             <div class="question-answer" id="questionAnswer">الإجابة ستظهر هنا</div>
         </div>
-
-        <!-- إشعار ضغط الزر -->
-        <div class="buzz-notification" id="buzzNotification">
-            🚨 <span id="contestantName">متسابق</span> ضغط الزر!
-        </div>
     </div>
 
     <script>
         // متغيرات العرض
         let currentQuestionData = null;
         let cellStates = {};
+        let buzzLocked = false;  // حالة حجز الزر
+        let buzzerName = '';     // اسم المتسابق الذي حجز الزر
+        let buzzerTeam = '';     // فريق المتسابق
+        let countdownTimer = null;
         
         const sessionId = window.sessionData?.sessionId || '{{ session.id }}';
 
@@ -475,18 +580,153 @@
             }, 10000);
         }
 
-        // إظهار إشعار ضغط الزر
-        function showBuzzNotification(contestantName) {
-            const notification = document.getElementById('buzzNotification');
-            const nameSpan = document.getElementById('contestantName');
+        // تشغيل الصوت
+        function playBuzzSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+                console.log('🔊 تم تشغيل صوت الضغط');
+            } catch (error) {
+                console.log('لا يمكن تشغيل الصوت');
+            }
+        }
+
+        // تشغيل صوت انتهاء الوقت
+        function playEndSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 400;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+                
+                console.log('🔔 تم تشغيل صوت انتهاء الوقت');
+            } catch (error) {
+                console.log('لا يمكن تشغيل الصوت');
+            }
+        }
+
+        // تحديث حالة الزر
+        function updateBuzzStatus(available, message) {
+            const statusEl = document.getElementById('buzzStatus');
             
-            nameSpan.textContent = contestantName || 'متسابق';
-            notification.style.display = 'block';
+            if (available) {
+                statusEl.className = 'buzz-status available';
+                statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
+            } else {
+                statusEl.className = 'buzz-status locked';
+                statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
+            }
             
-            // إخفاء الإشعار بعد 3 ثوان
+            statusEl.style.display = 'block';
+        }
+
+        // عرض ضغطة المتسابق مع المؤقت
+        function showContestantBuzz(contestantName, team, teamDisplay) {
+            // إذا كان الزر محجوز، تجاهل الضغطة
+            if (buzzLocked) {
+                console.log('🚫 الزر محجوز بالفعل، تجاهل الضغطة');
+                return;
+            }
+
+            // حجز الزر
+            buzzLocked = true;
+            buzzerName = contestantName;
+            buzzerTeam = team;
+            
+            console.log(`🎤 ${contestantName} حجز الزر!`);
+            
+            // تشغيل صوت الضغط
+            playBuzzSound();
+            
+            // تحديث حالة الزر
+            updateBuzzStatus(false, `${contestantName} حجز الزر`);
+            
+            // تحديث العرض
+            document.getElementById('buzzedName').textContent = contestantName;
+            
+            const teamIndicator = document.getElementById('teamIndicator');
+            const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+            teamIndicator.textContent = teamName;
+            teamIndicator.className = `team-indicator ${team}`;
+            
+            // إظهار طبقة العرض
+            document.getElementById('buzzedOverlay').classList.add('show');
+            
+            // بدء العد التنازلي
+            startCountdown();
+        }
+
+        // بدء العد التنازلي 3 ثوان
+        function startCountdown() {
+            let timeLeft = 3;
+            const countdownEl = document.getElementById('countdown');
+            
+            countdownEl.textContent = timeLeft;
+            
+            countdownTimer = setInterval(() => {
+                timeLeft--;
+                countdownEl.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(countdownTimer);
+                    endBuzzSession();
+                }
+            }, 1000);
+        }
+
+        // إنهاء جلسة الضغط
+        function endBuzzSession() {
+            // تشغيل صوت انتهاء الوقت
+            playEndSound();
+            
+            // إخفاء طبقة العرض
             setTimeout(() => {
-                notification.style.display = 'none';
-            }, 3000);
+                document.getElementById('buzzedOverlay').classList.remove('show');
+            }, 500);
+            
+            // إلغاء حجز الزر
+            setTimeout(() => {
+                buzzLocked = false;
+                buzzerName = '';
+                buzzerTeam = '';
+                updateBuzzStatus(true);
+                console.log('✅ تم إلغاء حجز الزر');
+            }, 2000); // انتظار ثانيتين إضافيتين قبل فتح الزر مرة أخرى
+        }
+
+        // إعادة تعيين الزر يدوياً (للمقدم)
+        function resetBuzzer() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+            }
+            
+            document.getElementById('buzzedOverlay').classList.remove('show');
+            buzzLocked = false;
+            buzzerName = '';
+            buzzerTeam = '';
+            updateBuzzStatus(true);
+            console.log('🔄 تم إعادة تعيين الزر يدوياً');
         }
 
         // تحميل حالة الجلسة من السيرفر
@@ -513,7 +753,7 @@
                     }
                 } else if (response.status === 410) {
                     // الجلسة منتهية الصلاحية
-                    document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1><p>الجلسة المجانية صالحة لمدة ساعة واحدة فقط</p></div>';
+                    document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1><p>انتهت صلاحية الجلسة</p></div>';
                 }
             } catch (error) {
                 console.error('خطأ في تحميل حالة الجلسة:', error);
@@ -526,6 +766,7 @@
 
         socket.onopen = function(event) {
             console.log('✅ WebSocket متصل لشاشة العرض');
+            updateBuzzStatus(true); // الزر متاح عند بدء الاتصال
         };
 
         socket.onmessage = function(event) {
@@ -533,26 +774,42 @@
             console.log('📨 تحديث مباشر:', data);
 
             switch(data.type) {
-                case 'update_cell':
+                case 'cell_state_updated':
                     updateCellState(data.letter, data.state);
                     break;
                     
-                case 'update_score':
+                case 'scores_updated':
                     updateScores(data.team1_score, data.team2_score);
                     break;
                     
                 case 'show_question':
-                    showQuestion(data.letter, data.question_data);
+                    showQuestion(data.letter, data);
                     break;
                     
-                case 'contestant_buzz':
-                    showBuzzNotification(data.contestant_name);
+                case 'show_contestant_buzz':
+                    showContestantBuzz(data.contestant_name, data.team, data.team_display);
+                    break;
+                    
+                // رسائل إضافية للتحكم في الزر
+                case 'buzz_reset':
+                    resetBuzzer();
+                    break;
+                    
+                case 'buzz_lock':
+                    buzzLocked = true;
+                    updateBuzzStatus(false, data.message || 'الزر محجوز');
+                    break;
+                    
+                case 'buzz_unlock':
+                    buzzLocked = false;
+                    updateBuzzStatus(true, 'الزر متاح للضغط');
                     break;
             }
         };
 
         socket.onclose = function(event) {
             console.log('❌ WebSocket مقطوع - محاولة إعادة الاتصال...');
+            updateBuzzStatus(false, 'منقطع عن الخادم');
             setTimeout(() => {
                 location.reload(); // إعادة تحميل الصفحة للاتصال مجدداً
             }, 3000);
@@ -560,16 +817,43 @@
 
         socket.onerror = function(error) {
             console.error('❌ خطأ WebSocket:', error);
+            updateBuzzStatus(false, 'خطأ في الاتصال');
         };
 
         // تحديث دوري لحالة الجلسة كـ backup
-        setInterval(loadSessionState, 10000); // كل 10 ثوان
+        setInterval(loadSessionState, 15000); // كل 15 ثانية
+
+        // التحكم بالكيبورد للمقدم
+        document.addEventListener('keydown', function(event) {
+            // مسافة أو Enter لإعادة تعيين الزر
+            if (event.code === 'Space' || event.code === 'Enter') {
+                event.preventDefault();
+                resetBuzzer();
+            }
+            
+            // Escape لإلغاء العرض
+            if (event.code === 'Escape') {
+                resetBuzzer();
+            }
+        });
+
+        // النقر في أي مكان لإعادة تعيين الزر
+        document.addEventListener('click', function(event) {
+            if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
+                resetBuzzer();
+            }
+        });
 
         // بدء التطبيق
         document.addEventListener('DOMContentLoaded', function() {
             console.log('تم تحميل شاشة العرض - خلية الحروف');
             createHoneycombCells();
             loadSessionState();
+            
+            // إخفاء مؤشر الحالة في البداية
+            setTimeout(() => {
+                updateBuzzStatus(true);
+            }, 1000);
         });
     </script>
 </body>

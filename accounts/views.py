@@ -14,9 +14,11 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
 import json
 import logging
-
+from accounts.forms import SimpleRegisterForm
+from django.contrib.auth.hashers import make_password
 from .models import UserProfile, UserActivity, UserPreferences
 from games.models import UserPurchase, GameSession
+from django.contrib.auth import get_user_model
 
 # إعداد logger
 logger = logging.getLogger('accounts')
@@ -24,152 +26,107 @@ logger = logging.getLogger('accounts')
 def login_view(request):
     """تسجيل الدخول"""
     if request.user.is_authenticated:
-        return redirect('/')  # توجيه للصفحة الرئيسية
-        
+        return redirect('/')
+
     if request.method == 'POST':
-        username = request.POST.get('username', '').strip()
+        email = request.POST.get('email', '').strip().lower()  # تغيير من username إلى email
         password = request.POST.get('password', '')
         remember_me = request.POST.get('remember_me')
-        
-        # التحقق من البيانات
-        if not username or not password:
+
+        if not email or not password:
             messages.error(request, 'يرجى ملء جميع الحقول المطلوبة')
             return render(request, 'accounts/login.html')
-        
-        # محاولة المصادقة
+
         try:
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    
-                    # إعداد مدة الجلسة
-                    if not remember_me:
-                        request.session.set_expiry(0)  # إنهاء عند إغلاق المتصفح
-                    else:
-                        request.session.set_expiry(604800)  # أسبوع واحد
-                    
-                    # تسجيل النشاط
-                    try:
-                        UserActivity.objects.create(
-                            user=user,
-                            activity_type='login',
-                            description=f'تسجيل دخول من {request.META.get("REMOTE_ADDR", "غير معروف")}'
-                        )
-                        logger.info(f'User {username} logged in successfully')
-                    except Exception as e:
-                        logger.error(f'Error creating login activity: {e}')
-                    
-                    messages.success(request, f'أهلاً وسهلاً {user.profile.display_name}! 🎉')
-                    
-                    # إعادة توجيه للصفحة المطلوبة
-                    next_page = request.GET.get('next', '/')
-                    return redirect(next_page)
-                else:
-                    messages.error(request, 'هذا الحساب معطل، يرجى التواصل مع الإدارة')
+            # البحث عن المستخدم بالبريد
+            user_obj = User.objects.get(email=email)
+            user = authenticate(request, username=user_obj.username, password=password)
+
+            if user is not None and user.is_active:
+                login(request, user)
+
+                # إعداد مدة الجلسة
+                request.session.set_expiry(0 if not remember_me else 604800)
+
+                # تسجيل النشاط
+                try:
+                    UserActivity.objects.create(
+                        user=user,
+                        activity_type='login',
+                        description=f'تسجيل دخول من {request.META.get("REMOTE_ADDR", "غير معروف")}'
+                    )
+                    logger.info(f'User {email} logged in successfully')
+                except Exception as e:
+                    logger.error(f'Error creating login activity: {e}')
+
+                messages.success(request, f'أهلاً وسهلاً {user.profile.display_name}! 🎉')
+                return redirect(request.GET.get('next', '/'))
+
             else:
-                messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة')
-                logger.warning(f'Failed login attempt for username: {username}')
-                
+                messages.error(request, 'البريد الإلكتروني أو كلمة المرور غير صحيحة')
+                logger.warning(f'Failed login attempt for email: {email}')
+
+        except User.DoesNotExist:
+            messages.error(request, 'لا يوجد حساب مرتبط بهذا البريد الإلكتروني')
         except Exception as e:
             logger.error(f'Login error: {e}')
             messages.error(request, 'حدث خطأ أثناء تسجيل الدخول، يرجى المحاولة لاحقاً')
-    
+
     return render(request, 'accounts/login.html')
+
 
 def register_view(request):
     """تسجيل جديد"""
     if request.user.is_authenticated:
         return redirect('/')
-        
+
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
-        
-        # جمع البيانات
-        first_name = request.POST.get('first_name', '').strip()
-        email = request.POST.get('email', '').strip()
-        host_name = request.POST.get('host_name', '').strip()
-        phone_number = request.POST.get('phone_number', '').strip()
-        terms_agreement = request.POST.get('terms_agreement')
-        
-        # التحقق من الموافقة على الشروط
-        if not terms_agreement:
-            messages.error(request, 'يجب الموافقة على شروط الاستخدام وسياسة الخصوصية')
-            return render(request, 'accounts/register.html', {'form': form})
-        
-        # التحقق من البريد الإلكتروني
-        if email and User.objects.filter(email=email).exists():
-            messages.error(request, 'البريد الإلكتروني مستخدم مسبقاً')
-            return render(request, 'accounts/register.html', {'form': form})
-        
-        # التحقق من رقم الهاتف
-        if phone_number and not phone_number.startswith('05'):
-            messages.error(request, 'رقم الهاتف يجب أن يبدأ بـ 05')
-            return render(request, 'accounts/register.html', {'form': form})
-        
+        form = SimpleRegisterForm(request.POST)
+
         if form.is_valid():
             try:
-                # إنشاء المستخدم
-                user = form.save(commit=False)
-                user.first_name = first_name
-                user.email = email
-                user.save()
-                
-                # تحديث الملف الشخصي
-                profile = user.profile
-                profile.host_name = host_name
-                profile.phone_number = phone_number
-                profile.save()
-                
-                # إنشاء تفضيلات افتراضية
-                UserPreferences.objects.get_or_create(user=user)
-                
+                # إنشاء المستخدم بطريقة آمنة
+                user = User.objects.create_user(
+                    username=form.cleaned_data['email'],
+                    first_name=form.cleaned_data['first_name'],
+                    email=form.cleaned_data['email'],
+                    password=form.cleaned_data['password']  # create_user يشفر تلقائياً
+                )
+
+                # ربط رقم الجوال في الملف الشخصي
+                user.profile.phone_number = form.cleaned_data['phone_number']
+                user.profile.save()
+
                 # تسجيل النشاط
-                try:
-                    UserActivity.objects.create(
-                        user=user,
-                        activity_type='profile_updated',
-                        description='إنشاء حساب جديد على المنصة'
-                    )
-                    logger.info(f'New user registered: {user.username}')
-                except Exception as e:
-                    logger.error(f'Error creating registration activity: {e}')
-                
-                messages.success(request, 'مرحباً بك! تم إنشاء حسابك بنجاح 🎊')
-                
+                UserActivity.objects.create(
+                    user=user,
+                    activity_type='profile_updated',
+                    description='إنشاء حساب جديد'
+                )
+
                 # تسجيل دخول تلقائي
                 login(request, user)
-                return redirect('/')
                 
+                messages.success(request, f'مرحباً بك {user.first_name}! تم إنشاء حسابك بنجاح 🎉')
+                logger.info(f'New user registered: {user.email}')
+                
+                return redirect('/')
+
             except Exception as e:
                 logger.error(f'Registration error: {e}')
-                messages.error(request, 'حدث خطأ أثناء إنشاء الحساب، يرجى المحاولة لاحقاً')
+                messages.error(request, 'حدث خطأ أثناء إنشاء الحساب، يرجى المحاولة مرة أخرى')
+        
         else:
-            # عرض أخطاء النموذج
+            # عرض أخطاء النموذج بشكل واضح
             for field, errors in form.errors.items():
                 for error in errors:
-                    if 'password' in field.lower():
-                        if 'too similar' in error:
-                            messages.error(request, 'كلمة المرور مشابهة جداً لمعلوماتك الشخصية')
-                        elif 'too short' in error:
-                            messages.error(request, 'كلمة المرور قصيرة جداً، يجب أن تحتوي على 8 أحرف على الأقل')
-                        elif 'too common' in error:
-                            messages.error(request, 'كلمة المرور شائعة جداً، اختر كلمة مرور أقوى')
-                        elif 'entirely numeric' in error:
-                            messages.error(request, 'كلمة المرور لا يمكن أن تكون أرقام فقط')
-                        else:
-                            messages.error(request, f'خطأ في كلمة المرور: {error}')
-                    elif 'username' in field.lower():
-                        if 'already exists' in error:
-                            messages.error(request, 'اسم المستخدم مستخدم مسبقاً')
-                        else:
-                            messages.error(request, f'خطأ في اسم المستخدم: {error}')
-                    else:
-                        messages.error(request, f'{error}')
+                    messages.error(request, error)
+
     else:
-        form = UserCreationForm()
-    
+        form = SimpleRegisterForm()
+
     return render(request, 'accounts/register.html', {'form': form})
+
 
 @login_required
 def logout_view(request):
