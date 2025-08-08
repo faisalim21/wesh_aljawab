@@ -30,5 +30,6 @@ urlpatterns = [
     path('api/check-eligibility/', views.api_check_free_session_eligibility, name='api_check_eligibility'),
     path('api/session-expiry-info/', views.api_session_expiry_info, name='api_session_expiry_info'),
     path('api/user-session-stats/', views.api_user_session_stats, name='api_user_session_stats'),
+    path('api/contestant-buzz/', views.api_contestant_buzz_http, name='api_contestant_buzz_http'),
     
 ]

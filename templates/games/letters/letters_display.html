@@ -454,407 +454,352 @@
         </div>
     </div>
 
-    <script>
-        // متغيرات العرض
-        let currentQuestionData = null;
-        let cellStates = {};
-        let buzzLocked = false;  // حالة حجز الزر
-        let buzzerName = '';     // اسم المتسابق الذي حجز الزر
-        let buzzerTeam = '';     // فريق المتسابق
-        let countdownTimer = null;
-        
-        const sessionId = window.sessionData?.sessionId || '{{ session.id }}';
+<script>
+  // ===================== المتغيرات العامة =====================
+  let currentQuestionData = null;
+  let cellStates = {};
+  let buzzLocked = false;
+  let buzzerName = '';
+  let buzzerTeam = '';
+  let countdownTimer = null;
 
-        // إنشاء الخلايا السداسية ديناميكياً
-        function createHoneycombCells() {
-            const svg = document.getElementById('honeycombSvg');
-            const arabicLetters = window.sessionData.arabicLetters || [];
-            
-            // إحداثيات الخلايا السداسية (نفس الأماكن بالضبط)
-            const cellPositions = [
-                // الصف الأول: 5 خلايا
-                {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
-                {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
-                {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
-                {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-                {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-                
-                // الصف الثاني: 5 خلايا (مزاحة قليلاً)
-                {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
-                {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
-                {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-                {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-                {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-                
-                // الصف الثالث: 5 خلايا
-                {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
-                {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
-                {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
-                {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-                {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-                
-                // الصف الرابع: 5 خلايا (مزاحة قليلاً)
-                {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
-                {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
-                {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-                {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-                {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-                
-                // الصف الخامس: 5 خلايا
-                {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-                {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-                {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-                {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-                {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
-            ];
-            
-            // إنشاء الخلايا السداسية
-            for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
-                const letter = arabicLetters[i];
-                const position = cellPositions[i];
-                
-                // إنشاء المجموعة
-                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                group.setAttribute('class', 'hex-cell');
-                group.setAttribute('data-letter', letter);
-                
-                // إنشاء الشكل السداسي
-                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                polygon.setAttribute('class', 'hex-shape');
-                polygon.setAttribute('points', position.points);
-                
-                // إنشاء النص
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('class', 'hex-text');
-                text.setAttribute('x', position.x);
-                text.setAttribute('y', position.y);
-                text.textContent = letter;
-                
-                // إضافة العناصر للمجموعة
-                group.appendChild(polygon);
-                group.appendChild(text);
-                
-                // إضافة المجموعة للـ SVG
-                svg.appendChild(group);
+  let socket = null;
+  let reconnectDelay = 1000;   // 1s -> 2s -> 5s
+  const maxDelay = 5000;
+  let pingTimer = null;
+
+  const sessionId = '{{ session.id }}';
+
+  // ===================== إنشاء الخلايا السداسية =====================
+  function createHoneycombCells() {
+    const svg = document.getElementById('honeycombSvg');
+    const arabicLetters = window.sessionData.arabicLetters || [];
+
+    const cellPositions = [
+      {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
+      {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
+      {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
+      {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
+      {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
+      {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
+      {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
+      {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
+      {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
+      {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
+      {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
+      {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
+      {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
+      {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
+      {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
+      {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
+      {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
+      {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
+      {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
+      {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
+      {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
+      {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
+      {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
+      {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
+      {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
+    ];
+
+    for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
+      const letter = arabicLetters[i];
+      const position = cellPositions[i];
+
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('class', 'hex-cell');
+      group.setAttribute('data-letter', letter);
+
+      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      polygon.setAttribute('class', 'hex-shape');
+      polygon.setAttribute('points', position.points);
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('class', 'hex-text');
+      text.setAttribute('x', position.x);
+      text.setAttribute('y', position.y);
+      text.textContent = letter;
+
+      group.appendChild(polygon);
+      group.appendChild(text);
+      svg.appendChild(group);
+    }
+
+    console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية للعرض`);
+  }
+
+  // ===================== واجهة العرض (النقاط/الخلايا/السؤال) =====================
+  function updateScores(team1Score, team2Score) {
+    document.getElementById('team1Score').textContent = team1Score;
+    document.getElementById('team2Score').textContent = team2Score;
+  }
+
+  function updateCellState(letter, state) {
+    const element = document.querySelector(`[data-letter="${letter}"]`);
+    if (element) {
+      element.classList.remove('team1', 'team2');
+      if (state !== 'normal') {
+        element.classList.add(state);
+      }
+      cellStates[letter] = state;
+    }
+  }
+
+  function showQuestion(letter, questionData) {
+    if (!questionData) return;
+    const questionDiv = document.getElementById('currentQuestion');
+    document.getElementById('questionLetter').textContent = `حرف ${letter}`;
+    document.getElementById('questionText').textContent = questionData.question;
+    document.getElementById('questionAnswer').textContent = questionData.answer;
+
+    questionDiv.classList.add('show');
+    setTimeout(() => { questionDiv.classList.remove('show'); }, 10000);
+  }
+
+  function playBuzzSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 800; oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.3);
+    } catch { console.log('لا يمكن تشغيل الصوت'); }
+  }
+
+  function playEndSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 400; oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.5);
+    } catch { console.log('لا يمكن تشغيل الصوت'); }
+  }
+
+  function updateBuzzStatus(available, message) {
+    const statusEl = document.getElementById('buzzStatus');
+    if (available) {
+      statusEl.className = 'buzz-status available';
+      statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
+    } else {
+      statusEl.className = 'buzz-status locked';
+      statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
+    }
+    statusEl.style.display = 'block';
+  }
+
+  function showContestantBuzz(contestantName, team, teamDisplay) {
+    if (buzzLocked) return; // حارس محلي
+    buzzLocked = true;
+    buzzerName = contestantName;
+    buzzerTeam = team;
+
+    playBuzzSound();
+    updateBuzzStatus(false, `${contestantName} حجز الزر`);
+
+    document.getElementById('buzzedName').textContent = contestantName;
+
+    const teamIndicator = document.getElementById('teamIndicator');
+    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    teamIndicator.textContent = teamName;
+    teamIndicator.className = `team-indicator ${team}`;
+
+    document.getElementById('buzzedOverlay').classList.add('show');
+    startCountdown();
+  }
+
+  function startCountdown() {
+    if (countdownTimer) clearInterval(countdownTimer); // حارس
+    let timeLeft = 3;
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.textContent = timeLeft;
+
+    countdownTimer = setInterval(() => {
+      timeLeft--;
+      countdownEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(countdownTimer);
+        endBuzzSession();
+      }
+    }, 1000);
+  }
+
+  function endBuzzSession() {
+    playEndSound();
+    setTimeout(() => {
+      document.getElementById('buzzedOverlay').classList.remove('show');
+    }, 500);
+    setTimeout(() => {
+      buzzLocked = false;
+      buzzerName = '';
+      buzzerTeam = '';
+      updateBuzzStatus(true);
+    }, 2000);
+  }
+
+  function resetBuzzer() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    document.getElementById('buzzedOverlay').classList.remove('show');
+    buzzLocked = false;
+    buzzerName = '';
+    buzzerTeam = '';
+    updateBuzzStatus(true);
+  }
+
+  // ===================== تحميل حالة الجلسة (قراءة فقط) =====================
+  async function loadSessionState() {
+    try {
+      const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        updateScores(data.team1_score || 0, data.team2_score || 0);
+        if (data.cell_states) {
+          for (const [letter, state] of Object.entries(data.cell_states)) {
+            updateCellState(letter, state);
+          }
+        }
+      } else if (response.status === 410) {
+        document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1></div>';
+      }
+    } catch (error) {
+      console.error('خطأ في تحميل حالة الجلسة:', error);
+    }
+  }
+
+  // ===================== WebSocket مع إعادة اتصال + Keep-Alive =====================
+  function setupWebSocket() {
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display`);
+
+      socket.onopen = function() {
+        console.log('✅ WebSocket متصل لشاشة العرض');
+        reconnectDelay = 1000;
+        updateBuzzStatus(true);
+
+        // keep-alive ping كل 25 ثانية
+        if (pingTimer) clearInterval(pingTimer);
+        pingTimer = setInterval(() => {
+          try {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+              socket.send(JSON.stringify({ type: 'ping' }));
             }
-            
-            console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية للعرض بالحروف:`, arabicLetters.slice(0, 25));
-        }
+          } catch (e) { /* ignore */ }
+        }, 25000);
+      };
 
-        // تحديث النقاط
-        function updateScores(team1Score, team2Score) {
-            document.getElementById('team1Score').textContent = team1Score;
-            document.getElementById('team2Score').textContent = team2Score;
-        }
+      socket.onmessage = function(event) {
+        const data = JSON.parse(event.data || "{}");
+        switch (data.type) {
+          case 'pong':
+            // تجاهل رد البينغ
+            break;
 
-        // تحديث حالة الخلايا
-        function updateCellState(letter, state) {
-            const element = document.querySelector(`[data-letter="${letter}"]`);
-            if (element) {
-                element.classList.remove('team1', 'team2');
-                if (state !== 'normal') {
-                    element.classList.add(state);
-                }
-                cellStates[letter] = state;
-            }
-        }
+          case 'cell_state_updated':
+            updateCellState(data.letter, data.state);
+            break;
 
-        // عرض السؤال
-        function showQuestion(letter, questionData) {
-            if (!questionData) return;
-            
-            const questionDiv = document.getElementById('currentQuestion');
-            const letterSpan = document.getElementById('questionLetter');
-            const textSpan = document.getElementById('questionText');
-            const answerSpan = document.getElementById('questionAnswer');
-            
-            letterSpan.textContent = `حرف ${letter}`;
-            textSpan.textContent = questionData.question;
-            answerSpan.textContent = questionData.answer;
-            
-            questionDiv.classList.add('show');
-            
-            // إخفاء السؤال بعد 10 ثوان
-            setTimeout(() => {
-                questionDiv.classList.remove('show');
-            }, 10000);
-        }
+          case 'scores_updated':
+            updateScores(data.team1_score, data.team2_score);
+            break;
 
-        // تشغيل الصوت
-        function playBuzzSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
+          case 'show_question':
+            showQuestion(data.letter, data);
+            break;
 
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
+          case 'show_contestant_buzz':
+            showContestantBuzz(data.contestant_name, data.team, data.team_display);
+            break;
 
-                oscillator.frequency.value = 800;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+          case 'buzz_reset':
+            resetBuzzer();
+            break;
 
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.3);
-                
-                console.log('🔊 تم تشغيل صوت الضغط');
-            } catch (error) {
-                console.log('لا يمكن تشغيل الصوت');
-            }
-        }
-
-        // تشغيل صوت انتهاء الوقت
-        function playEndSound() {
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioContext.createOscillator();
-                const gainNode = audioContext.createGain();
-
-                oscillator.connect(gainNode);
-                gainNode.connect(audioContext.destination);
-
-                oscillator.frequency.value = 400;
-                oscillator.type = 'sine';
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.5);
-                
-                console.log('🔔 تم تشغيل صوت انتهاء الوقت');
-            } catch (error) {
-                console.log('لا يمكن تشغيل الصوت');
-            }
-        }
-
-        // تحديث حالة الزر
-        function updateBuzzStatus(available, message) {
-            const statusEl = document.getElementById('buzzStatus');
-            
-            if (available) {
-                statusEl.className = 'buzz-status available';
-                statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
-            } else {
-                statusEl.className = 'buzz-status locked';
-                statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
-            }
-            
-            statusEl.style.display = 'block';
-        }
-
-        // عرض ضغطة المتسابق مع المؤقت
-        function showContestantBuzz(contestantName, team, teamDisplay) {
-            // إذا كان الزر محجوز، تجاهل الضغطة
-            if (buzzLocked) {
-                console.log('🚫 الزر محجوز بالفعل، تجاهل الضغطة');
-                return;
-            }
-
-            // حجز الزر
+          case 'buzz_lock':
             buzzLocked = true;
-            buzzerName = contestantName;
-            buzzerTeam = team;
-            
-            console.log(`🎤 ${contestantName} حجز الزر!`);
-            
-            // تشغيل صوت الضغط
-            playBuzzSound();
-            
-            // تحديث حالة الزر
-            updateBuzzStatus(false, `${contestantName} حجز الزر`);
-            
-            // تحديث العرض
-            document.getElementById('buzzedName').textContent = contestantName;
-            
-            const teamIndicator = document.getElementById('teamIndicator');
-            const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
-            teamIndicator.textContent = teamName;
-            teamIndicator.className = `team-indicator ${team}`;
-            
-            // إظهار طبقة العرض
-            document.getElementById('buzzedOverlay').classList.add('show');
-            
-            // بدء العد التنازلي
-            startCountdown();
+            updateBuzzStatus(false, data.message || 'الزر محجوز');
+            break;
+
+          case 'buzz_unlock':
+            // ننهي العرض فورًا لو وصل unlock من السيرفر
+            if (buzzLocked) endBuzzSession();
+            break;
+
+          default:
+            // تجاهل
+            break;
         }
+      };
 
-        // بدء العد التنازلي 3 ثوان
-        function startCountdown() {
-            let timeLeft = 3;
-            const countdownEl = document.getElementById('countdown');
-            
-            countdownEl.textContent = timeLeft;
-            
-            countdownTimer = setInterval(() => {
-                timeLeft--;
-                countdownEl.textContent = timeLeft;
-                
-                if (timeLeft <= 0) {
-                    clearInterval(countdownTimer);
-                    endBuzzSession();
-                }
-            }, 1000);
-        }
+      socket.onclose = function() {
+        console.log('❌ WebSocket انقطع — إعادة المحاولة...');
+        updateBuzzStatus(false, 'إعادة الاتصال...');
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+        setTimeout(setupWebSocket, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      };
 
-        // إنهاء جلسة الضغط
-        function endBuzzSession() {
-            // تشغيل صوت انتهاء الوقت
-            playEndSound();
-            
-            // إخفاء طبقة العرض
-            setTimeout(() => {
-                document.getElementById('buzzedOverlay').classList.remove('show');
-            }, 500);
-            
-            // إلغاء حجز الزر
-            setTimeout(() => {
-                buzzLocked = false;
-                buzzerName = '';
-                buzzerTeam = '';
-                updateBuzzStatus(true);
-                console.log('✅ تم إلغاء حجز الزر');
-            }, 2000); // انتظار ثانيتين إضافيتين قبل فتح الزر مرة أخرى
-        }
+      socket.onerror = function(err) {
+        console.error('❌ خطأ WebSocket:', err);
+        try { socket.close(); } catch {}
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      };
 
-        // إعادة تعيين الزر يدوياً (للمقدم)
-        function resetBuzzer() {
-            if (countdownTimer) {
-                clearInterval(countdownTimer);
-            }
-            
-            document.getElementById('buzzedOverlay').classList.remove('show');
-            buzzLocked = false;
-            buzzerName = '';
-            buzzerTeam = '';
-            updateBuzzStatus(true);
-            console.log('🔄 تم إعادة تعيين الزر يدوياً');
-        }
+    } catch (error) {
+      console.error('خطأ في إنشاء WebSocket:', error);
+      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      setTimeout(setupWebSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+    }
+  }
 
-        // تحميل حالة الجلسة من السيرفر
-        async function loadSessionState() {
-            try {
-                const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+  // إغلاق نظيف عند مغادرة الصفحة
+  window.addEventListener('beforeunload', () => {
+    try {
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close(1000, 'page unload');
+      }
+    } catch {}
+    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+  });
 
-                if (response.ok) {
-                    const data = await response.json();
+  // ===================== تحكم سريع بالكيبورد =====================
+  document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' || event.code === 'Enter') {
+      event.preventDefault();
+      resetBuzzer();
+    }
+    if (event.code === 'Escape') {
+      resetBuzzer();
+    }
+  });
 
-                    // تحديث النقاط
-                    updateScores(data.team1_score || 0, data.team2_score || 0);
+  document.addEventListener('click', function() {
+    if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
+      resetBuzzer();
+    }
+  });
 
-                    // تحديث حالة الخلايا
-                    if (data.cell_states) {
-                        for (const [letter, state] of Object.entries(data.cell_states)) {
-                            updateCellState(letter, state);
-                        }
-                    }
-                } else if (response.status === 410) {
-                    // الجلسة منتهية الصلاحية
-                    document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1><p>انتهت صلاحية الجلسة</p></div>';
-                }
-            } catch (error) {
-                console.error('خطأ في تحميل حالة الجلسة:', error);
-            }
-        }
+  // ===================== تهيئة الصفحة =====================
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎬 تم تحميل شاشة العرض - خلية الحروف');
+    createHoneycombCells();
+    loadSessionState();
+    setupWebSocket();
 
-        // WebSocket للتحديثات المباشرة
-        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-        const socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/`);
+    // تحديث دوري للحالة كل 15 ثانية (قراءة فقط)
+    setInterval(loadSessionState, 15000);
 
-        socket.onopen = function(event) {
-            console.log('✅ WebSocket متصل لشاشة العرض');
-            updateBuzzStatus(true); // الزر متاح عند بدء الاتصال
-        };
+    // إظهار حالة الزر بعد ثانية
+    setTimeout(() => { updateBuzzStatus(true); }, 1000);
+  });
+</script>
 
-        socket.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            console.log('📨 تحديث مباشر:', data);
 
-            switch(data.type) {
-                case 'cell_state_updated':
-                    updateCellState(data.letter, data.state);
-                    break;
-                    
-                case 'scores_updated':
-                    updateScores(data.team1_score, data.team2_score);
-                    break;
-                    
-                case 'show_question':
-                    showQuestion(data.letter, data);
-                    break;
-                    
-                case 'show_contestant_buzz':
-                    showContestantBuzz(data.contestant_name, data.team, data.team_display);
-                    break;
-                    
-                // رسائل إضافية للتحكم في الزر
-                case 'buzz_reset':
-                    resetBuzzer();
-                    break;
-                    
-                case 'buzz_lock':
-                    buzzLocked = true;
-                    updateBuzzStatus(false, data.message || 'الزر محجوز');
-                    break;
-                    
-                case 'buzz_unlock':
-                    buzzLocked = false;
-                    updateBuzzStatus(true, 'الزر متاح للضغط');
-                    break;
-            }
-        };
-
-        socket.onclose = function(event) {
-            console.log('❌ WebSocket مقطوع - محاولة إعادة الاتصال...');
-            updateBuzzStatus(false, 'منقطع عن الخادم');
-            setTimeout(() => {
-                location.reload(); // إعادة تحميل الصفحة للاتصال مجدداً
-            }, 3000);
-        };
-
-        socket.onerror = function(error) {
-            console.error('❌ خطأ WebSocket:', error);
-            updateBuzzStatus(false, 'خطأ في الاتصال');
-        };
-
-        // تحديث دوري لحالة الجلسة كـ backup
-        setInterval(loadSessionState, 15000); // كل 15 ثانية
-
-        // التحكم بالكيبورد للمقدم
-        document.addEventListener('keydown', function(event) {
-            // مسافة أو Enter لإعادة تعيين الزر
-            if (event.code === 'Space' || event.code === 'Enter') {
-                event.preventDefault();
-                resetBuzzer();
-            }
-            
-            // Escape لإلغاء العرض
-            if (event.code === 'Escape') {
-                resetBuzzer();
-            }
-        });
-
-        // النقر في أي مكان لإعادة تعيين الزر
-        document.addEventListener('click', function(event) {
-            if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
-                resetBuzzer();
-            }
-        });
-
-        // بدء التطبيق
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('تم تحميل شاشة العرض - خلية الحروف');
-            createHoneycombCells();
-            loadSessionState();
-            
-            // إخفاء مؤشر الحالة في البداية
-            setTimeout(() => {
-                updateBuzzStatus(true);
-            }, 1000);
-        });
-    </script>
 </body>
 </html>

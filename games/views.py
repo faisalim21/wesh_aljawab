@@ -12,6 +12,8 @@ import json
 import uuid
 import logging
 import random
+from django.core.cache import cache
+
 from .models import (
     GamePackage, GameSession, UserPurchase, LettersGameProgress, 
     LettersGameQuestion, Contestant
@@ -464,27 +466,27 @@ def letters_display(request, display_link):
     })
 
 def letters_contestants(request, contestants_link):
-    """صفحة المتسابقين لخلية الحروف - متاحة للجميع بدون تسجيل دخول"""
-    session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True)
-    
-    # التحقق من انتهاء صلاحية الجلسة
-    if is_session_expired(session):
-        return render(request, 'games/session_expired.html', {
-            'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)',
-            'session_type': 'مجانية',
-            'upgrade_message': 'للاستمتاع بجلسات غير محدودة، تصفح الحزم المدفوعة!'
-        })
-    
-    # حساب الوقت المتبقي
-    time_remaining = get_session_time_remaining(session)
-    
-    logger.info(f'Contestants page accessed for session: {session.id}')
-    
-    return render(request, 'games/letters/letters_contestants.html', {
-        'session': session,
-        'time_remaining': time_remaining,
-        'is_free_session': session.package.is_free,
-    })
+   """صفحة المتسابقين لخلية الحروف - متاحة للجميع بدون تسجيل دخول"""
+   session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True)
+   
+   # التحقق من انتهاء صلاحية الجلسة
+   if is_session_expired(session):
+       return render(request, 'games/session_expired.html', {
+           'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)',
+           'session_type': 'مجانية',
+           'upgrade_message': 'للاستمتاع بجلسات غير محدودة، تصفح الحزم المدفوعة!'
+       })
+   
+   # حساب الوقت المتبقي
+   time_remaining = get_session_time_remaining(session)
+   
+   logger.info(f'Contestants page accessed for session: {session.id}')
+   
+   return render(request, 'games/letters/letters_contestants.html', {
+       'session': session,
+       'time_remaining': time_remaining,
+       'is_free_session': session.package.is_free,
+   })
 
 # =======================================
 # نفس منطق منع التلاعب لألعاب أخرى
@@ -1270,4 +1272,124 @@ def api_user_session_stats(request):
         return JsonResponse({
             'success': False,
             'error': 'حدث خطأ في جلب الإحصائيات'
+        }, status=500)
+    
+
+# أضف هذا في نهاية ملف games/views.py
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_contestant_buzz_http(request):
+    """API للضغط عبر HTTP كبديل للـ WebSocket"""
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('session_id')
+        contestant_name = data.get('contestant_name')
+        team = data.get('team')
+        timestamp = data.get('timestamp')
+        
+        if not all([session_id, contestant_name, team]):
+            return JsonResponse({
+                'success': False,
+                'error': 'جميع المعاملات مطلوبة'
+            }, status=400)
+        
+        # التحقق من الجلسة
+        try:
+            session = GameSession.objects.get(id=session_id, is_active=True)
+        except GameSession.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': 'الجلسة غير موجودة'
+            }, status=404)
+        
+        # التحقق من انتهاء الصلاحية
+        if is_session_expired(session):
+            return JsonResponse({
+                'success': False,
+                'error': 'انتهت صلاحية الجلسة',
+                'session_expired': True
+            }, status=410)
+        
+        # فحص حجز الزر
+        buzz_lock_key = f"buzz_lock_{session_id}"
+        current_buzzer = cache.get(buzz_lock_key)
+        
+        if current_buzzer:
+            return JsonResponse({
+                'success': False,
+                'message': f'الزر محجوز من {current_buzzer["name"]}',
+                'locked_by': current_buzzer['name'],
+                'locked_team': current_buzzer['team']
+            })
+        
+        # حجز الزر
+        buzzer_data = {
+            'name': contestant_name,
+            'team': team,
+            'timestamp': timestamp,
+            'session_id': session_id,
+            'method': 'HTTP'
+        }
+        
+        cache.set(buzz_lock_key, buzzer_data, timeout=5)  # 5 ثوان كما طلبت
+        
+        # تسجيل المتسابق إذا لم يكن موجود
+        contestant, created = Contestant.objects.get_or_create(
+            session=session,
+            name=contestant_name,
+            defaults={'team': team}
+        )
+        
+        if not created and contestant.team != team:
+            contestant.team = team
+            contestant.save()
+        
+        # إرسال إشعار عبر WebSocket لباقي الصفحات
+        from channels.layers import get_channel_layer
+        from asgiref.sync import async_to_sync
+        
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            try:
+                group_name = f"letters_session_{session_id}"
+                team_display = session.team1_name if team == 'team1' else session.team2_name
+                
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        'type': 'broadcast_contestant_buzz',
+                        'contestant_name': contestant_name,
+                        'team': team,
+                        'team_display': team_display,
+                        'timestamp': timestamp,
+                        'method': 'HTTP'
+                    }
+                )
+                
+                logger.info(f"HTTP Buzz sent to WebSocket: {contestant_name} from {team}")
+                
+            except Exception as e:
+                logger.error(f"Error sending HTTP buzz to WebSocket: {e}")
+        
+        logger.info(f"HTTP Buzz accepted: {contestant_name} from {team} in session {session_id}")
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'تم تسجيل إجابتك يا {contestant_name}!',
+            'contestant_name': contestant_name,
+            'team': team,
+            'method': 'HTTP'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'بيانات JSON غير صحيحة'
+        }, status=400)
+    except Exception as e:
+        logger.error(f'HTTP Buzz error: {e}')
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ داخلي: {str(e)}'
         }, status=500)
