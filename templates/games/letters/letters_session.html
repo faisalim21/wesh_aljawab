@@ -348,14 +348,6 @@
       </div>
     </div>
 
-    <!-- المؤقت -->
-    <div class="text-center mb-3">
-      <div class="timer-display" id="timerDisplay">3</div>
-      <button class="btn btn-danger btn-lg" id="timerBtn" onclick="startTimer()">
-        ▶️ ابدأ العد التنازلي
-      </button>
-    </div>
-
     <!-- عرض السؤال -->
     <div id="questionDisplay" class="alert alert-light text-dark mt-4 text-center fs-4 fw-bold">
       اضغط على أي حرف لعرض السؤال
@@ -470,7 +462,7 @@
 
 
 <script>
-// متغيرات اللعبة
+// ======================= المتغيرات العامة =======================
 let clickCount = {};
 let team1Score = 0;
 let team2Score = 0;
@@ -479,7 +471,7 @@ let currentQuestionData = null;
 let isTimerRunning = false;
 let socket = null;
 
-// حساب الوقت المتبقي للجلسة المجانية
+// حساب الوقت المتبقي للجلسة المجانية (إن وجد)
 let sessionTimeRemaining = null;
 {% if session.package.is_free and time_remaining %}
   try {
@@ -488,9 +480,9 @@ let sessionTimeRemaining = null;
 {% endif %}
 
 const sessionId = '{{ session.id }}';
-const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}';
+const csrfToken = (document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}') ?? '';
 
-// ===== WebSocket (WS-only) مع إعادة اتصال + keep-alive =====
+// ======================= WebSocket مع إعادة اتصال + keep-alive =======================
 let reconnectDelay = 1000;     // 1s -> 2s -> 5s (حد أقصى)
 const maxDelay = 5000;
 let pingTimer = null;
@@ -525,11 +517,11 @@ function setupWebSocket() {
           break;
 
         case 'buzz_lock':
-          // ممكن تضيف عرض حالة قفل صغيرة لو حبيت
+          // بإمكانك إظهار حالة القفل لو حبيت
           break;
 
         case 'buzz_unlock':
-          // فك القفل بصريًا انتهى عند المتسابق/الشاشة
+          // فك القفل بصريًا يتم عند المتسابق/العرض
           break;
 
         case 'cell_state_updated':
@@ -537,18 +529,13 @@ function setupWebSocket() {
           break;
 
         case 'scores_updated':
-          team1Score = data.team1_score;
-          team2Score = data.team2_score;
+          team1Score = Number(data.team1_score || 0);
+          team2Score = Number(data.team2_score || 0);
           updateScoreDisplay();
           break;
 
-        case 'show_question':
-          // المقدم عنده العرض التفصيلي محليًا
-          break;
-
         case 'pong':
-          // اختياري: سجل وصول الرد
-          // console.debug('pong');
+          // keep-alive رد
           break;
 
         default:
@@ -583,7 +570,7 @@ window.addEventListener('beforeunload', () => {
   if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
 });
 
-// مؤقت الجلسة المجانية
+// ======================= مؤقت صلاحية الجلسة المجانية =======================
 function updateSessionTimer() {
   if (sessionTimeRemaining && sessionTimeRemaining > 0) {
     const hours = Math.floor(sessionTimeRemaining / 3600);
@@ -616,7 +603,7 @@ function updateSessionTimer() {
   }
 }
 
-// إنشاء الخلايا السداسية ديناميكياً
+// ======================= إنشاء خلية الحروف =======================
 function createHoneycombCells() {
   const svg = document.getElementById('honeycombSvg');
   const arabicLetters = window.sessionData.arabicLetters || [];
@@ -676,7 +663,7 @@ function createHoneycombCells() {
   console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية بالحروف:`, arabicLetters.slice(0, 25));
 }
 
-// قفل سريع ضد الـ double-tap عند اختيار الحرف
+// ======================= تعامل النقر على الحروف =======================
 let letterClickLocked = false;
 
 async function selectLetter(letter, element) {
@@ -688,29 +675,28 @@ async function selectLetter(letter, element) {
   clickCount[letter] = (clickCount[letter] || 0) + 1;
 
   if (clickCount[letter] === 1) {
+    // عرض السؤال محليًا فقط (HTTP) — لا WS
     await showQuestion(letter);
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'select_letter', letter }));
-    }
+    // 🔇 لا ترسل select_letter عبر WebSocket
   } else if (clickCount[letter] === 2) {
     element.classList.remove('team2');
     element.classList.add('team1');
-    updateCellState(letter, 'team1');
-    sendCellUpdate(letter, 'team1');
+    await updateCellState(letter, 'team1');   // تحديث DB
+    sendCellUpdate(letter, 'team1');          // بث WS
   } else if (clickCount[letter] === 3) {
     element.classList.remove('team1');
     element.classList.add('team2');
-    updateCellState(letter, 'team2');
+    await updateCellState(letter, 'team2');
     sendCellUpdate(letter, 'team2');
   } else {
     element.classList.remove('team1', 'team2');
     clickCount[letter] = 0;
-    updateCellState(letter, 'normal');
+    await updateCellState(letter, 'normal');
     sendCellUpdate(letter, 'normal');
   }
 }
 
-// عرض السؤال محليًا في صفحة المقدم
+// ======================= السؤال للمقدم فقط (HTTP) =======================
 async function showQuestion(letter) {
   currentLetter = letter;
   document.getElementById('currentLetter').textContent = letter;
@@ -740,10 +726,9 @@ async function showQuestion(letter) {
   document.getElementById('alt2Answer').textContent = currentQuestionData.alt2.answer;
 }
 
-// جلب السؤال من الخادم (HTTP لأن القراءة من DB)
 async function fetchQuestionFromServer(letter) {
   try {
-    const response = await fetch(`/games/api/get-question/?letter=${letter}&session_id=${sessionId}`, {
+    const response = await fetch(`/games/api/get-question/?letter=${encodeURIComponent(letter)}&session_id=${encodeURIComponent(sessionId)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
     });
@@ -755,14 +740,13 @@ async function fetchQuestionFromServer(letter) {
   }
 }
 
-// إرسال تحديث الخلية عبر WebSocket
+// ======================= تلوين الخلايا ومزامنة DB/WS =======================
 function sendCellUpdate(letter, state) {
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify({ type: 'update_cell_state', letter, state }));
   }
 }
 
-// تحديث حالة الخلية في قاعدة البيانات
 async function updateCellState(letter, state) {
   try {
     const response = await fetch('/games/api/update-cell-state/', {
@@ -776,20 +760,21 @@ async function updateCellState(letter, state) {
   }
 }
 
-// تبديل السؤال
-function switchQuestion(type) {
-  if (currentQuestionData && currentQuestionData[type]) {
-    document.getElementById('mainQuestion').textContent = currentQuestionData[type].question;
-    document.getElementById('mainAnswer').textContent = currentQuestionData[type].answer;
+function updateCellVisually(letter, state) {
+  const element = document.querySelector(`[data-letter="${letter}"]`);
+  if (element) {
+    element.classList.remove('team1', 'team2');
+    if (state !== 'normal') element.classList.add(state);
+    clickCount[letter] = state === 'team1' ? 2 : state === 'team2' ? 3 : (state === 'normal' ? 0 : 1);
   }
 }
 
-// تحديث النقاط
+// ======================= إدارة النقاط =======================
 async function updateScore(team, change) {
   if (team === 'team1') {
-    team1Score = Math.max(0, team1Score + change);
+    team1Score = Math.max(0, Number(team1Score) + Number(change));
   } else {
-    team2Score = Math.max(0, team2Score + change);
+    team2Score = Math.max(0, Number(team2Score) + Number(change));
   }
 
   updateScoreDisplay();
@@ -809,7 +794,6 @@ async function updateScore(team, change) {
   }
 }
 
-// تحديث عرض النقاط
 function updateScoreDisplay() {
   document.getElementById('team1Score').textContent = team1Score;
   document.getElementById('team2Score').textContent = team2Score;
@@ -820,7 +804,7 @@ function updateScoreDisplay() {
   if (team2Desktop) team2Desktop.textContent = team2Score;
 }
 
-// بدء مؤقت 3 ثوان
+// ======================= مؤقت 3 ثوانٍ (محلي) =======================
 function startTimer() {
   if (isTimerRunning) return;
 
@@ -865,10 +849,10 @@ function startTimer() {
   }, 1000);
 }
 
-// تحميل حالة الجلسة عند بداية الصفحة
+// ======================= تحميل حالة الجلسة عند بداية الصفحة =======================
 async function loadSessionState() {
   try {
-    const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`, {
+    const response = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
     });
@@ -876,8 +860,8 @@ async function loadSessionState() {
     if (response.ok) {
       const data = await response.json();
 
-      team1Score = data.team1_score || 0;
-      team2Score = data.team2_score || 0;
+      team1Score = Number(data.team1_score || 0);
+      team2Score = Number(data.team2_score || 0);
       updateScoreDisplay();
 
       if (data.cell_states) {
@@ -889,13 +873,16 @@ async function loadSessionState() {
           }
         }
       }
+    } else if (response.status === 410) {
+      alert('⏰ انتهت صلاحية الجلسة!');
+      window.location.href = '/games/letters/';
     }
   } catch (error) {
     console.error('خطأ في تحميل حالة الجلسة:', error);
   }
 }
 
-// عرض ضغطة المتسابق (إشعار صغير + صوت)
+// ======================= عرض ضغطة المتسابق للمقدم =======================
 function showContestantBuzz(contestantName, team, teamDisplay) {
   const notification = document.getElementById('buzzNotification');
   notification.innerHTML = `🚨 ${contestantName} من ${teamDisplay || (team === 'team1' ? 'الفريق الأخضر' : 'الفريق البرتقالي')} ضغط الزر!`;
@@ -926,17 +913,7 @@ function showContestantBuzz(contestantName, team, teamDisplay) {
   console.log(`🎤 ${contestantName} من ${team} ضغط الزر!`);
 }
 
-// تحديث حالة الخلية بصرياً
-function updateCellVisually(letter, state) {
-  const element = document.querySelector(`[data-letter="${letter}"]`);
-  if (element) {
-    element.classList.remove('team1', 'team2');
-    if (state !== 'normal') element.classList.add(state);
-    clickCount[letter] = state === 'team1' ? 2 : state === 'team2' ? 3 : (state === 'normal' ? 0 : 1);
-  }
-}
-
-// نسخ الروابط
+// ======================= نسخ الروابط =======================
 function copyLink(link) {
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(link).then(showCopySuccess).catch(err => {
@@ -984,7 +961,7 @@ function showCopySuccess() {
   }, 2000);
 }
 
-// منع التكبير المزدوج للجوال
+// ======================= منع التكبير المزدوج للجوال =======================
 let lastTouchEnd = 0;
 document.addEventListener('touchend', function (event) {
   const now = (new Date()).getTime();
@@ -992,7 +969,7 @@ document.addEventListener('touchend', function (event) {
   lastTouchEnd = now;
 }, false);
 
-// تهيئة التطبيق
+// ======================= تهيئة التطبيق =======================
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🎬 تم تحميل صفحة خلية الحروف - المقدم');
   setupWebSocket();
@@ -1001,6 +978,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (sessionTimeRemaining && sessionTimeRemaining > 0) updateSessionTimer();
 });
 </script>
+
 
 
 </body>

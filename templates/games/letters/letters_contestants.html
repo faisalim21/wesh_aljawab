@@ -17,7 +17,6 @@
       color: white;
       overflow-x: hidden;
     }
-
     .main-container {
       display: flex;
       flex-direction: column;
@@ -27,7 +26,6 @@
       padding: 20px;
       position: relative;
     }
-
     .logo-container {
       position: absolute;
       top: 20px;
@@ -38,19 +36,16 @@
       box-shadow: 0 6px 20px rgba(0,0,0,0.2);
       backdrop-filter: blur(10px);
     }
-
     .logo-container img {
       max-height: 50px;
       width: auto;
       display: block;
     }
-
     .main-title {
       text-align: center;
       margin-bottom: 30px;
       text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
     }
-
     .main-title h1 {
       font-size: 2.5rem;
       font-weight: 900;
@@ -60,13 +55,11 @@
       background-clip: text;
       margin: 0;
     }
-
     .main-title .subtitle {
       font-size: 1.1rem;
       color: #e2e8f0;
       margin-top: 8px;
     }
-
     .contestant-card {
       background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(20px);
@@ -79,7 +72,6 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       transition: all 0.3s ease;
     }
-
     .name-input {
       background: rgba(255, 255, 255, 0.9);
       border: 2px solid rgba(255, 255, 255, 0.3);
@@ -93,18 +85,15 @@
       margin-bottom: 25px;
       transition: all 0.3s ease;
     }
-
     .name-input:focus {
       outline: none;
       border-color: #8b5cf6;
       box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
       transform: scale(1.02);
     }
-
     .team-selection {
       margin-bottom: 30px;
     }
-
     .team-selection label {
       display: block;
       font-size: 1.1rem;
@@ -112,23 +101,19 @@
       margin-bottom: 15px;
       color: #e2e8f0;
     }
-
     .team-options {
       display: flex;
       gap: 15px;
       justify-content: center;
     }
-
     .team-option {
       flex: 1;
       position: relative;
     }
-
     .team-radio {
       position: absolute;
       opacity: 0;
     }
-
     .team-label {
       display: block;
       background: rgba(255, 255, 255, 0.1);
@@ -144,21 +129,18 @@
       align-items: center;
       justify-content: center;
     }
-
     .team-radio:checked + .team-label.team1 {
       background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
       border-color: #22c55e;
       color: #22c55e;
       box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
     }
-
     .team-radio:checked + .team-label.team2 {
       background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
       border-color: #f97316;
       color: #f97316;
       box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
     }
-
     .buzz-button {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
@@ -176,28 +158,14 @@
       justify-content: center;
       margin: 0 auto;
     }
-
     .buzz-button:hover:not(:disabled) {
       transform: scale(1.1) translateY(-5px);
       background: linear-gradient(135deg, #dc2626, #b91c1c);
     }
-
     .buzz-button:disabled {
       background: linear-gradient(135deg, #6b7280, #4b5563);
       cursor: not-allowed;
     }
-
-    .buzz-button.success {
-      background: linear-gradient(135deg, #059669, #047857);
-      animation: buzzSuccess 0.5s ease-in-out;
-    }
-
-    @keyframes buzzSuccess {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-
     .status-message {
       margin-top: 20px;
       padding: 15px 20px;
@@ -206,32 +174,21 @@
       text-align: center;
       display: none;
     }
-
     .status-message.success {
       background: rgba(34, 197, 94, 0.2);
       border: 1px solid #22c55e;
       color: #22c55e;
     }
-
     .status-message.error {
       background: rgba(239, 68, 68, 0.2);
       border: 1px solid #ef4444;
       color: #ef4444;
     }
-
-    @media (max-width: 768px) {
-      .main-container { padding: 15px; }
-      .main-title h1 { font-size: 2rem; }
-      .contestant-card { padding: 30px 20px; }
-      .buzz-button { width: 100px; height: 100px; font-size: 1.3rem; }
-      .team-options { flex-direction: column; gap: 10px; }
-    }
   </style>
 </head>
 <body>
   <div class="logo-container">
-    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
-         alt="وش الجواب" class="img-fluid">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="img-fluid">
   </div>
 
   <div class="main-container">
@@ -241,8 +198,7 @@
     </div>
 
     <div class="contestant-card">
-      <input type="text" class="name-input" id="contestantName" 
-             placeholder="🏷️ اكتب اسمك هنا" maxlength="20" autocomplete="off" />
+      <input type="text" class="name-input" id="contestantName" placeholder="🏷️ اكتب اسمك هنا" maxlength="20" autocomplete="off" />
 
       <div class="team-selection">
         <label>اختر فريقك:</label>
@@ -268,55 +224,45 @@
 
 <script>
   const sessionId = '{{ session.id }}';
-  const csrfToken = '{{ csrf_token }}'; // لم نعد نستخدمه هنا
   let socket = null;
-  let reconnectDelay = 1000; // 1s ثم 2s ثم 5s (حد أقصى)
-  let maxDelay = 5000;
-  let buzzCooldown = false;
+  let reconnectDelay = 1000;
+  const maxDelay = 5000;
+
+  function preloadIdentity() {
+    const savedName = localStorage.getItem('wj_contestant_name');
+    const savedTeam = localStorage.getItem('wj_contestant_team');
+    if (savedName) document.getElementById('contestantName').value = savedName;
+    if (savedTeam) {
+      const input = document.getElementById(savedTeam);
+      if (input) input.checked = true;
+    }
+  }
+
+  function persistIdentity(name, team) {
+    try {
+      localStorage.setItem('wj_contestant_name', name || '');
+      localStorage.setItem('wj_contestant_team', team || '');
+    } catch(e) { }
+  }
 
   function connectWS() {
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=contestant`);
-
-      socket.onopen = () => {
-        console.log('✅ WebSocket متصل (contestant)');
-        reconnectDelay = 1000; // reset backoff
-      };
-
-      socket.onmessage = (event) => {
-        const data = JSON.parse(event.data || "{}");
-        // المتسابق يهمّه تأكيد/رفض الضغطة فقط
-        if (data.type === 'buzz_confirmed') {
-          showSuccess(`🎉 تم إرسال إجابتك يا ${data.contestant_name || 'مشارك'}!`);
-          const btn = document.getElementById('buzzBtn');
-          btn.classList.add('success');
-          setTimeout(resetBuzzButton, 5000);
-        } else if (data.type === 'buzz_rejected') {
-          showError(`❌ ${data.message || 'الزر محجوز'}`);
-          resetBuzzButton();
-        }
-      };
-
+      socket.onopen = () => { reconnectDelay = 1000; };
+      socket.onmessage = null;
       socket.onclose = () => {
-        console.warn('❌ WebSocket انقطع (contestant) — إعادة محاولة...');
         setTimeout(connectWS, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
       };
-
-      socket.onerror = (err) => {
-        console.error('WS error (contestant):', err);
-        try { socket.close(); } catch {}
-      };
+      socket.onerror = () => { try { socket.close(); } catch {} };
     } catch (e) {
-      console.error('WS connect error:', e);
       setTimeout(connectWS, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
   }
 
-  async function buzzAnswer() {
-    if (buzzCooldown) return showError('⏳ انتظر قليلاً...');
+  function buzzAnswer() {
     const name = document.getElementById('contestantName').value.trim();
     const team = document.querySelector('input[name="team"]:checked')?.value;
 
@@ -327,34 +273,26 @@
     }
     if (!team) return showError('⚠️ اختر فريقك');
 
-    // قفل زر المتسابق محليًا
-    buzzCooldown = true;
-    const btn = document.getElementById('buzzBtn');
-    const txt = document.getElementById('buzzText');
-    btn.disabled = true; txt.textContent = '📡 جاري الإرسال...';
+    persistIdentity(name, team);
 
     if (!socket || socket.readyState !== WebSocket.OPEN) {
-      showError('❌ الاتصال غير جاهز — انتظر اتصال المتصفح');
-      return resetBuzzButton();
+      showError('❌ الاتصال غير جاهز — تأكد من الشبكة ثم حاول مجددًا');
+      return;
     }
 
-    // إرسال رسالة الضغط عبر WS فقط
-    socket.send(JSON.stringify({
-      type: 'contestant_buzz',
-      contestant_name: name,
-      team: team,
-      timestamp: new Date().toISOString()
-    }));
-  }
+    try {
+      socket.send(JSON.stringify({
+        type: 'contestant_buzz',
+        contestant_name: name,
+        team: team,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (e) {
+      showError('❌ تعذر الإرسال — حاول مرة أخرى');
+      return;
+    }
 
-  function resetBuzzButton() {
-    buzzCooldown = false;
-    const btn = document.getElementById('buzzBtn');
-    const txt = document.getElementById('buzzText');
-    btn.disabled = false;
-    btn.classList.remove('success');
-    txt.textContent = 'جاوب';
-    hideMessage();
+    showSuccess(`✅ تم إرسال إجابتك يا ${name}!`);
   }
 
   function showSuccess(message) {
@@ -369,21 +307,20 @@
     el.textContent = message;
     el.style.display = 'block';
   }
-  function hideMessage() {
-    document.getElementById('statusMessage').style.display = 'none';
-  }
 
-  // إرسال بـ Enter
   document.getElementById('contestantName').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') buzzAnswer();
   });
 
-  // تهيئة
+  window.addEventListener('beforeunload', () => {
+    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
+  });
+
   document.addEventListener('DOMContentLoaded', () => {
+    preloadIdentity();
     document.getElementById('contestantName').focus();
     connectWS();
   });
 </script>
-
 </body>
 </html>

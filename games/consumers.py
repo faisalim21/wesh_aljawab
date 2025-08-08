@@ -3,214 +3,229 @@
 import json
 import asyncio
 import logging
+from datetime import timedelta
 
-from channels.generic.websocket import AsyncWebsocketConsumer
 from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
-from games.models import GameSession, LettersGameQuestion, Contestant
+from games.models import GameSession, Contestant
 
 logger = logging.getLogger('games')
 
 
 class LettersGameConsumer(AsyncWebsocketConsumer):
+    """
+    يربط ثلاث واجهات لنفس الجلسة:
+    - role=host       : صفحة المقدّم (تحكّم بالحروف/الخلايا/النقاط + استلام اسم أول متسابق ضغط)
+    - role=display    : شاشة العرض (قراءة فقط + تستقبل إسم أول من ضغط)
+    - role=contestant : المتسابق (زر واحد يرسل محاولة الضغط، يتلقى قبول/رفض *مباشر فقط*)
+    """
+
+    BUZZ_RATE_MAX = 5      # أقصى 5 محاولات
+    BUZZ_RATE_WINDOW = 10  # خلال 10 ثوانٍ
+
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"letters_session_{self.session_id}"
 
+        # استخرج الدور من الـ QueryString
+        qs = self._parse_qs()
+        self.role = qs.get('role', ['viewer'])[0]  # host | contestant | display | viewer
+
+        # التحقق من الجلسة
+        try:
+            self.session = await self.get_session()
+        except ObjectDoesNotExist:
+            await self.close(code=4404)  # Not found
+            return
+
+        # منع التشغيل على جلسة منتهية/غير نشطة
+        if await self._is_session_expired(self.session) or not self.session.is_active:
+            await self.close(code=4401)  # expired/inactive
+            return
+
+        # صلاحيات المقدم (لو تبغى تشدد أكثر: أضف host_token لاحقًا)
+        if self.role == 'host':
+            user = self.scope.get('user')
+            if not user or not user.is_authenticated or user.id != self.session.host_id:
+                await self.close(code=4403)  # Forbidden
+                return
+
+        # الانضمام للمجموعة
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-        logger.info(f"WebSocket connected for session: {self.session_id}")
+        logger.info(f"WS connected: session={self.session_id}, role={self.role}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
-        logger.info(f"WebSocket disconnected for session: {self.session_id}")
+        try:
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        except Exception:
+            pass
+        logger.info(f"WS disconnected: session={self.session_id}, role={self.role}, code={close_code}")
 
-        async def receive(self, text_data):
+    async def receive(self, text_data: str):
+        # إغلاق أنيق إذا انتهت الجلسة
+        if await self._is_session_expired(self.session) or not self.session.is_active:
             try:
-                data = json.loads(text_data)
-                message_type = data.get('type')
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'انتهت صلاحية الجلسة'}))
+            finally:
+                await self.close(code=4401)
+            return
 
-                logger.info(f"Received message type: {message_type} for session: {self.session_id}")
+        try:
+            data = json.loads(text_data or "{}")
+        except json.JSONDecodeError:
+            return  # تجاهل البيانات التالفة
 
-                if message_type == "contestant_buzz":
-                    await self.handle_contestant_buzz(data)
-                elif message_type == "select_letter":
-                    await self.handle_select_letter(data)
-                elif message_type == "update_cell_state":
+        message_type = data.get('type')
+        logger.debug(f"WS message: {message_type} | role={self.role} | session={self.session_id}")
+
+        try:
+            # keep-alive
+            if message_type == "ping":
+                await self.send(text_data=json.dumps({"type": "pong"}))
+                return
+
+            # المتسابق: إرسال فقط
+            if message_type == "contestant_buzz" and self.role == "contestant":
+                await self.handle_contestant_buzz(data)
+                return
+
+            # المقدم: أوامر التحكم
+            if self.role == "host":
+                if message_type == "update_cell_state":
                     await self.handle_update_cell_state(data)
-                elif message_type == "update_scores":
+                    return
+                if message_type == "update_scores":
                     await self.handle_update_scores(data)
-                elif message_type == "buzz_reset":
-                    await self.handle_buzz_reset(data)
-                elif message_type == "ping":
-                    # رد اختياري
-                    await self.send(text_data=json.dumps({"type": "pong"}))
-                else:
-                    # تجاهل أي نوع غير معروف (لا تفك القفل بالخطأ)
-                    logger.debug(f"Ignored unknown message type: {message_type}")
+                    return
+                if message_type == "buzz_reset":
+                    await self.handle_buzz_reset()
+                    return
 
-            except json.JSONDecodeError:
-                ...
-
+            # display / viewer لا يرسلون شيء
+            # تجاهل أي نوع غير معروف أو غير مسموح
+        except Exception as e:
+            logger.error(f"WS handler error for {message_type}: {e}")
+            # لا ترسل تفاصيل الخطأ للمستخدم
 
     # -------------------------
     # Handlers
     # -------------------------
     async def handle_contestant_buzz(self, data):
-        """أول متسابق يضغط يحجز الزر 5 ثواني، ويظهر اسمه للجميع، ويبدأ مؤثر 3 ثواني ثم نفك القفل تلقائياً."""
-        contestant_name = data.get("contestant_name")
+        """
+        أول متسابق يضغط يحجز الزر 3 ثوانٍ فقط، يظهر اسمه للمقدّم والعرض،
+        ثم يفك القفل تلقائيًا من السيرفر.
+        """
+        contestant_name = (data.get("contestant_name") or "").strip()
         team = data.get("team")
         timestamp = data.get("timestamp")
 
-        if not contestant_name or not team:
-            await self.send(text_data=json.dumps({
-                'type': 'error',
-                'message': 'اسم المتسابق والفريق مطلوبان'
-            }))
+        if not contestant_name or team not in ("team1", "team2"):
+            await self._reply_contestant(error="اسم المتسابق والفريق مطلوبان")
             return
 
-        try:
-            session = await self.get_session()
-            buzz_lock_key = f"buzz_lock_{self.session_id}"
+        # Rate limit لكل (IP + اسم) على نفس الجلسة
+        if not await self._allow_buzz_rate(contestant_name):
+            await self._reply_contestant(rejected="محاولات كثيرة جدًا، حاول بعد قليل")
+            return
 
-            current_buzzer = cache.get(buzz_lock_key)
-            if current_buzzer:
-                # الزر محجوز بالفعل
-                await self.send(text_data=json.dumps({
-                    'type': 'buzz_rejected',
-                    'message': f'الزر محجوز من {current_buzzer["name"]}',
-                    'locked_by': current_buzzer['name']
-                }))
-                return
+        buzz_lock_key = f"buzz_lock_{self.session_id}"
+        current_buzzer = cache.get(buzz_lock_key)
+        if current_buzzer:
+            await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
+            return
 
-            # حجز لمدة 5 ثواني
-            cache.set(buzz_lock_key, {
-                'name': contestant_name,
-                'team': team,
-                'timestamp': timestamp
-            }, timeout=5)
+        # حجز لمدة 3 ثوانٍ (قفل مركزي في الكاش)
+        cache.set(
+            buzz_lock_key,
+            {'name': contestant_name, 'team': team, 'timestamp': timestamp},
+            timeout=3  # <-- أهم تغيير: القفل 3 ثوانٍ فقط
+        )
 
-            # بلغ الجميع إن الزر انقفل ومن حجزه
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'broadcast_buzz_lock',
-                    'message': f'{contestant_name} حجز الزر',
-                    'locked_by': contestant_name,
-                    'team': team
-                }
-            )
+        # سجّل المتسابق إن لم يكن موجود
+        await self.register_contestant_if_needed(self.session, contestant_name, team)
 
-            # سجّل المتسابق إن لم يكن موجود
-            await self.register_contestant_if_needed(session, contestant_name, team)
+        # تأكيد مباشر لصاحب الضغطة فقط
+        await self._reply_contestant(confirmed=True, name=contestant_name, team=team)
 
-            # أكد للمتسابق صاحب الضغطة
-            await self.send(text_data=json.dumps({
-                'type': 'buzz_confirmed',
+        # بث قفل الزر واسم المقبول (إلى المقدم + شاشة العرض فقط)
+        await self._group_send_hosts_displays(
+            {
+                'type': 'broadcast_buzz_lock',
+                'message': f'{contestant_name} حجز الزر',
+                'locked_by': contestant_name,
+                'team': team
+            }
+        )
+
+        team_display = await self.get_team_display_name(self.session, team)
+        await self._group_send_hosts_displays(
+            {
+                'type': 'broadcast_contestant_buzz',
                 'contestant_name': contestant_name,
                 'team': team,
-                'message': f'تم تسجيل إجابتك يا {contestant_name}!'
-            }))
+                'team_display': team_display,
+                'timestamp': timestamp
+            }
+        )
 
-            # بث الاسم للفريقين (شاشة العرض + المقدم)
-            team_display = await self.get_team_display_name(session, team)
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'broadcast_contestant_buzz',
-                    'contestant_name': contestant_name,
-                    'team': team,
-                    'team_display': team_display,
-                    'timestamp': timestamp
-                }
-            )
+        # فتح القفل تلقائيًا بعد 3 ثوانٍ + حذف المفتاح من الكاش
+        asyncio.create_task(self._auto_unlock_visual())
 
-            # فك القفل بصرياً بعد 3 ثواني + حذف الكي من الكاش
-            asyncio.create_task(self._auto_unlock_visual())
-
-            logger.info(f"Buzz accepted: {contestant_name} from {team} in session {self.session_id}")
-
-        except Exception as e:
-            logger.error(f"Error handling contestant buzz: {e}")
-            await self.send(text_data=json.dumps({
-                'type': 'error',
-                'message': 'فشل في معالجة الضغطة'
-            }))
+        logger.info(f"Buzz accepted: {contestant_name} from {team} in session {self.session_id}")
 
     async def handle_buzz_reset(self):
-        """إعادة تعيين القفل يدوياً من المقدم (أو أي عميل مخوّل)."""
+        """إعادة تعيين القفل يدويًا من المقدم (يفتح فورًا للجميع)."""
         try:
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             cache.delete(buzz_lock_key)
 
-            # بلّغ الجميع يمسحوا الواجهة ويظهر القفل متاح
-            await self.channel_layer.group_send(self.group_name, {'type': 'broadcast_buzz_reset'})
-            await self.channel_layer.group_send(
-                self.group_name,
+            # بثّ reset + unlock للمقدم + شاشة العرض فقط
+            await self._group_send_hosts_displays({'type': 'broadcast_buzz_reset'})
+            await self._group_send_hosts_displays(
                 {'type': 'broadcast_buzz_unlock', 'message': 'تم فك قفل الزر'}
             )
             logger.info(f"Buzzer reset for session: {self.session_id}")
         except Exception as e:
             logger.error(f"Error resetting buzzer: {e}")
 
-    async def handle_select_letter(self, data):
-        letter = data.get('letter')
-        if not letter:
-            return
-        try:
-            session = await self.get_session()
-            package = session.package
-            question_obj = await self.get_question(package, letter, 'main')
-
-            await self.channel_layer.group_send(
-                self.group_name,
-                {
-                    'type': 'broadcast_question',
-                    'letter': letter,
-                    'question': question_obj.question,
-                    'answer': question_obj.answer,
-                    'category': question_obj.category
-                }
-            )
-            logger.info(f"Question sent for letter {letter} in session {self.session_id}")
-        except Exception as e:
-            logger.error(f"Error handling select_letter: {e}")
-            await self.send(text_data=json.dumps({
-                'type': 'error',
-                'message': f'خطأ في جلب السؤال: {str(e)}'
-            }))
-
     async def handle_update_cell_state(self, data):
-        letter = data.get('letter')
+        """المقدم يغيّر لون خلية → نبث اللون (للمقدم + العرض فقط)."""
+        letter = (data.get('letter') or '').strip()
         state = data.get('state')
-        if letter and state:
-            await self.channel_layer.group_send(
-                self.group_name,
-                {'type': 'broadcast_cell_update', 'letter': letter, 'state': state}
-            )
+        if not letter or state not in ('normal', 'team1', 'team2'):
+            return
+
+        await self._group_send_hosts_displays(
+            {'type': 'broadcast_cell_update', 'letter': letter, 'state': state}
+        )
 
     async def handle_update_scores(self, data):
-        team1_score = data.get('team1_score', 0)
-        team2_score = data.get('team2_score', 0)
-        await self.channel_layer.group_send(
-            self.group_name,
-            {'type': 'broadcast_score_update', 'team1_score': team1_score, 'team2_score': team2_score}
-        )
+        """المقدم يحدّث نقاط الفريقين → نبث (للمقدم + العرض فقط)."""
+        try:
+            team1_score = int(data.get('team1_score', 0))
+            team2_score = int(data.get('team2_score', 0))
+        except (TypeError, ValueError):
+            return
+
+        payload = {
+            'type': 'broadcast_score_update',
+            'team1_score': max(0, team1_score),
+            'team2_score': max(0, team2_score)
+        }
+        await self._group_send_hosts_displays(payload)
 
     # -------------------------
     # Broadcasters (to clients)
     # -------------------------
-    async def broadcast_question(self, event):
-        await self.send(text_data=json.dumps({
-            'type': 'show_question',
-            'letter': event['letter'],
-            'question': event['question'],
-            'answer': event.get('answer', ''),
-            'category': event.get('category', '')
-        }))
-
     async def broadcast_contestant_buzz(self, event):
+        # لا ترسل للمتسابقين (يستلمون رد خاص فقط)
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({
             'type': 'show_contestant_buzz',
             'contestant_name': event['contestant_name'],
@@ -220,6 +235,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def broadcast_buzz_lock(self, event):
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({
             'type': 'buzz_lock',
             'message': event.get('message', ''),
@@ -228,15 +245,21 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def broadcast_buzz_unlock(self, event):
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({
             'type': 'buzz_unlock',
             'message': event.get('message', 'الزر متاح للضغط')
         }))
 
     async def broadcast_buzz_reset(self, event):
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({'type': 'buzz_reset'}))
 
     async def broadcast_cell_update(self, event):
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({
             'type': 'cell_state_updated',
             'letter': event['letter'],
@@ -244,25 +267,21 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def broadcast_score_update(self, event):
+        if self.role == 'contestant':
+            return
         await self.send(text_data=json.dumps({
             'type': 'scores_updated',
             'team1_score': event['team1_score'],
             'team2_score': event['team2_score']
         }))
 
-    async def broadcast_update(self, event):
-        await self.send(text_data=json.dumps(event['payload']))
-
     # -------------------------
     # Helpers
     # -------------------------
     async def get_session(self):
-        return await sync_to_async(GameSession.objects.get)(id=self.session_id)
-
-    async def get_question(self, package, letter, question_type):
-        return await sync_to_async(LettersGameQuestion.objects.get)(
-            package=package, letter=letter, question_type=question_type
-        )
+        return await sync_to_async(
+            lambda: GameSession.objects.select_related('package').get(id=self.session_id)
+        )()
 
     async def register_contestant_if_needed(self, session, contestant_name, team):
         try:
@@ -285,14 +304,84 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         return 'فريق غير معروف'
 
     async def _auto_unlock_visual(self):
-        """يفتح القفل بعد 3 ثواني تلقائياً ويبث الحدث، ويمسح مفتاح القفل من الكاش."""
+        """يفتح القفل بعد 3 ثوانٍ تلقائيًا ويبث الحدث، ويمسح مفتاح القفل من الكاش."""
         try:
             await asyncio.sleep(3)
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             cache.delete(buzz_lock_key)
-            await self.channel_layer.group_send(
-                self.group_name,
+            await self._group_send_hosts_displays(
                 {'type': 'broadcast_buzz_unlock', 'message': 'انتهى الوقت'}
             )
         except Exception as e:
             logger.error(f"auto_unlock_visual error for session {self.session_id}: {e}")
+
+    async def _is_session_expired(self, session: GameSession) -> bool:
+        """
+        فحص انتهاء الصلاحية دون تعديل DB (lazy check فقط)
+        - المجانية: 1 ساعة
+        - المدفوعة: 72 ساعة
+        """
+        if session.package and session.package.is_free:
+            expiry_time = session.created_at + timedelta(hours=1)
+        else:
+            expiry_time = session.created_at + timedelta(hours=72)
+        return timezone.now() >= expiry_time
+
+    def _parse_qs(self):
+        try:
+            from urllib.parse import parse_qs
+            return parse_qs(self.scope.get('query_string', b'').decode())
+        except Exception:
+            return {}
+
+    def _client_ip(self) -> str:
+        try:
+            client = self.scope.get('client') or ('0.0.0.0', 0)
+            return client[0] or '0.0.0.0'
+        except Exception:
+            return '0.0.0.0'
+
+    async def _allow_buzz_rate(self, name: str) -> bool:
+        """
+        Rate limit بسيط: أقصى BUZZ_RATE_MAX محاولات خلال BUZZ_RATE_WINDOW ثوانٍ
+        لكل (session_id + ip + name)
+        """
+        ip = self._client_ip()
+        key = f"ws_rate:{self.session_id}:{ip}:{name}"
+        try:
+            current = cache.get(key, 0)
+            if current >= self.BUZZ_RATE_MAX:
+                return False
+            if current == 0:
+                cache.set(key, 1, timeout=self.BUZZ_RATE_WINDOW)
+            else:
+                cache.incr(key)
+            return True
+        except Exception:
+            return True  # ما نحبس المستخدمين لو الكاش خرب
+
+    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
+        """رد مباشر إلى المتسابق الحالي فقط، بدون بث جماعي."""
+        if confirmed:
+            await self.send(text_data=json.dumps({
+                'type': 'buzz_confirmed',
+                'contestant_name': name,
+                'team': team,
+                'message': f'تم تسجيل إجابتك يا {name}!'
+            }))
+            return
+        if rejected:
+            await self.send(text_data=json.dumps({
+                'type': 'buzz_rejected',
+                'message': rejected
+            }))
+            return
+        if error:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': error
+            }))
+
+    async def _group_send_hosts_displays(self, payload: dict):
+        """إرسال إلى المجموعة، وسيتم فلترته عند الاستقبال بحيث لا يظهر للمتسابقين."""
+        await self.channel_layer.group_send(self.group_name, payload)

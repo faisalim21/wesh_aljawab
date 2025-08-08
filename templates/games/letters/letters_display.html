@@ -47,9 +47,7 @@
             animation: buzzOverlayPulse 0.5s ease-in-out infinite alternate;
         }
 
-        .buzzed-overlay.show {
-            display: flex;
-        }
+        .buzzed-overlay.show { display: flex; }
 
         @keyframes buzzOverlayPulse {
             from { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); }
@@ -57,10 +55,10 @@
         }
 
         .buzzed-name {
-            font-size: 4rem;
+            font-size: 4.8rem;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
             animation: nameGlow 0.5s ease-in-out infinite alternate;
         }
@@ -71,44 +69,33 @@
         }
 
         .team-indicator {
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 30px;
-            border: 3px solid rgba(255,255,255,0.8);
+            padding: 12px 28px;
+            border-radius: 28px;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 32px;
+            border: 4px solid rgba(255,255,255,0.85);
         }
-
-        .team-indicator.team1 {
-            background: rgba(34, 197, 94, 0.8);
-            color: white;
-        }
-
-        .team-indicator.team2 {
-            background: rgba(249, 115, 22, 0.8);
-            color: white;
-        }
+        .team-indicator.team1 { background: rgba(34, 197, 94, 0.9); color: white; }
+        .team-indicator.team2 { background: rgba(249, 115, 22, 0.9); color: white; }
 
         .countdown {
-            font-size: 8rem;
+            font-size: 9rem;
             font-weight: 900;
-            margin-top: 20px;
+            margin-top: 10px;
             text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
             animation: countdownPulse 1s ease-in-out;
         }
-
         @keyframes countdownPulse {
             0% { transform: scale(0.8); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
+            50% { transform: scale(1.15); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
 
         .main-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -117,74 +104,51 @@
         /* النقاط في الزاوية اليسرى العلوية */
         .scores-container {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: 22px;
+            left: 22px;
             z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 14px;
         }
-
         .score-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            border-radius: 12px;
-            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 14px 18px;
             text-align: center;
-            border: 2px solid;
-            min-width: 90px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 3px solid;
+            min-width: 150px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
         }
+        .score-card.team1 { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(34,197,94,0.12)); }
+        .score-card.team2 { border-color: #f97316; background: linear-gradient(135deg, rgba(249,115,22,0.35), rgba(249,115,22,0.12)); }
 
-        .score-card.team1 {
-            border-color: #22c55e;
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
-        }
-
-        .score-card.team2 {
-            border-color: #f97316;
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
-        }
-
-        .team-name {
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 3px;
-        }
-
-        .team1 .team-name {
-            color: #22c55e;
-        }
-
-        .team2 .team-name {
-            color: #f97316;
-        }
+        .team-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
+        .team1 .team-name { color: #22c55e; }
+        .team2 .team-name { color: #f97316; }
 
         .team-score {
-            font-size: 1.4rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
         }
 
         /* اللوجو في الزاوية اليمنى العلوية */
         .logo-container {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 16px;
+            right: 16px;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 8px 12px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.97);
+            padding: 10px 14px;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
-
-        .logo-container img {
-            max-height: 60px;
-            width: auto;
-            display: block;
-        }
+        .logo-container img { max-height: 90px; width: auto; display: block; }
 
         /* مؤشر حالة الزر */
         .buzz-status {
@@ -193,207 +157,94 @@
             right: 20px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-size: 0.9rem;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
             z-index: 150;
             display: none;
         }
-
-        .buzz-status.available {
-            background: rgba(34, 197, 94, 0.8);
-        }
-
-        .buzz-status.locked {
-            background: rgba(239, 68, 68, 0.8);
-            animation: statusPulse 1s ease-in-out infinite;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
+        .buzz-status.available { background: rgba(34, 197, 94, 0.9); }
+        .buzz-status.locked { background: rgba(239, 68, 68, 0.9); animation: statusPulse 1s ease-in-out infinite; }
+        @keyframes statusPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
 
         /* خلية الحروف - مركز الشاشة */
         .honeycomb-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
         }
-
         .honeycomb-svg {
-            width: 90vw;
-            height: 90vh;
-            max-width: 1000px;
-            max-height: 800px;
-            display: block;
-            margin: 0 auto;
+            width: 90vw; height: 90vh;
+            max-width: 1100px; max-height: 850px;
+            display: block; margin: 0 auto;
         }
 
-        .hex-cell {
-            transition: all 0.3s ease;
-        }
+        .hex-cell { transition: all 0.3s ease; }
+        .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
+        .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
+        .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
+        .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
 
-        .hex-cell.team1 .hex-shape {
-            fill: #22c55e;
-            stroke: #15803d;
-            stroke-width: 4;
-        }
-
-        .hex-cell.team1 .hex-text {
-            fill: white;
-            font-weight: bold;
-        }
-
-        .hex-cell.team2 .hex-shape {
-            fill: #f97316;
-            stroke: #c2410c;
-            stroke-width: 4;
-        }
-
-        .hex-cell.team2 .hex-text {
-            fill: white;
-            font-weight: bold;
-        }
-
-        .hex-shape {
-            fill: white;
-            stroke: #6b46c1;
-            stroke-width: 3;
-            transition: all 0.3s ease;
-            transform-origin: center;
-        }
-
+        .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
         .hex-text {
-            fill: #6b46c1;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 120px;
-            font-weight: 900;
-            text-anchor: middle;
-            dominant-baseline: central;
-            pointer-events: none;
+          font-size: 42px; /* كان ممكن 60 أو 55، الآن أصغر */
+          font-weight: 600; /* يظل واضح بدون زيادة سماكة */
+          fill: #222; /* لون أنيق */
+          font-family: 'Cairo', sans-serif; /* خط عصري وواضح */
+          pointer-events: none;
+          user-select: none;
         }
 
-        /* السؤال الحالي */
+
+        /* عنصر السؤال (غير مستخدم حاليًا لكن خليه موجود لو احتجته لاحقًا) */
         .current-question {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 20px; left: 50%; transform: translateX(-50%);
             background: rgba(255, 255, 255, 0.95);
             color: #1e293b;
             border-radius: 15px;
             padding: 15px 20px;
             text-align: center;
-            max-width: 600px;
-            width: 90%;
+            max-width: 600px; width: 90%;
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            display: none;
-            z-index: 150;
+            display: none; z-index: 150;
         }
+        .current-question.show { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .question-letter { font-size: 1.5rem; font-weight: 900; color: #6b46c1; margin-bottom: 10px; }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .question-answer { font-size: 1.1rem; font-weight: 700; color: #22c55e; }
 
-        .current-question.show {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-
-        .question-letter {
-            font-size: 1.5rem;
-            font-weight: 900;
-            color: #6b46c1;
-            margin-bottom: 10px;
-        }
-
-        .question-text {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .question-answer {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #22c55e;
-        }
-
-        /* تحسينات للشاشات الكبيرة */
+        /* شاشات أكبر */
         @media (min-width: 1200px) {
-            .hex-text {
-                font-size: 140px;
-            }
-            
-            .logo-container img {
-                max-height: 70px;
-            }
-            
-            .scores-container {
-                top: 30px;
-                left: 30px;
-            }
-            
-            .score-card {
-                min-width: 100px;
-                padding: 10px 15px;
-            }
-            
-            .team-name {
-                font-size: 0.9rem;
-            }
-            
-            .team-score {
-                font-size: 1.6rem;
-            }
-            
-            .buzzed-name {
-                font-size: 5rem;
-            }
-            
-            .countdown {
-                font-size: 10rem;
-            }
+            .hex-text { font-size: 160px; }
+            .logo-container img { max-height: 110px; }
+            .scores-container { top: 28px; left: 28px; }
+            .score-card { min-width: 180px; padding: 16px 20px; }
+            .team-name { font-size: 1.15rem; }
+            .team-score { font-size: 2.6rem; }
+            .buzzed-name { font-size: 5.4rem; }
+            .countdown { font-size: 10.5rem; }
         }
-
         @media (min-width: 1600px) {
-            .hex-text {
-                font-size: 160px;
-            }
-            
-            .logo-container img {
-                max-height: 80px;
-            }
+            .hex-text { font-size: 180px; }
+            .logo-container img { max-height: 130px; }
         }
 
-        /* إخفاء العناصر في الشاشات الصغيرة */
+        /* موبايل */
         @media (max-width: 768px) {
-            .scores-container,
-            .logo-container {
-                display: none;
-            }
-            
-            .hex-text {
-                font-size: 100px;
-            }
-            
-            .buzzed-name {
-                font-size: 3rem;
-            }
-            
-            .countdown {
-                font-size: 6rem;
-            }
+            .scores-container, .logo-container { display: none; }
+            .hex-text { font-size: 110px; }
+            .buzzed-name { font-size: 3.2rem; }
+            .team-indicator { font-size: 1.3rem; }
+            .countdown { font-size: 6.2rem; }
         }
     </style>
 </head>
 <body>
     <div class="main-container">
-        <!-- النقاط في الزاوية اليسرى -->
+        <!-- النقاط -->
         <div class="scores-container">
             <div class="score-card team1">
                 <div class="team-name">{{ session.team1_name }}</div>
@@ -405,48 +256,40 @@
             </div>
         </div>
 
-        <!-- اللوجو في الزاوية اليمنى -->
+        <!-- اللوجو -->
         <div class="logo-container">
             <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
-                 alt="وش الجواب" 
-                 class="img-fluid">
+                 alt="وش الجواب" class="img-fluid">
         </div>
 
-        <!-- مؤشر حالة الزر -->
-        <div class="buzz-status" id="buzzStatus">
-            🟢 الزر متاح للضغط
-        </div>
+        <!-- حالة الزر -->
+        <div class="buzz-status" id="buzzStatus">🟢 الزر متاح للضغط</div>
 
-        <!-- طبقة عرض ضغطة المتسابق -->
+        <!-- طبقة عرض اسم المتسابق -->
         <div id="buzzedOverlay" class="buzzed-overlay">
             <div id="buzzedName" class="buzzed-name">اسم المتسابق</div>
             <div id="teamIndicator" class="team-indicator">الفريق</div>
             <div id="countdown" class="countdown">3</div>
         </div>
 
-        <!-- خلية الحروف - مركز الشاشة -->
+        <!-- خلية الحروف -->
         <div class="honeycomb-container">
             <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
-                <!-- الإطار بألوان أغمق وأكثر عصرية -->
                 <defs>
                     <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
                     <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
                     <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
                     <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
                 </defs>
-                
-                <!-- رسم الخلفية بالألوان الأصلية -->
                 <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
                 <use href="#orangeLeft" fill="#fb923c"/>
                 <use href="#orangeRight" fill="#fb923c"/>
                 <use href="#greenTop" fill="#4ade80"/>
                 <use href="#greenBottom" fill="#4ade80"/>
-                
-                <!-- الخلايا السداسية - سيتم إنشاؤها ديناميكياً من JavaScript -->
             </svg>
         </div>
 
-        <!-- السؤال الحالي -->
+        <!-- عنصر سؤال (اختياري) -->
         <div class="current-question" id="currentQuestion">
             <div class="question-letter" id="questionLetter">أ</div>
             <div class="question-text" id="questionText">السؤال سيظهر هنا</div>
@@ -456,7 +299,6 @@
 
 <script>
   // ===================== المتغيرات العامة =====================
-  let currentQuestionData = null;
   let cellStates = {};
   let buzzLocked = false;
   let buzzerName = '';
@@ -529,7 +371,7 @@
     console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية للعرض`);
   }
 
-  // ===================== واجهة العرض (النقاط/الخلايا/السؤال) =====================
+  // ===================== واجهة العرض (النقاط/الخلايا) =====================
   function updateScores(team1Score, team2Score) {
     document.getElementById('team1Score').textContent = team1Score;
     document.getElementById('team2Score').textContent = team2Score;
@@ -539,24 +381,12 @@
     const element = document.querySelector(`[data-letter="${letter}"]`);
     if (element) {
       element.classList.remove('team1', 'team2');
-      if (state !== 'normal') {
-        element.classList.add(state);
-      }
+      if (state !== 'normal') element.classList.add(state);
       cellStates[letter] = state;
     }
   }
 
-  function showQuestion(letter, questionData) {
-    if (!questionData) return;
-    const questionDiv = document.getElementById('currentQuestion');
-    document.getElementById('questionLetter').textContent = `حرف ${letter}`;
-    document.getElementById('questionText').textContent = questionData.question;
-    document.getElementById('questionAnswer').textContent = questionData.answer;
-
-    questionDiv.classList.add('show');
-    setTimeout(() => { questionDiv.classList.remove('show'); }, 10000);
-  }
-
+  // ====== الأصوات ======
   function playBuzzSound() {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -566,19 +396,18 @@
       oscillator.frequency.value = 800; oscillator.type = 'sine';
       gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
       oscillator.start(); oscillator.stop(audioContext.currentTime + 0.3);
-    } catch { console.log('لا يمكن تشغيل الصوت'); }
+    } catch { /* ممكن المتصفح يمنع الصوت قبل تفاعل المستخدم */ }
   }
-
   function playEndSound() {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 400; oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.5);
-    } catch { console.log('لا يمكن تشغيل الصوت'); }
+      oscillator.frequency.value = 420; oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
+      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.45);
+    } catch {}
   }
 
   function updateBuzzStatus(available, message) {
@@ -593,8 +422,8 @@
     statusEl.style.display = 'block';
   }
 
+  // لا تمنع العرض حتى لو كان buzzLocked صحيح (قد تصل رسائل القفل قبل الاسم)
   function showContestantBuzz(contestantName, team, teamDisplay) {
-    if (buzzLocked) return; // حارس محلي
     buzzLocked = true;
     buzzerName = contestantName;
     buzzerTeam = team;
@@ -614,7 +443,7 @@
   }
 
   function startCountdown() {
-    if (countdownTimer) clearInterval(countdownTimer); // حارس
+    if (countdownTimer) clearInterval(countdownTimer);
     let timeLeft = 3;
     const countdownEl = document.getElementById('countdown');
     countdownEl.textContent = timeLeft;
@@ -633,21 +462,19 @@
     playEndSound();
     setTimeout(() => {
       document.getElementById('buzzedOverlay').classList.remove('show');
-    }, 500);
+    }, 450);
     setTimeout(() => {
       buzzLocked = false;
       buzzerName = '';
       buzzerTeam = '';
-      updateBuzzStatus(true);
-    }, 2000);
+      updateBuzzStatus(true, 'الزر متاح للضغط');
+    }, 1200);
   }
 
   function resetBuzzer() {
     if (countdownTimer) clearInterval(countdownTimer);
     document.getElementById('buzzedOverlay').classList.remove('show');
-    buzzLocked = false;
-    buzzerName = '';
-    buzzerTeam = '';
+    buzzLocked = false; buzzerName = ''; buzzerTeam = '';
     updateBuzzStatus(true);
   }
 
@@ -697,7 +524,6 @@
         const data = JSON.parse(event.data || "{}");
         switch (data.type) {
           case 'pong':
-            // تجاهل رد البينغ
             break;
 
           case 'cell_state_updated':
@@ -706,10 +532,6 @@
 
           case 'scores_updated':
             updateScores(data.team1_score, data.team2_score);
-            break;
-
-          case 'show_question':
-            showQuestion(data.letter, data);
             break;
 
           case 'show_contestant_buzz':
@@ -726,12 +548,11 @@
             break;
 
           case 'buzz_unlock':
-            // ننهي العرض فورًا لو وصل unlock من السيرفر
             if (buzzLocked) endBuzzSession();
             break;
 
           default:
-            // تجاهل
+            // تجاهل أي رسائل أخرى (لا يوجد بث أسئلة)
             break;
         }
       };
@@ -760,32 +581,23 @@
 
   // إغلاق نظيف عند مغادرة الصفحة
   window.addEventListener('beforeunload', () => {
-    try {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.close(1000, 'page unload');
-      }
-    } catch {}
+    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
     if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
   });
 
-  // ===================== تحكم سريع بالكيبورد =====================
+  // تحكم سريع بالكيبورد/النقر: لفك الحجز بصريًا (اختياري)
   document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' || event.code === 'Enter') {
-      event.preventDefault();
-      resetBuzzer();
-    }
-    if (event.code === 'Escape') {
+    if (event.code === 'Space' || event.code === 'Enter' || event.code === 'Escape') {
       resetBuzzer();
     }
   });
-
   document.addEventListener('click', function() {
     if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
       resetBuzzer();
     }
   });
 
-  // ===================== تهيئة الصفحة =====================
+  // ===================== تهيئة =====================
   document.addEventListener('DOMContentLoaded', function() {
     console.log('🎬 تم تحميل شاشة العرض - خلية الحروف');
     createHoneycombCells();
@@ -799,7 +611,6 @@
     setTimeout(() => { updateBuzzStatus(true); }, 1000);
   });
 </script>
-
 
 </body>
 </html>
