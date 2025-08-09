@@ -77,10 +77,20 @@
 <body>
   {% include 'header.html' %}
   <!-- في home.html لكل لعبة -->
-{% if not unlimited_free_mode %}
-  {% if not free_session_eligible %}
-    <div class="alert alert-warning ...">استنفدت جلستك المجانية</div>
-  {% endif %}
+{% if unlimited_free_mode %}
+    <button class="btn btn-success" onclick="createFreeSession()">
+        🎮 إنشاء جلسة مجانية (وضع غير محدود)
+    </button>
+{% else %}
+    {% if not free_session_eligible %}
+        <div class="alert alert-warning">
+            🚫 استنفدت جلستك المجانية
+        </div>
+    {% else %}
+        <button class="btn btn-success" onclick="createFreeSession()">
+            🎮 إنشاء جلسة مجانية
+        </button>
+    {% endif %}
 {% endif %}
 
   <section class="packages-section">
