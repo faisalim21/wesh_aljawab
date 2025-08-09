@@ -28,47 +28,9 @@
             margin: 0;
             overflow: hidden;
             color: white;
-            position: relative;
         }
 
-        /* تأثيرات الخلفية الديناميكية */
-        .background-particles {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .particle {
-            position: absolute;
-            width: 4px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            animation: floatParticle 6s linear infinite;
-        }
-
-        @keyframes floatParticle {
-            0% {
-                transform: translateY(100vh) rotate(0deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-10vh) rotate(360deg);
-                opacity: 0;
-            }
-        }
-
-        /* طبقة عرض ضغطة المتسابق المحسنة */
+        /* طبقة عرض ضغطة المتسابق */
         .buzzed-overlay {
             position: fixed;
             top: 0;
@@ -82,225 +44,52 @@
             align-items: center;
             justify-content: center;
             color: white;
-            animation: buzzOverlayPulse 0.3s ease-in-out infinite alternate;
+            animation: buzzOverlayPulse 0.5s ease-in-out infinite alternate;
         }
 
-        .buzzed-overlay.show { 
-            display: flex; 
-            animation: buzzSlideIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        @keyframes buzzSlideIn {
-            0% {
-                transform: scale(0.3) rotate(-10deg);
-                opacity: 0;
-            }
-            50% {
-                transform: scale(1.1) rotate(2deg);
-                opacity: 0.8;
-            }
-            100% {
-                transform: scale(1) rotate(0deg);
-                opacity: 1;
-            }
-        }
+        .buzzed-overlay.show { display: flex; }
 
         @keyframes buzzOverlayPulse {
-            from { 
-                background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
-                box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
-            }
-            to { 
-                background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1));
-                box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.3);
-            }
+            from { background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9)); }
+            to { background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(220, 38, 38, 1)); }
         }
 
-        /* اسم المتسابق مع تأثيرات مذهلة */
         .buzzed-name {
-            font-size: 5.5rem;
+            font-size: 4.8rem;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
-            animation: nameExplosion 0.8s ease-out, nameGlow 0.5s ease-in-out infinite alternate 0.8s;
-            background: linear-gradient(45deg, #ffffff, #fbbf24, #ffffff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
-        }
-
-        .buzzed-name::before {
-            content: '';
-            position: absolute;
-            top: -20px;
-            left: -20px;
-            right: -20px;
-            bottom: -20px;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: haloExpand 1s ease-out;
-            z-index: -1;
-        }
-
-        @keyframes nameExplosion {
-            0% {
-                transform: scale(0.2) translateY(50px);
-                opacity: 0;
-                filter: blur(10px);
-            }
-            30% {
-                transform: scale(1.3) translateY(-10px);
-                opacity: 0.7;
-                filter: blur(2px);
-            }
-            60% {
-                transform: scale(0.9) translateY(5px);
-                opacity: 0.9;
-                filter: blur(0px);
-            }
-            100% {
-                transform: scale(1) translateY(0px);
-                opacity: 1;
-                filter: blur(0px);
-            }
-        }
-
-        @keyframes haloExpand {
-            0% {
-                transform: scale(0);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(3);
-                opacity: 0;
-            }
+            animation: nameGlow 0.5s ease-in-out infinite alternate;
         }
 
         @keyframes nameGlow {
-            from { 
-                text-shadow: 3px 3px 6px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.5);
-                transform: translateY(0px);
-            }
-            to { 
-                text-shadow: 3px 3px 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.8), 0 0 60px rgba(251,191,36,0.6);
-                transform: translateY(-5px);
-            }
+            from { text-shadow: 3px 3px 6px rgba(0,0,0,0.5); }
+            to { text-shadow: 3px 3px 20px rgba(255,255,255,0.8), 0 0 30px rgba(255,255,255,0.6); }
         }
 
-        /* مؤشر الفريق المحسن */
         .team-indicator {
-            padding: 16px 36px;
-            border-radius: 35px;
-            font-size: 2rem;
+            padding: 12px 28px;
+            border-radius: 28px;
+            font-size: 1.8rem;
             font-weight: 800;
-            margin-bottom: 40px;
-            border: 5px solid rgba(255,255,255,0.9);
-            position: relative;
-            overflow: hidden;
-            animation: teamBadgeSlide 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s both;
+            margin-bottom: 32px;
+            border: 4px solid rgba(255,255,255,0.85);
         }
+        .team-indicator.team1 { background: rgba(34, 197, 94, 0.9); color: white; }
+        .team-indicator.team2 { background: rgba(249, 115, 22, 0.9); color: white; }
 
-        .team-indicator::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            animation: shimmer 1.5s infinite 1s;
-        }
-
-        @keyframes teamBadgeSlide {
-            0% {
-                transform: translateX(-100px) rotate(-15deg);
-                opacity: 0;
-            }
-            100% {
-                transform: translateX(0px) rotate(0deg);
-                opacity: 1;
-            }
-        }
-
-        @keyframes shimmer {
-            0% { left: -100%; }
-            100% { left: 100%; }
-        }
-
-        .team-indicator.team1 { 
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(16, 185, 129, 0.9)); 
-            color: white;
-            box-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
-        }
-        .team-indicator.team2 { 
-            background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(251, 146, 60, 0.9)); 
-            color: white;
-            box-shadow: 0 0 30px rgba(249, 115, 22, 0.5);
-        }
-
-        /* العد التنازلي المذهل */
         .countdown {
-            font-size: 12rem;
+            font-size: 9rem;
             font-weight: 900;
-            margin-top: 20px;
+            margin-top: 10px;
             text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
-            animation: countdownExplosion 1s ease-in-out;
-            background: linear-gradient(45deg, #ff6b6b, #feca57, #ff6b6b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            position: relative;
+            animation: countdownPulse 1s ease-in-out;
         }
-
-        .countdown::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200px;
-            height: 200px;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: countdownRing 1s ease-out;
-        }
-
-        @keyframes countdownExplosion {
-            0% { 
-                transform: scale(0.3) rotateY(180deg); 
-                opacity: 0; 
-                filter: blur(20px);
-            }
-            30% { 
-                transform: scale(1.4) rotateY(0deg); 
-                opacity: 0.7; 
-                filter: blur(5px);
-            }
-            60% { 
-                transform: scale(0.8) rotateY(0deg); 
-                opacity: 0.9; 
-                filter: blur(0px);
-            }
-            100% { 
-                transform: scale(1) rotateY(0deg); 
-                opacity: 1; 
-                filter: blur(0px);
-            }
-        }
-
-        @keyframes countdownRing {
-            0% {
-                width: 50px;
-                height: 50px;
-                opacity: 1;
-            }
-            100% {
-                width: 300px;
-                height: 300px;
-                opacity: 0;
-            }
+        @keyframes countdownPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         .main-container {
@@ -310,7 +99,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 10;
         }
 
         /* النقاط في الزاوية اليسرى العلوية */
@@ -321,368 +109,140 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 14px;
         }
-
         .score-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 18px 22px;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 14px 18px;
             text-align: center;
             border: 3px solid;
-            min-width: 160px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
+            min-width: 150px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
         }
+        .score-card.team1 { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(34,197,94,0.12)); }
+        .score-card.team2 { border-color: #f97316; background: linear-gradient(135deg, rgba(249,115,22,0.35), rgba(249,115,22,0.12)); }
 
-        .score-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-            transform: translateX(-100%);
-            transition: transform 0.6s;
-        }
-
-        .score-card:hover::before {
-            transform: translateX(100%);
-        }
-
-        .score-card.team1 { 
-            border-color: #22c55e; 
-            background: linear-gradient(135deg, rgba(34,197,94,0.4), rgba(34,197,94,0.15));
-        }
-        .score-card.team2 { 
-            border-color: #f97316; 
-            background: linear-gradient(135deg, rgba(249,115,22,0.4), rgba(249,115,22,0.15));
-        }
-
-        .team-name { 
-            font-size: 1.2rem; 
-            font-weight: 800; 
-            margin-bottom: 8px; 
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-        .team1 .team-name { color: #22c55e; text-shadow: 0 0 10px rgba(34,197,94,0.5); }
-        .team2 .team-name { color: #f97316; text-shadow: 0 0 10px rgba(249,115,22,0.5); }
+        .team-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
+        .team1 .team-name { color: #22c55e; }
+        .team2 .team-name { color: #f97316; }
 
         .team-score {
-            font-size: 2.8rem;
+            font-size: 2.2rem;
             font-weight: 900;
             line-height: 1;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-            transition: all 0.3s ease;
-        }
-
-        .team-score.score-updated {
-            animation: scorePopUp 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        @keyframes scorePopUp {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.3); color: #fbbf24; }
-            100% { transform: scale(1); }
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
         }
 
         /* اللوجو في الزاوية اليمنى العلوية */
         .logo-container {
             position: fixed;
-            top: 18px;
-            right: 18px;
+            top: 16px;
+            right: 16px;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.98);
-            padding: 12px 18px;
-            border-radius: 20px;
-            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
-            backdrop-filter: blur(12px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.97);
+            padding: 10px 14px;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
+        .logo-container img { max-height: 90px; width: auto; display: block; }
 
-        .logo-container:hover {
-            transform: scale(1.05) rotate(2deg);
-            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        }
-
-        .logo-container img { 
-            max-height: 95px; 
-            width: auto; 
-            display: block;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
-        }
-
-        /* مؤشر حالة الزر المحسن */
+        /* مؤشر حالة الزر */
         .buzz-status {
             position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background: rgba(0, 0, 0, 0.85);
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 16px 20px;
-            border-radius: 25px;
-            font-size: 1.1rem;
-            font-weight: 600;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 1rem;
             z-index: 150;
             display: none;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
         }
-
-        .buzz-status.available { 
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.9), rgba(16, 185, 129, 0.9));
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
-            animation: availablePulse 2s ease-in-out infinite;
-        }
-
-        .buzz-status.locked { 
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.9), rgba(220, 38, 38, 0.9));
-            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
-            animation: lockedShake 0.5s ease-in-out infinite;
-        }
-
-        @keyframes availablePulse {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.05); opacity: 1; }
-        }
-
-        @keyframes lockedShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-3px); }
-            75% { transform: translateX(3px); }
-        }
+        .buzz-status.available { background: rgba(34, 197, 94, 0.9); }
+        .buzz-status.locked { background: rgba(239, 68, 68, 0.9); animation: statusPulse 1s ease-in-out infinite; }
+        @keyframes statusPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
 
         /* خلية الحروف - مركز الشاشة */
         .honeycomb-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            width: 100%; 
-            height: 100%;
-            position: relative;
+            width: 100%; height: 100%;
         }
-
         .honeycomb-svg {
-            width: 90vw; 
-            height: 90vh;
-            max-width: 1100px; 
-            max-height: 850px;
-            display: block; 
-            margin: 0 auto;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            width: 90vw; height: 90vh;
+            max-width: 1100px; max-height: 850px;
+            display: block; margin: 0 auto;
         }
 
-        .hex-cell { 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            cursor: pointer;
-        }
+        .hex-cell { transition: all 0.3s ease; }
+        .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
+        .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
+        .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
+        .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
 
-        .hex-cell:hover .hex-shape {
-            filter: brightness(1.1) drop-shadow(0 0 15px rgba(255,255,255,0.5));
-            transform: scale(1.05);
-        }
-
-        .hex-cell.team1 .hex-shape { 
-            fill: #22c55e; 
-            stroke: #15803d; 
-            stroke-width: 5; 
-            filter: drop-shadow(0 0 15px rgba(34,197,94,0.6));
-            animation: cellCapture 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        .hex-cell.team1 .hex-text { 
-            fill: white; 
-            font-weight: bold;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-        }
-
-        .hex-cell.team2 .hex-shape { 
-            fill: #f97316; 
-            stroke: #c2410c; 
-            stroke-width: 5; 
-            filter: drop-shadow(0 0 15px rgba(249,115,22,0.6));
-            animation: cellCapture 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-
-        .hex-cell.team2 .hex-text { 
-            fill: white; 
-            font-weight: bold;
-            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
-        }
-
-        @keyframes cellCapture {
-            0% { 
-                transform: scale(1) rotate(0deg); 
-                opacity: 0.7;
-            }
-            50% { 
-                transform: scale(1.2) rotate(5deg); 
-                opacity: 0.9;
-            }
-            100% { 
-                transform: scale(1) rotate(0deg); 
-                opacity: 1;
-            }
-        }
-
-        .hex-shape { 
-            fill: white; 
-            stroke: #6b46c1; 
-            stroke-width: 4; 
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: center;
-            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
-        }
-
-        /* تصغير النص في الخلايا */
+        .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
         .hex-text {
-            font-size: 35px; /* تم تصغيرها من 42px إلى 35px */
-            font-weight: 700;
-            fill: #2d3748;
-            font-family: 'Tajawal', sans-serif;
-            pointer-events: none;
-            user-select: none;
-            transition: all 0.3s ease;
-            filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.3));
+          font-size: 42px; /* كان ممكن 60 أو 55، الآن أصغر */
+          font-weight: 600; /* يظل واضح بدون زيادة سماكة */
+          fill: #222; /* لون أنيق */
+          font-family: 'Cairo', sans-serif; /* خط عصري وواضح */
+          pointer-events: none;
+          user-select: none;
         }
 
-        /* عنصر السؤال (غير مستخدم حاليًا) */
+
+        /* عنصر السؤال (غير مستخدم حاليًا لكن خليه موجود لو احتجته لاحقًا) */
         .current-question {
             position: fixed;
-            bottom: 25px; 
-            left: 50%; 
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.97);
+            bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
             color: #1e293b;
-            border-radius: 20px;
-            padding: 20px 25px;
+            border-radius: 15px;
+            padding: 15px 20px;
             text-align: center;
-            max-width: 650px; 
-            width: 90%;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
-            display: none; 
-            z-index: 150;
-            backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            max-width: 600px; width: 90%;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            display: none; z-index: 150;
         }
+        .current-question.show { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+        .question-letter { font-size: 1.5rem; font-weight: 900; color: #6b46c1; margin-bottom: 10px; }
+        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+        .question-answer { font-size: 1.1rem; font-weight: 700; color: #22c55e; }
 
-        .current-question.show { 
-            display: block; 
-            animation: questionSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes questionSlideUp { 
-            from { 
-                opacity: 0; 
-                transform: translateX(-50%) translateY(30px) scale(0.95); 
-            } 
-            to { 
-                opacity: 1; 
-                transform: translateX(-50%) translateY(0) scale(1); 
-            } 
-        }
-
-        .question-letter { 
-            font-size: 1.8rem; 
-            font-weight: 900; 
-            color: #6b46c1; 
-            margin-bottom: 12px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .question-text { 
-            font-size: 1.3rem; 
-            font-weight: 600; 
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-
-        .question-answer { 
-            font-size: 1.2rem; 
-            font-weight: 700; 
-            color: #22c55e;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
-
-        /* تحسينات للشاشات الكبيرة */
+        /* شاشات أكبر */
         @media (min-width: 1200px) {
-            .hex-text { font-size: 45px; } /* تم تصغيرها من 160px إلى 45px */
-            .logo-container img { max-height: 115px; }
-            .scores-container { top: 30px; left: 30px; }
-            .score-card { min-width: 190px; padding: 20px 24px; }
-            .team-name { font-size: 1.25rem; }
-            .team-score { font-size: 3.2rem; }
-            .buzzed-name { font-size: 6.2rem; }
-            .countdown { font-size: 14rem; }
-            .team-indicator { font-size: 2.2rem; padding: 18px 40px; }
+            .hex-text { font-size: 160px; }
+            .logo-container img { max-height: 110px; }
+            .scores-container { top: 28px; left: 28px; }
+            .score-card { min-width: 180px; padding: 16px 20px; }
+            .team-name { font-size: 1.15rem; }
+            .team-score { font-size: 2.6rem; }
+            .buzzed-name { font-size: 5.4rem; }
+            .countdown { font-size: 10.5rem; }
         }
-
         @media (min-width: 1600px) {
-            .hex-text { font-size: 55px; } /* تم تصغيرها من 180px إلى 55px */
-            .logo-container img { max-height: 140px; }
-            .buzzed-name { font-size: 7rem; }
-            .countdown { font-size: 16rem; }
+            .hex-text { font-size: 180px; }
+            .logo-container img { max-height: 130px; }
         }
 
-        /* تحسينات الموبايل */
+        /* موبايل */
         @media (max-width: 768px) {
             .scores-container, .logo-container { display: none; }
-            .hex-text { font-size: 28px; } /* تم تصغيرها من 110px إلى 28px */
-            .buzzed-name { font-size: 3.8rem; }
-            .team-indicator { font-size: 1.5rem; padding: 14px 28px; }
-            .countdown { font-size: 8rem; }
-            .buzz-status { bottom: 15px; right: 15px; font-size: 1rem; padding: 12px 16px; }
-        }
-
-        /* تأثيرات إضافية للإثارة */
-        .screen-flash {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.8);
-            z-index: 8888;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        .screen-flash.flash {
-            animation: screenFlash 0.3s ease-out;
-        }
-
-        @keyframes screenFlash {
-            0% { opacity: 0; }
-            50% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        /* تأثير الاهتزاز للشاشة */
-        .screen-shake {
-            animation: screenShake 0.5s ease-in-out;
-        }
-
-        @keyframes screenShake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
+            .hex-text { font-size: 110px; }
+            .buzzed-name { font-size: 3.2rem; }
+            .team-indicator { font-size: 1.3rem; }
+            .countdown { font-size: 6.2rem; }
         }
     </style>
 </head>
 <body>
-    <!-- جزيئات الخلفية -->
-    <div class="background-particles" id="backgroundParticles"></div>
-    
-    <!-- فلاش الشاشة -->
-    <div class="screen-flash" id="screenFlash"></div>
-
     <div class="main-container">
         <!-- النقاط -->
         <div class="scores-container">
@@ -746,40 +306,11 @@
   let countdownTimer = null;
 
   let socket = null;
-  let reconnectDelay = 1000;
+  let reconnectDelay = 1000;   // 1s -> 2s -> 5s
   const maxDelay = 5000;
   let pingTimer = null;
-  let particleTimer = null;
 
   const sessionId = '{{ session.id }}';
-
-  // ===================== تأثيرات الخلفية المتحركة =====================
-  function createBackgroundParticles() {
-    const container = document.getElementById('backgroundParticles');
-    
-    function addParticle() {
-      const particle = document.createElement('div');
-      particle.className = 'particle';
-      particle.style.left = Math.random() * 100 + '%';
-      particle.style.animationDelay = Math.random() * 2 + 's';
-      particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
-      container.appendChild(particle);
-      
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-        }
-      }, 8000);
-    }
-    
-    // إضافة جزيئة كل 500ms
-    particleTimer = setInterval(addParticle, 500);
-    
-    // إضافة بعض الجزيئات في البداية
-    for (let i = 0; i < 10; i++) {
-      setTimeout(addParticle, i * 100);
-    }
-  }
 
   // ===================== إنشاء الخلايا السداسية =====================
   function createHoneycombCells() {
@@ -830,8 +361,6 @@
       text.setAttribute('class', 'hex-text');
       text.setAttribute('x', position.x);
       text.setAttribute('y', position.y);
-      text.setAttribute('text-anchor', 'middle');
-      text.setAttribute('dominant-baseline', 'central');
       text.textContent = letter;
 
       group.appendChild(polygon);
@@ -844,126 +373,40 @@
 
   // ===================== واجهة العرض (النقاط/الخلايا) =====================
   function updateScores(team1Score, team2Score) {
-    const team1Element = document.getElementById('team1Score');
-    const team2Element = document.getElementById('team2Score');
-    
-    const oldTeam1 = parseInt(team1Element.textContent);
-    const oldTeam2 = parseInt(team2Element.textContent);
-    
-    // إذا تغيرت النقاط، أضف تأثير الانتفاضة
-    if (team1Score !== oldTeam1) {
-      team1Element.classList.add('score-updated');
-      setTimeout(() => team1Element.classList.remove('score-updated'), 600);
-      triggerScreenFlash();
-    }
-    
-    if (team2Score !== oldTeam2) {
-      team2Element.classList.add('score-updated');
-      setTimeout(() => team2Element.classList.remove('score-updated'), 600);
-      triggerScreenFlash();
-    }
-    
-    team1Element.textContent = team1Score;
-    team2Element.textContent = team2Score;
+    document.getElementById('team1Score').textContent = team1Score;
+    document.getElementById('team2Score').textContent = team2Score;
   }
 
   function updateCellState(letter, state) {
     const element = document.querySelector(`[data-letter="${letter}"]`);
     if (element) {
       element.classList.remove('team1', 'team2');
-      if (state !== 'normal') {
-        element.classList.add(state);
-        // تأثير فلاش عند تغيير حالة الخلية
-        triggerScreenFlash();
-      }
+      if (state !== 'normal') element.classList.add(state);
       cellStates[letter] = state;
     }
   }
 
-  // ===================== التأثيرات البصرية المثيرة =====================
-  function triggerScreenFlash() {
-    const flash = document.getElementById('screenFlash');
-    flash.classList.add('flash');
-    setTimeout(() => flash.classList.remove('flash'), 300);
-  }
-
-  function triggerScreenShake() {
-    document.body.classList.add('screen-shake');
-    setTimeout(() => document.body.classList.remove('screen-shake'), 500);
-  }
-
-  // ====== الأصوات المطورة ======
+  // ====== الأصوات ======
   function playBuzzSound() {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      
-      // صوت أكثر إثارة ومعقد
-      const oscillator1 = audioContext.createOscillator();
-      const oscillator2 = audioContext.createOscillator();
+      const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
-      oscillator1.connect(gainNode);
-      oscillator2.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator1.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
-      oscillator1.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
-      
-      oscillator2.frequency.setValueAtTime(400, audioContext.currentTime);
-      oscillator2.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
-      oscillator2.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.3);
-      
-      oscillator1.type = 'sawtooth';
-      oscillator2.type = 'sine';
-      
-      gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.1, audioContext.currentTime + 0.3);
-      
-      oscillator1.start();
-      oscillator2.start();
-      oscillator1.stop(audioContext.currentTime + 0.3);
-      oscillator2.stop(audioContext.currentTime + 0.3);
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 800; oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.3);
     } catch { /* ممكن المتصفح يمنع الصوت قبل تفاعل المستخدم */ }
   }
-
   function playEndSound() {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(300, audioContext.currentTime + 0.5);
-      oscillator.type = 'triangle';
-      
-      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-      
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.5);
-    } catch {}
-  }
-
-  function playCountdownBeep() {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.frequency.value = 1000;
-      oscillator.type = 'square';
-      
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.1);
+      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 420; oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
+      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.45);
     } catch {}
   }
 
@@ -979,16 +422,13 @@
     statusEl.style.display = 'block';
   }
 
+  // لا تمنع العرض حتى لو كان buzzLocked صحيح (قد تصل رسائل القفل قبل الاسم)
   function showContestantBuzz(contestantName, team, teamDisplay) {
     buzzLocked = true;
     buzzerName = contestantName;
     buzzerTeam = team;
 
-    // تأثيرات بصرية مثيرة
-    triggerScreenFlash();
-    triggerScreenShake();
     playBuzzSound();
-    
     updateBuzzStatus(false, `${contestantName} حجز الزر`);
 
     document.getElementById('buzzedName').textContent = contestantName;
@@ -1011,13 +451,6 @@
     countdownTimer = setInterval(() => {
       timeLeft--;
       countdownEl.textContent = timeLeft;
-      
-      if (timeLeft > 0) {
-        playCountdownBeep();
-        // تأثير اهتزاز خفيف مع كل عدّة
-        triggerScreenShake();
-      }
-      
       if (timeLeft <= 0) {
         clearInterval(countdownTimer);
         endBuzzSession();
@@ -1027,12 +460,9 @@
 
   function endBuzzSession() {
     playEndSound();
-    triggerScreenFlash();
-    
     setTimeout(() => {
       document.getElementById('buzzedOverlay').classList.remove('show');
     }, 450);
-    
     setTimeout(() => {
       buzzLocked = false;
       buzzerName = '';
@@ -1044,9 +474,7 @@
   function resetBuzzer() {
     if (countdownTimer) clearInterval(countdownTimer);
     document.getElementById('buzzedOverlay').classList.remove('show');
-    buzzLocked = false; 
-    buzzerName = ''; 
-    buzzerTeam = '';
+    buzzLocked = false; buzzerName = ''; buzzerTeam = '';
     updateBuzzStatus(true);
   }
 
@@ -1063,12 +491,7 @@
           }
         }
       } else if (response.status === 410) {
-        document.body.innerHTML = `
-          <div class="text-center mt-5" style="color: white; padding: 50px;">
-            <h1 style="font-size: 3rem; margin-bottom: 20px;">⏰ انتهت صلاحية الجلسة</h1>
-            <p style="font-size: 1.5rem;">تم انتهاء الجلسة أو حذفها</p>
-          </div>
-        `;
+        document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1></div>';
       }
     } catch (error) {
       console.error('خطأ في تحميل حالة الجلسة:', error);
@@ -1129,7 +552,7 @@
             break;
 
           default:
-            // تجاهل أي رسائل أخرى
+            // تجاهل أي رسائل أخرى (لا يوجد بث أسئلة)
             break;
         }
       };
@@ -1158,11 +581,8 @@
 
   // إغلاق نظيف عند مغادرة الصفحة
   window.addEventListener('beforeunload', () => {
-    try { 
-      if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); 
-    } catch {}
+    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
     if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-    if (particleTimer) { clearInterval(particleTimer); particleTimer = null; }
   });
 
   // تحكم سريع بالكيبورد/النقر: لفك الحجز بصريًا (اختياري)
@@ -1171,7 +591,6 @@
       resetBuzzer();
     }
   });
-
   document.addEventListener('click', function() {
     if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
       resetBuzzer();
@@ -1180,13 +599,8 @@
 
   // ===================== تهيئة =====================
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 تم تحميل شاشة العرض المطورة - خلية الحروف');
-    
-    // إنشاء العناصر المرئية
+    console.log('🎬 تم تحميل شاشة العرض - خلية الحروف');
     createHoneycombCells();
-    createBackgroundParticles();
-    
-    // تحميل البيانات والاتصال
     loadSessionState();
     setupWebSocket();
 
@@ -1195,8 +609,6 @@
 
     // إظهار حالة الزر بعد ثانية
     setTimeout(() => { updateBuzzStatus(true); }, 1000);
-    
-    console.log('🎮 النظام جاهز مع التأثيرات المطورة!');
   });
 </script>
 
