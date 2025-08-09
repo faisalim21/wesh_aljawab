@@ -63,7 +63,7 @@ class LettersGameQuestion(models.Model):
         help_text="اختر حزمة خلية الحروف"
     )
     letter = models.CharField(
-        max_length=1,
+        max_length=3,
         verbose_name="الحرف",
         help_text="الحرف العربي (أ، ب، ت...)"
     )
@@ -264,7 +264,7 @@ class LettersGameProgress(models.Model):
     
     # السؤال الحالي
     current_letter = models.CharField(
-        max_length=1, 
+        max_length=3, 
         null=True, 
         blank=True,
         verbose_name="الحرف الحالي"
