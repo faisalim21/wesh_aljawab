@@ -2,7 +2,17 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+import os
+from pathlib import Path
 
+# حمل .env.dev تلقائياً لو موجود (محلي فقط)
+try:
+    from dotenv import load_dotenv
+    env_dev = Path(__file__).resolve().parent / ".env.dev"
+    if env_dev.exists():
+        load_dotenv(env_dev)
+except Exception:
+    pass
 
 def main():
     """Run administrative tasks."""

@@ -16,8 +16,7 @@ ALLOWED_HOSTS = [
 
 # -------- التطبيقات --------
 INSTALLED_APPS = [
-    # مهم لسيرفر ASGI في الإنتاج
-    'daphne',
+    'daphne',  # مهم لسيرفر ASGI في الإنتاج
 
     # Django
     'django.contrib.admin',
@@ -79,9 +78,10 @@ DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
         conn_max_age=600,
-        ssl_require=(not DEBUG),  # <-- بدل False
+        ssl_require=(not DEBUG),
     )
 }
+
 # -------- إعدادات اللعبة --------
 GAME_SETTINGS = {
     'FREE_SESSION_DURATION_HOURS': 1,
@@ -100,7 +100,6 @@ FORCE_REDIS = config('FORCE_REDIS', default=not DEBUG, cast=bool)
 def _channels_redis_hosts(url: str):
     if not url:
         return []
-    # دعم TLS إذا كانت rediss://
     parsed = urlparse(url)
     use_ssl = parsed.scheme == 'rediss'
     host_cfg = {'address': url}
@@ -109,30 +108,26 @@ def _channels_redis_hosts(url: str):
     return [host_cfg]
 
 if FORCE_REDIS and REDIS_URL:
-    # settings.py
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": "channels_redis.core.RedisChannelLayer",
             "CONFIG": {
-                "hosts": [os.environ.get("REDIS_URL")],
+                "hosts": _channels_redis_hosts(REDIS_URL),
             },
         },
     }
-
 else:
-    CHANNEL_LAYERS = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 # -------- الكاش --------
 REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
+
 def _cache_location(url: str):
     if not url:
         return ''
     parsed = urlparse(url)
     if parsed.scheme == 'rediss':
-        # django-redis يدعم rediss مباشرة
-        return url
+        return url  # django-redis يدعم rediss مباشرة
     return url
 
 if FORCE_REDIS and REDIS_CACHE_URL:
@@ -143,7 +138,6 @@ if FORCE_REDIS and REDIS_CACHE_URL:
             "OPTIONS": {
                 "CLIENT_CLASS": "django_redis.client.DefaultClient",
                 "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-                # لو rediss وتحتاج شهادة مخصصة أضف 'SSL' خيارات هنا
             },
             "KEY_PREFIX": "wesh",
             "TIMEOUT": 300,
@@ -182,8 +176,10 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise تخزين مضغوط مع Manifest
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -207,7 +203,7 @@ SESSION_COOKIE_AGE = 86400
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# CSRF Trusted Origins من env (أضف دومين Render)
+# CSRF Trusted Origins من env
 _csrf_trusted = config('CSRF_TRUSTED_ORIGINS', default='')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()] if _csrf_trusted else []
 

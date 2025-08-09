@@ -33,3 +33,67 @@ INFO 2025-08-08 23:41:53,128 consumers 1496 1524 WS disconnected: session=1f03b8
 INFO 2025-08-08 23:42:00,388 consumers 1496 1524 WS disconnected: session=1f03b81b-20e3-4d59-a9be-d9ce4e19d41b, role=host, code=1006
 INFO 2025-08-08 23:42:09,083 consumers 1496 1524 WS disconnected: session=1f03b81b-20e3-4d59-a9be-d9ce4e19d41b, role=host, code=1006
 INFO 2025-08-08 23:42:17,349 server 1496 1524 Killed 2 pending application instances
+INFO 2025-08-09 17:44:28,459 autoreload 5780 14808 Watching for file changes with StatReloader
+INFO 2025-08-09 17:44:28,709 server 5780 3956 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-09 17:44:28,710 server 5780 3956 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-09 17:44:28,711 server 5780 3956 Listening on TCP address 127.0.0.1:8000
+INFO 2025-08-09 17:57:48,299 autoreload 3784 14344 Watching for file changes with StatReloader
+INFO 2025-08-09 17:57:48,435 server 3784 8396 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-09 17:57:48,436 server 3784 8396 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-09 17:57:48,437 server 3784 8396 Listening on TCP address 127.0.0.1:8000
+WARNING 2025-08-09 17:57:54,219 base 3784 2324 Session data corrupted
+INFO 2025-08-09 17:57:54,271 runserver 3784 8396 [mHTTP GET / 200 [0.17, 127.0.0.1:50458][0m
+WARNING 2025-08-09 17:57:54,536 log 3784 10288 Not Found: /favicon.ico
+WARNING 2025-08-09 17:57:54,537 runserver 3784 8396 [33mHTTP GET /favicon.ico 404 [0.05, 127.0.0.1:50458][0m
+INFO 2025-08-09 17:57:59,716 runserver 3784 8396 [mHTTP GET /games/letters/ 200 [0.05, 127.0.0.1:50458][0m
+INFO 2025-08-09 17:58:00,841 runserver 3784 8396 [32mHTTP POST /games/letters/create/ 302 [0.06, 127.0.0.1:50458][0m
+INFO 2025-08-09 17:58:00,894 runserver 3784 8396 [mHTTP GET /accounts/login/?next=/games/letters/create/ 200 [0.05, 127.0.0.1:50458][0m
+INFO 2025-08-09 18:18:57,306 autoreload 9132 9888 Watching for file changes with StatReloader
+INFO 2025-08-09 18:18:57,479 server 9132 11024 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-09 18:18:57,480 server 9132 11024 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-09 18:18:57,481 server 9132 11024 Listening on TCP address 127.0.0.1:8000
+INFO 2025-08-09 18:19:28,366 autoreload 6852 3436 Watching for file changes with StatReloader
+INFO 2025-08-09 18:19:28,685 server 6852 15260 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-09 18:19:28,686 server 6852 15260 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-09 18:19:28,688 server 6852 15260 Listening on TCP address 127.0.0.1:8000
+WARNING 2025-08-09 18:19:34,271 base 6852 3464 Session data corrupted
+INFO 2025-08-09 18:19:34,327 runserver 6852 15260 [mHTTP GET / 200 [0.11, 127.0.0.1:50813][0m
+INFO 2025-08-09 18:19:43,565 runserver 6852 15260 [mHTTP GET /accounts/login/ 200 [0.07, 127.0.0.1:50813][0m
+INFO 2025-08-09 18:19:51,805 runserver 6852 15260 [mHTTP GET /games/letters/ 200 [0.09, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:01,989 runserver 6852 15260 [32mHTTP GET /admin/accounts/user/add/ 302 [0.09, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,448 runserver 6852 15260 [mHTTP GET /admin/login/?next=/admin/accounts/user/add/ 200 [0.45, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,530 runserver 6852 15260 [36mHTTP GET /static/admin/css/base.css 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,551 runserver 6852 15260 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.03, 127.0.0.1:50822][0m
+INFO 2025-08-09 18:20:02,554 runserver 6852 15260 [36mHTTP GET /static/admin/js/theme.js 304 [0.03, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:02,573 runserver 6852 15260 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,615 runserver 6852 15260 [36mHTTP GET /static/admin/css/rtl.css 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,620 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive.css 304 [0.02, 127.0.0.1:50822][0m
+INFO 2025-08-09 18:20:02,623 runserver 6852 15260 [36mHTTP GET /static/admin/css/login.css 304 [0.02, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:02,649 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive_rtl.css 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:02,652 runserver 6852 15260 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.01, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,417 runserver 6852 15260 [32mHTTP GET /admin/ 302 [0.03, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,468 runserver 6852 15260 [mHTTP GET /admin/login/?next=/admin/ 200 [0.04, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,508 runserver 6852 15260 [36mHTTP GET /static/admin/css/base.css 304 [0.00, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,535 runserver 6852 15260 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.02, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,542 runserver 6852 15260 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.02, 127.0.0.1:50822][0m
+INFO 2025-08-09 18:20:04,543 runserver 6852 15260 [36mHTTP GET /static/admin/js/theme.js 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:04,545 runserver 6852 15260 [36mHTTP GET /static/admin/css/login.css 304 [0.02, 127.0.0.1:50824][0m
+INFO 2025-08-09 18:20:04,551 runserver 6852 15260 [36mHTTP GET /static/admin/css/rtl.css 304 [0.02, 127.0.0.1:50825][0m
+INFO 2025-08-09 18:20:04,552 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive.css 304 [0.02, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:04,562 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive_rtl.css 304 [0.02, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:04,569 runserver 6852 15260 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.01, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:08,756 runserver 6852 15260 [32mHTTP POST /admin/login/?next=/admin/ 302 [2.64, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:08,879 runserver 6852 15260 [mHTTP GET /admin/ 200 [0.12, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:08,953 runserver 6852 15260 [36mHTTP GET /static/admin/css/base.css 304 [0.01, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:08,977 runserver 6852 15260 [36mHTTP GET /static/admin/css/nav_sidebar.css 304 [0.03, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:08,979 runserver 6852 15260 [36mHTTP GET /static/admin/css/dark_mode.css 304 [0.03, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:08,980 runserver 6852 15260 [36mHTTP GET /static/admin/css/dashboard.css 304 [0.03, 127.0.0.1:50824][0m
+INFO 2025-08-09 18:20:08,982 runserver 6852 15260 [36mHTTP GET /static/admin/js/theme.js 304 [0.03, 127.0.0.1:50825][0m
+INFO 2025-08-09 18:20:08,984 runserver 6852 15260 [36mHTTP GET /static/admin/css/rtl.css 304 [0.03, 127.0.0.1:50822][0m
+INFO 2025-08-09 18:20:09,004 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive.css 304 [0.04, 127.0.0.1:50826][0m
+INFO 2025-08-09 18:20:09,014 runserver 6852 15260 [36mHTTP GET /static/admin/css/responsive_rtl.css 304 [0.02, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:09,017 runserver 6852 15260 [36mHTTP GET /static/admin/js/nav_sidebar.js 304 [0.01, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:09,038 runserver 6852 15260 [36mHTTP GET /static/admin/img/icon-addlink.svg 304 [0.01, 127.0.0.1:50823][0m
+INFO 2025-08-09 18:20:09,041 runserver 6852 15260 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.01, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:13,450 runserver 6852 15260 [32mHTTP POST /admin/logout/ 302 [0.07, 127.0.0.1:50817][0m
+INFO 2025-08-09 18:20:13,486 runserver 6852 15260 [mHTTP GET / 200 [0.03, 127.0.0.1:50817][0m
