@@ -242,39 +242,28 @@ def games_home(request):
 
 def letters_game_home(request):
     free_package = GamePackage.objects.filter(
-        game_type='letters',
-        is_free=True,
-        is_active=True
+        game_type='letters', is_free=True, is_active=True
     ).first()
 
     paid_packages = GamePackage.objects.filter(
-        game_type='letters',
-        is_free=False,
-        is_active=True
+        game_type='letters', is_free=False, is_active=True
     ).order_by('package_number')
 
     user_purchases = []
-    free_session_eligible = True
-    free_session_message = ""
-    user_free_sessions_count = 0
-
     if request.user.is_authenticated:
         user_purchases = UserPurchase.objects.filter(
-            user=request.user,
-            package__game_type='letters'
+            user=request.user, package__game_type='letters'
         ).values_list('package_id', flat=True)
 
-        free_session_eligible, free_session_message, user_free_sessions_count = check_free_session_eligibility(
-            request.user, 'letters'
-        )
-
+    # وضع مؤقت: السماح دائمًا وإخفاء أي شارة استنفاد
     return render(request, 'games/letters/home.html', {
         'free_package': free_package,
         'paid_packages': paid_packages,
         'user_purchases': user_purchases,
-        'free_session_eligible': free_session_eligible,
-        'free_session_message': free_session_message,
-        'user_free_sessions_count': user_free_sessions_count,
+        'free_session_eligible': True,
+        'free_session_message': "",
+        'user_free_sessions_count': 0,
+        'unlimited_free_mode': True,  # فلاغ يُستخدم بالواجهة
     })
 
 def create_letters_session(request):
