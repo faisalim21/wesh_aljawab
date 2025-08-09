@@ -169,37 +169,24 @@ def get_letters_for_session(session):
 # ===============================
 
 def check_free_session_eligibility(user, game_type):
-    if not user.is_authenticated:
-        return True, "", 0
+    """
+    [وضع مؤقت] السماح بعدد غير محدود من الجلسات المجانية.
+    يُعاد True دائمًا مع رسالة فارغة وعدّاد معلوماتي فقط.
+    """
+    try:
+        # عدّاد معلوماتي فقط (لا يستخدم للمنع)
+        if user.is_authenticated:
+            sessions_count = GameSession.objects.filter(
+                host=user, game_type=game_type, package__is_free=True
+            ).count()
+        else:
+            sessions_count = 0
+    except Exception:
+        sessions_count = 0
 
-    previous_free_sessions_qs = GameSession.objects.filter(
-        host_id=user.id,
-        game_type=game_type,
-        package__is_free=True
-    ).only('id')
+    # السماح دائمًا
+    return True, "", sessions_count
 
-    if previous_free_sessions_qs.exists():
-        sessions_count = previous_free_sessions_qs.count()
-        # (الباقي كما هو: تكوين message وإرجاع False, message, sessions_count)
-        game_names = {
-            'letters': 'خلية الحروف',
-            'images': 'تحدي الصور',
-            'quiz': 'سؤال وجواب'
-        }
-        latest_session = previous_free_sessions_qs.order_by('-created_at').first()
-        message = f"""
-        🚫 لقد استنفدت جلستك المجانية للعبة {game_names.get(game_type, 'هذه اللعبة')}!
-
-        💎 للاستمرار في الاستمتاع باللعبة:
-        • يمكنك شراء الحزم المدفوعة التي تحتوي على المزيد من المحتوى
-        • الحزم المدفوعة لا تنتهي صلاحيتها ولا يوجد حد لعدد الجلسات
-        • محتوى حصري وأسئلة أكثر تنوعاً
-
-        🛒 تصفح الحزم المتاحة واختر ما يناسبك!
-        """
-        return False, message, sessions_count
-
-    return True, "", 0
 
 
 # ===============================
