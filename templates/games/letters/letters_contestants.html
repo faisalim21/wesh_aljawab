@@ -249,18 +249,51 @@
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=contestant`);
-      socket.onopen = () => { reconnectDelay = 1000; };
-      socket.onmessage = null;
+
+      socket.onopen = () => {
+        reconnectDelay = 1000;
+        // ping كل 25 ثانية (يبقي الاتصال يقِظ)
+        if (window.__pingTimer) clearInterval(window.__pingTimer);
+        window.__pingTimer = setInterval(() => {
+          try { socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify({ type: 'ping' })); } catch(e){}
+        }, 25000);
+      };
+
+      socket.onmessage = (evt) => {
+        let data = {};
+        try { data = JSON.parse(evt.data || "{}"); } catch { return; }
+
+        if (data.type === 'buzz_confirmed') {
+          showSuccess(`✅ تم تسجيل إجابتك يا ${data.contestant_name}!`);
+          return;
+        }
+        if (data.type === 'buzz_rejected') {
+          showError(data.message || 'الزر محجوز حاليًا — جرّب فورًا بعد فك القفل');
+          return;
+        }
+        if (data.type === 'error') {
+          showError(data.message || 'حدث خطأ، حاول مرة أخرى');
+          return;
+        }
+        // تجاهل بقية الأنواع (pong, بث العرض ...إلخ)
+      };
+
       socket.onclose = () => {
+        if (window.__pingTimer) { clearInterval(window.__pingTimer); window.__pingTimer = null; }
         setTimeout(connectWS, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
       };
-      socket.onerror = () => { try { socket.close(); } catch {} };
+
+      socket.onerror = () => {
+        try { socket.close(); } catch {}
+        if (window.__pingTimer) { clearInterval(window.__pingTimer); window.__pingTimer = null; }
+      };
     } catch (e) {
       setTimeout(connectWS, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
   }
+
 
   function buzzAnswer() {
     const name = document.getElementById('contestantName').value.trim();

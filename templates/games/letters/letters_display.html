@@ -188,10 +188,12 @@
 
         .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
         .hex-text {
-          font-size: 42px; /* كان ممكن 60 أو 55، الآن أصغر */
-          font-weight: 600; /* يظل واضح بدون زيادة سماكة */
-          fill: #222; /* لون أنيق */
-          font-family: 'Cairo', sans-serif; /* خط عصري وواضح */
+          font-size: 72px;              /* حجم منطقي افتراضي */
+          font-weight: 800;
+          fill: #222;
+          font-family: 'Tajawal', sans-serif;  /* نفس الخط المحمّل فعليًا */
+          text-anchor: middle;          /* توسيط داخل السداسي */
+          dominant-baseline: central;   /* توسيط عمودي داخل السداسي */
           pointer-events: none;
           user-select: none;
         }
@@ -218,7 +220,7 @@
 
         /* شاشات أكبر */
         @media (min-width: 1200px) {
-            .hex-text { font-size: 160px; }
+            .hex-text { font-size: 88px;}
             .logo-container img { max-height: 110px; }
             .scores-container { top: 28px; left: 28px; }
             .score-card { min-width: 180px; padding: 16px 20px; }
@@ -228,14 +230,14 @@
             .countdown { font-size: 10.5rem; }
         }
         @media (min-width: 1600px) {
-            .hex-text { font-size: 180px; }
+            .hex-text { font-size: 96px; }
             .logo-container img { max-height: 130px; }
         }
 
         /* موبايل */
         @media (max-width: 768px) {
             .scores-container, .logo-container { display: none; }
-            .hex-text { font-size: 110px; }
+            .hex-text { font-size: 64px; }
             .buzzed-name { font-size: 3.2rem; }
             .team-indicator { font-size: 1.3rem; }
             .countdown { font-size: 6.2rem; }
