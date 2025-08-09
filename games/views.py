@@ -172,19 +172,21 @@ def check_free_session_eligibility(user, game_type):
     if not user.is_authenticated:
         return True, "", 0
 
-    previous_free_sessions = GameSession.objects.filter(
-        host=user,
+    previous_free_sessions_qs = GameSession.objects.filter(
+        host_id=user.id,
         game_type=game_type,
         package__is_free=True
-    )
-    sessions_count = previous_free_sessions.count()
+    ).only('id')
 
-    if sessions_count > 0:
+    if previous_free_sessions_qs.exists():
+        sessions_count = previous_free_sessions_qs.count()
+        # (الباقي كما هو: تكوين message وإرجاع False, message, sessions_count)
         game_names = {
             'letters': 'خلية الحروف',
             'images': 'تحدي الصور',
             'quiz': 'سؤال وجواب'
         }
+        latest_session = previous_free_sessions_qs.order_by('-created_at').first()
         message = f"""
         🚫 لقد استنفدت جلستك المجانية للعبة {game_names.get(game_type, 'هذه اللعبة')}!
 
@@ -198,6 +200,7 @@ def check_free_session_eligibility(user, game_type):
         return False, message, sessions_count
 
     return True, "", 0
+
 
 # ===============================
 # Helpers: توكن المضيف
