@@ -77,8 +77,10 @@
 <body>
   {% include 'header.html' %}
   <!-- في home.html لكل لعبة -->
-{% if not unlimited_free_mode and (not free_session_eligible) %}
-<div class="alert alert-warning ...">استنفدت جلستك المجانية</div>
+{% if not unlimited_free_mode %}
+  {% if not free_session_eligible %}
+    <div class="alert alert-warning ...">استنفدت جلستك المجانية</div>
+  {% endif %}
 {% endif %}
 
   <section class="packages-section">

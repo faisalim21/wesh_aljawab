@@ -97,3 +97,8 @@ INFO 2025-08-09 18:20:09,038 runserver 6852 15260 [36mHTTP GET /static/admin/im
 INFO 2025-08-09 18:20:09,041 runserver 6852 15260 [36mHTTP GET /static/admin/img/icon-changelink.svg 304 [0.01, 127.0.0.1:50817][0m
 INFO 2025-08-09 18:20:13,450 runserver 6852 15260 [32mHTTP POST /admin/logout/ 302 [0.07, 127.0.0.1:50817][0m
 INFO 2025-08-09 18:20:13,486 runserver 6852 15260 [mHTTP GET / 200 [0.03, 127.0.0.1:50817][0m
+INFO 2025-08-09 22:49:17,084 autoreload 556 14980 Watching for file changes with StatReloader
+INFO 2025-08-09 22:49:19,142 server 556 18264 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-09 22:49:19,142 server 556 18264 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-09 22:49:19,143 server 556 18264 Listening on TCP address 127.0.0.1:8000
+INFO 2025-08-09 22:49:22,105 runserver 556 18264 [32mHTTP GET / 301 [0.00, 127.0.0.1:54533][0m
