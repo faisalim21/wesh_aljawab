@@ -462,522 +462,284 @@
 
 
 <script>
-// ======================= المتغيرات العامة =======================
-let clickCount = {};
-let team1Score = 0;
-let team2Score = 0;
-let currentLetter = '';
-let currentQuestionData = null;
-let isTimerRunning = false;
-let socket = null;
+  // ===================== المتغيرات العامة =====================
+  let cellStates = {};
+  let buzzLocked = false;
+  let buzzerName = '';
+  let buzzerTeam = '';
+  let countdownTimer = null;
 
-// حساب الوقت المتبقي للجلسة المجانية (إن وجد)
-let sessionTimeRemaining = null;
-{% if session.package.is_free and time_remaining %}
-  try {
-    sessionTimeRemaining = {{ time_remaining.total_seconds|floatformat:0 }};
-  } catch(e) { sessionTimeRemaining = null; }
-{% endif %}
+  let socket = null;
+  let reconnectDelay = 1000;   // 1s -> 2s -> 5s
+  const maxDelay = 5000;
+  let pingTimer = null;
 
-const sessionId = '{{ session.id }}';
-const csrfToken = (document.querySelector('[name=csrfmiddlewaretoken]')?.value || '{{ csrf_token }}') ?? '';
+  const sessionId = '{{ session.id }}';
+  const hostToken = '{{ host_token }}'; // إضافة توكن المضيف
 
-// ======================= WebSocket مع إعادة اتصال + keep-alive =======================
-let reconnectDelay = 1000;     // 1s -> 2s -> 5s (حد أقصى)
-const maxDelay = 5000;
-let pingTimer = null;
+  // ===================== إنشاء الخلايا السداسية =====================
+  function createHoneycombCells() {
+    const svg = document.getElementById('honeycombSvg');
+    const arabicLetters = window.sessionData.arabicLetters || [];
 
-function setupWebSocket() {
-  try {
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=host`);
+    const cellPositions = [
+      {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
+      {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
+      {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
+      {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
+      {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
+      {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
+      {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
+      {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
+      {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
+      {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
+      {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
+      {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
+      {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
+      {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
+      {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
+      {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
+      {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
+      {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
+      {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
+      {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
+      {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
+      {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
+      {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
+      {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
+      {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
+    ];
 
-    socket.onopen = function() {
-      console.log('✅ WebSocket متصل للمقدم');
-      reconnectDelay = 1000;
+    for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
+      const letter = arabicLetters[i];
+      const position = cellPositions[i];
 
-      // keep-alive ping كل 25 ثانية
-      if (pingTimer) clearInterval(pingTimer);
-      pingTimer = setInterval(() => {
-        try {
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'ping' }));
-          }
-        } catch(e) {/* ignore */}
-      }, 25000);
-    };
+      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      group.setAttribute('class', 'hex-cell');
+      group.setAttribute('data-letter', letter);
 
-    socket.onmessage = function(event) {
-      let data = {};
-      try { data = JSON.parse(event.data || "{}"); } catch { data = {}; }
+      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      polygon.setAttribute('class', 'hex-shape');
+      polygon.setAttribute('points', position.points);
 
-      switch(data.type) {
-        case 'show_contestant_buzz':
-          showContestantBuzz(data.contestant_name, data.team, data.team_display);
-          break;
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('class', 'hex-text');
+      text.setAttribute('x', position.x);
+      text.setAttribute('y', position.y);
+      text.textContent = letter;
 
-        case 'buzz_lock':
-          // بإمكانك إظهار حالة القفل لو حبيت
-          break;
+      group.appendChild(polygon);
+      group.appendChild(text);
+      svg.appendChild(group);
+    }
+  }
 
-        case 'buzz_unlock':
-          // فك القفل بصريًا يتم عند المتسابق/العرض
-          break;
+  // ===================== واجهة العرض (النقاط/الخلايا) =====================
+  function updateScores(team1Score, team2Score) {
+    document.getElementById('team1Score').textContent = team1Score;
+    document.getElementById('team2Score').textContent = team2Score;
+  }
 
-        case 'cell_state_updated':
-          updateCellVisually(data.letter, data.state);
-          break;
+  function updateCellState(letter, state) {
+    const element = document.querySelector(`[data-letter="${letter}"]`);
+    if (element) {
+      element.classList.remove('team1', 'team2');
+      if (state !== 'normal') element.classList.add(state);
+      cellStates[letter] = state;
+    }
+  }
 
-        case 'scores_updated':
-          team1Score = Number(data.team1_score || 0);
-          team2Score = Number(data.team2_score || 0);
-          updateScoreDisplay();
-          break;
+  // ====== الأصوات ======
+  function playBuzzSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 800;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch {}
+  }
+  function playEndSound() {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 420;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + 0.45);
+    } catch {}
+  }
 
-        case 'pong':
-          // keep-alive رد
-          break;
+  function updateBuzzStatus(available, message) {
+    const statusEl = document.getElementById('buzzStatus');
+    if (available) {
+      statusEl.className = 'buzz-status available';
+      statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
+    } else {
+      statusEl.className = 'buzz-status locked';
+      statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
+    }
+    statusEl.style.display = 'block';
+  }
 
-        default:
-          // تجاهل أي أنواع غير مهمة هنا
-          break;
+  function showContestantBuzz(contestantName, team, teamDisplay) {
+    buzzLocked = true;
+    buzzerName = contestantName;
+    buzzerTeam = team;
+    playBuzzSound();
+    updateBuzzStatus(false, `${contestantName} حجز الزر`);
+    document.getElementById('buzzedName').textContent = contestantName;
+    const teamIndicator = document.getElementById('teamIndicator');
+    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    teamIndicator.textContent = teamName;
+    teamIndicator.className = `team-indicator ${team}`;
+    document.getElementById('buzzedOverlay').classList.add('show');
+    startCountdown();
+  }
+
+  function startCountdown() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    let timeLeft = 3;
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.textContent = timeLeft;
+    countdownTimer = setInterval(() => {
+      timeLeft--;
+      countdownEl.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(countdownTimer);
+        endBuzzSession();
       }
-    };
-
-    socket.onclose = function() {
-      console.log('❌ WebSocket منقطع للمقدم — إعادة المحاولة...');
-      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      setTimeout(setupWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-    };
-
-    socket.onerror = function(error) {
-      console.error('❌ خطأ WebSocket للمقدم:', error);
-      try { socket.close(); } catch {}
-      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-    };
-
-  } catch (error) {
-    console.error('خطأ في إنشاء WebSocket:', error);
-    setTimeout(setupWebSocket, reconnectDelay);
-    reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-  }
-}
-
-// أغلق WS بلطف عند مغادرة الصفحة
-window.addEventListener('beforeunload', () => {
-  try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
-  if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-});
-
-// ======================= مؤقت صلاحية الجلسة المجانية =======================
-function updateSessionTimer() {
-  if (sessionTimeRemaining && sessionTimeRemaining > 0) {
-    const hours = Math.floor(sessionTimeRemaining / 3600);
-    const minutes = Math.floor((sessionTimeRemaining % 3600) / 60);
-    const seconds = Math.floor(sessionTimeRemaining % 60);
-
-    let timeText = hours > 0
-      ? `${hours}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`
-      : `${minutes}:${String(seconds).padStart(2,'0')}`;
-
-    const timeEl = document.getElementById('timeRemaining');
-    if (timeEl) timeEl.textContent = timeText;
-
-    const timerElement = document.getElementById('sessionTimer');
-    if (timerElement) {
-      if (sessionTimeRemaining <= 300) {
-        timerElement.className = 'alert alert-danger text-center mb-3';
-      } else if (sessionTimeRemaining <= 900) {
-        timerElement.className = 'alert alert-warning text-center mb-3';
-      }
-    }
-
-    sessionTimeRemaining--;
-    if (sessionTimeRemaining <= 0) {
-      alert('⏰ انتهت صلاحية الجلسة المجانية!');
-      window.location.href = '/games/letters/';
-      return;
-    }
-    setTimeout(updateSessionTimer, 1000);
-  }
-}
-
-// ======================= إنشاء خلية الحروف =======================
-function createHoneycombCells() {
-  const svg = document.getElementById('honeycombSvg');
-  const arabicLetters = window.sessionData.arabicLetters || [];
-
-  const cellPositions = [
-    {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
-    {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
-    {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
-    {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-    {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-    {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
-    {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
-    {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-    {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-    {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-    {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
-    {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
-    {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
-    {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-    {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-    {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
-    {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
-    {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-    {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-    {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-    {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-    {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-    {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-    {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-    {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
-  ];
-
-  for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
-    const letter = arabicLetters[i];
-    const position = cellPositions[i];
-
-    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    group.setAttribute('class', 'hex-cell');
-    group.setAttribute('data-letter', letter);
-    group.setAttribute('onclick', `selectLetter('${letter}', this)`);
-
-    const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    polygon.setAttribute('class', 'hex-shape');
-    polygon.setAttribute('points', position.points);
-
-    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    text.setAttribute('class', 'hex-text');
-    text.setAttribute('x', position.x);
-    text.setAttribute('y', position.y);
-    text.textContent = letter;
-
-    group.appendChild(polygon);
-    group.appendChild(text);
-    svg.appendChild(group);
+    }, 1000);
   }
 
-  console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية بالحروف:`, arabicLetters.slice(0, 25));
-}
-
-// ======================= تعامل النقر على الحروف =======================
-let letterClickLocked = false;
-
-async function selectLetter(letter, element) {
-  if (isTimerRunning || letterClickLocked) return;
-  letterClickLocked = true;
-  setTimeout(() => { letterClickLocked = false; }, 200);
-
-  console.log(`تم اختيار الحرف: ${letter}`);
-  clickCount[letter] = (clickCount[letter] || 0) + 1;
-
-  if (clickCount[letter] === 1) {
-    // عرض السؤال محليًا فقط (HTTP) — لا WS
-    await showQuestion(letter);
-    // 🔇 لا ترسل select_letter عبر WebSocket
-  } else if (clickCount[letter] === 2) {
-    element.classList.remove('team2');
-    element.classList.add('team1');
-    await updateCellState(letter, 'team1');   // تحديث DB
-    sendCellUpdate(letter, 'team1');          // بث WS
-  } else if (clickCount[letter] === 3) {
-    element.classList.remove('team1');
-    element.classList.add('team2');
-    await updateCellState(letter, 'team2');
-    sendCellUpdate(letter, 'team2');
-  } else {
-    element.classList.remove('team1', 'team2');
-    clickCount[letter] = 0;
-    await updateCellState(letter, 'normal');
-    sendCellUpdate(letter, 'normal');
-  }
-}
-
-// ======================= السؤال للمقدم فقط (HTTP) =======================
-async function showQuestion(letter) {
-  currentLetter = letter;
-  document.getElementById('currentLetter').textContent = letter;
-  document.getElementById('mainQuestion').textContent = 'جاري تحميل السؤال...';
-  document.getElementById('mainAnswer').textContent = '...';
-  document.getElementById('questionPanel').style.display = 'block';
-
-  const data = await fetchQuestionFromServer(letter);
-
-  if (!data || !data.questions) {
-    document.getElementById('mainQuestion').textContent = 'لا يوجد سؤال متاح لهذا الحرف';
-    document.getElementById('mainAnswer').textContent = '';
-    document.getElementById('alt1Question').textContent = '';
-    document.getElementById('alt1Answer').textContent = '';
-    document.getElementById('alt2Question').textContent = '';
-    document.getElementById('alt2Answer').textContent = '';
-    return;
+  function endBuzzSession() {
+    playEndSound();
+    setTimeout(() => {
+      document.getElementById('buzzedOverlay').classList.remove('show');
+    }, 450);
+    setTimeout(() => {
+      buzzLocked = false;
+      buzzerName = '';
+      buzzerTeam = '';
+      updateBuzzStatus(true, 'الزر متاح للضغط');
+    }, 1200);
   }
 
-  currentQuestionData = data.questions;
-
-  document.getElementById('mainQuestion').textContent = currentQuestionData.main.question;
-  document.getElementById('mainAnswer').textContent = currentQuestionData.main.answer;
-  document.getElementById('alt1Question').textContent = currentQuestionData.alt1.question;
-  document.getElementById('alt1Answer').textContent = currentQuestionData.alt1.answer;
-  document.getElementById('alt2Question').textContent = currentQuestionData.alt2.question;
-  document.getElementById('alt2Answer').textContent = currentQuestionData.alt2.answer;
-}
-
-async function fetchQuestionFromServer(letter) {
-  try {
-    const response = await fetch(`/games/api/get-question/?letter=${encodeURIComponent(letter)}&session_id=${encodeURIComponent(sessionId)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-    });
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('خطأ في جلب السؤال:', error);
-    return null;
-  }
-}
-
-// ======================= تلوين الخلايا ومزامنة DB/WS =======================
-function sendCellUpdate(letter, state) {
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'update_cell_state', letter, state }));
-  }
-}
-
-async function updateCellState(letter, state) {
-  try {
-    const response = await fetch('/games/api/update-cell-state/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-      body: JSON.stringify({ session_id: sessionId, letter, state })
-    });
-    if (!response.ok) console.error('خطأ في تحديث حالة الخلية');
-  } catch (error) {
-    console.error('خطأ في الاتصال بالسيرفر:', error);
-  }
-}
-
-function updateCellVisually(letter, state) {
-  const element = document.querySelector(`[data-letter="${letter}"]`);
-  if (element) {
-    element.classList.remove('team1', 'team2');
-    if (state !== 'normal') element.classList.add(state);
-    clickCount[letter] = state === 'team1' ? 2 : state === 'team2' ? 3 : (state === 'normal' ? 0 : 1);
-  }
-}
-
-// ======================= إدارة النقاط =======================
-async function updateScore(team, change) {
-  if (team === 'team1') {
-    team1Score = Math.max(0, Number(team1Score) + Number(change));
-  } else {
-    team2Score = Math.max(0, Number(team2Score) + Number(change));
+  function resetBuzzer() {
+    if (countdownTimer) clearInterval(countdownTimer);
+    document.getElementById('buzzedOverlay').classList.remove('show');
+    buzzLocked = false;
+    buzzerName = '';
+    buzzerTeam = '';
+    updateBuzzStatus(true);
   }
 
-  updateScoreDisplay();
-
-  try {
-    await fetch('/games/api/update-scores/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-      body: JSON.stringify({ session_id: sessionId, team1_score: team1Score, team2_score: team2Score })
-    });
-
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'update_scores', team1_score: team1Score, team2_score: team2Score }));
-    }
-  } catch (error) {
-    console.error('خطأ في تحديث النقاط:', error);
-  }
-}
-
-function updateScoreDisplay() {
-  document.getElementById('team1Score').textContent = team1Score;
-  document.getElementById('team2Score').textContent = team2Score;
-
-  const team1Desktop = document.getElementById('team1ScoreDesktop');
-  const team2Desktop = document.getElementById('team2ScoreDesktop');
-  if (team1Desktop) team1Desktop.textContent = team1Score;
-  if (team2Desktop) team2Desktop.textContent = team2Score;
-}
-
-// ======================= مؤقت 3 ثوانٍ (محلي) =======================
-function startTimer() {
-  if (isTimerRunning) return;
-
-  isTimerRunning = true;
-  const btn = document.getElementById('timerBtn');
-  const display = document.getElementById('timerDisplay');
-
-  btn.textContent = '⏸️ جاري العد...';
-  btn.disabled = true;
-
-  let time = 3;
-  const interval = setInterval(() => {
-    time--;
-    display.textContent = time;
-
-    if (time <= 0) {
-      clearInterval(interval);
-
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-
-        oscillator.frequency.value = 800;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-      } catch (error) {
-        console.log('لا يمكن تشغيل الصوت');
-      }
-
-      btn.textContent = '▶️ ابدأ العد التنازلي';
-      btn.disabled = false;
-      isTimerRunning = false;
-      display.textContent = '3';
-    }
-  }, 1000);
-}
-
-// ======================= تحميل حالة الجلسة عند بداية الصفحة =======================
-async function loadSessionState() {
-  try {
-    const response = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-
-      team1Score = Number(data.team1_score || 0);
-      team2Score = Number(data.team2_score || 0);
-      updateScoreDisplay();
-
-      if (data.cell_states) {
-        for (const [letter, state] of Object.entries(data.cell_states)) {
-          const element = document.querySelector(`[data-letter="${letter}"]`);
-          if (element && state !== 'normal') {
-            element.classList.add(state);
-            clickCount[letter] = state === 'team1' ? 2 : 3;
+  // ===================== تحميل حالة الجلسة =====================
+  async function loadSessionState() {
+    try {
+      const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        updateScores(data.team1_score || 0, data.team2_score || 0);
+        if (data.cell_states) {
+          for (const [letter, state] of Object.entries(data.cell_states)) {
+            updateCellState(letter, state);
           }
         }
       }
-    } else if (response.status === 410) {
-      alert('⏰ انتهت صلاحية الجلسة!');
-      window.location.href = '/games/letters/';
+    } catch {}
+  }
+
+  // ===================== WebSocket =====================
+  function setupWebSocket() {
+    try {
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display&host_token=${encodeURIComponent(hostToken)}`);
+      socket.onopen = function() {
+        reconnectDelay = 1000;
+        updateBuzzStatus(true);
+        if (pingTimer) clearInterval(pingTimer);
+        pingTimer = setInterval(() => {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 25000);
+      };
+      socket.onmessage = function(event) {
+        const data = JSON.parse(event.data || "{}");
+        switch (data.type) {
+          case 'cell_state_updated':
+            updateCellState(data.letter, data.state);
+            break;
+          case 'scores_updated':
+            updateScores(data.team1_score, data.team2_score);
+            break;
+          case 'show_contestant_buzz':
+            showContestantBuzz(data.contestant_name, data.team, data.team_display);
+            break;
+          case 'buzz_reset':
+            resetBuzzer();
+            break;
+          case 'buzz_lock':
+            buzzLocked = true;
+            updateBuzzStatus(false, data.message || 'الزر محجوز');
+            break;
+          case 'buzz_unlock':
+            if (buzzLocked) endBuzzSession();
+            break;
+        }
+      };
+      socket.onclose = function() {
+        updateBuzzStatus(false, 'إعادة الاتصال...');
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+        setTimeout(setupWebSocket, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      };
+      socket.onerror = function() {
+        try { socket.close(); } catch {}
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      };
+    } catch {
+      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+      setTimeout(setupWebSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
-  } catch (error) {
-    console.error('خطأ في تحميل حالة الجلسة:', error);
-  }
-}
-
-// ======================= عرض ضغطة المتسابق للمقدم =======================
-function showContestantBuzz(contestantName, team, teamDisplay) {
-  const notification = document.getElementById('buzzNotification');
-  notification.innerHTML = `🚨 ${contestantName} من ${teamDisplay || (team === 'team1' ? 'الفريق الأخضر' : 'الفريق البرتقالي')} ضغط الزر!`;
-  notification.style.display = 'block';
-
-  // صوت البدء
-  try {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.frequency.value = 600;
-    oscillator.type = 'sine';
-    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.3);
-  } catch (error) {
-    console.log('لا يمكن تشغيل الصوت');
   }
 
-  // إخفاء الإشعار بعد 5 ثوان
-  setTimeout(() => { notification.style.display = 'none'; }, 5000);
+  window.addEventListener('beforeunload', () => {
+    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
+    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+  });
 
-  console.log(`🎤 ${contestantName} من ${team} ضغط الزر!`);
-}
+  document.addEventListener('keydown', function(event) {
+    if (event.code === 'Space' || event.code === 'Enter' || event.code === 'Escape') {
+      resetBuzzer();
+    }
+  });
+  document.addEventListener('click', function() {
+    if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
+      resetBuzzer();
+    }
+  });
 
-// ======================= نسخ الروابط =======================
-function copyLink(link) {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(link).then(showCopySuccess).catch(err => {
-      console.error('فشل النسخ:', err);
-      fallbackCopyTextToClipboard(link);
-    });
-  } else {
-    fallbackCopyTextToClipboard(link);
-  }
-}
-
-function fallbackCopyTextToClipboard(text) {
-  const textArea = document.createElement("textarea");
-  textArea.value = text;
-  textArea.style.position = "fixed";
-  textArea.style.top = "0";
-  textArea.style.left = "0";
-  textArea.style.width = "2em";
-  textArea.style.height = "2em";
-  textArea.style.padding = "0";
-  textArea.style.border = "none";
-  textArea.style.outline = "none";
-  textArea.style.boxShadow = "none";
-  textArea.style.background = "transparent";
-
-  document.body.appendChild(textArea);
-  textArea.focus();
-  textArea.select();
-
-  try { if (document.execCommand('copy')) showCopySuccess(); } catch (err) {
-    console.error('خطأ في النسخ:', err);
-  }
-
-  document.body.removeChild(textArea);
-}
-
-function showCopySuccess() {
-  const msg = document.getElementById('copySuccess');
-  if (!msg) return;
-  msg.style.display = 'block';
-  msg.style.opacity = '1';
-  setTimeout(() => {
-    msg.style.opacity = '0';
-    setTimeout(() => { msg.style.display = 'none'; }, 300);
-  }, 2000);
-}
-
-// ======================= منع التكبير المزدوج للجوال =======================
-let lastTouchEnd = 0;
-document.addEventListener('touchend', function (event) {
-  const now = (new Date()).getTime();
-  if (now - lastTouchEnd <= 300) event.preventDefault();
-  lastTouchEnd = now;
-}, false);
-
-// ======================= تهيئة التطبيق =======================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('🎬 تم تحميل صفحة خلية الحروف - المقدم');
-  setupWebSocket();
-  createHoneycombCells();
-  loadSessionState();
-  if (sessionTimeRemaining && sessionTimeRemaining > 0) updateSessionTimer();
-});
+  document.addEventListener('DOMContentLoaded', function() {
+    createHoneycombCells();
+    loadSessionState();
+    setupWebSocket();
+    setInterval(loadSessionState, 15000);
+    setTimeout(() => { updateBuzzStatus(true); }, 1000);
+  });
 </script>
+
 
 
 

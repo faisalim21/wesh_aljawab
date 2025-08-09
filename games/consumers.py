@@ -3,6 +3,7 @@
 import json
 import asyncio
 import logging
+import hashlib
 from datetime import timedelta
 
 from asgiref.sync import sync_to_async
@@ -21,19 +22,17 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
     يربط ثلاث واجهات لنفس الجلسة:
     - role=host       : صفحة المقدّم (تحكّم بالحروف/الخلايا/النقاط + استلام اسم أول متسابق ضغط)
     - role=display    : شاشة العرض (قراءة فقط + تستقبل إسم أول من ضغط)
-    - role=contestant : المتسابق (زر واحد يرسل محاولة الضغط، يتلقى قبول/رفض *مباشر فقط*)
+    - role=contestant : المتسابق (زر واحد يرسل محاولة الضغط، يتلقى قبول/رفض مباشر فقط)
     """
-
-    BUZZ_RATE_MAX = 5      # أقصى 5 محاولات
-    BUZZ_RATE_WINDOW = 10  # خلال 10 ثوانٍ
 
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"letters_session_{self.session_id}"
 
-        # استخرج الدور من الـ QueryString
+        # استخرج الدور + host_token من الـ QueryString
         qs = self._parse_qs()
         self.role = qs.get('role', ['viewer'])[0]  # host | contestant | display | viewer
+        self.host_token_qs = qs.get('host_token', [None])[0]
 
         # التحقق من الجلسة
         try:
@@ -47,10 +46,16 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             await self.close(code=4401)  # expired/inactive
             return
 
-        # صلاحيات المقدم (لو تبغى تشدد أكثر: أضف host_token لاحقًا)
+        # صلاحيات المقدم + التحقق من host_token (بسيط وغير معقّد)
         if self.role == 'host':
             user = self.scope.get('user')
             if not user or not user.is_authenticated or user.id != self.session.host_id:
+                await self.close(code=4403)  # Forbidden
+                return
+
+            # تحقق host_token ضد ما في الكاش (مولّد في views.create_letters_session)
+            expected_token = cache.get(self._host_token_key(self.session_id))
+            if not expected_token or self.host_token_qs != expected_token:
                 await self.close(code=4403)  # Forbidden
                 return
 
@@ -119,6 +124,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         """
         أول متسابق يضغط يحجز الزر 3 ثوانٍ فقط، يظهر اسمه للمقدّم والعرض،
         ثم يفك القفل تلقائيًا من السيرفر.
+        لا يوجد Rate-Limit: يمكنه المحاولة بلا قيود، يُرفض فقط أثناء القفل الحالي.
         """
         contestant_name = (data.get("contestant_name") or "").strip()
         team = data.get("team")
@@ -128,14 +134,10 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             await self._reply_contestant(error="اسم المتسابق والفريق مطلوبان")
             return
 
-        # Rate limit لكل (IP + اسم) على نفس الجلسة
-        if not await self._allow_buzz_rate(contestant_name):
-            await self._reply_contestant(rejected="محاولات كثيرة جدًا، حاول بعد قليل")
-            return
-
         buzz_lock_key = f"buzz_lock_{self.session_id}"
         current_buzzer = cache.get(buzz_lock_key)
         if current_buzzer:
+            # الزر محجوز الآن، نرفض فقط هذه المحاولة (بدون منع محاولات لاحقة)
             await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
             return
 
@@ -143,11 +145,11 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         cache.set(
             buzz_lock_key,
             {'name': contestant_name, 'team': team, 'timestamp': timestamp},
-            timeout=3  # <-- أهم تغيير: القفل 3 ثوانٍ فقط
+            timeout=3
         )
 
-        # سجّل المتسابق إن لم يكن موجود
-        await self.register_contestant_if_needed(self.session, contestant_name, team)
+        # سجّل/حدّث المتسابق
+        await self.ensure_contestant(self.session, contestant_name, team)
 
         # تأكيد مباشر لصاحب الضغطة فقط
         await self._reply_contestant(confirmed=True, name=contestant_name, team=team)
@@ -283,18 +285,25 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             lambda: GameSession.objects.select_related('package').get(id=self.session_id)
         )()
 
-    async def register_contestant_if_needed(self, session, contestant_name, team):
+    async def ensure_contestant(self, session, contestant_name, team):
+        """
+        إن وُجد الاسم نحدّث فريقه عند الحاجة، وإلا ننشئه.
+        """
         try:
-            exists = await sync_to_async(
-                Contestant.objects.filter(session=session, name=contestant_name).exists
+            obj = await sync_to_async(
+                lambda: Contestant.objects.filter(session=session, name=contestant_name).first()
             )()
-            if not exists:
+            if obj:
+                if obj.team != team:
+                    obj.team = team
+                    await sync_to_async(obj.save)(update_fields=['team'])
+            else:
                 await sync_to_async(Contestant.objects.create)(
                     session=session, name=contestant_name, team=team
                 )
-                logger.info(f"New contestant registered: {contestant_name} in team {team}")
+            logger.info(f"Contestant ensured: {contestant_name} -> {team}")
         except Exception as e:
-            logger.error(f"Error registering contestant: {e}")
+            logger.error(f"Error ensuring contestant: {e}")
 
     async def get_team_display_name(self, session, team):
         if team == 'team1':
@@ -341,24 +350,14 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception:
             return '0.0.0.0'
 
-    async def _allow_buzz_rate(self, name: str) -> bool:
-        """
-        Rate limit بسيط: أقصى BUZZ_RATE_MAX محاولات خلال BUZZ_RATE_WINDOW ثوانٍ
-        لكل (session_id + ip + name)
-        """
-        ip = self._client_ip()
-        key = f"ws_rate:{self.session_id}:{ip}:{name}"
-        try:
-            current = cache.get(key, 0)
-            if current >= self.BUZZ_RATE_MAX:
-                return False
-            if current == 0:
-                cache.set(key, 1, timeout=self.BUZZ_RATE_WINDOW)
-            else:
-                cache.incr(key)
-            return True
-        except Exception:
-            return True  # ما نحبس المستخدمين لو الكاش خرب
+    @staticmethod
+    def _hash_name(name: str) -> str:
+        """تجزئة اسم المتسابق (للاستخدام الآمن كمفتاح كاش إن احتجنا)."""
+        return hashlib.sha1((name or "").encode('utf-8')).hexdigest()
+
+    @staticmethod
+    def _host_token_key(session_id: str) -> str:
+        return f"host_token_{session_id}"
 
     async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
         """رد مباشر إلى المتسابق الحالي فقط، بدون بث جماعي."""
