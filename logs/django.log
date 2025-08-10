@@ -102,3 +102,15 @@ INFO 2025-08-09 22:49:19,142 server 556 18264 HTTP/2 support not enabled (instal
 INFO 2025-08-09 22:49:19,142 server 556 18264 Configuring endpoint tcp:port=8000:interface=127.0.0.1
 INFO 2025-08-09 22:49:19,143 server 556 18264 Listening on TCP address 127.0.0.1:8000
 INFO 2025-08-09 22:49:22,105 runserver 556 18264 [32mHTTP GET / 301 [0.00, 127.0.0.1:54533][0m
+INFO 2025-08-10 17:03:45,843 autoreload 17120 12868 Watching for file changes with StatReloader
+INFO 2025-08-10 17:03:46,172 server 17120 11952 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-10 17:03:46,173 server 17120 11952 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-10 17:03:46,174 server 17120 11952 Listening on TCP address 127.0.0.1:8000
+INFO 2025-08-10 17:04:43,783 autoreload 17152 16372 Watching for file changes with StatReloader
+INFO 2025-08-10 17:04:44,001 server 17152 16664 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-10 17:04:44,001 server 17152 16664 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-08-10 17:04:44,002 server 17152 16664 Listening on TCP address 127.0.0.1:8000
+INFO 2025-08-10 17:07:35,891 autoreload 8068 16572 Watching for file changes with StatReloader
+INFO 2025-08-10 17:07:36,125 server 8068 4292 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-08-10 17:07:36,126 server 8068 4292 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+INFO 2025-08-10 17:07:36,127 server 8068 4292 Listening on TCP address 0.0.0.0:8000

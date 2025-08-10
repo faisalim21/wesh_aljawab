@@ -1,47 +1,37 @@
 from pathlib import Path
 from decouple import config
-import dj_database_url
 import os
+import sys
 from urllib.parse import urlparse
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.append(str(BASE_DIR))
 
-# -------- أساسيات --------
+# ============== 🔐 إعدادات الأمان ==============
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
-DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',') if h.strip()]
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in config('CSRF_TRUSTED_ORIGINS', default='').split(',') if o.strip()]
 
-ALLOWED_HOSTS = [
-    h.strip() for h in config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',') if h.strip()
-]
-
-# -------- التطبيقات --------
+# ============== 🧩 التطبيقات ==============
 INSTALLED_APPS = [
-    'daphne',  # مهم لسيرفر ASGI في الإنتاج
-
-    # Django
+    'daphne',  # ASGI server for production
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # طرف ثالث
-    'channels',
-
-    # تطبيقات محلية
+    'channels',  # WebSockets
     'accounts',
     'games',
     'payments',
 ]
 
-# -------- Middleware --------
+# ============== ⚙️ الميدل وير ==============
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-
-    # لخدمة الملفات الثابتة في الإنتاج بدون Nginx
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -52,7 +42,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'wesh_aljawab.urls'
 
-# -------- القوالب --------
+# ============== 🌐 القوالب ==============
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -69,20 +59,33 @@ TEMPLATES = [
     },
 ]
 
-# -------- ASGI / WSGI --------
 WSGI_APPLICATION = 'wesh_aljawab.wsgi.application'
 ASGI_APPLICATION = 'wesh_aljawab.asgi.application'
 
-# -------- قاعدة البيانات --------
-DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=(not DEBUG),
-    )
-}
+# ============== 🗄 قاعدة البيانات ==============
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT', default='5432'),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
+    }
 
-# -------- إعدادات اللعبة --------
+# ============== ⚙️ إعدادات اللعبة ==============
 GAME_SETTINGS = {
     'FREE_SESSION_DURATION_HOURS': 1,
     'PAID_SESSION_DURATION_DAYS': 3,
@@ -93,8 +96,8 @@ GAME_SETTINGS = {
     }
 }
 
-# -------- Channels / Redis --------
-REDIS_URL = config('REDIS_URL', default='')  # مثال: redis://localhost:6379/0 أو rediss://...
+# ============== 🔄 إعدادات Redis / Channels ==============
+REDIS_URL = config('REDIS_URL', default='')
 FORCE_REDIS = config('FORCE_REDIS', default=not DEBUG, cast=bool)
 
 def _channels_redis_hosts(url: str):
@@ -119,15 +122,12 @@ if FORCE_REDIS and REDIS_URL:
 else:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
-# -------- الكاش --------
 REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
 
 def _cache_location(url: str):
     if not url:
         return ''
     parsed = urlparse(url)
-    if parsed.scheme == 'rediss':
-        return url  # django-redis يدعم rediss مباشرة
     return url
 
 if FORCE_REDIS and REDIS_CACHE_URL:
@@ -153,7 +153,7 @@ else:
         }
     }
 
-# -------- Auth --------
+# ============== 🔐 المصادقة ==============
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', 'OPTIONS': {'min_length': 8}},
@@ -165,13 +165,13 @@ LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# -------- لغة وتوقيت --------
+# ============== 🌍 اللغة والتوقيت ==============
 LANGUAGE_CODE = 'ar'
 TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True
 
-# -------- ملفات ثابتة وميديا --------
+# ============== 📁 الملفات الثابتة والميديا ==============
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -186,7 +186,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# -------- أمان --------
+# ============== 🛡 إعدادات الأمان ==============
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
@@ -203,11 +203,7 @@ SESSION_COOKIE_AGE = 86400
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# CSRF Trusted Origins من env
-_csrf_trusted = config('CSRF_TRUSTED_ORIGINS', default='')
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in _csrf_trusted.split(',') if o.strip()] if _csrf_trusted else []
-
-# -------- بريد --------
+# ============== ✉️ إعدادات البريد ==============
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -216,11 +212,11 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='وش الجواب <noreply@weshaljawab.com>')
 
-# -------- حدود رفع --------
+# ============== 📤 حدود رفع الملفات ==============
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
-# -------- Logging --------
+# ============== 📊 إعدادات التسجيل ==============
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
 
@@ -248,7 +244,7 @@ LOGGING = {
     },
 }
 
-# -------- إعدادات إضافية للإنتاج --------
+# ============== 🚀 إعدادات إضافية للإنتاج ==============
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000

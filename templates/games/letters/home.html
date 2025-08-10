@@ -51,12 +51,16 @@
 
     <div class="d-flex justify-content-center">
       {% if unlimited_free_mode %}
-        <button class="btn btn-success mb-3" onclick="createFreeSession('{{ free_package.id|default_if_none:'' }}')">
-          🎮 إنشاء جلسة مجانية (وضع غير محدود)
-        </button>
+        {% if free_package %}
+          <button class="btn btn-success mb-3" type="button"
+                  onclick="createLettersSession('{{ free_package.id }}')">
+            🎮 إنشاء جلسة مجانية (وضع غير محدود)
+          </button>
+        {% endif %}
       {% else %}
-        {% if free_session_eligible %}
-          <button class="btn btn-success mb-3" onclick="createFreeSession('{{ free_package.id|default_if_none:'' }}')">
+        {% if free_session_eligible and free_package %}
+          <button class="btn btn-success mb-3" type="button"
+                  onclick="createLettersSession('{{ free_package.id }}')">
             🎮 إنشاء جلسة مجانية
           </button>
         {% else %}
@@ -66,10 +70,10 @@
     </div>
   </div>
 
-  <!-- فورم واحد مخفي لإرسال الطلب (يحل أي مشاكل كِليك/تراكُب/منع) -->
-  <form id="createSessionForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
+  <!-- فورم مخفي مركزي لإرسال الطلبات (يتجنب أي تداخل نماذج في الهيدر) -->
+  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
     {% csrf_token %}
-    <input type="hidden" name="package_id" id="pkgInput">
+    <input type="hidden" name="package_id" id="lettersPkgId">
   </form>
 
   <section class="packages-section">
@@ -86,10 +90,8 @@
             <div class="package-card">
               <div class="package-title">حزمة مجانية</div>
               <p class="package-desc">جولة واحدة للتجربة</p>
-
-              <!-- الزر يشغّل نفس الفورم المخفي -->
               <button type="button" class="btn-play"
-                      onclick="createFreeSession('{{ free_package.id }}')">
+                      onclick="createLettersSession('{{ free_package.id }}')">
                 ابدأ الجولة المجانية
               </button>
             </div>
@@ -104,7 +106,7 @@
 
               {% if package.id in user_purchases %}
                 <button type="button" class="btn-play"
-                        onclick="createFreeSession('{{ package.id }}')">
+                        onclick="createLettersSession('{{ package.id }}')">
                   ابدأ اللعب
                 </button>
               {% else %}
@@ -122,19 +124,19 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // إرسال مؤكد للفورم (يتجاوز أي منعٍ افتراضي أو تراكُبات CSS)
-    function createFreeSession(packageId){
-      if(!packageId){ return; }
-      var f=document.getElementById('createSessionForm');
-      var i=document.getElementById('pkgInput');
-      i.value=packageId;
+    // إرسال آمن عبر الفورم المخفي لتجاوز أي تعارضات
+    function createLettersSession(packageId){
+      if(!packageId) return;
+      const form = document.getElementById('lettersCreateForm');
+      const input = document.getElementById('lettersPkgId');
 
       // منع النقر المزدوج
-      if(f.dataset.locked==='1') return;
-      f.dataset.locked='1';
-      setTimeout(function(){ f.dataset.locked=''; }, 2000);
+      if(form.dataset.locked === '1') return;
+      form.dataset.locked = '1';
+      setTimeout(()=>{ form.dataset.locked = ''; }, 2000);
 
-      try{ f.submit(); }catch(e){ console.error(e); }
+      input.value = packageId;
+      try { form.submit(); } catch(e){ console.error(e); }
     }
   </script>
 </body>
