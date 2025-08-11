@@ -324,65 +324,92 @@
   </div>
 
 <script>
-  const sessionId='{{ session.id }}';
-  let socket=null, reconnectDelay=1000, maxDelay=5000, heartbeatTimer=null;
+  const sessionId = '{{ session.id }}';
+  let socket = null;
+  let reconnectDelay = 1000;
+  const maxDelay = 5000;
 
-  function setConnStatus(ok, extra=''){
-    const el=document.getElementById('connectionStatus');
-    el.className='connection-status '+(ok?'connected':'disconnected');
-    el.textContent= ok ? '🟢 متصل' : ('🔴 منقطع'+(extra?` (${extra})`:'')); 
-    const btn=document.getElementById('buzzBtn'); if(btn) btn.disabled=!ok;
+  // حالة الاتصال (اللمبة)
+  function setConn(ok){
+    const s = document.getElementById('connectionStatus');
+    if (!s) return;
+    s.className = 'connection-status ' + (ok ? 'connected' : 'disconnected');
+    s.textContent = ok ? '🟢 متصل' : '🔴 منقطع';
   }
 
+  // اتصال WebSocket كمتسابق
   function connectWS(){
-    try{
-      const proto=location.protocol==='https:'?'wss':'ws';
-      const url=`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`;
-      socket=new WebSocket(url);
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    socket = new WebSocket(`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`);
 
-      socket.onopen=()=>{
-        console.log('🟢 WS connected (contestant)');
-        setConnStatus(true);
-        reconnectDelay=1000;
-        clearInterval(heartbeatTimer);
-        heartbeatTimer=setInterval(()=>{ try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{} },20000);
-      };
+    socket.onopen = () => { setConn(true); reconnectDelay = 1000; };
 
-      socket.onmessage=(e)=>{
-        let d={}; try{ d=JSON.parse(e.data||'{}'); }catch{}
-        if(d.type==='buzz_confirmed'){ showSuccess(`✅ ${d.message||'تم تسجيل إجابتك!'}`); wave(); }
-        else if(d.type==='buzz_rejected'){ showError(d.message||'الزر محجوز الآن'); }
-        else if(d.type==='error'){ showError(d.message||'حدث خطأ'); }
-      };
+    socket.onmessage = (evt) => {
+      let msg = {};
+      try { msg = JSON.parse(evt.data || '{}'); } catch { return; }
 
-      socket.onclose=(e)=>{
-        console.warn('WS closed (contestant)', e.code, e.reason);
-        setConnStatus(false, `${e.code}${e.reason?(' '+e.reason):''}`);
-        clearInterval(heartbeatTimer);
-        setTimeout(connectWS, reconnectDelay);
-        reconnectDelay=Math.min(reconnectDelay*2, maxDelay);
-      };
+      // ردود السيرفر
+      if (msg.type === 'buzz_confirmed') {
+        showSuccess(msg.message || '✅ تم تسجيل ضغطتك!');
+        // مافي شيء آخر هنا — شاشة العرض/المقدم بيتكفلون بالباقي
+      } else if (msg.type === 'buzz_rejected') {
+        showError(msg.message || '⚠️ الزر محجوز حالياً');
+      }
+    };
 
-      socket.onerror=(err)=>{
-        console.error('WS error (contestant):', err);
-        setConnStatus(false, 'error');
-        try{ socket.close(); }catch{}
-      };
-    }catch(err){
-      console.error('WS create error:', err);
-      setConnStatus(false, 'create-failed');
+    socket.onclose = () => {
+      setConn(false);
       setTimeout(connectWS, reconnectDelay);
-      reconnectDelay=Math.min(reconnectDelay*2, maxDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+    };
+
+    socket.onerror = () => {
+      setConn(false);
+      try { socket.close(); } catch {}
+    };
+  }
+
+  // إرسال حدث الضغط
+  function buzzAnswer(){
+    const name = document.getElementById('contestantName').value.trim();
+    const team = document.querySelector('input[name="team"]:checked')?.value;
+
+    if (!name) { showError('اكتب اسمك'); return; }
+    if (!team) { showError('اختر فريقك'); return; }
+    if (!socket || socket.readyState !== WebSocket.OPEN) { showError('الاتصال غير جاهز'); return; }
+
+    // أرسل الرسالة المتوقّعة من السيرفر
+    try {
+      socket.send(JSON.stringify({
+        type: 'contestant_buzz',
+        contestant_name: name,
+        team: team,
+        timestamp: new Date().toISOString()
+      }));
+      // إحساس فوري للمستخدم
+      showInfo('⏳ تم الإرسال...');
+      addWaveEffect && addWaveEffect();
+    } catch(e) {
+      showError('تعذر الإرسال، حاول ثانية');
     }
   }
 
-  // ... باقي الدوال كما هي عندك (buzzAnswer، الرسائل، التخزين المحلي) ...
-  // لو تبيني أرجعها هنا كاملة أعيد لصق نسخة الرد السابق، لكن ما غيّرت إلا onclose/onerror.
+  // رسائل الحالة البسيطة (موجودة عندك مسبقًا)
+  function showSuccess(t){ const el = document.getElementById('statusMessage'); el.className='status-message success'; el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
+  function showError(t){ const el = document.getElementById('statusMessage'); el.className='status-message error';   el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
+  function showInfo(t){ const el = document.getElementById('statusMessage'); el.className='status-message'; el.style.background='rgba(59,130,246,.2)'; el.style.borderColor='#3b82f6'; el.style.color='#3b82f6'; el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',2000); }
 
-  document.addEventListener('DOMContentLoaded', ()=>{
+  // تهيئة
+  document.addEventListener('DOMContentLoaded', () => {
     connectWS();
+    document.getElementById('contestantName').focus();
+    document.getElementById('contestantName').addEventListener('keypress', e => { if (e.key === 'Enter') buzzAnswer(); });
+    document.getElementById('buzzBtn').onclick = buzzAnswer;
   });
+
+  window.buzzAnswer = buzzAnswer;
 </script>
+
 
 
 </body>
