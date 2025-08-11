@@ -106,8 +106,7 @@
 <script>
   // حالة الدخول + رابط العودة بعد تسجيل الدخول
   const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-  // إذا كنت تستخدم django-allauth وعرّفت اسمًا مختلفًا لمسار تسجيل الدخول، حدّث هذا الثابت يدويًا:
-  const LOGIN_URL = "/accounts/login/";
+  const LOGIN_URL = "/accounts/login/";  // حدّد المسار يدويًا هنا
   const NEXT_URL = "{{ request.get_full_path|urlencode }}";
 
   // إرسال آمن عبر الفورم المخفي
@@ -147,6 +146,7 @@
     } catch (e) { console.error(e); }
   }
 </script>
+
 
 
 </body>
