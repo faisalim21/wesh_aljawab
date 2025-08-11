@@ -397,69 +397,48 @@
   </div>
 
 <script>
-  // ===================== المتغيرات العامة =====================
-  const sessionId  = '{{ session.id }}';
-  const hostToken  = '{{ host_token }}';
-  const team1Name  = '{{ session.team1_name }}';
-  const team2Name  = '{{ session.team2_name }}';
+  // ========= متغيرات عامة =========
+  const sessionId = '{{ session.id }}';
+  const hostToken = '{{ host_token }}';
+  const team1Name = '{{ session.team1_name }}';
+  const team2Name = '{{ session.team2_name }}';
   const lettersArr = (window.sessionData && window.sessionData.arabicLetters) || [];
 
   let socket = null;
   let reconnectDelay = 1000;
   const maxDelay = 5000;
+  let heartbeatTimer = null;
 
-  // حالة الواجهة
   const cellStates = {};
   let lastClickedLetter = null;
 
-  // ===================== أدوات مساعدة =====================
-  function qs(sel){ return document.querySelector(sel); }
-  function qsa(sel){ return Array.from(document.querySelectorAll(sel)); }
-
-  // نسخ الروابط
-  async function copyLink(text) {
-    try {
+  // ========= أدوات مساعدة =========
+  async function copyLink(text){
+    try{
       await navigator.clipboard.writeText(text);
       const el = document.getElementById('copySuccess');
       el.style.display = 'block';
-      requestAnimationFrame(() => { el.style.opacity = '1'; });
-      setTimeout(() => { el.style.opacity = '0'; setTimeout(() => { el.style.display = 'none'; }, 300); }, 1400);
-    } catch(e) {
-      alert('تعذّر النسخ، انسخ الرابط يدويًا:\n' + text);
-    }
+      requestAnimationFrame(()=>el.style.opacity='1');
+      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none', 300); }, 1400);
+    }catch{ alert('تعذّر النسخ، انسخ الرابط يدويًا:\n' + text); }
   }
   window.copyLink = copyLink;
 
-  // صوتيات
   function tone(freq=800, dur=300, gain=0.5){
     try{
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator(), g = ctx.createGain();
-      osc.connect(g); g.connect(ctx.destination);
-      osc.frequency.value = freq; g.gain.setValueAtTime(gain, ctx.currentTime);
-      osc.start(); osc.stop(ctx.currentTime + (dur/1000));
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value=freq; g.gain.setValueAtTime(gain, ctx.currentTime);
+      o.start(); o.stop(ctx.currentTime + dur/1000);
     }catch{}
   }
-  function playBuzzSound(){ tone(800, 300, 0.5); }
+  function playBuzzSound(){ tone(800,300,0.6); }
 
-  // ===================== إعادة تعيين الطنطيط =====================
-  function resetBuzzer() {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      try {
-        socket.send(JSON.stringify({
-          type: 'buzz_reset'
-        }));
-      } catch(e) {
-        console.error('فشل في إرسال reset:', e);
-      }
-    }
-  }
-  window.resetBuzzer = resetBuzzer;
-
-  // ===================== بناء خلية الحروف =====================
+  // ========= واجهة الخلايا =========
   function createHoneycombCells(){
     const svg = document.getElementById('honeycombSvg');
-    const positions = [
+    const P = [
       {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
       {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
       {x:880,y:260,points:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
@@ -487,74 +466,59 @@
       {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
     ];
 
-    for(let i=0;i<Math.min(25,lettersArr.length);i++){
-      const letter   = lettersArr[i];
-      const pos      = positions[i];
-
-      const g   = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','hex-cell');
-      g.setAttribute('data-letter',letter);
+    for(let i=0;i<Math.min(25, lettersArr.length);i++){
+      const letter = lettersArr[i], pos = P[i];
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter', letter);
 
       const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      poly.setAttribute('class','hex-shape');
-      poly.setAttribute('points',pos.points);
+      poly.setAttribute('class','hex-shape'); poly.setAttribute('points', pos.points);
 
       const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('class','hex-text');
-      txt.setAttribute('x',pos.x);
-      txt.setAttribute('y',pos.y);
-      txt.textContent = letter;
+      txt.setAttribute('class','hex-text'); txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y); txt.textContent = letter;
 
-      g.appendChild(poly);
-      g.appendChild(txt);
-      svg.appendChild(g);
+      g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
 
-      // حدث النقر
-      g.addEventListener('click', async () => {
-        showQuestion(letter);
-
-        if (lastClickedLetter === letter) {
-          // دورة الألوان
-          let newState = 'team1';
-          if (g.classList.contains('team1')) {
-            g.classList.remove('team1');
-            g.classList.add('team2');
-            newState = 'team2';
-          } else if (g.classList.contains('team2')) {
-            g.classList.remove('team2');
-            newState = 'normal';
-          } else {
-            g.classList.add('team1');
-            newState = 'team1';
-          }
-          cellStates[letter] = newState;
-
-          // بثّ عبر WS
-          sendWS({ type:'update_cell_state', letter, state:newState })
-          .catch(() => updateCellStateAPI(letter, newState));
-        }
-
-        lastClickedLetter = letter;
-      });
+      g.addEventListener('click', () => onCellClick(g, letter));
     }
   }
 
-  // تحديث لون خلية على الواجهة
+  let lastClickAt = 0;
+  function onCellClick(g, letter){
+    const now = Date.now();
+    if (now - lastClickAt < 150) return; // منع الاهتزاز السريع
+    lastClickAt = now;
+
+    showQuestion(letter);
+
+    if (lastClickedLetter === letter){
+      // تدوير اللون
+      let newState = 'team1';
+      if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
+      else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
+      else { g.classList.add('team1'); newState = 'team1'; }
+      cellStates[letter] = newState;
+
+      sendWS({type:'update_cell_state', letter, state:newState})
+        .catch(()=> updateCellStateAPI(letter, newState));
+    }
+    lastClickedLetter = letter;
+  }
+
   function applyCellState(letter, state){
     const el = document.querySelector(`[data-letter="${letter}"]`);
     if (!el) return;
     el.classList.remove('team1','team2');
-    if (state && state !== 'normal') { el.classList.add(state); }
+    if (state && state!=='normal') el.classList.add(state);
     cellStates[letter] = state || 'normal';
   }
 
-  // ===================== الأسئلة =====================
+  // ========= الأسئلة =========
   async function showQuestion(letter){
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
-      if(!r.ok) return;
-      const data = await r.json();
-      const q = data.questions || {};
+      if (!r.ok) return;
+      const data = await r.json(), q = data.questions || {};
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
       document.getElementById('mainQuestion').textContent = (q.main && q.main.question) || 'لا يوجد سؤال';
@@ -564,183 +528,144 @@
       document.getElementById('alt2Question').textContent = (q.alt2 && q.alt2.question) || '—';
       document.getElementById('alt2Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
       document.getElementById('questionDisplay').textContent = `حرف ${letter}`;
-    }catch(e){}
+    }catch{}
   }
 
-  // ===================== النقاط =====================
-  function reflectScores(t1, t2){
+  // ========= النقاط =========
+  function reflectScores(t1,t2){
     const m1 = document.getElementById('team1Score');
     const m2 = document.getElementById('team2Score');
     const d1 = document.getElementById('team1ScoreDesktop');
     const d2 = document.getElementById('team2ScoreDesktop');
-    if (m1) m1.textContent = t1;
-    if (m2) m2.textContent = t2;
-    if (d1) d1.textContent = t1;
-    if (d2) d2.textContent = t2;
+    if (m1) m1.textContent = t1; if (m2) m2.textContent = t2;
+    if (d1) d1.textContent = t1; if (d2) d2.textContent = t2;
   }
 
   async function updateScore(team, delta){
     const cur1 = parseInt(document.getElementById('team1ScoreDesktop').textContent || '0',10);
     const cur2 = parseInt(document.getElementById('team2ScoreDesktop').textContent || '0',10);
     let t1 = cur1, t2 = cur2;
-    if (team === 'team1') t1 = Math.max(0, cur1 + delta);
-    else                  t2 = Math.max(0, cur2 + delta);
-    reflectScores(t1, t2);
-
-    // WS أولاً ثم فولباك API
-    sendWS({ type:'update_scores', team1_score:t1, team2_score:t2 })
-    .catch(() => updateScoresAPI(t1, t2));
+    if (team==='team1') t1 = Math.max(0, cur1 + delta); else t2 = Math.max(0, cur2 + delta);
+    reflectScores(t1,t2);
+    sendWS({type:'update_scores', team1_score:t1, team2_score:t2}).catch(()=> updateScoresAPI(t1,t2));
   }
   window.updateScore = updateScore;
 
-  async function updateCellStateAPI(letter, state){
+  async function updateCellStateAPI(letter,state){
     try{
       await fetch('/games/api/update-cell-state/',{
         method:'POST',
-        headers:{ 'Content-Type':'application/json', 'X-Host-Token': hostToken },
-        body: JSON.stringify({ session_id:sessionId, letter, state })
+        headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
+        body: JSON.stringify({session_id:sessionId, letter, state})
       });
-    }catch(e){}
+    }catch{}
   }
-  async function updateScoresAPI(team1, team2){
+  async function updateScoresAPI(team1,team2){
     try{
       await fetch('/games/api/update-scores/',{
         method:'POST',
-        headers:{ 'Content-Type':'application/json', 'X-Host-Token': hostToken },
-        body: JSON.stringify({ session_id:sessionId, team1_score:team1, team2_score:team2 })
+        headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
+        body: JSON.stringify({session_id:sessionId, team1_score:team1, team2_score:team2})
       });
-    }catch(e){}
+    }catch{}
   }
 
-  // ===================== إشعارات الطنطيط =====================
-  function showBuzzNotification(contestantName, team, teamDisplay) {
-    const notification = document.getElementById('buzzNotification');
-    const teamName = team === 'team1' ? team1Name : team2Name;
-    notification.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${teamName} ضغط الزر!`;
-    notification.style.display = 'block';
-    
-    // صوت تنبيه
+  // ========= إشعار الطنطيط =========
+  function showBuzzNotification(contestantName, team){
+    const n = document.getElementById('buzzNotification');
+    n.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${(team==='team1'?team1Name:team2Name)} ضغط الزر!`;
+    n.style.display = 'block';
     playBuzzSound();
-    
-    // إخفاء بعد 4 ثواني
-    setTimeout(() => {
-      notification.style.display = 'none';
-    }, 4000);
+    setTimeout(()=>{ n.style.display='none'; }, 4000);
   }
 
-  // ===================== تحميل حالة الجلسة =====================
+  // ========= حالة الجلسة =========
   async function loadSessionState(){
     try{
       const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
-      if(!r.ok) return;
+      if (!r.ok) return;
       const data = await r.json();
-
       reflectScores(data.team1_score||0, data.team2_score||0);
-
-      if (data.cell_states){
-        Object.entries(data.cell_states).forEach(([ltr, st]) => applyCellState(ltr, st));
-      }
-
-      if (typeof data.time_remaining_seconds === 'number'){
-        startSessionTimer(data.time_remaining_seconds);
-      }
-    }catch(e){}
+      if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
+      if (typeof data.time_remaining_seconds==='number') startSessionTimer(data.time_remaining_seconds);
+    }catch{}
   }
 
-  // ===================== مؤقّت الجلسة =====================
+  // ========= مؤقّت الجلسة =========
   let sessionTimerInterval = null;
   function startSessionTimer(seconds){
-    const el = document.getElementById('timeRemaining');
-    const box = document.getElementById('sessionTimer');
-    if(!el || !box) return;
+    const el = document.getElementById('timeRemaining'), box = document.getElementById('sessionTimer');
+    if (!el || !box) return;
     if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-
-    let left = Math.max(0, parseInt(seconds,10) || 0);
-    const render = () => {
-      const m = Math.floor(left / 60);
-      const s = left % 60;
-      el.textContent = `${m}:${String(s).padStart(2,'0')}`;
-      if (left <= 0){
-        clearInterval(sessionTimerInterval);
-        el.textContent = '0:00';
-      }
-    };
+    let left = Math.max(0, parseInt(seconds,10)||0);
+    const render = ()=>{ const m=Math.floor(left/60), s=left%60; el.textContent = `${m}:${String(s).padStart(2,'0')}`; };
     render();
-    sessionTimerInterval = setInterval(() => { left = Math.max(0,left-1); render(); }, 1000);
+    sessionTimerInterval = setInterval(()=>{ left = Math.max(0,left-1); render(); }, 1000);
   }
 
-  // ===================== WebSocket محسّن =====================
-  function setupWebSocket(){
-    const proto = (location.protocol === 'https:') ? 'wss' : 'ws';
-    const url   = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=host&host_token=${encodeURIComponent(hostToken)}`;
+  // ========= WebSocket + Heartbeat =========
+  function clearHeartbeat(){ if (heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer=null; } }
 
+  function setupWebSocket(){
+    const proto = (location.protocol==='https:') ? 'wss' : 'ws';
+    const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=host&host_token=${encodeURIComponent(hostToken)}`;
     socket = new WebSocket(url);
 
-    socket.onopen = () => {
-      console.log('🟢 WebSocket متصل - المقدم');
+    socket.onopen = ()=>{
+      console.log('🟢 WS connected (host)');
       reconnectDelay = 1000;
+      clearHeartbeat();
+      heartbeatTimer = setInterval(()=>{
+        try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
+      }, 20000); // كل 20 ثانية
     };
 
-    socket.onmessage = (ev) => {
-      let d = {};
-      try{ d = JSON.parse(ev.data || '{}'); }catch{}
-
+    socket.onmessage = (ev)=>{
+      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
       switch(d.type){
-        case 'contestant_buzz_accepted':
-          // إشعار فوري للمقدم فقط
-          showBuzzNotification(d.contestant_name, d.team, d.team_display);
-          break;
-
-        case 'cell_state_updated':
-          applyCellState(d.letter, d.state);
-          break;
-
-        case 'scores_updated':
-          reflectScores(d.team1_score, d.team2_score);
-          break;
-
-        case 'pong':
-          break;
-
-        default: 
-          break;
+        case 'contestant_buzz_accepted': showBuzzNotification(d.contestant_name, d.team); break;
+        case 'cell_state_updated': applyCellState(d.letter, d.state); break;
+        case 'scores_updated': reflectScores(d.team1_score, d.team2_score); break;
+        case 'pong': break;
+        default: break;
       }
     };
 
-    socket.onclose = () => {
-      console.log('🔴 WebSocket انقطع - إعادة المحاولة...');
+    socket.onclose = ()=>{
+      console.warn('🔴 WS closed (host) – reconnecting...');
+      clearHeartbeat();
       setTimeout(setupWebSocket, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay*2, maxDelay);
     };
 
-    socket.onerror = () => {
-      try{ socket.close(); }catch{}
-    };
+    socket.onerror = ()=>{ try{ socket.close(); }catch{} };
   }
 
   function sendWS(payload){
-    return new Promise((resolve, reject) => {
-      if (socket && socket.readyState === WebSocket.OPEN){
-        try{ socket.send(JSON.stringify(payload)); resolve(); }
-        catch(e){ reject(e); }
-      } else {
-        reject(new Error('ws not open'));
-      }
+    return new Promise((res,rej)=>{
+      if (socket && socket.readyState===1){ try{ socket.send(JSON.stringify(payload)); res(); }catch(e){ rej(e); } }
+      else rej(new Error('ws not open'));
     });
   }
 
-  // ===================== تهيئة الصفحة =====================
-  window.addEventListener('beforeunload', () => {
-    try{ socket && socket.readyState === WebSocket.OPEN && socket.close(1000,'page unload'); }catch{}
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
+  // ========= تهيئة =========
+  window.addEventListener('beforeunload', ()=>{ try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{}; clearHeartbeat(); });
+  document.addEventListener('DOMContentLoaded', ()=>{
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
-    setInterval(loadSessionState, 30000); // تحديث أقل تكراراً
+    setInterval(loadSessionState, 30000);
   });
+
+  // فك قفل الزر – يرسل للجميع
+  function resetBuzzer(){
+    if (socket && socket.readyState===1){
+      try{ socket.send(JSON.stringify({type:'buzz_reset'})); }catch{}
+    }
+  }
+  window.resetBuzzer = resetBuzzer;
 </script>
+
 
 </body>
 </html>

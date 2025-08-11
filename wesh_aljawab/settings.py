@@ -107,9 +107,14 @@ def _is_rediss(url: str) -> bool:
         return False
 
 def _channels_hosts(url: str):
+    """
+    مهم: channels_redis يفهم TLS من rediss:// تلقائياً.
+    لا نمرّر مفتاح ssl نهائياً لتجنب TypeError في redis/valkey.
+    """
     if not url:
         return []
-    return [{'address': url, 'ssl': _is_rediss(url)}]
+    # يكفي تمرير الـ URL نفسه
+    return [url]  # أو [{'address': url}] بدون أي مفاتيح إضافية
 
 # Channels
 try:
@@ -118,7 +123,12 @@ try:
         CHANNEL_LAYERS = {
             "default": {
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
-                "CONFIG": {"hosts": _channels_hosts(REDIS_URL)},
+                "CONFIG": {
+                    "hosts": _channels_hosts(REDIS_URL),
+                    # خيارات اختيارية لتحسين الأداء والضغط
+                    "capacity": 1000,   # حجم الطوابير
+                    "expiry": 10,       # ثواني لبقاء الرسائل
+                },
             }
         }
     else:
