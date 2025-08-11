@@ -462,283 +462,228 @@
 
 
 <script>
-  // ===================== المتغيرات العامة =====================
-  let cellStates = {};
-  let buzzLocked = false;
-  let buzzerName = '';
-  let buzzerTeam = '';
-  let countdownTimer = null;
+  // ---------------- إعدادات عامة من السيرفر ----------------
+  const sessionId  = '{{ session.id }}';
+  const hostToken  = '{{ host_token }}';
+  const isFree     = {{ session.package.is_free|yesno:"true,false" }};
+  const displayUrl = window.location.origin + '{% url "games:letters_display" session.display_link %}';
+  const contUrl    = window.location.origin + '{% url "games:letters_contestants" session.contestants_link %}';
+  const letters    = {{ arabic_letters_json|safe }};
 
-  let socket = null;
-  let reconnectDelay = 1000;   // 1s -> 2s -> 5s
-  const maxDelay = 5000;
-  let pingTimer = null;
+  // ---------------- عناصر مساعدة ----------------
+  function copyLink(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const el = document.getElementById('copySuccess');
+      if (!el) return;
+      el.style.display = 'block';
+      requestAnimationFrame(() => { el.style.opacity = '1'; });
+      setTimeout(() => { el.style.opacity = '0'; setTimeout(()=> el.style.display='none', 300); }, 1200);
+    });
+  }
 
-  const sessionId = '{{ session.id }}';
-  const hostToken = '{{ host_token }}'; // إضافة توكن المضيف
+  function fmt(sec) {
+    sec = Math.max(0, sec|0);
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    return (h? (h+':'):'') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
 
-  // ===================== إنشاء الخلايا السداسية =====================
-  function createHoneycombCells() {
+  // ---------------- مؤقّت الجلسة المجانية ----------------
+  async function startFreeTimer() {
+    if (!isFree) return;
+    const span = document.getElementById('timeRemaining');
+    if (!span) return;
+    // نجيب الوقت من API ثم نحدّث كل ثانية
+    try {
+      const r = await fetch(`/games/api/session-expiry-info/?session_id=${sessionId}`);
+      const j = await r.json();
+      if (!j.success) return;
+      let remaining = j.expiry_info.time_remaining_seconds || 0;
+      span.textContent = fmt(remaining);
+      const t = setInterval(() => {
+        remaining -= 1;
+        if (remaining <= 0) { span.textContent = '00:00'; clearInterval(t); location.reload(); }
+        else { span.textContent = fmt(remaining); }
+      }, 1000);
+    } catch {}
+  }
+
+  // ---------------- رسم الخلايا + جلب السؤال ----------------
+  function createHoneycomb() {
     const svg = document.getElementById('honeycombSvg');
-    const arabicLetters = window.sessionData.arabicLetters || [];
-
-    const cellPositions = [
-      {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
-      {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
-      {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
-      {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-      {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-      {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
-      {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
-      {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-      {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-      {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-      {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
-      {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
-      {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
-      {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-      {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-      {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
-      {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
-      {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-      {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-      {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-      {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-      {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-      {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-      {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-      {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
+    const positions = [
+      {x:380,y:260,p:"250,200 380,140 510,200 510,320 380,380 250,320"},
+      {x:630,y:260,p:"500,200 630,140 760,200 760,320 630,380 500,320"},
+      {x:880,y:260,p:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
+      {x:1130,y:260,p:"1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
+      {x:1380,y:260,p:"1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
+      {x:505,y:440,p:"375,380 505,320 635,380 635,500 505,560 375,500"},
+      {x:755,y:440,p:"625,380 755,320 885,380 885,500 755,560 625,500"},
+      {x:1005,y:440,p:"875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
+      {x:1255,y:440,p:"1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
+      {x:1505,y:440,p:"1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
+      {x:380,y:620,p:"250,560 380,500 510,560 510,680 380,740 250,680"},
+      {x:630,y:620,p:"500,560 630,500 760,560 760,680 630,740 500,680"},
+      {x:880,y:620,p:"750,560 880,500 1010,560 1010,680 880,740 750,680"},
+      {x:1130,y:620,p:"1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
+      {x:1380,y:620,p:"1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
+      {x:505,y:800,p:"375,740 505,680 635,740 635,860 505,920 375,860"},
+      {x:755,y:800,p:"625,740 755,680 885,740 885,860 755,920 625,860"},
+      {x:1005,y:800,p:"875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
+      {x:1255,y:800,p:"1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
+      {x:1505,y:800,p:"1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
+      {x:380,y:980,p:"250,920 380,860 510,920 510,1040 380,1100 250,1040"},
+      {x:630,y:980,p:"500,920 630,860 760,920 760,1040 630,1100 500,1040"},
+      {x:880,y:980,p:"750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
+      {x:1130,y:980,p:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
+      {x:1380,y:980,p:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"},
     ];
 
-    for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
-      const letter = arabicLetters[i];
-      const position = cellPositions[i];
+    for (let i=0;i<Math.min(25, letters.length);i++){
+      const {x,y,p} = positions[i];
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','hex-cell');
+      g.dataset.letter = letters[i];
 
-      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('class', 'hex-cell');
-      group.setAttribute('data-letter', letter);
+      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      poly.setAttribute('class','hex-shape');
+      poly.setAttribute('points', p);
 
-      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      polygon.setAttribute('class', 'hex-shape');
-      polygon.setAttribute('points', position.points);
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('class','hex-text'); t.setAttribute('x', x); t.setAttribute('y', y);
+      t.textContent = letters[i];
 
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('class', 'hex-text');
-      text.setAttribute('x', position.x);
-      text.setAttribute('y', position.y);
-      text.textContent = letter;
+      g.appendChild(poly); g.appendChild(t); svg.appendChild(g);
 
-      group.appendChild(polygon);
-      group.appendChild(text);
-      svg.appendChild(group);
+      g.addEventListener('click', () => fetchQuestion(letters[i]));
     }
   }
 
-  // ===================== واجهة العرض (النقاط/الخلايا) =====================
-  function updateScores(team1Score, team2Score) {
-    document.getElementById('team1Score').textContent = team1Score;
-    document.getElementById('team2Score').textContent = team2Score;
-  }
-
-  function updateCellState(letter, state) {
-    const element = document.querySelector(`[data-letter="${letter}"]`);
-    if (element) {
-      element.classList.remove('team1', 'team2');
-      if (state !== 'normal') element.classList.add(state);
-      cellStates[letter] = state;
-    }
-  }
-
-  // ====== الأصوات ======
-  function playBuzzSound() {
+  async function fetchQuestion(letter) {
+    const box = document.getElementById('questionPanel');
+    const h = document.getElementById('questionDisplay');
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.3);
-    } catch {}
-  }
-  function playEndSound() {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 420;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
-      oscillator.start();
-      oscillator.stop(audioContext.currentTime + 0.45);
+      const r = await fetch(`/games/api/get-question/?session_id=${sessionId}&letter=${encodeURIComponent(letter)}`);
+      const j = await r.json();
+      if (!j.success) return;
+      document.getElementById('currentLetter').textContent = j.letter;
+      document.getElementById('mainQuestion').textContent = j.questions.main.question;
+      document.getElementById('mainAnswer').textContent   = j.questions.main.answer;
+      document.getElementById('alt1Question').textContent = j.questions.alt1.question;
+      document.getElementById('alt1Answer').textContent   = j.questions.alt1.answer;
+      document.getElementById('alt2Question').textContent = j.questions.alt2.question;
+      document.getElementById('alt2Answer').textContent   = j.questions.alt2.answer;
+      box.style.display = 'block';
+      if (h) h.textContent = `حرف ${j.letter}`;
     } catch {}
   }
 
-  function updateBuzzStatus(available, message) {
-    const statusEl = document.getElementById('buzzStatus');
-    if (available) {
-      statusEl.className = 'buzz-status available';
-      statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
-    } else {
-      statusEl.className = 'buzz-status locked';
-      statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
-    }
-    statusEl.style.display = 'block';
+  function switchQuestion(which){
+    const q = document.getElementById(which+'Question').textContent;
+    const a = document.getElementById(which+'Answer').textContent;
+    document.getElementById('mainQuestion').textContent = q;
+    document.getElementById('mainAnswer').textContent   = a;
   }
 
-  function showContestantBuzz(contestantName, team, teamDisplay) {
-    buzzLocked = true;
-    buzzerName = contestantName;
-    buzzerTeam = team;
-    playBuzzSound();
-    updateBuzzStatus(false, `${contestantName} حجز الزر`);
-    document.getElementById('buzzedName').textContent = contestantName;
-    const teamIndicator = document.getElementById('teamIndicator');
-    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
-    teamIndicator.textContent = teamName;
-    teamIndicator.className = `team-indicator ${team}`;
-    document.getElementById('buzzedOverlay').classList.add('show');
-    startCountdown();
-  }
+  // ---------------- تحديث النقاط عبر API ----------------
+  async function updateScore(team, delta){
+    const s1El = document.getElementById('team1ScoreDesktop') || document.getElementById('team1Score');
+    const s2El = document.getElementById('team2ScoreDesktop') || document.getElementById('team2Score');
+    let s1 = parseInt(s1El.textContent||'0',10);
+    let s2 = parseInt(s2El.textContent||'0',10);
+    if (team === 'team1') s1 = Math.max(0, s1 + delta);
+    else s2 = Math.max(0, s2 + delta);
 
-  function startCountdown() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    let timeLeft = 3;
-    const countdownEl = document.getElementById('countdown');
-    countdownEl.textContent = timeLeft;
-    countdownTimer = setInterval(() => {
-      timeLeft--;
-      countdownEl.textContent = timeLeft;
-      if (timeLeft <= 0) {
-        clearInterval(countdownTimer);
-        endBuzzSession();
-      }
-    }, 1000);
-  }
-
-  function endBuzzSession() {
-    playEndSound();
-    setTimeout(() => {
-      document.getElementById('buzzedOverlay').classList.remove('show');
-    }, 450);
-    setTimeout(() => {
-      buzzLocked = false;
-      buzzerName = '';
-      buzzerTeam = '';
-      updateBuzzStatus(true, 'الزر متاح للضغط');
-    }, 1200);
-  }
-
-  function resetBuzzer() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    document.getElementById('buzzedOverlay').classList.remove('show');
-    buzzLocked = false;
-    buzzerName = '';
-    buzzerTeam = '';
-    updateBuzzStatus(true);
-  }
-
-  // ===================== تحميل حالة الجلسة =====================
-  async function loadSessionState() {
-    try {
-      const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        updateScores(data.team1_score || 0, data.team2_score || 0);
-        if (data.cell_states) {
-          for (const [letter, state] of Object.entries(data.cell_states)) {
-            updateCellState(letter, state);
-          }
+    try{
+      const r = await fetch('/games/api/update-scores/', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'X-Host-Token': hostToken },
+        body: JSON.stringify({ session_id: sessionId, team1_score: s1, team2_score: s2 })
+      });
+      const j = await r.json();
+      if (j.success){
+        (document.getElementById('team1Score')||s1El).textContent = j.team1_score;
+        (document.getElementById('team2Score')||s2El).textContent = j.team2_score;
+        if (document.getElementById('team1ScoreDesktop')) {
+          document.getElementById('team1ScoreDesktop').textContent = j.team1_score;
+          document.getElementById('team2ScoreDesktop').textContent = j.team2_score;
         }
       }
-    } catch {}
+    }catch{}
   }
 
-  // ===================== WebSocket =====================
-  function setupWebSocket() {
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display&host_token=${encodeURIComponent(hostToken)}`);
-      socket.onopen = function() {
-        reconnectDelay = 1000;
-        updateBuzzStatus(true);
-        if (pingTimer) clearInterval(pingTimer);
-        pingTimer = setInterval(() => {
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'ping' }));
-          }
-        }, 25000);
-      };
-      socket.onmessage = function(event) {
-        const data = JSON.parse(event.data || "{}");
-        switch (data.type) {
-          case 'cell_state_updated':
-            updateCellState(data.letter, data.state);
-            break;
-          case 'scores_updated':
-            updateScores(data.team1_score, data.team2_score);
-            break;
-          case 'show_contestant_buzz':
-            showContestantBuzz(data.contestant_name, data.team, data.team_display);
-            break;
-          case 'buzz_reset':
-            resetBuzzer();
-            break;
-          case 'buzz_lock':
-            buzzLocked = true;
-            updateBuzzStatus(false, data.message || 'الزر محجوز');
-            break;
-          case 'buzz_unlock':
-            if (buzzLocked) endBuzzSession();
-            break;
+  // ---------------- WebSocket لاستقبال الطنطيط وتحديثات العرض ----------------
+  let socket, pingTimer;
+  function setupWebSocket(){
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const url = `${proto}://${location.host}/ws/letters/${sessionId}/?role=host&host_token=${encodeURIComponent(hostToken)}`;
+    socket = new WebSocket(url);
+
+    socket.onopen = () => {
+      pingTimer = setInterval(() => { try{ socket.send(JSON.stringify({type:'ping'})); }catch{} }, 25000);
+    };
+    socket.onmessage = (ev) => {
+      const d = JSON.parse(ev.data||'{}');
+      if (d.type === 'scores_updated') {
+        (document.getElementById('team1Score')||{}).textContent = d.team1_score;
+        (document.getElementById('team2Score')||{}).textContent = d.team2_score;
+        if (document.getElementById('team1ScoreDesktop')) {
+          document.getElementById('team1ScoreDesktop').textContent = d.team1_score;
+          document.getElementById('team2ScoreDesktop').textContent = d.team2_score;
         }
-      };
-      socket.onclose = function() {
-        updateBuzzStatus(false, 'إعادة الاتصال...');
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-        setTimeout(setupWebSocket, reconnectDelay);
-        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-      };
-      socket.onerror = function() {
-        try { socket.close(); } catch {}
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      };
-    } catch {
-      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      setTimeout(setupWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-    }
+      }
+      if (d.type === 'show_contestant_buzz') {
+        // إظهار تنبيه بسيط للمقدّم
+        const n = document.getElementById('buzzNotification');
+        if (n){ n.textContent = `🚨 ${d.contestant_name} (${d.team_display}) حجز الزر`; n.style.display='block'; setTimeout(()=> n.style.display='none', 3000); }
+      }
+      if (d.type === 'cell_state_updated') {
+        // تلوين الخلية لو وصل بث من جلسة أخرى (اختياري)
+        const el = document.querySelector(`[data-letter="${d.letter}"]`);
+        if (el){ el.classList.remove('team1','team2'); if (d.state!=='normal') el.classList.add(d.state); }
+      }
+    };
+    socket.onclose = () => { if (pingTimer) { clearInterval(pingTimer); pingTimer=null; } setTimeout(setupWebSocket, 1500); };
+    socket.onerror = () => { try{socket.close();}catch{} };
   }
 
-  window.addEventListener('beforeunload', () => {
-    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
-    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-  });
+  // ---------------- تحميل حالة الجلسة عند البدء ----------------
+  async function loadSessionState(){
+    try{
+      const r = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
+      const j = await r.json();
+      if (!j.success) return;
+      const t1 = j.team1_score||0, t2=j.team2_score||0;
+      (document.getElementById('team1Score')||{}).textContent = t1;
+      (document.getElementById('team2Score')||{}).textContent = t2;
+      if (document.getElementById('team1ScoreDesktop')) {
+        document.getElementById('team1ScoreDesktop').textContent = t1;
+        document.getElementById('team2ScoreDesktop').textContent = t2;
+      }
+      if (j.cell_states){
+        for (const [L,S] of Object.entries(j.cell_states)){
+          const el = document.querySelector(`[data-letter="${L}"]`);
+          if (el){ el.classList.remove('team1','team2'); if (S!=='normal') el.classList.add(S); }
+        }
+      }
+    }catch{}
+  }
 
-  document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' || event.code === 'Enter' || event.code === 'Escape') {
-      resetBuzzer();
-    }
-  });
-  document.addEventListener('click', function() {
-    if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
-      resetBuzzer();
-    }
-  });
+  // ---------------- إقلاع الصفحة ----------------
+  document.addEventListener('DOMContentLoaded', () => {
+    // زر النسخ يستخدم copyLink() الموجودة فوق
+    // روابط الأزرار في القالب تستدعيها بالفعل.
 
-  document.addEventListener('DOMContentLoaded', function() {
-    createHoneycombCells();
+    createHoneycomb();
     loadSessionState();
+    startFreeTimer();
     setupWebSocket();
+
+    // تحديث بسيط كل 15 ثانية
     setInterval(loadSessionState, 15000);
-    setTimeout(() => { updateBuzzStatus(true); }, 1000);
   });
 </script>
+
 
 
 
