@@ -74,20 +74,13 @@
             <div class="package-card">
               <div class="package-title">حزمة مجانية</div>
               <p class="package-desc">جولة واحدة للتجربة</p>
-              {% if request.user.is_authenticated %}
-                <button type="button" class="btn-play" id="freeBtn"
-                        onclick="createLettersSession('{{ free_package.id }}')">
-                  <span class="btn-text">ابدأ الجولة المجانية</span>
-                  <div class="loading-spinner">
-                    <div class="spinner"></div>
-                  </div>
-                </button>
-              {% else %}
-                <button type="button" class="btn-play"
-                        onclick="redirectToLogin()">
-                  سجل الدخول للعب
-                </button>
-              {% endif %}
+              <button type="button" class="btn-play" id="freeBtn"
+                      onclick="createLettersSession('{{ free_package.id }}')">
+                <span class="btn-text">ابدأ الجولة المجانية</span>
+                <div class="loading-spinner">
+                  <div class="spinner"></div>
+                </div>
+              </button>
             </div>
           </div>
         {% endif %}
@@ -99,20 +92,13 @@
               <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
 
               {% if package.id in user_purchases %}
-                {% if request.user.is_authenticated %}
-                  <button type="button" class="btn-play"
-                          onclick="createLettersSession('{{ package.id }}')">
-                    <span class="btn-text">ابدأ اللعب</span>
-                    <div class="loading-spinner">
-                      <div class="spinner"></div>
-                    </div>
-                  </button>
-                {% else %}
-                  <button type="button" class="btn-play"
-                          onclick="redirectToLogin()">
-                    سجل الدخول للعب
-                  </button>
-                {% endif %}
+                <button type="button" class="btn-play"
+                        onclick="createLettersSession('{{ package.id }}')">
+                  <span class="btn-text">ابدأ اللعب</span>
+                  <div class="loading-spinner">
+                    <div class="spinner"></div>
+                  </div>
+                </button>
               {% else %}
                 <a class="btn-play" href="{% url 'payments:purchase' package.id %}">اشترِ هذه الحزمة</a>
               {% endif %}
@@ -135,43 +121,33 @@
   let sessionLocked = false;
 
   function createLettersSession(packageId) {
-    if (!packageId || sessionLocked) return;
+    if (!packageId) return;
 
+    // إذا غير مسجل، وجهه للتسجيل مباشرة
     if (!IS_AUTH) {
-      redirectToLogin();
+      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
       return;
     }
 
-    // تفعيل القفل
+    // منع الضغط المتكرر
+    if (sessionLocked) return;
     sessionLocked = true;
     
     // إظهار التحميل
-    const buttons = document.querySelectorAll('.btn-play[onclick*="' + packageId + '"]');
-    buttons.forEach(btn => {
-      const text = btn.querySelector('.btn-text');
-      const spinner = btn.querySelector('.loading-spinner');
-      if (text && spinner) {
-        text.style.display = 'none';
-        spinner.style.display = 'block';
-      }
-      btn.disabled = true;
-    });
+    showLoading(packageId, true);
 
     const form = document.getElementById('lettersCreateForm');
     const input = document.getElementById('lettersPkgId');
 
+    if (!form || !input) {
+      console.error('Form elements not found');
+      resetLock();
+      return;
+    }
+
     // إعادة تعيين القفل بعد 3 ثوانٍ
     setTimeout(() => {
-      sessionLocked = false;
-      buttons.forEach(btn => {
-        const text = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.loading-spinner');
-        if (text && spinner) {
-          text.style.display = 'block';
-          spinner.style.display = 'none';
-        }
-        btn.disabled = false;
-      });
+      resetLock();
     }, 3000);
 
     input.value = packageId;
@@ -183,13 +159,43 @@
         form.submit();
       }
     } catch (e) { 
-      console.error(e);
-      sessionLocked = false;
+      console.error('Form submission error:', e);
+      resetLock();
     }
   }
 
-  function redirectToLogin() {
-    window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+  function showLoading(packageId, show) {
+    const buttons = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+    buttons.forEach(btn => {
+      const text = btn.querySelector('.btn-text');
+      const spinner = btn.querySelector('.loading-spinner');
+      if (text && spinner) {
+        if (show) {
+          text.style.display = 'none';
+          spinner.style.display = 'block';
+          btn.disabled = true;
+        } else {
+          text.style.display = 'block';
+          spinner.style.display = 'none';
+          btn.disabled = false;
+        }
+      }
+    });
+  }
+
+  function resetLock() {
+    sessionLocked = false;
+    // إخفاء جميع حالات التحميل
+    const allButtons = document.querySelectorAll('.btn-play button');
+    allButtons.forEach(btn => {
+      const text = btn.querySelector('.btn-text');
+      const spinner = btn.querySelector('.loading-spinner');
+      if (text && spinner) {
+        text.style.display = 'block';
+        spinner.style.display = 'none';
+        btn.disabled = false;
+      }
+    });
   }
 </script>
 
