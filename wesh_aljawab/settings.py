@@ -1,3 +1,4 @@
+# wesh_aljawab/settings.py
 from pathlib import Path
 from decouple import config
 import os
@@ -15,7 +16,7 @@ CSRF_TRUSTED_ORIGINS = [o.strip() for o in config('CSRF_TRUSTED_ORIGINS', defaul
 
 # ============== 🧩 التطبيقات ==============
 INSTALLED_APPS = [
-    'daphne',  # ASGI server for production
+    'daphne',  # خادم ASGI
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -79,9 +80,7 @@ else:
             'PASSWORD': config('DB_PASSWORD'),
             'HOST': config('DB_HOST'),
             'PORT': config('DB_PORT', default='5432'),
-            'OPTIONS': {
-                'sslmode': 'require',
-            },
+            'OPTIONS': {'sslmode': 'require'},
         }
     }
 
@@ -96,35 +95,31 @@ GAME_SETTINGS = {
     }
 }
 
-# ============== 🔄 إعدادات Redis / Channels - مُصححة ==============
+# ============== 🔄 إعدادات Redis / Channels ==============
 REDIS_URL = config('REDIS_URL', default='')
-FORCE_REDIS = config('FORCE_REDIS', default=False, cast=bool)  # تغيير هنا: False بدلاً من not DEBUG
+REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
+FORCE_REDIS = config('FORCE_REDIS', default=False, cast=bool)
 
-def _channels_redis_hosts(url: str):
+def _is_rediss(url: str) -> bool:
+    try:
+        return urlparse(url).scheme == 'rediss'
+    except Exception:
+        return False
+
+def _channels_hosts(url: str):
     if not url:
         return []
-    try:
-        parsed = urlparse(url)
-        use_ssl = parsed.scheme == 'rediss'
-        host_cfg = {'address': url}
-        if use_ssl:
-            host_cfg['ssl'] = True
-        return [host_cfg]
-    except Exception as e:
-        print(f"Error parsing Redis URL: {e}")
-        return []
+    return [{'address': url, 'ssl': _is_rediss(url)}]
 
-# إعدادات Channels - مع معالجة الأخطاء
+# Channels
 try:
     if FORCE_REDIS and REDIS_URL:
         print("Using Redis for Channels...")
         CHANNEL_LAYERS = {
             "default": {
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
-                "CONFIG": {
-                    "hosts": _channels_redis_hosts(REDIS_URL),
-                },
-            },
+                "CONFIG": {"hosts": _channels_hosts(REDIS_URL)},
+            }
         }
     else:
         print("Using InMemory for Channels...")
@@ -133,29 +128,19 @@ except Exception as e:
     print(f"Redis connection failed for Channels, falling back to InMemory: {e}")
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
-REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
-
-def _cache_location(url: str):
-    if not url:
-        return ''
-    try:
-        parsed = urlparse(url)
-        return url
-    except Exception as e:
-        print(f"Error parsing Cache URL: {e}")
-        return ''
-
-# إعدادات Cache - مع معالجة الأخطاء
+# Cache
 try:
     if FORCE_REDIS and REDIS_CACHE_URL:
         print("Using Redis for Cache...")
         CACHES = {
             "default": {
                 "BACKEND": "django_redis.cache.RedisCache",
-                "LOCATION": _cache_location(REDIS_CACHE_URL),
+                "LOCATION": REDIS_CACHE_URL,
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
                     "CONNECTION_POOL_KWARGS": {"max_connections": 50},
+                    # ضروري عند استخدام rediss://
+                    **({"SSL": True} if _is_rediss(REDIS_CACHE_URL) else {}),
                 },
                 "KEY_PREFIX": "wesh",
                 "TIMEOUT": 300,

@@ -19,8 +19,7 @@ from .models import (
     GamePackage, GameSession, UserPurchase, LettersGameProgress,
     LettersGameQuestion, Contestant
 )
-from django.conf import settings
-settings.FORCE_REDIS = False
+
 logger = logging.getLogger('games')
 
 # ===============================
@@ -275,6 +274,7 @@ def create_letters_session(request):
     package_id = request.POST.get('package_id')
     package = get_object_or_404(GamePackage, id=package_id, game_type='letters')
 
+    lock_key = None
     try:
         # تحقق الأهلية/الشراء قبل إنشاء الجلسة
         if package.is_free:
@@ -369,7 +369,8 @@ def create_letters_session(request):
     finally:
         # فك القفل حتى لا يحبس المستخدم
         try:
-            cache.delete(lock_key)
+            if lock_key:
+                cache.delete(lock_key)
         except Exception:
             pass
 
