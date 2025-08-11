@@ -163,17 +163,19 @@
     </div>
 
 <script>
+  // ===================== متغيرات عامة =====================
   const sessionId = '{{ session.id }}';
   let socket = null;
-  let reconnectDelay = 1000;
-  const maxDelay = 5000;
+  let reconnectDelay = 1000; // يبدأ من 1s
+  const maxDelay = 5000;     // حد أقصى 5s
   let countdownInterval = null;
   let heartbeatTimer = null;
 
-  // ===== بناء خلايا العسل مرة واحدة =====
+  // ===================== بناء خلايا العسل مرة واحدة =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
     const letters = (window.sessionData && window.sessionData.arabicLetters) || [];
+
     const P = [
       {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
       {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
@@ -201,79 +203,156 @@
       {x:1130,y:980,points:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
       {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"},
     ];
-    for (let i=0;i<Math.min(25, letters.length);i++){
-      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter',letters[i]);
-      const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon'); poly.setAttribute('class','hex-shape'); poly.setAttribute('points',P[i].points);
-      const t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('class','hex-text'); t.setAttribute('x',P[i].x); t.setAttribute('y',P[i].y); t.textContent=letters[i];
-      g.appendChild(poly); g.appendChild(t); document.getElementById('honeycombSvg').appendChild(g);
+
+    for (let i = 0; i < Math.min(25, letters.length); i++) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'hex-cell');
+      g.setAttribute('data-letter', letters[i]);
+
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      poly.setAttribute('class', 'hex-shape');
+      poly.setAttribute('points', P[i].points);
+
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('class', 'hex-text');
+      t.setAttribute('x', P[i].x);
+      t.setAttribute('y', P[i].y);
+      t.textContent = letters[i];
+
+      g.appendChild(poly);
+      g.appendChild(t);
+      svg.appendChild(g);
     }
   }
 
-  // ===== أصوات + عد تنازلي =====
-  function sound(freq, dur){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=freq; g.gain.value=.6; o.start(); o.stop(ctx.currentTime+dur/1000);}catch{} }
-  function playBuzz(){ sound(800,350); } function playEnd(){ sound(420,600); }
-  function showBuzz(name, team){
+  // ===================== أصوات + عدّ تنازلي =====================
+  function tone(freq, durMs) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.frequency.value = freq; g.gain.value = 0.6;
+      osc.start(); osc.stop(ctx.currentTime + durMs / 1000);
+    } catch {}
+  }
+  function playBuzz() { tone(800, 350); }
+  function playEnd()  { tone(420, 600); }
+
+  function showBuzz(name, team) {
     playBuzz();
     document.getElementById('buzzedName').textContent = name;
-    const ind=document.getElementById('teamIndicator');
-    ind.textContent = (team==='team1') ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    const ind = document.getElementById('teamIndicator');
+    ind.textContent = (team === 'team1') ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
     ind.className = 'team-indicator ' + team;
     document.getElementById('buzzedOverlay').classList.add('show');
     startCountdown();
   }
-  function startCountdown(){
+
+  function startCountdown() {
     clearInterval(countdownInterval);
-    let n=3; const el=document.getElementById('countdown'); el.textContent=n;
-    countdownInterval=setInterval(()=>{ n--; el.textContent=n; if(n<=0){ clearInterval(countdownInterval); endBuzz(); }},1000);
-  }
-  function endBuzz(){ playEnd(); setTimeout(()=>document.getElementById('buzzedOverlay').classList.remove('show'), 400); }
-
-  // ===== تحديث واجهة =====
-  function setScore(t1,t2){ document.getElementById('team1Score').textContent=t1; document.getElementById('team2Score').textContent=t2; }
-  function setCell(letter,state){
-    const el=document.querySelector(`[data-letter="${letter}"]`); if(!el) return;
-    el.classList.remove('team1','team2'); if(state && state!=='normal') el.classList.add(state);
+    let n = 3;
+    const el = document.getElementById('countdown');
+    el.textContent = n;
+    countdownInterval = setInterval(() => {
+      n -= 1; el.textContent = n;
+      if (n <= 0) { clearInterval(countdownInterval); endBuzz(); }
+    }, 1000);
   }
 
-  // ===== WebSocket (بدون Polling) =====
-  function setupWS(){
-    const proto = location.protocol==='https:'?'wss':'ws';
-    socket = new WebSocket(`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=display`);
-
-    socket.onopen = () => {
-      console.log('🟢 WS connected (display)');
-      reconnectDelay = 1000;
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = setInterval(()=>{ try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
-    };
-    socket.onmessage = (ev) => {
-      let d = {}; try{ d=JSON.parse(ev.data||'{}'); }catch{ return; }
-      switch(d.type){
-        case 'contestant_buzz_accepted': showBuzz(d.contestant_name, d.team); break;
-        case 'buzz_unlocked': endBuzz(); break;
-        case 'buzz_reset_by_host': endBuzz(); break;
-        case 'cell_state_updated': setCell(d.letter, d.state); break;
-        case 'scores_updated': setScore(d.team1_score, d.team2_score); break;
-        case 'pong': break;
-        default: break;
-      }
-    };
-    socket.onclose = () => {
-      console.log('🔴 WS closed (display) – retrying...');
-      clearInterval(heartbeatTimer);
-      setTimeout(setupWS, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay*2, maxDelay);
-    };
-    socket.onerror = () => { try{ socket.close(); }catch{} };
+  function endBuzz() {
+    playEnd();
+    setTimeout(() => {
+      document.getElementById('buzzedOverlay').classList.remove('show');
+    }, 400);
   }
 
+  // ===================== تحديث الواجهة =====================
+  function updateScores(t1, t2) {
+    document.getElementById('team1Score').textContent = t1;
+    document.getElementById('team2Score').textContent = t2;
+  }
+
+  function updateCell(letter, state) {
+    const el = document.querySelector(`[data-letter="${letter}"]`);
+    if (!el) return;
+    el.classList.remove('team1', 'team2');
+    if (state && state !== 'normal') el.classList.add(state);
+  }
+
+  // ===================== WebSocket (بدون Polling) =====================
+  function setupWebSocket() {
+    try {
+      const proto = (location.protocol === 'https:') ? 'wss' : 'ws';
+      const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=display`;
+      socket = new WebSocket(url);
+
+      socket.onopen = () => {
+        console.log('🟢 WS connected (display)');
+        reconnectDelay = 1000;
+
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => {
+          try { socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify({ type: 'ping' })); } catch {}
+        }, 20000);
+      };
+
+      socket.onmessage = (event) => {
+        let d = {};
+        try { d = JSON.parse(event.data || '{}'); } catch { return; }
+
+        switch (d.type) {
+          case 'contestant_buzz_accepted':
+            showBuzz(d.contestant_name, d.team);
+            break;
+          case 'buzz_unlocked':
+          case 'buzz_reset_by_host':
+            endBuzz();
+            break;
+          case 'cell_state_updated':
+            updateCell(d.letter, d.state);
+            break;
+          case 'scores_updated':
+            updateScores(d.team1_score, d.team2_score);
+            break;
+          case 'pong':
+            break;
+          default:
+            break;
+        }
+      };
+
+      socket.onclose = (e) => {
+        console.warn('WS closed (display):', e.code, e.reason);
+        clearInterval(heartbeatTimer);
+        setTimeout(setupWebSocket, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      };
+
+      socket.onerror = (err) => {
+        console.error('WS error (display):', err);
+        try { socket.close(); } catch {}
+      };
+    } catch (e) {
+      console.error('WS create error:', e);
+      setTimeout(setupWebSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+    }
+  }
+
+  // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎬 شاشة العرض – تشغيل WebSocket فقط');
     createHoneycombCells();
-    setupWS();
-    window.addEventListener('beforeunload', () => { try{ socket && socket.readyState===1 && socket.close(1000,'page unload'); }catch{} });
+    setupWebSocket();
+
+    window.addEventListener('beforeunload', () => {
+      try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
+      clearInterval(heartbeatTimer);
+      clearInterval(countdownInterval);
+    });
   });
 </script>
+
 
 
 </body>
