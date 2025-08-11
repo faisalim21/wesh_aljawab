@@ -19,7 +19,8 @@ from .models import (
     GamePackage, GameSession, UserPurchase, LettersGameProgress,
     LettersGameQuestion, Contestant
 )
-
+from django.conf import settings
+settings.FORCE_REDIS = False
 logger = logging.getLogger('games')
 
 # ===============================
