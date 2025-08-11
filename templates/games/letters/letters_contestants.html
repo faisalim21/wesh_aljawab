@@ -367,7 +367,7 @@
   function connectWS() {
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=contestant`);
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`);
 
       socket.onopen = () => {
         console.log('🟢 WebSocket متصل - المتسابق');
@@ -381,13 +381,11 @@
 
         switch(data.type) {
           case 'buzz_confirmed':
-            // رد فوري: تم قبول الضغطة
             showSuccess(`✅ ${data.message || 'تم تسجيل إجابتك!'}`);
             addWaveEffect();
             break;
 
           case 'buzz_rejected':
-            // رد فوري: تم رفض الضغطة
             showError(data.message || 'الزر محجوز حاليًا');
             break;
 
@@ -400,7 +398,7 @@
             break;
 
           default:
-            // تجاهل رسائل العرض والمقدم
+            // تجاهل رسائل المقدم/العرض
             break;
         }
       };
@@ -417,6 +415,15 @@
         try { socket.close(); } catch {}
       };
 
+      // keep-alive كل 20 ثانية لتقليل الإغلاقات الخاملة
+      setInterval(() => {
+        try {
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'ping' }));
+          }
+        } catch(_) {}
+      }, 20000);
+
     } catch (e) {
       console.error('خطأ في إنشاء WebSocket:', e);
       updateConnectionStatus(false);
@@ -425,8 +432,8 @@
     }
   }
 
-  // ===================== الطنطيط الفوري =====================
-  function buzzAnswer() {
+  // ===================== الطنطيط الفوري (WS أولاً ثم HTTP فولباك) =====================
+  async function buzzAnswer() {
     const name = document.getElementById('contestantName').value.trim();
     const team = document.querySelector('input[name="team"]:checked')?.value;
 
@@ -440,31 +447,52 @@
       showError('⚠️ اختر فريقك');
       return;
     }
-
-    // التحقق من الاتصال
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      showError('❌ الاتصال غير جاهز - تأكد من الشبكة ثم حاول مجدداً');
+    if (name.length > 20) {
+      showError('⚠️ الاسم طويل جدًا (20 حرف حد أقصى)');
       return;
     }
 
     // حفظ الهوية
     persistIdentity(name, team);
 
-    try {
-      // إرسال فوري
-      socket.send(JSON.stringify({
-        type: 'contestant_buzz',
-        contestant_name: name,
-        team: team,
-        timestamp: new Date().toISOString()
-      }));
+    // WS أولاً
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      try {
+        socket.send(JSON.stringify({
+          type: 'contestant_buzz',
+          contestant_name: name,
+          team: team,
+          timestamp: new Date().toISOString()
+        }));
+        showInfo('⏳ جاري الإرسال...');
+        return;
+      } catch (e) {
+        // نكمل للفولباك
+      }
+    }
 
-      // تأثير بصري فوري (قبل الرد)
-      showInfo(`⏳ جاري الإرسال...`);
-      
-    } catch (e) {
-      showError('❌ تعذر الإرسال - حاول مرة أخرى');
-      return;
+    // فولباك HTTP: يرسل لنفس الـ API ويُبث فورياً عبر الـ consumer
+    try {
+      showInfo('⏳ جاري الإرسال عبر الشبكة...');
+      const r = await fetch('/games/api/contestant-buzz/', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          session_id: sessionId,
+          contestant_name: name,
+          team: team,
+          timestamp: new Date().toISOString()
+        })
+      });
+      const data = await r.json();
+      if (r.ok && data.success) {
+        addWaveEffect();
+        showSuccess(data.message || '✅ تم تسجيل إجابتك!');
+      } else {
+        showError((data && (data.message || data.error)) || '❌ تعذر الإرسال');
+      }
+    } catch(err) {
+      showError('❌ تعذر الإرسال، تحقق من الاتصال');
     }
   }
 
@@ -474,11 +502,7 @@
     el.className = 'status-message success';
     el.textContent = message;
     el.style.display = 'block';
-    
-    // إخفاء بعد 3 ثواني
-    setTimeout(() => {
-      el.style.display = 'none';
-    }, 3000);
+    setTimeout(() => { el.style.display = 'none'; }, 3000);
   }
 
   function showError(message) {
@@ -486,11 +510,7 @@
     el.className = 'status-message error';
     el.textContent = message;
     el.style.display = 'block';
-    
-    // إخفاء بعد 4 ثواني
-    setTimeout(() => {
-      el.style.display = 'none';
-    }, 4000);
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
 
   function showInfo(message) {
@@ -501,33 +521,25 @@
     el.style.color = '#3b82f6';
     el.textContent = message;
     el.style.display = 'block';
-    
-    // إخفاء بعد ثانيتين
-    setTimeout(() => {
-      el.style.display = 'none';
-    }, 2000);
+    setTimeout(() => { el.style.display = 'none'; }, 2000);
   }
 
   function addWaveEffect() {
     const button = document.getElementById('buzzBtn');
     button.classList.add('wave');
-    setTimeout(() => {
-      button.classList.remove('wave');
-    }, 600);
+    setTimeout(() => { button.classList.remove('wave'); }, 600);
   }
 
   // ===================== أحداث الواجهة =====================
   document.getElementById('contestantName').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      buzzAnswer();
-    }
+    if (e.key === 'Enter') buzzAnswer();
   });
 
-  // منع الإرسال المتعدد بالضغط السريع
+  // منع الإرسال المتعدد بالضغط السريع (client-side)
   let lastBuzzTime = 0;
   document.getElementById('buzzBtn').addEventListener('click', function(e) {
     const now = Date.now();
-    if (now - lastBuzzTime < 1000) { // حد أدنى ثانية واحدة
+    if (now - lastBuzzTime < 800) { // 0.8 ثانية
       e.preventDefault();
       showError('⚠️ انتظر قليلاً قبل المحاولة مرة أخرى');
       return;
@@ -537,18 +549,17 @@
 
   // ===================== تهيئة الصفحة =====================
   window.addEventListener('beforeunload', () => {
-    try { 
-      if (socket && socket.readyState === WebSocket.OPEN) 
-        socket.close(1000, 'page unload'); 
+    try {
+      if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload');
     } catch {}
   });
 
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎤 صفحة المتسابق - خلية الحروف (محسّنة)');
+    console.log('🎤 صفحة المتسابق - خلية الحروف (محسّنة، مع فولباك HTTP)');
     preloadIdentity();
     document.getElementById('contestantName').focus();
     connectWS();
-    
+
     // إعادة التركيز عند النقر في أي مكان
     document.addEventListener('click', () => {
       if (document.getElementById('contestantName').value.trim() === '') {
@@ -560,5 +571,6 @@
   // تعريف الدالة عالمياً
   window.buzzAnswer = buzzAnswer;
 </script>
+
 </body>
 </html>

@@ -979,7 +979,7 @@ def api_contestant_buzz_http(request):
     try:
         data = json.loads(request.body or "{}")
         session_id = data.get('session_id')
-        contestant_name = data.get('contestant_name')
+        contestant_name = (data.get('contestant_name') or '').strip()
         team = data.get('team')
         timestamp = data.get('timestamp')
 
@@ -991,9 +991,11 @@ def api_contestant_buzz_http(request):
         except GameSession.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
 
+        # انتهاء الصلاحية
         if is_session_expired(session):
             return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
+        # قفل الزر لثلاث ثوانٍ
         buzz_lock_key = f"buzz_lock_{session_id}"
         current_buzzer = cache.get(buzz_lock_key)
         if current_buzzer:
@@ -1010,8 +1012,9 @@ def api_contestant_buzz_http(request):
             'timestamp': timestamp,
             'session_id': session_id,
             'method': 'HTTP'
-        }, timeout=3)  # 3 ثوانٍ فقط
+        }, timeout=3)  # 3 ثوانٍ
 
+        # ثبّت المتسابق/الفريق في قاعدة البيانات
         contestant, created = Contestant.objects.get_or_create(
             session=session,
             name=contestant_name,
@@ -1021,7 +1024,7 @@ def api_contestant_buzz_http(request):
             contestant.team = team
             contestant.save(update_fields=['team'])
 
-        # بث عبر WebSocket (إن وُجد)
+        # بث موحّد إلى المجموعة (يتوافق مع consumer: broadcast_buzz_event)
         try:
             from channels.layers import get_channel_layer
             from asgiref.sync import async_to_sync
@@ -1030,18 +1033,12 @@ def api_contestant_buzz_http(request):
                 group_name = f"letters_session_{session_id}"
                 team_display = session.team1_name if team == 'team1' else session.team2_name
                 async_to_sync(channel_layer.group_send)(group_name, {
-                    'type': 'broadcast_contestant_buzz',
+                    'type': 'broadcast_buzz_event',
                     'contestant_name': contestant_name,
                     'team': team,
                     'team_display': team_display,
                     'timestamp': timestamp,
-                    'method': 'HTTP'
-                })
-                async_to_sync(channel_layer.group_send)(group_name, {
-                    'type': 'broadcast_buzz_lock',
-                    'message': f'{contestant_name} حجز الزر',
-                    'locked_by': contestant_name,
-                    'team': team
+                    'action': 'buzz_accepted',  # ← المهم
                 })
         except Exception as e:
             logger.error(f"Error sending HTTP buzz to WebSocket: {e}")
