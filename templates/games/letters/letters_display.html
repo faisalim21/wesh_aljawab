@@ -273,11 +273,18 @@
   }
 
   function updateCell(letter, state) {
-    const el = document.querySelector(`[data-letter="${letter}"]`);
-    if (!el) return;
-    el.classList.remove('team1', 'team2');
-    if (state && state !== 'normal') el.classList.add(state);
+      const el = document.querySelector(`[data-letter="${letter}"]`);
+      if (!el) return;
+
+      // إزالة أي حالة سابقة
+      el.classList.remove('team1', 'team2');
+
+      // إذا وصلت حالة غير normal نضيفها
+      if (state && state !== 'normal') {
+          el.classList.add(state);
+      }
   }
+
 
   // ===================== WebSocket (بدون Polling) =====================
   function setupWebSocket() {
