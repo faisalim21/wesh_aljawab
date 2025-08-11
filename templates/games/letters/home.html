@@ -103,48 +103,51 @@
   {% include 'footer.html' %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // حالة الدخول + رابط العودة بعد تسجيل الدخول
-    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-    const LOGIN_URL = "/accounts/login/"; // إن كنت تستخدم allauth: "{% url 'account_login' %}"
-    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+<script>
+  // حالة الدخول + رابط العودة بعد تسجيل الدخول
+  const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+  // إذا كنت تستخدم django-allauth وعرّفت اسمًا مختلفًا لمسار تسجيل الدخول، حدّث هذا الثابت يدويًا:
+  const LOGIN_URL = "/accounts/login/";
+  const NEXT_URL = "{{ request.get_full_path|urlencode }}";
 
-    // إرسال آمن عبر الفورم المخفي
-    function createLettersSession(packageId) {
-      if (!packageId) return;
+  // إرسال آمن عبر الفورم المخفي
+  function createLettersSession(packageId) {
+    if (!packageId) return;
 
-      // غير مسجّل → تحويل مباشر للتسجيل
-      if (!IS_AUTH) {
-        const redirectTo = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-        window.location.href = redirectTo;
-        return;
-      }
-
-      const form  = document.getElementById('lettersCreateForm');
-      const input = document.getElementById('lettersPkgId');
-
-      // منع النقر المزدوج (متزامن مع قفل السيرفر)
-      if (form.dataset.locked === '1') return;
-      form.dataset.locked = '1';
-      setTimeout(() => { form.dataset.locked = ''; }, 3000);
-
-      input.value = packageId;
-
-      // تعطيل الأزرار كتحسين UX
-      try {
-        document.querySelectorAll('.btn-play').forEach(b => b.setAttribute('disabled', 'disabled'));
-      } catch (_) {}
-
-      // إرسال POST فوري
-      try {
-        if (typeof form.requestSubmit === 'function') {
-          form.requestSubmit();
-        } else {
-          form.submit();
-        }
-      } catch (e) { console.error(e); }
+    // غير مسجّل → تحويل مباشر للتسجيل
+    if (!IS_AUTH) {
+      const redirectTo = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+      window.location.href = redirectTo;
+      return;
     }
-  </script>
+
+    const form  = document.getElementById('lettersCreateForm');
+    const input = document.getElementById('lettersPkgId');
+
+    // منع النقر المزدوج (متزامن مع قفل السيرفر)
+    if (form.dataset.locked === '1') return;
+    form.dataset.locked = '1';
+    setTimeout(() => { form.dataset.locked = ''; }, 3000);
+
+    input.value = packageId;
+
+    // تعطيل الأزرار كتحسين UX
+    try {
+      document.querySelectorAll('.btn-play, .btn.btn-success')
+        .forEach(b => b.setAttribute('disabled', 'disabled'));
+    } catch (_) {}
+
+    // إرسال POST فوري
+    try {
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit();
+      } else {
+        form.submit();
+      }
+    } catch (e) { console.error(e); }
+  }
+</script>
+
 
 </body>
 </html>
