@@ -55,9 +55,10 @@
   </div>
 
   <!-- فورم مخفي مركزي لإرسال الطلبات -->
-  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
+  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}">
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
+    <button type="submit" id="hiddenSubmitBtn" style="display:none;"></button>
   </form>
 
   <section class="packages-section">
@@ -123,7 +124,7 @@
 
     // إنشاء الجلسة
     window.createLettersSession = function(packageId) {
-      console.log('Creating session for package:', packageId);
+      console.log('=== Creating session for package:', packageId, '===');
       
       if (!packageId) {
         console.error('Package ID is required');
@@ -151,25 +152,49 @@
 
       const form = document.getElementById('lettersCreateForm');
       const input = document.getElementById('lettersPkgId');
+      const submitBtn = document.getElementById('hiddenSubmitBtn');
+
+      console.log('Form elements:', {
+        form: !!form,
+        input: !!input,
+        submitBtn: !!submitBtn,
+        formAction: form?.action,
+        csrfToken: form?.querySelector('[name="csrfmiddlewaretoken"]')?.value
+      });
 
       if (!form || !input) {
-        console.error('Form elements not found:', {form, input});
+        console.error('Form elements not found');
         resetLock();
         return;
       }
 
+      // تعيين قيمة الحزمة
       input.value = packageId;
-      console.log('Form prepared with package ID:', packageId);
+      console.log('Package ID set to:', input.value);
 
       // إعادة تعيين القفل بعد 5 ثوانٍ للحماية
       setTimeout(() => {
         console.log('Resetting lock after timeout');
         resetLock();
-      }, 5000);
+      }, 8000);
 
       try {
-        console.log('Submitting form...');
-        form.submit();
+        console.log('Attempting form submission...');
+        
+        // جرب طرق مختلفة للإرسال
+        if (submitBtn) {
+          console.log('Using hidden submit button');
+          submitBtn.click();
+        } else if (typeof form.requestSubmit === 'function') {
+          console.log('Using requestSubmit');
+          form.requestSubmit();
+        } else {
+          console.log('Using form.submit()');
+          form.submit();
+        }
+        
+        console.log('Form submission initiated');
+        
       } catch (e) { 
         console.error('Form submission error:', e);
         resetLock();
@@ -179,9 +204,14 @@
     function showLoading(packageId, show) {
       console.log('Toggle loading state:', {packageId, show});
       const buttons = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-      buttons.forEach(btn => {
+      console.log('Found buttons:', buttons.length);
+      
+      buttons.forEach((btn, index) => {
+        console.log(`Button ${index}:`, btn);
         const text = btn.querySelector('.btn-text');
         const spinner = btn.querySelector('.loading-spinner');
+        console.log(`Button ${index} elements:`, {text: !!text, spinner: !!spinner});
+        
         if (text && spinner) {
           if (show) {
             text.style.display = 'none';
@@ -200,20 +230,34 @@
       console.log('Resetting session lock');
       sessionLocked = false;
       // إخفاء جميع حالات التحميل
-      const allButtons = document.querySelectorAll('.btn-play button');
+      const allButtons = document.querySelectorAll('.btn-play');
       allButtons.forEach(btn => {
-        const text = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.loading-spinner');
-        if (text && spinner) {
-          text.style.display = 'block';
-          spinner.style.display = 'none';
-          btn.disabled = false;
+        if (btn.tagName === 'BUTTON') {
+          const text = btn.querySelector('.btn-text');
+          const spinner = btn.querySelector('.loading-spinner');
+          if (text && spinner) {
+            text.style.display = 'block';
+            spinner.style.display = 'none';
+            btn.disabled = false;
+          }
         }
       });
     }
 
+    // اختبار الفورم عند التحميل
+    const form = document.getElementById('lettersCreateForm');
+    if (form) {
+      console.log('Form found on load:', {
+        action: form.action,
+        method: form.method,
+        csrf: !!form.querySelector('[name="csrfmiddlewaretoken"]')
+      });
+    } else {
+      console.error('Form not found on load!');
+    }
+
     // تسجيل أن الـ script تم تحميله
-    console.log('Letters game script loaded successfully');
+    console.log('Letters game script loaded successfully, IS_AUTH:', IS_AUTH);
   });
 </script>
 
