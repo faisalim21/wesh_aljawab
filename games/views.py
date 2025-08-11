@@ -267,23 +267,31 @@ def letters_game_home(request):
     })
 
 def create_letters_session(request):
-    if request.method == 'POST':
-        package_id = request.POST.get('package_id')
-        package = get_object_or_404(GamePackage, id=package_id, game_type='letters')
+    # يقبل POST فقط
+    if request.method != 'POST':
+        return redirect('games:letters_home')
 
+    package_id = request.POST.get('package_id')
+    package = get_object_or_404(GamePackage, id=package_id, game_type='letters')
+
+    try:
+        # تحقق الأهلية/الشراء قبل إنشاء الجلسة
         if package.is_free:
+            # غير مسجل → وجّهه للتسجيل مباشرة
             if not request.user.is_authenticated:
                 messages.info(request, 'يرجى تسجيل الدخول لإنشاء جلسة لعب')
                 return redirect(f'/accounts/login/?next={request.path}')
 
+            # وضع مؤقت: السماح دائمًا (لكن أبقي المنطق للمستقبل)
             eligible, anti_cheat_message, sessions_count = check_free_session_eligibility(
                 request.user, 'letters'
             )
             if not eligible:
-                messages.error(request, anti_cheat_message)
+                messages.error(request, anti_cheat_message or 'غير مؤهل للجلسة المجانية حاليًا')
                 logger.warning(f'Free session creation blocked for user {request.user.username}: {sessions_count} previous sessions')
                 return redirect('games:letters_home')
         else:
+            # المدفوعة تتطلب شراء
             if not request.user.is_authenticated:
                 messages.error(request, 'يرجى تسجيل الدخول لشراء الحزم المدفوعة')
                 return redirect(f'/accounts/login/?next={request.path}')
@@ -292,73 +300,78 @@ def create_letters_session(request):
                 messages.error(request, 'يجب شراء هذه الحزمة أولاً')
                 return redirect('games:letters_home')
 
+        # أسماء الفرق (مع تفضيلات المستخدم إن وُجدت)
         team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
         team2_name = request.POST.get('team2_name', 'الفريق البرتقالي')
-
         if request.user.is_authenticated and hasattr(request.user, 'preferences'):
             team1_name = request.user.preferences.default_team1_name or team1_name
             team2_name = request.user.preferences.default_team2_name or team2_name
 
-        try:
-            session = GameSession.objects.create(
-                host=request.user,
-                package=package,
-                game_type='letters',
-                team1_name=team1_name,
-                team2_name=team2_name,
-            )
-
-            # توليد الحروف وتخزينها في الكاش (حسب قواعد الجلسة)
-            _ = get_letters_for_session(session)
-
-            # توليد host_token وتخزينه حتى نهاية الجلسة
-            host_token = _put_host_token(session)
-
-            # إنشاء تقدم اللعبة
-            LettersGameProgress.objects.create(
-                session=session,
-                cell_states={},
-                used_letters=[],
-            )
-
-            # تسجيل النشاط
-            if request.user.is_authenticated:
-                try:
-                    from accounts.models import UserActivity
-                    UserActivity.objects.create(
-                        user=request.user,
-                        activity_type='game_created',
-                        description=f'إنشاء جلسة خلية الحروف - {package.get_game_type_display()} ({"مجانية" if package.is_free else "مدفوعة"})',
-                        game_type='letters',
-                        session_id=str(session.id)
-                    )
-                except Exception:
-                    pass
-
-            if package.is_free:
-                success_message = '''
-                🎉 تم إنشاء جلسة مجانية بنجاح!
-
-                ⏰ تذكير: هذه جلستك المجانية الوحيدة لخلية الحروف
-                • صالحة لمدة ساعة واحدة فقط
-                • لن تتمكن من إنشاء جلسة مجانية أخرى بعد انتهائها
-
-                💎 للحصول على المزيد: تصفح الحزم المدفوعة للاستمتاع بمحتوى أكثر وجلسات غير محدودة!
-                '''
-                messages.success(request, success_message)
-            else:
-                messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع بجلسات غير محدودة! 🎉')
-
-            logger.info(f'New letters session created: {session.id} by {request.user.username} ({"FREE" if package.is_free else "PAID"})')
-
-            return redirect('games:letters_session', session_id=session.id)
-
-        except Exception as e:
-            logger.error(f'Error creating letters session: {e}')
-            messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، يرجى المحاولة مرة أخرى')
+        # قفل خفيف لمنع إنشاء جلستين بالنقر السريع (3 ثوانٍ)
+        lock_owner = request.user.id if request.user.is_authenticated else request.META.get('REMOTE_ADDR', 'anon')
+        lock_key = f"letters_create_lock:{lock_owner}"
+        if cache.get(lock_key):
+            messages.info(request, '⏳ يتم إنشاء الجلسة الآن، انتظر لحظات...')
             return redirect('games:letters_home')
+        cache.set(lock_key, 1, timeout=3)
 
-    return redirect('games:letters_home')
+        # إنشاء الجلسة
+        session = GameSession.objects.create(
+            host=request.user,
+            package=package,
+            game_type='letters',
+            team1_name=team1_name,
+            team2_name=team2_name,
+        )
+
+        # توليد الحروف وتخزينها في الكاش (حسب قواعد الجلسة)
+        _ = get_letters_for_session(session)
+
+        # توليد وحفظ توكن المضيف حتى نهاية الجلسة
+        host_token = _put_host_token(session)
+
+        # إنشاء تقدم اللعبة
+        LettersGameProgress.objects.create(
+            session=session,
+            cell_states={},
+            used_letters=[],
+        )
+
+        # تسجيل نشاط (غير حرج)
+        if request.user.is_authenticated:
+            try:
+                from accounts.models import UserActivity
+                UserActivity.objects.create(
+                    user=request.user,
+                    activity_type='game_created',
+                    description=f'إنشاء جلسة خلية الحروف - {package.get_game_type_display()} ({"مجانية" if package.is_free else "مدفوعة"})',
+                    game_type='letters',
+                    session_id=str(session.id)
+                )
+            except Exception:
+                pass
+
+        # رسائل نجاح: وضع المجانية غير محدود حاليًا
+        if package.is_free:
+            messages.success(request, '🎉 تم إنشاء جلستك المجانية بنجاح! ⏰ صالحة لمدة ساعة واحدة.')
+        else:
+            messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع باللعب 🎉')
+
+        logger.info(f'New letters session created: {session.id} by {request.user.username} ({"FREE" if package.is_free else "PAID"})')
+        return redirect('games:letters_session', session_id=session.id)
+
+    except Exception as e:
+        logger.error(f'Error creating letters session: {e}')
+        messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، يرجى المحاولة مرة أخرى')
+        return redirect('games:letters_home')
+
+    finally:
+        # فك القفل حتى لا يحبس المستخدم
+        try:
+            cache.delete(lock_key)
+        except Exception:
+            pass
+
 
 @login_required
 def letters_session(request, session_id):
