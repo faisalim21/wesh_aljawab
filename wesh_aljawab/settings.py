@@ -96,30 +96,41 @@ GAME_SETTINGS = {
     }
 }
 
-# ============== 🔄 إعدادات Redis / Channels ==============
+# ============== 🔄 إعدادات Redis / Channels - مُصححة ==============
 REDIS_URL = config('REDIS_URL', default='')
-FORCE_REDIS = config('FORCE_REDIS', default=not DEBUG, cast=bool)
+FORCE_REDIS = config('FORCE_REDIS', default=False, cast=bool)  # تغيير هنا: False بدلاً من not DEBUG
 
 def _channels_redis_hosts(url: str):
     if not url:
         return []
-    parsed = urlparse(url)
-    use_ssl = parsed.scheme == 'rediss'
-    host_cfg = {'address': url}
-    if use_ssl:
-        host_cfg['ssl'] = True
-    return [host_cfg]
+    try:
+        parsed = urlparse(url)
+        use_ssl = parsed.scheme == 'rediss'
+        host_cfg = {'address': url}
+        if use_ssl:
+            host_cfg['ssl'] = True
+        return [host_cfg]
+    except Exception as e:
+        print(f"Error parsing Redis URL: {e}")
+        return []
 
-if FORCE_REDIS and REDIS_URL:
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": _channels_redis_hosts(REDIS_URL),
+# إعدادات Channels - مع معالجة الأخطاء
+try:
+    if FORCE_REDIS and REDIS_URL:
+        print("Using Redis for Channels...")
+        CHANNEL_LAYERS = {
+            "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG": {
+                    "hosts": _channels_redis_hosts(REDIS_URL),
+                },
             },
-        },
-    }
-else:
+        }
+    else:
+        print("Using InMemory for Channels...")
+        CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+except Exception as e:
+    print(f"Redis connection failed for Channels, falling back to InMemory: {e}")
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
@@ -127,23 +138,41 @@ REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
 def _cache_location(url: str):
     if not url:
         return ''
-    parsed = urlparse(url)
-    return url
+    try:
+        parsed = urlparse(url)
+        return url
+    except Exception as e:
+        print(f"Error parsing Cache URL: {e}")
+        return ''
 
-if FORCE_REDIS and REDIS_CACHE_URL:
-    CACHES = {
-        "default": {
-            "BACKEND": "django_redis.cache.RedisCache",
-            "LOCATION": _cache_location(REDIS_CACHE_URL),
-            "OPTIONS": {
-                "CLIENT_CLASS": "django_redis.client.DefaultClient",
-                "CONNECTION_POOL_KWARGS": {"max_connections": 100},
-            },
-            "KEY_PREFIX": "wesh",
-            "TIMEOUT": 300,
+# إعدادات Cache - مع معالجة الأخطاء
+try:
+    if FORCE_REDIS and REDIS_CACHE_URL:
+        print("Using Redis for Cache...")
+        CACHES = {
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": _cache_location(REDIS_CACHE_URL),
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "CONNECTION_POOL_KWARGS": {"max_connections": 50},
+                },
+                "KEY_PREFIX": "wesh",
+                "TIMEOUT": 300,
+            }
         }
-    }
-else:
+    else:
+        print("Using LocMem for Cache...")
+        CACHES = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "wesh-local-cache",
+                "TIMEOUT": 300,
+                "OPTIONS": {"MAX_ENTRIES": 1000},
+            }
+        }
+except Exception as e:
+    print(f"Redis cache failed, falling back to LocMem: {e}")
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
