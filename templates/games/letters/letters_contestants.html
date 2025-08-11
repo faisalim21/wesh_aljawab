@@ -324,252 +324,149 @@
   </div>
 
 <script>
+  // ===== إعدادات أساسية =====
   const sessionId = '{{ session.id }}';
   let socket = null;
   let reconnectDelay = 1000;
   const maxDelay = 5000;
-  let isConnected = false;
+  let heartbeatTimer = null;
 
-  // ===================== حفظ/استرداد الهوية =====================
+  // ===== حفظ/استرجاع الاسم والفريق =====
   function preloadIdentity() {
     try {
-      const savedName = localStorage.getItem('wj_contestant_name');
-      const savedTeam = localStorage.getItem('wj_contestant_team');
-      if (savedName) document.getElementById('contestantName').value = savedName;
-      if (savedTeam) {
-        const input = document.getElementById(savedTeam);
-        if (input) input.checked = true;
+      const n = localStorage.getItem('wj_contestant_name');
+      const t = localStorage.getItem('wj_contestant_team');
+      if (n) document.getElementById('contestantName').value = n;
+      if (t) {
+        const radio = document.getElementById(t);
+        if (radio) radio.checked = true;
       }
-    } catch(e) { /* localStorage blocked */ }
+    } catch {}
   }
-
   function persistIdentity(name, team) {
     try {
       localStorage.setItem('wj_contestant_name', name || '');
       localStorage.setItem('wj_contestant_team', team || '');
-    } catch(e) { /* localStorage blocked */ }
+    } catch {}
   }
 
-  // ===================== حالة الاتصال =====================
-  function updateConnectionStatus(connected) {
-    isConnected = connected;
-    const statusEl = document.getElementById('connectionStatus');
-    if (connected) {
-      statusEl.className = 'connection-status connected';
-      statusEl.textContent = '🟢 متصل';
-    } else {
-      statusEl.className = 'connection-status disconnected';
-      statusEl.textContent = '🔴 منقطع';
-    }
+  // ===== حالة الاتصال UI =====
+  function setConnStatus(ok) {
+    const el = document.getElementById('connectionStatus');
+    el.className = 'connection-status ' + (ok ? 'connected' : 'disconnected');
+    el.textContent = ok ? '🟢 متصل' : '🔴 منقطع';
+    document.getElementById('buzzBtn').disabled = !ok;
   }
 
-  // ===================== WebSocket محسّن للسرعة =====================
+  // ===== WebSocket (بدون Polling) =====
   function connectWS() {
     try {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`);
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      socket = new WebSocket(`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`);
 
       socket.onopen = () => {
-        console.log('🟢 WebSocket متصل - المتسابق');
+        console.log('🟢 WS connected (contestant)');
+        setConnStatus(true);
         reconnectDelay = 1000;
-        updateConnectionStatus(true);
+
+        // heartbeat كل 20 ثانية
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => {
+          try { socket.readyState === 1 && socket.send(JSON.stringify({type:'ping'})); } catch {}
+        }, 20000);
       };
 
-      socket.onmessage = (evt) => {
-        let data = {};
-        try { data = JSON.parse(evt.data || "{}"); } catch { return; }
+      socket.onmessage = (ev) => {
+        let d = {};
+        try { d = JSON.parse(ev.data || '{}'); } catch { return; }
 
-        switch(data.type) {
+        switch (d.type) {
           case 'buzz_confirmed':
-            showSuccess(`✅ ${data.message || 'تم تسجيل إجابتك!'}`);
-            addWaveEffect();
+            showSuccess(`✅ ${d.message || 'تم تسجيل إجابتك!'}`);
+            wave();
             break;
-
           case 'buzz_rejected':
-            showError(data.message || 'الزر محجوز حاليًا');
+            showError(d.message || 'الزر محجوز الآن');
             break;
-
           case 'error':
-            showError(data.message || 'حدث خطأ، حاول مرة أخرى');
+            showError(d.message || 'حدث خطأ، حاول مجددًا');
             break;
-
-          case 'pong':
-            // keep-alive response
-            break;
-
-          default:
-            // تجاهل رسائل المقدم/العرض
-            break;
+          case 'pong': break;
+          default: break;
         }
       };
 
       socket.onclose = () => {
-        console.log('🔴 WebSocket انقطع - إعادة المحاولة...');
-        updateConnectionStatus(false);
+        console.log('🔴 WS closed (contestant) – retrying...');
+        setConnStatus(false);
+        clearInterval(heartbeatTimer);
         setTimeout(connectWS, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
       };
 
       socket.onerror = () => {
-        updateConnectionStatus(false);
+        setConnStatus(false);
         try { socket.close(); } catch {}
       };
-
-      // keep-alive كل 20 ثانية لتقليل الإغلاقات الخاملة
-      setInterval(() => {
-        try {
-          if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'ping' }));
-          }
-        } catch(_) {}
-      }, 20000);
-
     } catch (e) {
-      console.error('خطأ في إنشاء WebSocket:', e);
-      updateConnectionStatus(false);
+      console.error('WS error:', e);
+      setConnStatus(false);
       setTimeout(connectWS, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
   }
 
-  // ===================== الطنطيط الفوري (WS أولاً ثم HTTP فولباك) =====================
-  async function buzzAnswer() {
+  // ===== إرسال الطنطيط (WS مباشر) =====
+  let lastBuzz = 0;
+  function buzzAnswer() {
     const name = document.getElementById('contestantName').value.trim();
     const team = document.querySelector('input[name="team"]:checked')?.value;
 
-    // التحقق من البيانات
-    if (!name) {
-      showError('⚠️ اكتب اسمك أولاً');
-      document.getElementById('contestantName').focus();
-      return;
-    }
-    if (!team) {
-      showError('⚠️ اختر فريقك');
-      return;
-    }
-    if (name.length > 20) {
-      showError('⚠️ الاسم طويل جدًا (20 حرف حد أقصى)');
-      return;
+    if (!name) { showError('⚠️ اكتب اسمك أولاً'); document.getElementById('contestantName').focus(); return; }
+    if (!team) { showError('⚠️ اختر فريقك'); return; }
+    if (name.length > 20) { showError('⚠️ الاسم طويل (حد 20)'); return; }
+
+    // ثروتل بسيط
+    const now = Date.now();
+    if (now - lastBuzz < 800) { showError('⚠️ انتظر لحظة'); return; }
+    lastBuzz = now;
+
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      showError('❌ الاتصال غير جاهز'); return;
     }
 
-    // حفظ الهوية
     persistIdentity(name, team);
 
-    // WS أولاً
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      try {
-        socket.send(JSON.stringify({
-          type: 'contestant_buzz',
-          contestant_name: name,
-          team: team,
-          timestamp: new Date().toISOString()
-        }));
-        showInfo('⏳ جاري الإرسال...');
-        return;
-      } catch (e) {
-        // نكمل للفولباك
-      }
-    }
-
-    // فولباك HTTP: يرسل لنفس الـ API ويُبث فورياً عبر الـ consumer
     try {
-      showInfo('⏳ جاري الإرسال عبر الشبكة...');
-      const r = await fetch('/games/api/contestant-buzz/', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          session_id: sessionId,
-          contestant_name: name,
-          team: team,
-          timestamp: new Date().toISOString()
-        })
-      });
-      const data = await r.json();
-      if (r.ok && data.success) {
-        addWaveEffect();
-        showSuccess(data.message || '✅ تم تسجيل إجابتك!');
-      } else {
-        showError((data && (data.message || data.error)) || '❌ تعذر الإرسال');
-      }
-    } catch(err) {
-      showError('❌ تعذر الإرسال، تحقق من الاتصال');
+      socket.send(JSON.stringify({
+        type: 'contestant_buzz',
+        contestant_name: name,
+        team: team,
+        timestamp: new Date().toISOString()
+      }));
+      showInfo('⏳ جاري الإرسال...');
+    } catch {
+      showError('❌ تعذّر الإرسال');
     }
   }
+  window.buzzAnswer = buzzAnswer;
 
-  // ===================== الرسائل والتأثيرات =====================
-  function showSuccess(message) {
-    const el = document.getElementById('statusMessage');
-    el.className = 'status-message success';
-    el.textContent = message;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 3000);
-  }
+  // ===== رسائل UI =====
+  function show(msg, cls, ms=3000){ const el = document.getElementById('statusMessage'); el.className='status-message '+cls; el.textContent=msg; el.style.display='block'; setTimeout(()=>{el.style.display='none';}, ms); }
+  function showSuccess(m){ show(m,'success',3000); }
+  function showError(m){ show(m,'error',4000); }
+  function showInfo(m){ show(m,'',2000); }
+  function wave(){ const b=document.getElementById('buzzBtn'); b.classList.add('wave'); setTimeout(()=>b.classList.remove('wave'),600); }
 
-  function showError(message) {
-    const el = document.getElementById('statusMessage');
-    el.className = 'status-message error';
-    el.textContent = message;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 4000);
-  }
-
-  function showInfo(message) {
-    const el = document.getElementById('statusMessage');
-    el.className = 'status-message';
-    el.style.background = 'rgba(59, 130, 246, 0.2)';
-    el.style.borderColor = '#3b82f6';
-    el.style.color = '#3b82f6';
-    el.textContent = message;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 2000);
-  }
-
-  function addWaveEffect() {
-    const button = document.getElementById('buzzBtn');
-    button.classList.add('wave');
-    setTimeout(() => { button.classList.remove('wave'); }, 600);
-  }
-
-  // ===================== أحداث الواجهة =====================
-  document.getElementById('contestantName').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') buzzAnswer();
-  });
-
-  // منع الإرسال المتعدد بالضغط السريع (client-side)
-  let lastBuzzTime = 0;
-  document.getElementById('buzzBtn').addEventListener('click', function(e) {
-    const now = Date.now();
-    if (now - lastBuzzTime < 800) { // 0.8 ثانية
-      e.preventDefault();
-      showError('⚠️ انتظر قليلاً قبل المحاولة مرة أخرى');
-      return;
-    }
-    lastBuzzTime = now;
-  });
-
-  // ===================== تهيئة الصفحة =====================
-  window.addEventListener('beforeunload', () => {
-    try {
-      if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload');
-    } catch {}
-  });
-
+  // ===== تهيئة =====
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎤 صفحة المتسابق - خلية الحروف (محسّنة، مع فولباك HTTP)');
     preloadIdentity();
     document.getElementById('contestantName').focus();
     connectWS();
 
-    // إعادة التركيز عند النقر في أي مكان
-    document.addEventListener('click', () => {
-      if (document.getElementById('contestantName').value.trim() === '') {
-        document.getElementById('contestantName').focus();
-      }
-    });
+    document.getElementById('contestantName').addEventListener('keypress', e => { if (e.key === 'Enter') buzzAnswer(); });
+    window.addEventListener('beforeunload', () => { try { socket && socket.readyState === 1 && socket.close(1000,'page unload'); } catch {} });
   });
-
-  // تعريف الدالة عالمياً
-  window.buzzAnswer = buzzAnswer;
 </script>
 
 </body>

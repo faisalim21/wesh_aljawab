@@ -163,267 +163,118 @@
     </div>
 
 <script>
-  // ===================== متغيرات عامة =====================
   const sessionId = '{{ session.id }}';
   let socket = null;
-  let countdownInterval = null;
   let reconnectDelay = 1000;
   const maxDelay = 5000;
+  let countdownInterval = null;
+  let heartbeatTimer = null;
 
-  // ===================== إنشاء الخلايا =====================
+  // ===== بناء خلايا العسل مرة واحدة =====
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
-    const arabicLetters = window.sessionData.arabicLetters || [];
-
-    const cellPositions = [
-      {x: 380, y: 260, points: "250,200 380,140 510,200 510,320 380,380 250,320"},
-      {x: 630, y: 260, points: "500,200 630,140 760,200 760,320 630,380 500,320"},
-      {x: 880, y: 260, points: "750,200 880,140 1010,200 1010,320 880,380 750,320"},
-      {x: 1130, y: 260, points: "1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-      {x: 1380, y: 260, points: "1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-      {x: 505, y: 440, points: "375,380 505,320 635,380 635,500 505,560 375,500"},
-      {x: 755, y: 440, points: "625,380 755,320 885,380 885,500 755,560 625,500"},
-      {x: 1005, y: 440, points: "875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-      {x: 1255, y: 440, points: "1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-      {x: 1505, y: 440, points: "1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-      {x: 380, y: 620, points: "250,560 380,500 510,560 510,680 380,740 250,680"},
-      {x: 630, y: 620, points: "500,560 630,500 760,560 760,680 630,740 500,680"},
-      {x: 880, y: 620, points: "750,560 880,500 1010,560 1010,680 880,740 750,680"},
-      {x: 1130, y: 620, points: "1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-      {x: 1380, y: 620, points: "1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-      {x: 505, y: 800, points: "375,740 505,680 635,740 635,860 505,920 375,860"},
-      {x: 755, y: 800, points: "625,740 755,680 885,740 885,860 755,920 625,860"},
-      {x: 1005, y: 800, points: "875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-      {x: 1255, y: 800, points: "1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-      {x: 1505, y: 800, points: "1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-      {x: 380, y: 980, points: "250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-      {x: 630, y: 980, points: "500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-      {x: 880, y: 980, points: "750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-      {x: 1130, y: 980, points: "1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-      {x: 1380, y: 980, points: "1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
+    const letters = (window.sessionData && window.sessionData.arabicLetters) || [];
+    const P = [
+      {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
+      {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
+      {x:880,y:260,points:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
+      {x:1130,y:260,points:"1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
+      {x:1380,y:260,points:"1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
+      {x:505,y:440,points:"375,380 505,320 635,380 635,500 505,560 375,500"},
+      {x:755,y:440,points:"625,380 755,320 885,380 885,500 755,560 625,500"},
+      {x:1005,y:440,points:"875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
+      {x:1255,y:440,points:"1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
+      {x:1505,y:440,points:"1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
+      {x:380,y:620,points:"250,560 380,500 510,560 510,680 380,740 250,680"},
+      {x:630,y:620,points:"500,560 630,500 760,560 760,680 630,740 500,680"},
+      {x:880,y:620,points:"750,560 880,500 1010,560 1010,680 880,740 750,680"},
+      {x:1130,y:620,points:"1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
+      {x:1380,y:620,points:"1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
+      {x:505,y:800,points:"375,740 505,680 635,740 635,860 505,920 375,860"},
+      {x:755,y:800,points:"625,740 755,680 885,740 885,860 755,920 625,860"},
+      {x:1005,y:800,points:"875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
+      {x:1255,y:800,points:"1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
+      {x:1505,y:800,points:"1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
+      {x:380,y:980,points:"250,920 380,860 510,920 510,1040 380,1100 250,1040"},
+      {x:630,y:980,points:"500,920 630,860 760,920 760,1040 630,1100 500,1040"},
+      {x:880,y:980,points:"750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
+      {x:1130,y:980,points:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
+      {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"},
     ];
-
-    for (let i = 0; i < Math.min(25, arabicLetters.length); i++) {
-      const letter = arabicLetters[i];
-      const position = cellPositions[i];
-
-      const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      group.setAttribute('class', 'hex-cell');
-      group.setAttribute('data-letter', letter);
-
-      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      polygon.setAttribute('class', 'hex-shape');
-      polygon.setAttribute('points', position.points);
-
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('class', 'hex-text');
-      text.setAttribute('x', position.x);
-      text.setAttribute('y', position.y);
-      text.textContent = letter;
-
-      group.appendChild(polygon);
-      group.appendChild(text);
-      svg.appendChild(group);
+    for (let i=0;i<Math.min(25, letters.length);i++){
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter',letters[i]);
+      const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon'); poly.setAttribute('class','hex-shape'); poly.setAttribute('points',P[i].points);
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('class','hex-text'); t.setAttribute('x',P[i].x); t.setAttribute('y',P[i].y); t.textContent=letters[i];
+      g.appendChild(poly); g.appendChild(t); document.getElementById('honeycombSvg').appendChild(g);
     }
   }
 
-  // ===================== الأصوات المحسّنة =====================
-  function playBuzzSound() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 800;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.7, ctx.currentTime);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.4);
-    } catch(e) { console.log('Audio blocked'); }
-  }
-
-  function playEndSound() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.value = 420;
-      osc.type = 'sine';
-      gain.gain.setValueAtTime(0.5, ctx.currentTime);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.6);
-    } catch(e) { console.log('Audio blocked'); }
-  }
-
-  // ===================== عرض Buzz فوري =====================
-  function showContestantBuzz(contestantName, team, teamDisplay) {
-    // صوت فوري
-    playBuzzSound();
-
-    // عرض الاسم والفريق
-    document.getElementById('buzzedName').textContent = contestantName;
-    
-    const teamIndicator = document.getElementById('teamIndicator');
-    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
-    teamIndicator.textContent = teamName;
-    teamIndicator.className = `team-indicator ${team}`;
-
-    // إظهار الطبقة
+  // ===== أصوات + عد تنازلي =====
+  function sound(freq, dur){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(), g=ctx.createGain(); o.connect(g); g.connect(ctx.destination); o.frequency.value=freq; g.gain.value=.6; o.start(); o.stop(ctx.currentTime+dur/1000);}catch{} }
+  function playBuzz(){ sound(800,350); } function playEnd(){ sound(420,600); }
+  function showBuzz(name, team){
+    playBuzz();
+    document.getElementById('buzzedName').textContent = name;
+    const ind=document.getElementById('teamIndicator');
+    ind.textContent = (team==='team1') ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    ind.className = 'team-indicator ' + team;
     document.getElementById('buzzedOverlay').classList.add('show');
-    
-    // بدء العد التنازلي
     startCountdown();
   }
+  function startCountdown(){
+    clearInterval(countdownInterval);
+    let n=3; const el=document.getElementById('countdown'); el.textContent=n;
+    countdownInterval=setInterval(()=>{ n--; el.textContent=n; if(n<=0){ clearInterval(countdownInterval); endBuzz(); }},1000);
+  }
+  function endBuzz(){ playEnd(); setTimeout(()=>document.getElementById('buzzedOverlay').classList.remove('show'), 400); }
 
-  function startCountdown() {
-    if (countdownInterval) clearInterval(countdownInterval);
-    
-    let timeLeft = 3;
-    const countdownEl = document.getElementById('countdown');
-    countdownEl.textContent = timeLeft;
+  // ===== تحديث واجهة =====
+  function setScore(t1,t2){ document.getElementById('team1Score').textContent=t1; document.getElementById('team2Score').textContent=t2; }
+  function setCell(letter,state){
+    const el=document.querySelector(`[data-letter="${letter}"]`); if(!el) return;
+    el.classList.remove('team1','team2'); if(state && state!=='normal') el.classList.add(state);
+  }
 
-    countdownInterval = setInterval(() => {
-      timeLeft--;
-      countdownEl.textContent = timeLeft;
-      
-      if (timeLeft <= 0) {
-        clearInterval(countdownInterval);
-        endBuzzSession();
+  // ===== WebSocket (بدون Polling) =====
+  function setupWS(){
+    const proto = location.protocol==='https:'?'wss':'ws';
+    socket = new WebSocket(`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=display`);
+
+    socket.onopen = () => {
+      console.log('🟢 WS connected (display)');
+      reconnectDelay = 1000;
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = setInterval(()=>{ try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+    };
+    socket.onmessage = (ev) => {
+      let d = {}; try{ d=JSON.parse(ev.data||'{}'); }catch{ return; }
+      switch(d.type){
+        case 'contestant_buzz_accepted': showBuzz(d.contestant_name, d.team); break;
+        case 'buzz_unlocked': endBuzz(); break;
+        case 'buzz_reset_by_host': endBuzz(); break;
+        case 'cell_state_updated': setCell(d.letter, d.state); break;
+        case 'scores_updated': setScore(d.team1_score, d.team2_score); break;
+        case 'pong': break;
+        default: break;
       }
-    }, 1000);
+    };
+    socket.onclose = () => {
+      console.log('🔴 WS closed (display) – retrying...');
+      clearInterval(heartbeatTimer);
+      setTimeout(setupWS, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay*2, maxDelay);
+    };
+    socket.onerror = () => { try{ socket.close(); }catch{} };
   }
 
-  function endBuzzSession() {
-    // صوت النهاية
-    playEndSound();
-    
-    // إخفاء الطبقة
-    setTimeout(() => {
-      document.getElementById('buzzedOverlay').classList.remove('show');
-    }, 500);
-  }
-
-  function resetBuzzer() {
-    if (countdownInterval) clearInterval(countdownInterval);
-    document.getElementById('buzzedOverlay').classList.remove('show');
-  }
-
-  // ===================== تحديث الواجهة =====================
-  function updateScores(team1Score, team2Score) {
-    document.getElementById('team1Score').textContent = team1Score;
-    document.getElementById('team2Score').textContent = team2Score;
-  }
-
-  function updateCellState(letter, state) {
-    const element = document.querySelector(`[data-letter="${letter}"]`);
-    if (element) {
-      element.classList.remove('team1', 'team2');
-      if (state !== 'normal') element.classList.add(state);
-    }
-  }
-
-  // ===================== WebSocket محسّن للسرعة =====================
-  function setupWebSocket() {
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display`);
-
-      socket.onopen = function() {
-        console.log('🟢 WebSocket متصل - شاشة العرض');
-        reconnectDelay = 1000;
-      };
-
-      socket.onmessage = function(event) {
-        const data = JSON.parse(event.data || "{}");
-        
-        switch (data.type) {
-          case 'contestant_buzz_accepted':
-            // عرض فوري بدون تأخير
-            showContestantBuzz(data.contestant_name, data.team, data.team_display);
-            break;
-
-          case 'buzz_unlocked':
-            endBuzzSession();
-            break;
-
-          case 'buzz_reset_by_host':
-            resetBuzzer();
-            break;
-
-          case 'cell_state_updated':
-            updateCellState(data.letter, data.state);
-            break;
-
-          case 'scores_updated':
-            updateScores(data.team1_score, data.team2_score);
-            break;
-
-          case 'pong':
-            break;
-
-          default:
-            break;
-        }
-      };
-
-      socket.onclose = function() {
-        console.log('🔴 WebSocket انقطع - إعادة المحاولة...');
-        setTimeout(setupWebSocket, reconnectDelay);
-        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-      };
-
-      socket.onerror = function(err) {
-        console.error('❌ خطأ WebSocket:', err);
-        try { socket.close(); } catch {}
-      };
-
-    } catch (error) {
-      console.error('خطأ في إنشاء WebSocket:', error);
-      setTimeout(setupWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-    }
-  }
-
-  // ===================== تحميل حالة الجلسة =====================
-  async function loadSessionState() {
-    try {
-      const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
-      if (response.ok) {
-        const data = await response.json();
-        updateScores(data.team1_score || 0, data.team2_score || 0);
-        if (data.cell_states) {
-          for (const [letter, state] of Object.entries(data.cell_states)) {
-            updateCellState(letter, state);
-          }
-        }
-      } else if (response.status === 410) {
-        document.body.innerHTML = '<div class="text-center mt-5"><h1>⏰ انتهت صلاحية الجلسة</h1></div>';
-      }
-    } catch (error) {
-      console.error('خطأ في تحميل حالة الجلسة:', error);
-    }
-  }
-
-  // ===================== تهيئة =====================
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 شاشة العرض - خلية الحروف (محسّنة)');
+  document.addEventListener('DOMContentLoaded', () => {
     createHoneycombCells();
-    loadSessionState();
-    setupWebSocket();
-
-    // تحديث دوري أقل تكراراً
-    setInterval(loadSessionState, 30000);
-  });
-
-  // إغلاق نظيف
-  window.addEventListener('beforeunload', () => {
-    if (countdownInterval) clearInterval(countdownInterval);
-    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
+    setupWS();
+    window.addEventListener('beforeunload', () => { try{ socket && socket.readyState===1 && socket.close(1000,'page unload'); }catch{} });
   });
 </script>
+
 
 </body>
 </html>
