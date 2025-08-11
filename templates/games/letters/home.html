@@ -29,11 +29,15 @@
     .package-title{font-size:1.5rem;font-weight:700;margin-bottom:.5rem;text-align:center;}
     .package-desc{text-align:center;color:#718096;margin-bottom:1rem;}
     .btn-play{
-      display:block;width:100%;background:linear-gradient(135deg,#8b5cf6,#06b6د4);
+      display:block;width:100%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);
       color:#fff;padding:12px;border:none;border-radius:15px;font-size:1.1rem;font-weight:700;
-      transition:.3s;text-decoration:none;text-align:center;
+      transition:.3s;text-decoration:none;text-align:center;position:relative;
     }
     .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.3);color:#fff;}
+    .btn-play:disabled{background:#e2e8f0 !important;color:#a0aec0 !important;cursor:not-allowed;}
+    .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+    .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
   </style>
 </head>
 <body>
@@ -70,10 +74,20 @@
             <div class="package-card">
               <div class="package-title">حزمة مجانية</div>
               <p class="package-desc">جولة واحدة للتجربة</p>
-              <button type="button" class="btn-play"
-                      onclick="createLettersSession('{{ free_package.id }}')">
-                ابدأ الجولة المجانية
-              </button>
+              {% if request.user.is_authenticated %}
+                <button type="button" class="btn-play" id="freeBtn"
+                        onclick="createLettersSession('{{ free_package.id }}')">
+                  <span class="btn-text">ابدأ الجولة المجانية</span>
+                  <div class="loading-spinner">
+                    <div class="spinner"></div>
+                  </div>
+                </button>
+              {% else %}
+                <button type="button" class="btn-play"
+                        onclick="redirectToLogin()">
+                  سجل الدخول للعب
+                </button>
+              {% endif %}
             </div>
           </div>
         {% endif %}
@@ -85,10 +99,20 @@
               <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
 
               {% if package.id in user_purchases %}
-                <button type="button" class="btn-play"
-                        onclick="createLettersSession('{{ package.id }}')">
-                  ابدأ اللعب
-                </button>
+                {% if request.user.is_authenticated %}
+                  <button type="button" class="btn-play"
+                          onclick="createLettersSession('{{ package.id }}')">
+                    <span class="btn-text">ابدأ اللعب</span>
+                    <div class="loading-spinner">
+                      <div class="spinner"></div>
+                    </div>
+                  </button>
+                {% else %}
+                  <button type="button" class="btn-play"
+                          onclick="redirectToLogin()">
+                    سجل الدخول للعب
+                  </button>
+                {% endif %}
               {% else %}
                 <a class="btn-play" href="{% url 'payments:purchase' package.id %}">اشترِ هذه الحزمة</a>
               {% endif %}
@@ -107,21 +131,48 @@
   const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
   const LOGIN_URL = "/accounts/login/";
   const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+  
+  let sessionLocked = false;
 
   function createLettersSession(packageId) {
-    if (!packageId) return;
+    if (!packageId || sessionLocked) return;
 
     if (!IS_AUTH) {
-      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+      redirectToLogin();
       return;
     }
 
-    const form  = document.getElementById('lettersCreateForm');
+    // تفعيل القفل
+    sessionLocked = true;
+    
+    // إظهار التحميل
+    const buttons = document.querySelectorAll('.btn-play[onclick*="' + packageId + '"]');
+    buttons.forEach(btn => {
+      const text = btn.querySelector('.btn-text');
+      const spinner = btn.querySelector('.loading-spinner');
+      if (text && spinner) {
+        text.style.display = 'none';
+        spinner.style.display = 'block';
+      }
+      btn.disabled = true;
+    });
+
+    const form = document.getElementById('lettersCreateForm');
     const input = document.getElementById('lettersPkgId');
 
-    if (form.dataset.locked === '1') return;
-    form.dataset.locked = '1';
-    setTimeout(() => { form.dataset.locked = ''; }, 3000);
+    // إعادة تعيين القفل بعد 3 ثوانٍ
+    setTimeout(() => {
+      sessionLocked = false;
+      buttons.forEach(btn => {
+        const text = btn.querySelector('.btn-text');
+        const spinner = btn.querySelector('.loading-spinner');
+        if (text && spinner) {
+          text.style.display = 'block';
+          spinner.style.display = 'none';
+        }
+        btn.disabled = false;
+      });
+    }, 3000);
 
     input.value = packageId;
 
@@ -131,12 +182,16 @@
       } else {
         form.submit();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      sessionLocked = false;
+    }
+  }
+
+  function redirectToLogin() {
+    window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
   }
 </script>
-
-
-
 
 </body>
 </html>
