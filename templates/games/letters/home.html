@@ -55,10 +55,10 @@
   </div>
 
   <!-- فورم مخفي مركزي لإرسال الطلبات -->
-  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}">
+  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
-    <button type="submit" id="hiddenSubmitBtn" style="display:none;"></button>
+    <button type="submit" id="hiddenSubmitBtn" style="display:none">Submit</button>
   </form>
 
   <section class="packages-section">
@@ -122,142 +122,150 @@
     
     let sessionLocked = false;
 
-    // إنشاء الجلسة
+    // إنشاء الجلسة - نسخة مبسطة
     window.createLettersSession = function(packageId) {
-      console.log('=== Creating session for package:', packageId, '===');
+      console.log('=== بداية إنشاء الجلسة ===');
+      console.log('Package ID:', packageId);
+      console.log('User authenticated:', IS_AUTH);
       
       if (!packageId) {
-        console.error('Package ID is required');
+        console.error('❌ Package ID مفقود');
+        alert('خطأ: معرف الحزمة مفقود');
         return;
       }
 
-      // إذا غير مسجل، وجهه للتسجيل مباشرة
+      // التحقق من تسجيل الدخول
       if (!IS_AUTH) {
-        console.log('User not authenticated, redirecting to login');
+        console.log('🔄 توجيه للتسجيل...');
         window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
         return;
       }
 
       // منع الضغط المتكرر
       if (sessionLocked) {
-        console.log('Session creation is locked');
+        console.log('⚠️ الجلسة مقفلة - انتظار...');
+        alert('انتظر قليلاً... جاري إنشاء الجلسة');
         return;
       }
       
       sessionLocked = true;
-      console.log('Session creation locked');
-      
-      // إظهار التحميل
-      showLoading(packageId, true);
+      console.log('🔒 تم قفل إنشاء الجلسات');
 
+      // العثور على العناصر
       const form = document.getElementById('lettersCreateForm');
       const input = document.getElementById('lettersPkgId');
       const submitBtn = document.getElementById('hiddenSubmitBtn');
 
-      console.log('Form elements:', {
-        form: !!form,
-        input: !!input,
-        submitBtn: !!submitBtn,
-        formAction: form?.action,
-        csrfToken: form?.querySelector('[name="csrfmiddlewaretoken"]')?.value
-      });
+      console.log('Form element:', form);
+      console.log('Input element:', input);
+      console.log('Submit button:', submitBtn);
 
-      if (!form || !input) {
-        console.error('Form elements not found');
-        resetLock();
+      if (!form) {
+        console.error('❌ لم يتم العثور على الفورم');
+        alert('خطأ: الفورم غير موجود');
+        sessionLocked = false;
+        return;
+      }
+
+      if (!input) {
+        console.error('❌ لم يتم العثور على حقل package_id');
+        alert('خطأ: حقل البيانات غير موجود');
+        sessionLocked = false;
         return;
       }
 
       // تعيين قيمة الحزمة
       input.value = packageId;
-      console.log('Package ID set to:', input.value);
+      console.log('✅ تم تعيين Package ID في الفورم:', input.value);
 
-      // إعادة تعيين القفل بعد 5 ثوانٍ للحماية
-      setTimeout(() => {
-        console.log('Resetting lock after timeout');
+      // إظهار التحميل
+      showLoading(packageId, true);
+
+      // إعادة تعيين القفل بعد 10 ثوانٍ للحماية
+      const timeoutId = setTimeout(() => {
+        console.log('⏰ انتهى الوقت المحدد - إلغاء القفل');
         resetLock();
-      }, 8000);
+      }, 10000);
 
+      // إرسال الفورم
       try {
-        console.log('Attempting form submission...');
+        console.log('📤 محاولة إرسال الفورم...');
+        console.log('Form action:', form.action);
+        console.log('Form method:', form.method);
         
-        // جرب طرق مختلفة للإرسال
+        // استخدام الزر المخفي للإرسال
         if (submitBtn) {
-          console.log('Using hidden submit button');
+          console.log('📤 إرسال عبر الزر المخفي...');
           submitBtn.click();
-        } else if (typeof form.requestSubmit === 'function') {
-          console.log('Using requestSubmit');
-          form.requestSubmit();
         } else {
-          console.log('Using form.submit()');
+          console.log('📤 إرسال مباشر...');
           form.submit();
         }
         
-        console.log('Form submission initiated');
+        console.log('✅ تم إرسال الفورم بنجاح');
         
-      } catch (e) { 
-        console.error('Form submission error:', e);
+        // إلغاء timeout لأن الفورم تم إرساله
+        clearTimeout(timeoutId);
+        
+      } catch (error) { 
+        console.error('❌ خطأ في إرسال الفورم:', error);
+        alert('حدث خطأ أثناء إرسال البيانات: ' + error.message);
         resetLock();
+        clearTimeout(timeoutId);
       }
     };
 
     function showLoading(packageId, show) {
-      console.log('Toggle loading state:', {packageId, show});
+      console.log('🔄 تغيير حالة التحميل:', {packageId, show});
       const buttons = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-      console.log('Found buttons:', buttons.length);
+      console.log('عدد الأزرار الموجودة:', buttons.length);
       
       buttons.forEach((btn, index) => {
-        console.log(`Button ${index}:`, btn);
+        console.log(`زر ${index + 1}:`, btn);
         const text = btn.querySelector('.btn-text');
         const spinner = btn.querySelector('.loading-spinner');
-        console.log(`Button ${index} elements:`, {text: !!text, spinner: !!spinner});
         
         if (text && spinner) {
           if (show) {
             text.style.display = 'none';
             spinner.style.display = 'block';
             btn.disabled = true;
+            console.log(`✅ تم تفعيل التحميل للزر ${index + 1}`);
           } else {
             text.style.display = 'block';
             spinner.style.display = 'none';
             btn.disabled = false;
+            console.log(`✅ تم إلغاء التحميل للزر ${index + 1}`);
           }
+        } else {
+          console.log(`⚠️ عناصر التحميل غير موجودة في الزر ${index + 1}:`, {text, spinner});
         }
       });
     }
 
     function resetLock() {
-      console.log('Resetting session lock');
+      console.log('🔓 إعادة تعيين القفل');
       sessionLocked = false;
+      
       // إخفاء جميع حالات التحميل
-      const allButtons = document.querySelectorAll('.btn-play');
-      allButtons.forEach(btn => {
-        if (btn.tagName === 'BUTTON') {
-          const text = btn.querySelector('.btn-text');
-          const spinner = btn.querySelector('.loading-spinner');
-          if (text && spinner) {
-            text.style.display = 'block';
-            spinner.style.display = 'none';
-            btn.disabled = false;
-          }
+      const allButtons = document.querySelectorAll('.btn-play button');
+      allButtons.forEach((btn, index) => {
+        const text = btn.querySelector('.btn-text');
+        const spinner = btn.querySelector('.loading-spinner');
+        if (text && spinner) {
+          text.style.display = 'block';
+          spinner.style.display = 'none';
+          btn.disabled = false;
         }
       });
     }
 
-    // اختبار الفورم عند التحميل
-    const form = document.getElementById('lettersCreateForm');
-    if (form) {
-      console.log('Form found on load:', {
-        action: form.action,
-        method: form.method,
-        csrf: !!form.querySelector('[name="csrfmiddlewaretoken"]')
-      });
-    } else {
-      console.error('Form not found on load!');
-    }
-
-    // تسجيل أن الـ script تم تحميله
-    console.log('Letters game script loaded successfully, IS_AUTH:', IS_AUTH);
+    // تسجيل نجاح تحميل الـ script
+    console.log('✅ تم تحميل script خلية الحروف بنجاح');
+    console.log('🔧 معلومات التشخيص:');
+    console.log('- المستخدم مسجل دخول:', IS_AUTH);
+    console.log('- رابط التسجيل:', LOGIN_URL);
+    console.log('- الصفحة الحالية:', NEXT_URL);
   });
 </script>
 
