@@ -141,31 +141,72 @@
       color: #f97316;
       box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
     }
+
+    /* زر الطنطيط محسّن */
     .buzz-button {
       background: linear-gradient(135deg, #ef4444, #dc2626);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 120px;
-      height: 120px;
-      font-size: 1.5rem;
+      width: 140px;
+      height: 140px;
+      font-size: 1.6rem;
       font-weight: 900;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+      transition: all 0.2s ease;
+      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto;
+      position: relative;
+      overflow: hidden;
     }
+
     .buzz-button:hover:not(:disabled) {
-      transform: scale(1.1) translateY(-5px);
+      transform: scale(1.05) translateY(-3px);
       background: linear-gradient(135deg, #dc2626, #b91c1c);
+      box-shadow: 0 20px 40px rgba(239, 68, 68, 0.5);
     }
+
+    .buzz-button:active:not(:disabled) {
+      transform: scale(0.95);
+      transition: all 0.1s ease;
+    }
+
     .buzz-button:disabled {
       background: linear-gradient(135deg, #6b7280, #4b5563);
       cursor: not-allowed;
+      transform: none;
     }
+
+    /* تأثير الموجة عند الضغط */
+    .buzz-button.wave::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      transform: translate(-50%, -50%);
+      animation: wave-animation 0.6s ease-out;
+    }
+
+    @keyframes wave-animation {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+      }
+      100% {
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+      }
+    }
+
     .status-message {
       margin-top: 20px;
       padding: 15px 20px;
@@ -173,20 +214,80 @@
       font-weight: 600;
       text-align: center;
       display: none;
+      transition: all 0.3s ease;
     }
     .status-message.success {
       background: rgba(34, 197, 94, 0.2);
       border: 1px solid #22c55e;
       color: #22c55e;
+      animation: successPulse 0.5s ease-in-out;
     }
     .status-message.error {
       background: rgba(239, 68, 68, 0.2);
       border: 1px solid #ef4444;
       color: #ef4444;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes successPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* حالة الاتصال */
+    .connection-status {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 1000;
+    }
+    .connection-status.connected {
+      background: rgba(34, 197, 94, 0.9);
+      color: white;
+    }
+    .connection-status.disconnected {
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.5; }
+    }
+
+    /* موبايل */
+    @media (max-width: 768px) {
+      .contestant-card {
+        padding: 30px 20px;
+        margin: 10px;
+      }
+      .buzz-button {
+        width: 120px;
+        height: 120px;
+        font-size: 1.4rem;
+      }
+      .main-title h1 {
+        font-size: 2rem;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="connection-status connected" id="connectionStatus">
+    🟢 متصل
+  </div>
+
   <div class="logo-container">
     <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="img-fluid">
   </div>
@@ -215,7 +316,7 @@
       </div>
 
       <button class="buzz-button" id="buzzBtn" onclick="buzzAnswer()">
-        <span id="buzzText">جاوب</span>
+        <span id="buzzText">جاوب!</span>
       </button>
 
       <div class="status-message" id="statusMessage"></div>
@@ -227,133 +328,237 @@
   let socket = null;
   let reconnectDelay = 1000;
   const maxDelay = 5000;
+  let isConnected = false;
 
+  // ===================== حفظ/استرداد الهوية =====================
   function preloadIdentity() {
-    const savedName = localStorage.getItem('wj_contestant_name');
-    const savedTeam = localStorage.getItem('wj_contestant_team');
-    if (savedName) document.getElementById('contestantName').value = savedName;
-    if (savedTeam) {
-      const input = document.getElementById(savedTeam);
-      if (input) input.checked = true;
-    }
+    try {
+      const savedName = localStorage.getItem('wj_contestant_name');
+      const savedTeam = localStorage.getItem('wj_contestant_team');
+      if (savedName) document.getElementById('contestantName').value = savedName;
+      if (savedTeam) {
+        const input = document.getElementById(savedTeam);
+        if (input) input.checked = true;
+      }
+    } catch(e) { /* localStorage blocked */ }
   }
 
   function persistIdentity(name, team) {
     try {
       localStorage.setItem('wj_contestant_name', name || '');
       localStorage.setItem('wj_contestant_team', team || '');
-    } catch(e) { }
+    } catch(e) { /* localStorage blocked */ }
   }
 
+  // ===================== حالة الاتصال =====================
+  function updateConnectionStatus(connected) {
+    isConnected = connected;
+    const statusEl = document.getElementById('connectionStatus');
+    if (connected) {
+      statusEl.className = 'connection-status connected';
+      statusEl.textContent = '🟢 متصل';
+    } else {
+      statusEl.className = 'connection-status disconnected';
+      statusEl.textContent = '🔴 منقطع';
+    }
+  }
+
+  // ===================== WebSocket محسّن للسرعة =====================
   function connectWS() {
     try {
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
       socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=contestant`);
 
       socket.onopen = () => {
+        console.log('🟢 WebSocket متصل - المتسابق');
         reconnectDelay = 1000;
-        // ping كل 25 ثانية (يبقي الاتصال يقِظ)
-        if (window.__pingTimer) clearInterval(window.__pingTimer);
-        window.__pingTimer = setInterval(() => {
-          try { socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify({ type: 'ping' })); } catch(e){}
-        }, 25000);
+        updateConnectionStatus(true);
       };
 
       socket.onmessage = (evt) => {
         let data = {};
         try { data = JSON.parse(evt.data || "{}"); } catch { return; }
 
-        if (data.type === 'buzz_confirmed') {
-          showSuccess(`✅ تم تسجيل إجابتك يا ${data.contestant_name}!`);
-          return;
+        switch(data.type) {
+          case 'buzz_confirmed':
+            // رد فوري: تم قبول الضغطة
+            showSuccess(`✅ ${data.message || 'تم تسجيل إجابتك!'}`);
+            addWaveEffect();
+            break;
+
+          case 'buzz_rejected':
+            // رد فوري: تم رفض الضغطة
+            showError(data.message || 'الزر محجوز حاليًا');
+            break;
+
+          case 'error':
+            showError(data.message || 'حدث خطأ، حاول مرة أخرى');
+            break;
+
+          case 'pong':
+            // keep-alive response
+            break;
+
+          default:
+            // تجاهل رسائل العرض والمقدم
+            break;
         }
-        if (data.type === 'buzz_rejected') {
-          showError(data.message || 'الزر محجوز حاليًا — جرّب فورًا بعد فك القفل');
-          return;
-        }
-        if (data.type === 'error') {
-          showError(data.message || 'حدث خطأ، حاول مرة أخرى');
-          return;
-        }
-        // تجاهل بقية الأنواع (pong, بث العرض ...إلخ)
       };
 
       socket.onclose = () => {
-        if (window.__pingTimer) { clearInterval(window.__pingTimer); window.__pingTimer = null; }
+        console.log('🔴 WebSocket انقطع - إعادة المحاولة...');
+        updateConnectionStatus(false);
         setTimeout(connectWS, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
       };
 
       socket.onerror = () => {
+        updateConnectionStatus(false);
         try { socket.close(); } catch {}
-        if (window.__pingTimer) { clearInterval(window.__pingTimer); window.__pingTimer = null; }
       };
+
     } catch (e) {
+      console.error('خطأ في إنشاء WebSocket:', e);
+      updateConnectionStatus(false);
       setTimeout(connectWS, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
   }
 
-
+  // ===================== الطنطيط الفوري =====================
   function buzzAnswer() {
     const name = document.getElementById('contestantName').value.trim();
     const team = document.querySelector('input[name="team"]:checked')?.value;
 
+    // التحقق من البيانات
     if (!name) {
       showError('⚠️ اكتب اسمك أولاً');
       document.getElementById('contestantName').focus();
       return;
     }
-    if (!team) return showError('⚠️ اختر فريقك');
-
-    persistIdentity(name, team);
-
-    if (!socket || socket.readyState !== WebSocket.OPEN) {
-      showError('❌ الاتصال غير جاهز — تأكد من الشبكة ثم حاول مجددًا');
+    if (!team) {
+      showError('⚠️ اختر فريقك');
       return;
     }
 
+    // التحقق من الاتصال
+    if (!socket || socket.readyState !== WebSocket.OPEN) {
+      showError('❌ الاتصال غير جاهز - تأكد من الشبكة ثم حاول مجدداً');
+      return;
+    }
+
+    // حفظ الهوية
+    persistIdentity(name, team);
+
     try {
+      // إرسال فوري
       socket.send(JSON.stringify({
         type: 'contestant_buzz',
         contestant_name: name,
         team: team,
         timestamp: new Date().toISOString()
       }));
+
+      // تأثير بصري فوري (قبل الرد)
+      showInfo(`⏳ جاري الإرسال...`);
+      
     } catch (e) {
-      showError('❌ تعذر الإرسال — حاول مرة أخرى');
+      showError('❌ تعذر الإرسال - حاول مرة أخرى');
       return;
     }
-
-    showSuccess(`✅ تم إرسال إجابتك يا ${name}!`);
   }
 
+  // ===================== الرسائل والتأثيرات =====================
   function showSuccess(message) {
     const el = document.getElementById('statusMessage');
     el.className = 'status-message success';
     el.textContent = message;
     el.style.display = 'block';
+    
+    // إخفاء بعد 3 ثواني
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 3000);
   }
+
   function showError(message) {
     const el = document.getElementById('statusMessage');
     el.className = 'status-message error';
     el.textContent = message;
     el.style.display = 'block';
+    
+    // إخفاء بعد 4 ثواني
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 4000);
   }
 
+  function showInfo(message) {
+    const el = document.getElementById('statusMessage');
+    el.className = 'status-message';
+    el.style.background = 'rgba(59, 130, 246, 0.2)';
+    el.style.borderColor = '#3b82f6';
+    el.style.color = '#3b82f6';
+    el.textContent = message;
+    el.style.display = 'block';
+    
+    // إخفاء بعد ثانيتين
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 2000);
+  }
+
+  function addWaveEffect() {
+    const button = document.getElementById('buzzBtn');
+    button.classList.add('wave');
+    setTimeout(() => {
+      button.classList.remove('wave');
+    }, 600);
+  }
+
+  // ===================== أحداث الواجهة =====================
   document.getElementById('contestantName').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') buzzAnswer();
+    if (e.key === 'Enter') {
+      buzzAnswer();
+    }
   });
 
+  // منع الإرسال المتعدد بالضغط السريع
+  let lastBuzzTime = 0;
+  document.getElementById('buzzBtn').addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastBuzzTime < 1000) { // حد أدنى ثانية واحدة
+      e.preventDefault();
+      showError('⚠️ انتظر قليلاً قبل المحاولة مرة أخرى');
+      return;
+    }
+    lastBuzzTime = now;
+  });
+
+  // ===================== تهيئة الصفحة =====================
   window.addEventListener('beforeunload', () => {
-    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
+    try { 
+      if (socket && socket.readyState === WebSocket.OPEN) 
+        socket.close(1000, 'page unload'); 
+    } catch {}
   });
 
   document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎤 صفحة المتسابق - خلية الحروف (محسّنة)');
     preloadIdentity();
     document.getElementById('contestantName').focus();
     connectWS();
+    
+    // إعادة التركيز عند النقر في أي مكان
+    document.addEventListener('click', () => {
+      if (document.getElementById('contestantName').value.trim() === '') {
+        document.getElementById('contestantName').focus();
+      }
+    });
   });
+
+  // تعريف الدالة عالمياً
+  window.buzzAnswer = buzzAnswer;
 </script>
 </body>
 </html>

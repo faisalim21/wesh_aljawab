@@ -8,13 +8,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     
     <script>
-        // بيانات الجلسة من Django
         window.sessionData = {
             sessionId: '{{ session.id }}',
             team1Name: '{{ session.team1_name }}',
             team2Name: '{{ session.team2_name }}',
-            displayLink: '{{ session.display_link }}',
-            packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}',
             arabicLetters: {{ arabic_letters|safe }}
         };
     </script>
@@ -24,29 +21,21 @@
             background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
             font-family: 'Tajawal', sans-serif;
             min-height: 100vh;
-            padding: 0;
-            margin: 0;
+            padding: 0; margin: 0;
             overflow: hidden;
             color: white;
         }
 
-        /* طبقة عرض ضغطة المتسابق */
+        /* طبقة عرض ضغطة المتسابق - محسّنة */
         .buzzed-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+            position: fixed; top: 0; left: 0;
             background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95));
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            width: 100%; height: 100%; z-index: 9999;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
             color: white;
             animation: buzzOverlayPulse 0.5s ease-in-out infinite alternate;
         }
-
         .buzzed-overlay.show { display: flex; }
 
         @keyframes buzzOverlayPulse {
@@ -55,10 +44,8 @@
         }
 
         .buzzed-name {
-            font-size: 4.8rem;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 24px;
+            font-size: 4.8rem; font-weight: 900;
+            text-align: center; margin-bottom: 24px;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
             animation: nameGlow 0.5s ease-in-out infinite alternate;
         }
@@ -69,10 +56,8 @@
         }
 
         .team-indicator {
-            padding: 12px 28px;
-            border-radius: 28px;
-            font-size: 1.8rem;
-            font-weight: 800;
+            padding: 12px 28px; border-radius: 28px;
+            font-size: 1.8rem; font-weight: 800;
             margin-bottom: 32px;
             border: 4px solid rgba(255,255,255,0.85);
         }
@@ -80,8 +65,7 @@
         .team-indicator.team2 { background: rgba(249, 115, 22, 0.9); color: white; }
 
         .countdown {
-            font-size: 9rem;
-            font-weight: 900;
+            font-size: 9rem; font-weight: 900;
             margin-top: 10px;
             text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
             animation: countdownPulse 1s ease-in-out;
@@ -92,133 +76,28 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
-        .main-container {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* النقاط في الزاوية اليسرى العلوية */
-        .scores-container {
-            position: fixed;
-            top: 22px;
-            left: 22px;
-            z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .score-card {
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(16px);
-            border-radius: 16px;
-            padding: 14px 18px;
-            text-align: center;
-            border: 3px solid;
-            min-width: 150px;
-            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-        }
+        /* باقي الستايل كما هو */
+        .main-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .scores-container { position: fixed; top: 22px; left: 22px; z-index: 100; display: flex; flex-direction: column; gap: 14px; }
+        .score-card { background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 18px; text-align: center; border: 3px solid; min-width: 150px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
         .score-card.team1 { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(34,197,94,0.12)); }
         .score-card.team2 { border-color: #f97316; background: linear-gradient(135deg, rgba(249,115,22,0.35), rgba(249,115,22,0.12)); }
-
         .team-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
         .team1 .team-name { color: #22c55e; }
         .team2 .team-name { color: #f97316; }
-
-        .team-score {
-            font-size: 2.2rem;
-            font-weight: 900;
-            line-height: 1;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.35);
-        }
-
-        /* اللوجو في الزاوية اليمنى العلوية */
-        .logo-container {
-            position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.97);
-            padding: 10px 14px;
-            border-radius: 16px;
-            box-shadow: 0 10px 28px rgba(0,0,0,0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
+        .team-score { font-size: 2.2rem; font-weight: 900; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.35); }
+        .logo-container { position: fixed; top: 16px; right: 16px; z-index: 100; background: rgba(255, 255, 255, 0.97); padding: 10px 14px; border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
         .logo-container img { max-height: 90px; width: auto; display: block; }
-
-        /* مؤشر حالة الزر */
-        .buzz-status {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 1rem;
-            z-index: 150;
-            display: none;
-        }
-        .buzz-status.available { background: rgba(34, 197, 94, 0.9); }
-        .buzz-status.locked { background: rgba(239, 68, 68, 0.9); animation: statusPulse 1s ease-in-out infinite; }
-        @keyframes statusPulse { 0%, 100% { opacity: 0.85; } 50% { opacity: 1; } }
-
-        /* خلية الحروف - مركز الشاشة */
-        .honeycomb-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%; height: 100%;
-        }
-        .honeycomb-svg {
-            width: 90vw; height: 90vh;
-            max-width: 1100px; max-height: 850px;
-            display: block; margin: 0 auto;
-        }
-
+        .honeycomb-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        .honeycomb-svg { width: 90vw; height: 90vh; max-width: 1100px; max-height: 850px; display: block; margin: 0 auto; }
         .hex-cell { transition: all 0.3s ease; }
         .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
         .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
         .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
         .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
-
         .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
-        .hex-text {
-          font-size: 72px;              /* حجم منطقي افتراضي */
-          font-weight: 800;
-          fill: #222;
-          font-family: 'Tajawal', sans-serif;  /* نفس الخط المحمّل فعليًا */
-          text-anchor: middle;          /* توسيط داخل السداسي */
-          dominant-baseline: central;   /* توسيط عمودي داخل السداسي */
-          pointer-events: none;
-          user-select: none;
-        }
+        .hex-text { font-size: 72px; font-weight: 800; fill: #222; font-family: 'Tajawal', sans-serif; text-anchor: middle; dominant-baseline: central; pointer-events: none; user-select: none; }
 
-
-        /* عنصر السؤال (غير مستخدم حاليًا لكن خليه موجود لو احتجته لاحقًا) */
-        .current-question {
-            position: fixed;
-            bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.95);
-            color: #1e293b;
-            border-radius: 15px;
-            padding: 15px 20px;
-            text-align: center;
-            max-width: 600px; width: 90%;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            display: none; z-index: 150;
-        }
-        .current-question.show { display: block; animation: slideUp 0.3s ease-out; }
-        @keyframes slideUp { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-        .question-letter { font-size: 1.5rem; font-weight: 900; color: #6b46c1; margin-bottom: 10px; }
-        .question-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
-        .question-answer { font-size: 1.1rem; font-weight: 700; color: #22c55e; }
-
-        /* شاشات أكبر */
         @media (min-width: 1200px) {
             .hex-text { font-size: 88px;}
             .logo-container img { max-height: 110px; }
@@ -229,12 +108,6 @@
             .buzzed-name { font-size: 5.4rem; }
             .countdown { font-size: 10.5rem; }
         }
-        @media (min-width: 1600px) {
-            .hex-text { font-size: 96px; }
-            .logo-container img { max-height: 130px; }
-        }
-
-        /* موبايل */
         @media (max-width: 768px) {
             .scores-container, .logo-container { display: none; }
             .hex-text { font-size: 64px; }
@@ -264,9 +137,6 @@
                  alt="وش الجواب" class="img-fluid">
         </div>
 
-        <!-- حالة الزر -->
-        <div class="buzz-status" id="buzzStatus">🟢 الزر متاح للضغط</div>
-
         <!-- طبقة عرض اسم المتسابق -->
         <div id="buzzedOverlay" class="buzzed-overlay">
             <div id="buzzedName" class="buzzed-name">اسم المتسابق</div>
@@ -290,31 +160,17 @@
                 <use href="#greenBottom" fill="#4ade80"/>
             </svg>
         </div>
-
-        <!-- عنصر سؤال (اختياري) -->
-        <div class="current-question" id="currentQuestion">
-            <div class="question-letter" id="questionLetter">أ</div>
-            <div class="question-text" id="questionText">السؤال سيظهر هنا</div>
-            <div class="question-answer" id="questionAnswer">الإجابة ستظهر هنا</div>
-        </div>
     </div>
 
 <script>
-  // ===================== المتغيرات العامة =====================
-  let cellStates = {};
-  let buzzLocked = false;
-  let buzzerName = '';
-  let buzzerTeam = '';
-  let countdownTimer = null;
-
-  let socket = null;
-  let reconnectDelay = 1000;   // 1s -> 2s -> 5s
-  const maxDelay = 5000;
-  let pingTimer = null;
-
+  // ===================== متغيرات عامة =====================
   const sessionId = '{{ session.id }}';
+  let socket = null;
+  let countdownInterval = null;
+  let reconnectDelay = 1000;
+  const maxDelay = 5000;
 
-  // ===================== إنشاء الخلايا السداسية =====================
+  // ===================== إنشاء الخلايا =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
     const arabicLetters = window.sessionData.arabicLetters || [];
@@ -369,11 +225,93 @@
       group.appendChild(text);
       svg.appendChild(group);
     }
-
-    console.log(`تم إنشاء ${Math.min(25, arabicLetters.length)} خلية للعرض`);
   }
 
-  // ===================== واجهة العرض (النقاط/الخلايا) =====================
+  // ===================== الأصوات المحسّنة =====================
+  function playBuzzSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 800;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.7, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.4);
+    } catch(e) { console.log('Audio blocked'); }
+  }
+
+  function playEndSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 420;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.5, ctx.currentTime);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+    } catch(e) { console.log('Audio blocked'); }
+  }
+
+  // ===================== عرض Buzz فوري =====================
+  function showContestantBuzz(contestantName, team, teamDisplay) {
+    // صوت فوري
+    playBuzzSound();
+
+    // عرض الاسم والفريق
+    document.getElementById('buzzedName').textContent = contestantName;
+    
+    const teamIndicator = document.getElementById('teamIndicator');
+    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    teamIndicator.textContent = teamName;
+    teamIndicator.className = `team-indicator ${team}`;
+
+    // إظهار الطبقة
+    document.getElementById('buzzedOverlay').classList.add('show');
+    
+    // بدء العد التنازلي
+    startCountdown();
+  }
+
+  function startCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    
+    let timeLeft = 3;
+    const countdownEl = document.getElementById('countdown');
+    countdownEl.textContent = timeLeft;
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      countdownEl.textContent = timeLeft;
+      
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        endBuzzSession();
+      }
+    }, 1000);
+  }
+
+  function endBuzzSession() {
+    // صوت النهاية
+    playEndSound();
+    
+    // إخفاء الطبقة
+    setTimeout(() => {
+      document.getElementById('buzzedOverlay').classList.remove('show');
+    }, 500);
+  }
+
+  function resetBuzzer() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    document.getElementById('buzzedOverlay').classList.remove('show');
+  }
+
+  // ===================== تحديث الواجهة =====================
   function updateScores(team1Score, team2Score) {
     document.getElementById('team1Score').textContent = team1Score;
     document.getElementById('team2Score').textContent = team2Score;
@@ -384,103 +322,72 @@
     if (element) {
       element.classList.remove('team1', 'team2');
       if (state !== 'normal') element.classList.add(state);
-      cellStates[letter] = state;
     }
   }
 
-  // ====== الأصوات ======
-  function playBuzzSound() {
+  // ===================== WebSocket محسّن للسرعة =====================
+  function setupWebSocket() {
     try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 800; oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
-      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.3);
-    } catch { /* ممكن المتصفح يمنع الصوت قبل تفاعل المستخدم */ }
-  }
-  function playEndSound() {
-    try {
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 420; oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.35, audioContext.currentTime);
-      oscillator.start(); oscillator.stop(audioContext.currentTime + 0.45);
-    } catch {}
-  }
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display`);
 
-  function updateBuzzStatus(available, message) {
-    const statusEl = document.getElementById('buzzStatus');
-    if (available) {
-      statusEl.className = 'buzz-status available';
-      statusEl.innerHTML = '🟢 ' + (message || 'الزر متاح للضغط');
-    } else {
-      statusEl.className = 'buzz-status locked';
-      statusEl.innerHTML = '🔴 ' + (message || 'الزر محجوز');
+      socket.onopen = function() {
+        console.log('🟢 WebSocket متصل - شاشة العرض');
+        reconnectDelay = 1000;
+      };
+
+      socket.onmessage = function(event) {
+        const data = JSON.parse(event.data || "{}");
+        
+        switch (data.type) {
+          case 'contestant_buzz_accepted':
+            // عرض فوري بدون تأخير
+            showContestantBuzz(data.contestant_name, data.team, data.team_display);
+            break;
+
+          case 'buzz_unlocked':
+            endBuzzSession();
+            break;
+
+          case 'buzz_reset_by_host':
+            resetBuzzer();
+            break;
+
+          case 'cell_state_updated':
+            updateCellState(data.letter, data.state);
+            break;
+
+          case 'scores_updated':
+            updateScores(data.team1_score, data.team2_score);
+            break;
+
+          case 'pong':
+            break;
+
+          default:
+            break;
+        }
+      };
+
+      socket.onclose = function() {
+        console.log('🔴 WebSocket انقطع - إعادة المحاولة...');
+        setTimeout(setupWebSocket, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      };
+
+      socket.onerror = function(err) {
+        console.error('❌ خطأ WebSocket:', err);
+        try { socket.close(); } catch {}
+      };
+
+    } catch (error) {
+      console.error('خطأ في إنشاء WebSocket:', error);
+      setTimeout(setupWebSocket, reconnectDelay);
+      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
-    statusEl.style.display = 'block';
   }
 
-  // لا تمنع العرض حتى لو كان buzzLocked صحيح (قد تصل رسائل القفل قبل الاسم)
-  function showContestantBuzz(contestantName, team, teamDisplay) {
-    buzzLocked = true;
-    buzzerName = contestantName;
-    buzzerTeam = team;
-
-    playBuzzSound();
-    updateBuzzStatus(false, `${contestantName} حجز الزر`);
-
-    document.getElementById('buzzedName').textContent = contestantName;
-
-    const teamIndicator = document.getElementById('teamIndicator');
-    const teamName = team === 'team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
-    teamIndicator.textContent = teamName;
-    teamIndicator.className = `team-indicator ${team}`;
-
-    document.getElementById('buzzedOverlay').classList.add('show');
-    startCountdown();
-  }
-
-  function startCountdown() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    let timeLeft = 3;
-    const countdownEl = document.getElementById('countdown');
-    countdownEl.textContent = timeLeft;
-
-    countdownTimer = setInterval(() => {
-      timeLeft--;
-      countdownEl.textContent = timeLeft;
-      if (timeLeft <= 0) {
-        clearInterval(countdownTimer);
-        endBuzzSession();
-      }
-    }, 1000);
-  }
-
-  function endBuzzSession() {
-    playEndSound();
-    setTimeout(() => {
-      document.getElementById('buzzedOverlay').classList.remove('show');
-    }, 450);
-    setTimeout(() => {
-      buzzLocked = false;
-      buzzerName = '';
-      buzzerTeam = '';
-      updateBuzzStatus(true, 'الزر متاح للضغط');
-    }, 1200);
-  }
-
-  function resetBuzzer() {
-    if (countdownTimer) clearInterval(countdownTimer);
-    document.getElementById('buzzedOverlay').classList.remove('show');
-    buzzLocked = false; buzzerName = ''; buzzerTeam = '';
-    updateBuzzStatus(true);
-  }
-
-  // ===================== تحميل حالة الجلسة (قراءة فقط) =====================
+  // ===================== تحميل حالة الجلسة =====================
   async function loadSessionState() {
     try {
       const response = await fetch(`/games/api/session-state/?session_id=${sessionId}`);
@@ -500,117 +407,21 @@
     }
   }
 
-  // ===================== WebSocket مع إعادة اتصال + Keep-Alive =====================
-  function setupWebSocket() {
-    try {
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      socket = new WebSocket(`${protocol}://${window.location.host}/ws/letters/${sessionId}/?role=display`);
-
-      socket.onopen = function() {
-        console.log('✅ WebSocket متصل لشاشة العرض');
-        reconnectDelay = 1000;
-        updateBuzzStatus(true);
-
-        // keep-alive ping كل 25 ثانية
-        if (pingTimer) clearInterval(pingTimer);
-        pingTimer = setInterval(() => {
-          try {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-              socket.send(JSON.stringify({ type: 'ping' }));
-            }
-          } catch (e) { /* ignore */ }
-        }, 25000);
-      };
-
-      socket.onmessage = function(event) {
-        const data = JSON.parse(event.data || "{}");
-        switch (data.type) {
-          case 'pong':
-            break;
-
-          case 'cell_state_updated':
-            updateCellState(data.letter, data.state);
-            break;
-
-          case 'scores_updated':
-            updateScores(data.team1_score, data.team2_score);
-            break;
-
-          case 'show_contestant_buzz':
-            showContestantBuzz(data.contestant_name, data.team, data.team_display);
-            break;
-
-          case 'buzz_reset':
-            resetBuzzer();
-            break;
-
-          case 'buzz_lock':
-            buzzLocked = true;
-            updateBuzzStatus(false, data.message || 'الزر محجوز');
-            break;
-
-          case 'buzz_unlock':
-            if (buzzLocked) endBuzzSession();
-            break;
-
-          default:
-            // تجاهل أي رسائل أخرى (لا يوجد بث أسئلة)
-            break;
-        }
-      };
-
-      socket.onclose = function() {
-        console.log('❌ WebSocket انقطع — إعادة المحاولة...');
-        updateBuzzStatus(false, 'إعادة الاتصال...');
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-        setTimeout(setupWebSocket, reconnectDelay);
-        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-      };
-
-      socket.onerror = function(err) {
-        console.error('❌ خطأ WebSocket:', err);
-        try { socket.close(); } catch {}
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      };
-
-    } catch (error) {
-      console.error('خطأ في إنشاء WebSocket:', error);
-      if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-      setTimeout(setupWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-    }
-  }
-
-  // إغلاق نظيف عند مغادرة الصفحة
-  window.addEventListener('beforeunload', () => {
-    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
-    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-  });
-
-  // تحكم سريع بالكيبورد/النقر: لفك الحجز بصريًا (اختياري)
-  document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' || event.code === 'Enter' || event.code === 'Escape') {
-      resetBuzzer();
-    }
-  });
-  document.addEventListener('click', function() {
-    if (buzzLocked && document.getElementById('buzzedOverlay').classList.contains('show')) {
-      resetBuzzer();
-    }
-  });
-
   // ===================== تهيئة =====================
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎬 تم تحميل شاشة العرض - خلية الحروف');
+    console.log('🎬 شاشة العرض - خلية الحروف (محسّنة)');
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
 
-    // تحديث دوري للحالة كل 15 ثانية (قراءة فقط)
-    setInterval(loadSessionState, 15000);
+    // تحديث دوري أقل تكراراً
+    setInterval(loadSessionState, 30000);
+  });
 
-    // إظهار حالة الزر بعد ثانية
-    setTimeout(() => { updateBuzzStatus(true); }, 1000);
+  // إغلاق نظيف
+  window.addEventListener('beforeunload', () => {
+    if (countdownInterval) clearInterval(countdownInterval);
+    try { if (socket && socket.readyState === WebSocket.OPEN) socket.close(1000, 'page unload'); } catch {}
   });
 </script>
 
