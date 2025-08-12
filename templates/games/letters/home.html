@@ -19,7 +19,6 @@
       font-size:2.5rem;font-weight:700;
       background:linear-gradient(135deg,#8b5cf6,#06b6d4);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-              background-clip:text;
     }
     .package-card{
       background:#fff;border-radius:20px;padding:2rem;margin-bottom:2rem;
@@ -39,8 +38,6 @@
     .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
     .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
-
-    .hint-text{font-size:.9rem;color:#64748b;text-align:center;margin-top:.5rem}
   </style>
 </head>
 <body>
@@ -57,7 +54,7 @@
     {% endif %}
   </div>
 
-  <!-- فورم مخفي لإرسال إنشاء الجلسة -->
+  <!-- فورم مخفي مركزي لإرسال الطلبات -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
@@ -80,30 +77,29 @@
               <p class="package-desc">جولة واحدة للتجربة</p>
 
               {% if free_session_eligible %}
-                <button
-                  type="button"
-                  class="btn-play"
-                  id="freeBtn"
-                  data-action="create-session"
-                  data-package-id="{{ free_package.id }}"
-                  aria-label="ابدأ الجولة المجانية">
+                <!-- مؤهل: زر يبدأ الجلسة -->
+                <button type="button" class="btn-play" id="freeBtn"
+                        onclick="createLettersSession('{{ free_package.id }}')">
                   <span class="btn-text">ابدأ الجولة المجانية</span>
                   <div class="loading-spinner"><div class="spinner"></div></div>
                 </button>
               {% else %}
-                <button type="button" class="btn-play" id="freeBtn" disabled
-                        title="{{ free_session_message|default:'غير متاح' }}" aria-disabled="true">
-                  <span class="btn-text">
-                    {% if request.user.is_authenticated %}
-                      جربت المجاني بالفعل
-                    {% else %}
-                      سجّل الدخول لتجربة المجاني
-                    {% endif %}
-                  </span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
-                </button>
-                {% if free_session_message %}
-                  <div class="hint-text">{{ free_session_message }}</div>
+                {% if request.user.is_authenticated %}
+                  <!-- غير مؤهل ومُسجّل: عطّل الزر -->
+                  <button type="button" class="btn-play" id="freeBtn" disabled
+                          title="{{ free_session_message|default:'غير متاح' }}" aria-disabled="true">
+                    <span class="btn-text">جربت المجاني بالفعل</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </button>
+                {% else %}
+                  <!-- غير مؤهل وغير مسجّل: رابط واضح لتسجيل الدخول -->
+                  <a
+                    class="btn-play"
+                    id="freeLoginBtn"
+                    href="/accounts/login/?next={{ request.get_full_path|urlencode }}"
+                    aria-label="سجّل الدخول لتجربة المجاني">
+                    سجّل الدخول لتجربة المجاني
+                  </a>
                 {% endif %}
               {% endif %}
             </div>
@@ -117,19 +113,15 @@
               <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
 
               {% if package.id in user_purchases %}
-                <button
-                  type="button"
-                  class="btn-play"
-                  data-action="create-session"
-                  data-package-id="{{ package.id }}"
-                  aria-label="ابدأ اللعب">
+                <button type="button" class="btn-play"
+                        onclick="createLettersSession('{{ package.id }}')">
                   <span class="btn-text">ابدأ اللعب</span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
+                  <div class="loading-spinner">
+                    <div class="spinner"></div>
+                  </div>
                 </button>
               {% else %}
-                <a class="btn-play" href="{% url 'payments:purchase_package' package.id %}" aria-label="اشترِ هذه الحزمة">
-                  اشترِ هذه الحزمة
-                </a>
+                <a class="btn-play" href="{% url 'payments:purchase_package' package.id %}">اشترِ هذه الحزمة</a>
               {% endif %}
             </div>
           </div>
@@ -142,94 +134,100 @@
   {% include 'footer.html' %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-      const LOGIN_URL = "/accounts/login/";
-      const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const LOGIN_URL = "/accounts/login/";
+    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+    
+    let sessionLocked = false;
 
-      let sessionLocked = false;
-
-      // ربط الأزرار التي تنشئ الجلسة
-      function initPackageButtons() {
-        document.querySelectorAll('button.btn-play[data-action="create-session"]').forEach((btn) => {
-          btn.addEventListener('click', () => {
-            const packageId = btn.getAttribute('data-package-id');
-            createLettersSession(packageId, btn);
-          });
-        });
+    // إنشاء الجلسة - نسخة مبسطة
+    window.createLettersSession = function(packageId) {
+      if (!packageId) {
+        alert('خطأ: معرف الحزمة مفقود');
+        return;
       }
 
-      // إنشاء الجلسة
-      function createLettersSession(packageId, btnEl) {
-        if (!packageId) {
-          alert('خطأ: معرف الحزمة مفقود'); return;
-        }
-
-        if (!IS_AUTH) {
-          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-          return;
-        }
-
-        if (sessionLocked) {
-          alert('انتظر قليلاً... جاري إنشاء الجلسة');
-          return;
-        }
-        sessionLocked = true;
-
-        const form = document.getElementById('lettersCreateForm');
-        const input = document.getElementById('lettersPkgId');
-        const submitBtn = document.getElementById('hiddenSubmitBtn');
-
-        if (!form || !input) {
-          alert('خطأ داخلي: النموذج غير جاهز'); resetLock(); return;
-        }
-
-        input.value = packageId;
-        showLoading(btnEl, true);
-
-        const timeoutId = setTimeout(() => { resetLock(); }, 10000);
-
-        try {
-          if (submitBtn) submitBtn.click(); else form.submit();
-          clearTimeout(timeoutId); // سنغادر الصفحة على الأغلب
-        } catch (e) {
-          alert('حدث خطأ أثناء الإرسال: ' + e.message);
-          clearTimeout(timeoutId);
-          resetLock();
-          showLoading(btnEl, false);
-        }
+      // التحقق من تسجيل الدخول (احتياطي)
+      if (!IS_AUTH) {
+        window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+        return;
       }
 
-      function showLoading(btnEl, show) {
-        if (!btnEl) return;
-        const text = btnEl.querySelector('.btn-text');
-        const spinner = btnEl.querySelector('.loading-spinner');
+      // منع الضغط المتكرر
+      if (sessionLocked) {
+        alert('انتظر قليلاً... جاري إنشاء الجلسة');
+        return;
+      }
+      
+      sessionLocked = true;
+
+      // العثور على العناصر
+      const form = document.getElementById('lettersCreateForm');
+      const input = document.getElementById('lettersPkgId');
+      const submitBtn = document.getElementById('hiddenSubmitBtn');
+
+      if (!form || !input) {
+        alert('خطأ: عناصر النموذج غير موجودة');
+        sessionLocked = false;
+        return;
+      }
+
+      // تعيين قيمة الحزمة
+      input.value = packageId;
+
+      // إظهار التحميل
+      showLoading(packageId, true);
+
+      // إعادة تعيين القفل بعد 10 ثوانٍ للحماية
+      const timeoutId = setTimeout(() => { resetLock(); }, 10000);
+
+      // إرسال الفورم
+      try {
+        if (submitBtn) submitBtn.click(); else form.submit();
+        clearTimeout(timeoutId);
+      } catch (error) { 
+        alert('حدث خطأ أثناء إرسال البيانات: ' + error.message);
+        resetLock();
+        clearTimeout(timeoutId);
+      }
+    };
+
+    function showLoading(packageId, show) {
+      const buttons = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+      buttons.forEach((btn) => {
+        const text = btn.querySelector('.btn-text');
+        const spinner = btn.querySelector('.loading-spinner');
         if (text && spinner) {
           if (show) {
             text.style.display = 'none';
             spinner.style.display = 'block';
-            btnEl.disabled = true;
+            btn.disabled = true;
           } else {
             text.style.display = 'block';
             spinner.style.display = 'none';
-            btnEl.disabled = false;
+            btn.disabled = false;
           }
         }
-      }
+      });
+    }
 
-      function resetLock() {
-        sessionLocked = false;
-        // رجّع كل الأزرار لوضعها الطبيعي
-        document.querySelectorAll('button.btn-play[data-action="create-session"]').forEach((btn) => {
-          showLoading(btn, false);
-        });
-      }
-
-      // بدء
-      initPackageButtons();
-    });
-  </script>
+    function resetLock() {
+      sessionLocked = false;
+      // رجّع كل أزرار التشغيل لوضعها الطبيعي
+      document.querySelectorAll('.btn-play').forEach((el) => {
+        const text = el.querySelector('.btn-text');
+        const spinner = el.querySelector('.loading-spinner');
+        if (text && spinner) {
+          text.style.display = 'block';
+          spinner.style.display = 'none';
+          if (el.tagName === 'BUTTON') el.disabled = false;
+        }
+      });
+    }
+  });
+</script>
 
 </body>
 </html>
