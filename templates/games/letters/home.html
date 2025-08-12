@@ -28,6 +28,9 @@
     .package-card:hover{transform:translateY(-10px);box-shadow:0 30px 60px rgba(139,92,246,.2);}
     .package-title{font-size:1.5rem;font-weight:700;margin-bottom:.5rem;text-align:center;}
     .package-desc{text-align:center;color:#718096;margin-bottom:1rem;}
+    .theme-badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.85rem;font-weight:700;}
+    .theme-mixed{background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;}
+    .theme-sports{background:#dcfce7;color:#166534;border:1px solid #86efac;}
     .btn-play{
       display:block;width:100%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);
       color:#fff;padding:12px;border:none;border-radius:15px;font-size:1.1rem;font-weight:700;
@@ -74,33 +77,36 @@
           <div class="col-md-6 col-lg-4">
             <div class="package-card">
               <div class="package-title">حزمة مجانية</div>
-              <p class="package-desc">جولة واحدة للتجربة</p>
 
-              {% if free_session_eligible %}
-                <!-- مؤهل: زر يبدأ الجلسة -->
+              <!-- نوع الأسئلة للحزمة المجانية -->
+              {% if free_package.question_theme %}
+                <div class="text-center mb-2">
+                  {% if free_package.question_theme == 'sports' %}
+                    <span class="theme-badge theme-sports">نوع الأسئلة: {{ free_package.get_question_theme_display }}</span>
+                  {% else %}
+                    <span class="theme-badge theme-mixed">نوع الأسئلة: {{ free_package.get_question_theme_display }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <!-- الوصف للحزمة المجانية (إن وُجد) -->
+              {% if free_package.description %}
+                <p class="package-desc">{{ free_package.description }}</p>
+              {% else %}
+                <p class="package-desc">جولة واحدة للتجربة</p>
+              {% endif %}
+
+              {% if request.user.is_authenticated %}
                 <button type="button" class="btn-play" id="freeBtn"
                         onclick="createLettersSession('{{ free_package.id }}')">
                   <span class="btn-text">ابدأ الجولة المجانية</span>
                   <div class="loading-spinner"><div class="spinner"></div></div>
                 </button>
               {% else %}
-                {% if request.user.is_authenticated %}
-                  <!-- غير مؤهل ومُسجّل: عطّل الزر -->
-                  <button type="button" class="btn-play" id="freeBtn" disabled
-                          title="{{ free_session_message|default:'غير متاح' }}" aria-disabled="true">
-                    <span class="btn-text">جربت المجاني بالفعل</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
-                {% else %}
-                  <!-- غير مؤهل وغير مسجّل: رابط واضح لتسجيل الدخول -->
-                  <a
-                    class="btn-play"
-                    id="freeLoginBtn"
-                    href="/accounts/login/?next={{ request.get_full_path|urlencode }}"
-                    aria-label="سجّل الدخول للتجربة المجانية">
-                    سجّل الدخول للتجربة المجانية
-                  </a>
-                {% endif %}
+                <!-- زر واضح يودّي لتسجيل الدخول -->
+                <a class="btn btn-outline-primary w-100 mt-1" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                  سجّل الدخول لتجربة المجاني
+                </a>
               {% endif %}
             </div>
           </div>
@@ -110,18 +116,34 @@
           <div class="col-md-6 col-lg-4">
             <div class="package-card">
               <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+
+              <!-- نوع الأسئلة -->
+              {% if package.question_theme %}
+                <div class="text-center mb-2">
+                  {% if package.question_theme == 'sports' %}
+                    <span class="theme-badge theme-sports">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+                  {% else %}
+                    <span class="theme-badge theme-mixed">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+                  {% endif %}
+                </div>
+              {% endif %}
+
+              <!-- السعر -->
               <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
+
+              <!-- الوصف -->
+              {% if package.description %}
+                <p class="package-desc">{{ package.description }}</p>
+              {% endif %}
 
               {% if package.id in user_purchases %}
                 <button type="button" class="btn-play"
                         onclick="createLettersSession('{{ package.id }}')">
                   <span class="btn-text">ابدأ اللعب</span>
-                  <div class="loading-spinner">
-                    <div class="spinner"></div>
-                  </div>
+                  <div class="loading-spinner"><div class="spinner"></div></div>
                 </button>
               {% else %}
-                <a class="btn-play" href="{% url 'payments:purchase_package' package.id %}">اشترِ هذه الحزمة</a>
+                <a class="btn-play" href="{% url 'payments:purchase' package.id %}">اشترِ هذه الحزمة</a>
               {% endif %}
             </div>
           </div>
@@ -137,60 +159,40 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-    const LOGIN_URL = "/accounts/login/";
+    const LOGIN_URL = "{% url 'accounts:login' %}";
     const NEXT_URL = "{{ request.get_full_path|urlencode }}";
     
     let sessionLocked = false;
 
-    // إنشاء الجلسة - نسخة مبسطة
     window.createLettersSession = function(packageId) {
-      if (!packageId) {
-        alert('خطأ: معرف الحزمة مفقود');
-        return;
-      }
-
-      // التحقق من تسجيل الدخول (احتياطي)
       if (!IS_AUTH) {
         window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
         return;
       }
-
-      // منع الضغط المتكرر
+      if (!packageId) return;
       if (sessionLocked) {
         alert('انتظر قليلاً... جاري إنشاء الجلسة');
         return;
       }
-      
       sessionLocked = true;
 
-      // العثور على العناصر
       const form = document.getElementById('lettersCreateForm');
       const input = document.getElementById('lettersPkgId');
       const submitBtn = document.getElementById('hiddenSubmitBtn');
 
-      if (!form || !input) {
-        alert('خطأ: عناصر النموذج غير موجودة');
-        sessionLocked = false;
-        return;
-      }
-
-      // تعيين قيمة الحزمة
       input.value = packageId;
-
-      // إظهار التحميل
       showLoading(packageId, true);
 
-      // إعادة تعيين القفل بعد 10 ثوانٍ للحماية
-      const timeoutId = setTimeout(() => { resetLock(); }, 10000);
+      const timeoutId = setTimeout(() => { sessionLocked = false; showLoading(packageId, false); }, 10000);
 
-      // إرسال الفورم
       try {
-        if (submitBtn) submitBtn.click(); else form.submit();
+        submitBtn ? submitBtn.click() : form.submit();
         clearTimeout(timeoutId);
-      } catch (error) { 
-        alert('حدث خطأ أثناء إرسال البيانات: ' + error.message);
-        resetLock();
+      } catch (e) {
+        alert('خطأ أثناء الإرسال: ' + e.message);
         clearTimeout(timeoutId);
+        sessionLocked = false;
+        showLoading(packageId, false);
       }
     };
 
@@ -200,29 +202,9 @@
         const text = btn.querySelector('.btn-text');
         const spinner = btn.querySelector('.loading-spinner');
         if (text && spinner) {
-          if (show) {
-            text.style.display = 'none';
-            spinner.style.display = 'block';
-            btn.disabled = true;
-          } else {
-            text.style.display = 'block';
-            spinner.style.display = 'none';
-            btn.disabled = false;
-          }
-        }
-      });
-    }
-
-    function resetLock() {
-      sessionLocked = false;
-      // رجّع كل أزرار التشغيل لوضعها الطبيعي
-      document.querySelectorAll('.btn-play').forEach((el) => {
-        const text = el.querySelector('.btn-text');
-        const spinner = el.querySelector('.loading-spinner');
-        if (text && spinner) {
-          text.style.display = 'block';
-          spinner.style.display = 'none';
-          if (el.tagName === 'BUTTON') el.disabled = false;
+          text.style.display = show ? 'none' : 'block';
+          spinner.style.display = show ? 'block' : 'none';
+          btn.disabled = show;
         }
       });
     }

@@ -1,230 +1,572 @@
-# games/admin.py - نسخة مبسطة وعملية
+# games/admin.py - لوحة تحكم مُقسّمة لكل لعبة + إحصائيات + رفع أسئلة
 from django.contrib import admin
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
 from django.urls import path, reverse
-from django.http import HttpResponse
+from django.db.models import Count, Sum, Q, Max
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
-from django.db import transaction
+from django.utils.safestring import mark_safe
+from django.contrib import messages
+from django.shortcuts import get_object_or_404
 import csv
 import io
-import openpyxl
-from .models import GamePackage, LettersGameQuestion, UserPurchase, GameSession
+
+# حاول استيراد openpyxl إن وُجد
+try:
+    import openpyxl
+    HAS_OPENPYXL = True
+except Exception:
+    HAS_OPENPYXL = False
+
+from .models import (
+    GamePackage,
+    LettersGameQuestion,
+    UserPurchase,
+    GameSession,
+    LettersGameProgress,
+    Contestant,
+)
+
+# ===========================
+#  Helpers / Utilities
+# ===========================
+
+def _admin_url_for(model, view="changelist"):
+    """
+    يبني اسم الـ URL الخاص بالأدمن ديناميكيًا من الموديل.
+    view: "changelist" | "add" | "change"
+    """
+    app_label = model._meta.app_label
+    model_name = model._meta.model_name
+    return f"admin:{app_label}_{model_name}_{view}"
+
+def action_mark_active(modeladmin, request, queryset):
+    updated = queryset.update(is_active=True)
+    messages.success(request, f"تم تفعيل {updated} عنصر/حزمة")
+action_mark_active.short_description = "تفعيل المحدد"
+
+def action_mark_inactive(modeladmin, request, queryset):
+    updated = queryset.update(is_active=False)
+    messages.info(request, f"تم تعطيل {updated} عنصر/حزمة")
+action_mark_inactive.short_description = "تعطيل المحدد"
+
+def action_export_csv(modeladmin, request, queryset):
+    """
+    تصدير مختصر CSV للحزم المحددة
+    """
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="packages_export.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['id', 'game_type', 'package_number', 'is_free', 'price', 'is_active', 'question_theme', 'description', 'created_at'])
+    for obj in queryset:
+        writer.writerow([
+            str(obj.id), obj.game_type, obj.package_number,
+            '1' if obj.is_free else '0', str(obj.price),
+            '1' if obj.is_active else '0', getattr(obj, 'question_theme', ''),
+            (obj.description or '').replace('\n', ' '), obj.created_at.isoformat()
+        ])
+    return response
+action_export_csv.short_description = "تصدير CSV (حزم)"
+
+
+# ===========================
+#  Proxy Models لتقسيم الأدمن
+# ===========================
+
+# الحزم
+class LettersPackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - خلية الحروف"
+        verbose_name_plural = "حزم - خلية الحروف"
+
+class ImagesPackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - تحدي الصور"
+        verbose_name_plural = "حزم - تحدي الصور"
+
+class QuizPackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - سؤال وجواب"
+        verbose_name_plural = "حزم - سؤال وجواب"
+
+# الجلسات
+class LettersSession(GameSession):
+    class Meta:
+        proxy = True
+        verbose_name = "جلسة - خلية الحروف"
+        verbose_name_plural = "جلسات - خلية الحروف"
+
+class ImagesSession(GameSession):
+    class Meta:
+        proxy = True
+        verbose_name = "جلسة - تحدي الصور"
+        verbose_name_plural = "جلسات - تحدي الصور"
+
+class QuizSession(GameSession):
+    class Meta:
+        proxy = True
+        verbose_name = "جلسة - سؤال وجواب"
+        verbose_name_plural = "جلسات - سؤال وجواب"
+
+
+# ===========================
+#  Inlines
+# ===========================
 
 class LettersGameQuestionInline(admin.TabularInline):
     model = LettersGameQuestion
     extra = 0
     fields = ('letter', 'question_type', 'question', 'answer', 'category')
+    show_change_link = True
 
-@admin.register(GamePackage)
-class GamePackageAdmin(admin.ModelAdmin):
-    list_display = ['package_info', 'questions_count', 'price_info', 'status', 'upload_action']
-    list_filter = ['is_free', 'is_active', 'created_at']
-    search_fields = ['package_number']
+
+# ===========================
+#  Admin: حِزم خلية الحروف
+# ===========================
+
+@admin.register(LettersPackage)
+class LettersPackageAdmin(admin.ModelAdmin):
+    """
+    قسم مخصص لحزم خلية الحروف:
+    - يعرض عدد الأسئلة
+    - يدعم رفع الأسئلة (Excel/CSV) + تنزيل قالب
+    - يدعم الحقول الجديدة (الوصف + نوع الأسئلة)
+    """
+    list_display = (
+        'package_info',
+        'theme_badge',
+        'questions_count_badge',
+        'price_info',
+        'is_free_icon',
+        'status_badge',
+        'created_at',
+        'letters_actions',
+    )
+    list_filter = ('is_free', 'is_active', 'question_theme', 'created_at')
+    search_fields = ('package_number', 'description')
     inlines = [LettersGameQuestionInline]
-    
+    actions = (action_mark_active, action_mark_inactive, action_export_csv)
+    ordering = ('package_number',)
+
+    fieldsets = (
+        ('المعلومات الأساسية', {
+            'fields': ('package_number', 'is_free', 'price', 'is_active')
+        }),
+        ('المحتوى', {
+            'fields': ('description', 'question_theme')
+        }),
+    )
+
+    # ------- أعمدة العرض -------
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.filter(game_type='letters').annotate(
+            _qcount=Count('letters_questions')
+        )
+
     def package_info(self, obj):
         return f"حزمة {obj.package_number}"
-    package_info.short_description = 'رقم الحزمة'
-    
-    def questions_count(self, obj):
-        count = obj.letters_questions.count()
+    package_info.short_description = "الرقم"
+
+    def theme_badge(self, obj):
+        theme = getattr(obj, 'question_theme', 'mixed') or 'mixed'
+        label = obj.get_question_theme_display() if hasattr(obj, 'get_question_theme_display') else theme
+        if theme == 'sports':
+            return format_html('<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
+        return format_html('<span style="background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
+    theme_badge.short_description = "نوع الأسئلة"
+
+    def questions_count_badge(self, obj):
+        count = getattr(obj, '_qcount', 0)
         if count == 75:
-            return format_html('<span style="color: green;">✅ {}</span>', count)
+            color = 'green'; icon = '✅'
         elif count > 0:
-            return format_html('<span style="color: orange;">⚠️ {}</span>', count)
+            color = 'orange'; icon = '⚠️'
         else:
-            return format_html('<span style="color: red;">❌ 0</span>')
-    questions_count.short_description = 'عدد الأسئلة'
-    
+            color = 'red'; icon = '❌'
+        return format_html('<span style="color:{};font-weight:700;">{} {}</span>', color, icon, count)
+    questions_count_badge.short_description = "عدد الأسئلة"
+
     def price_info(self, obj):
-        if obj.is_free:
-            return "🆓 مجانية"
-        return f"💰 {obj.price} ريال"
-    price_info.short_description = 'السعر'
-    
-    def status(self, obj):
-        if obj.is_active:
-            return format_html('<span style="color: green;">🟢 فعالة</span>')
-        return format_html('<span style="color: red;">🔴 غير فعالة</span>')
-    status.short_description = 'الحالة'
-    
-    def upload_action(self, obj):
-        upload_url = reverse('admin:upload_questions', args=[obj.id])
-        return format_html(
-            '<a href="{}" style="background:#28a745; color:white; padding:4px 8px; '
-            'text-decoration:none; border-radius:3px; font-size:12px;">📁 رفع ملف</a>',
-            upload_url
+        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+    price_info.short_description = "السعر"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return format_html('<b style="color:{};">{}</b>', 'green' if obj.is_active else 'red', 'فعّالة' if obj.is_active else 'غير فعّالة')
+    status_badge.short_description = "الحالة"
+
+    def letters_actions(self, obj):
+        # روابط رفع/تنزيل
+        upload_url = reverse(f"{_admin_url_for(self.model, 'changelist')}".replace('_changelist', '_upload_letters'), args=[obj.id])
+        template_url = reverse(f"{_admin_url_for(self.model, 'changelist')}".replace('_changelist', '_download_letters_template'))
+        return mark_safe(
+            f'<a class="button" href="{upload_url}" style="background:#28a745;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع أسئلة</a>'
+            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">⬇️ قالب</a>'
         )
-    upload_action.short_description = 'إجراءات'
-    
+    letters_actions.short_description = "إجراءات"
+
+    # ------- روابط مخصصة -------
     def get_urls(self):
         urls = super().get_urls()
-        custom_urls = [
-            path('<path:package_id>/upload/', self.upload_questions, name='upload_questions'),
-            path('download-template/', self.download_template, name='download_template'),
+        custom = [
+            path("stats/", self.admin_site.admin_view(self.stats_view), name=_admin_url_for(self.model, 'stats').split(':', 1)[1]),
+            path("<uuid:pk>/upload/", self.admin_site.admin_view(self.upload_letters_view), name=_admin_url_for(self.model, 'upload_letters').split(':', 1)[1]),
+            path("download-template/", self.admin_site.admin_view(self.download_letters_template_view), name=_admin_url_for(self.model, 'download_letters_template').split(':', 1)[1]),
         ]
-        return custom_urls + urls
-    
-    def upload_questions(self, request, package_id):
-        try:
-            package = GamePackage.objects.get(id=package_id, game_type='letters')
-        except GamePackage.DoesNotExist:
-            messages.error(request, 'الحزمة غير موجودة')
-            return redirect('admin:games_gamepackage_changelist')
-        
+        return custom + urls
+
+    # ------- صفحات مخصصة (بدون قوالب خارجية) -------
+    def stats_view(self, request):
+        """صفحة إحصائيات لحزم/أسئلة خلية الحروف"""
+        qs = GamePackage.objects.filter(game_type='letters').annotate(qcount=Count('letters_questions'))
+        total_packages = qs.count()
+        total_questions = LettersGameQuestion.objects.count()
+        free_count = qs.filter(is_free=True).count()
+        paid_count = qs.filter(is_free=False).count()
+        active_count = qs.filter(is_active=True).count()
+
+        top_packages = qs.order_by('-qcount', 'package_number')[:10]
+        rows = "".join([
+            f"<tr><td>حزمة {p.package_number}</td><td>{p.get_question_theme_display() if hasattr(p,'get_question_theme_display') else ''}</td><td style='text-align:center;'>{p.qcount}</td><td>{'مجانية' if p.is_free else 'مدفوعة'}</td><td>{'فعالة' if p.is_active else 'غير فعالة'}</td></tr>"
+            for p in top_packages
+        ])
+        html = f"""
+        <div style="padding:20px;font-family:Tahoma,Arial;">
+          <h2>📊 إحصائيات خلية الحروف</h2>
+          <ul>
+            <li>إجمالي الحزم: <b>{total_packages}</b> (مجانية: {free_count} / مدفوعة: {paid_count})</li>
+            <li>إجمالي الأسئلة: <b>{total_questions}</b></li>
+            <li>حزم فعّالة: <b>{active_count}</b></li>
+          </ul>
+          <h4>أكثر الحزم من حيث عدد الأسئلة</h4>
+          <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="6">
+            <thead style="background:#f1f5f9;">
+              <tr>
+                <th>الحزمة</th>
+                <th>نوع الأسئلة</th>
+                <th>عدد الأسئلة</th>
+                <th>السعر</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody>{rows or '<tr><td colspan="5">لا توجد بيانات</td></tr>'}</tbody>
+          </table>
+        </div>
+        """
+        return HttpResponse(html)
+
+    def upload_letters_view(self, request, pk):
+        """
+        رفع أسئلة (Excel/CSV) للحزمة المحددة
+        الحقول: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2), السؤال, الإجابة, التصنيف]
+        """
+        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
         if request.method == 'POST':
-            uploaded_file = request.FILES.get('file')
-            replace_existing = request.POST.get('replace') == 'on'
-            
-            if not uploaded_file:
-                messages.error(request, 'يرجى اختيار ملف')
-                return redirect(request.path_info)
-            
+            file = request.FILES.get('file')
+            replace_existing = bool(request.POST.get('replace'))
+
+            if not file:
+                messages.error(request, "يرجى اختيار ملف")
+                return HttpResponseRedirect(request.path)
+
+            if replace_existing:
+                package.letters_questions.all().delete()
+
+            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2'}
+            added = 0
+
             try:
-                if replace_existing:
-                    package.letters_questions.all().delete()
-                
-                added_count = 0
-                
-                if uploaded_file.name.endswith('.xlsx'):
-                    workbook = openpyxl.load_workbook(uploaded_file)
-                    sheet = workbook.active
-                    
-                    for row in sheet.iter_rows(min_row=2, values_only=True):
-                        if len(row) >= 5 and all(row[:5]):
-                            letter, q_type, question, answer, category = row[:5]
-                            
-                            # تحويل نوع السؤال
-                            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2'}
-                            q_type_en = type_map.get(str(q_type).strip())
-                            
-                            if q_type_en:
-                                LettersGameQuestion.objects.update_or_create(
-                                    package=package,
-                                    letter=str(letter).strip(),
-                                    question_type=q_type_en,
-                                    defaults={
-                                        'question': str(question).strip(),
-                                        'answer': str(answer).strip(),
-                                        'category': str(category).strip()
-                                    }
-                                )
-                                added_count += 1
-                
-                elif uploaded_file.name.endswith('.csv'):
-                    decoded_file = uploaded_file.read().decode('utf-8-sig')
-                    reader = csv.reader(io.StringIO(decoded_file))
-                    next(reader)  # تخطي الهيدر
-                    
+                if file.name.lower().endswith('.csv'):
+                    decoded = file.read().decode('utf-8-sig')
+                    reader = csv.reader(io.StringIO(decoded))
+                    next(reader, None)  # تخطي الهيدر
                     for row in reader:
                         if len(row) >= 5:
-                            letter, q_type, question, answer, category = row[:5]
-                            
-                            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2'}
-                            q_type_en = type_map.get(q_type.strip())
-                            
-                            if q_type_en:
-                                LettersGameQuestion.objects.update_or_create(
-                                    package=package,
-                                    letter=letter.strip(),
-                                    question_type=q_type_en,
-                                    defaults={
-                                        'question': question.strip(),
-                                        'answer': answer.strip(),
-                                        'category': category.strip()
-                                    }
-                                )
-                                added_count += 1
+                            letter, qtype_ar, question, answer, category = [str(x).strip() for x in row[:5]]
+                            qtype = type_map.get(qtype_ar)
+                            if not qtype:
+                                continue
+                            LettersGameQuestion.objects.update_or_create(
+                                package=package, letter=letter, question_type=qtype,
+                                defaults={'question': question, 'answer': answer, 'category': category}
+                            )
+                            added += 1
+
+                elif file.name.lower().endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')) and HAS_OPENPYXL:
+                    wb = openpyxl.load_workbook(file)
+                    sh = wb.active
+                    for i, row in enumerate(sh.iter_rows(min_row=2, values_only=True), start=2):
+                        if not row or len(row) < 5:
+                            continue
+                        letter, qtype_ar, question, answer, category = [str(x).strip() if x is not None else '' for x in row[:5]]
+                        qtype = type_map.get(qtype_ar)
+                        if not qtype:
+                            continue
+                        LettersGameQuestion.objects.update_or_create(
+                            package=package, letter=letter, question_type=qtype,
+                            defaults={'question': question, 'answer': answer, 'category': category}
+                        )
+                        added += 1
                 else:
-                    messages.error(request, 'نوع الملف غير مدعوم')
-                    return redirect(request.path_info)
-                
-                messages.success(request, f'تم إضافة {added_count} سؤال بنجاح!')
-                return redirect('admin:games_gamepackage_changelist')
-                
+                    messages.error(request, "نوع الملف غير مدعوم، أو openpyxl غير متاح.")
+                    return HttpResponseRedirect(request.path)
+
+                messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
+                return HttpResponseRedirect(reverse(_admin_url_for(self.model, 'changelist')))
+
             except Exception as e:
-                messages.error(request, f'خطأ: {str(e)}')
-        
-        return render(request, 'admin/upload_questions.html', {
-            'package': package,
-            'title': f'رفع أسئلة للحزمة {package.package_number}',
-        })
-    
-    def download_template(self, request):
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = 'attachment; filename="template.xlsx"'
-        
-        workbook = openpyxl.Workbook()
-        sheet = workbook.active
-        sheet.title = "قالب الأسئلة"
-        
-        # الهيدر
+                messages.error(request, f"خطأ أثناء الرفع: {e}")
+                return HttpResponseRedirect(request.path)
+
+        # صفحة رفع بسيطة بدون قالب خارجي
+        html = f"""
+        <div style="padding:20px;font-family:Tahoma,Arial;">
+          <h3>رفع أسئلة - حزمة {package.package_number}</h3>
+          <form method="post" enctype="multipart/form-data">
+            {admin.helpers.csrf_input_lazy(request)}
+            <p><label>الملف (CSV أو Excel): <input type="file" name="file" required></label></p>
+            <p><label><input type="checkbox" name="replace"> حذف الأسئلة الحالية قبل الرفع</label></p>
+            <button class="button" type="submit" style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:6px;">رفع</button>
+            <a class="button" href="{reverse(_admin_url_for(self.model, 'download_letters_template'))}" style="margin-right:10px;">⬇️ تنزيل القالب</a>
+            <a class="button" href="{reverse(_admin_url_for(self.model, 'changelist'))}" style="margin-right:10px;">عودة</a>
+          </form>
+        </div>
+        """
+        return HttpResponse(html)
+
+    def download_letters_template_view(self, request):
+        """
+        تنزيل قالب Excel لأسئلة خلية الحروف
+        """
+        if not HAS_OPENPYXL:
+            # بديل CSV
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
+            writer = csv.writer(response)
+            writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
+            writer.writerow(['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'])
+            writer.writerow(['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'])
+            writer.writerow(['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'])
+            return response
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="letters_template.xlsx"'
+        wb = openpyxl.Workbook()
+        sh = wb.active
+        sh.title = "قالب الأسئلة"
         headers = ['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف']
-        sheet.append(headers)
-        
-        # أمثلة
+        sh.append(headers)
         examples = [
             ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
             ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
             ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
         ]
-        
-        for example in examples:
-            sheet.append(example)
-        
-        workbook.save(response)
+        for row in examples:
+            sh.append(row)
+        wb.save(response)
         return response
-    
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(game_type='letters')
-    
+
+    # ------- حفظ / فلترة -------
     def save_model(self, request, obj, form, change):
         obj.game_type = 'letters'
         super().save_model(request, obj, form, change)
 
+
+# ===========================
+#  Admin: حِزم الصور
+# ===========================
+
+@admin.register(ImagesPackage)
+class ImagesPackageAdmin(admin.ModelAdmin):
+    list_display = ('package_info', 'price_info', 'is_free_icon', 'status_badge', 'created_at', 'generic_actions')
+    list_filter = ('is_free', 'is_active', 'created_at')
+    search_fields = ('package_number', 'description')
+    actions = (action_mark_active, action_mark_inactive, action_export_csv)
+    ordering = ('package_number',)
+    fieldsets = (
+        ('المعلومات الأساسية', {'fields': ('package_number', 'is_free', 'price', 'is_active')}),
+        ('المحتوى', {'fields': ('description',)}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='images')
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package_number}"
+    package_info.short_description = "الرقم"
+
+    def price_info(self, obj):
+        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+    price_info.short_description = "السعر"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return format_html('<b style="color:{};">{}</b>', 'green' if obj.is_active else 'red', 'فعّالة' if obj.is_active else 'غير فعّالة')
+    status_badge.short_description = "الحالة"
+
+    def generic_actions(self, obj):
+        return "—"
+    generic_actions.short_description = "إجراءات"
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'images'
+        super().save_model(request, obj, form, change)
+
+
+# ===========================
+#  Admin: حِزم سؤال وجواب
+# ===========================
+
+@admin.register(QuizPackage)
+class QuizPackageAdmin(admin.ModelAdmin):
+    list_display = ('package_info', 'price_info', 'is_free_icon', 'status_badge', 'created_at')
+    list_filter = ('is_free', 'is_active', 'created_at')
+    search_fields = ('package_number', 'description')
+    actions = (action_mark_active, action_mark_inactive, action_export_csv)
+    ordering = ('package_number',)
+    fieldsets = (
+        ('المعلومات الأساسية', {'fields': ('package_number', 'is_free', 'price', 'is_active')}),
+        ('المحتوى', {'fields': ('description',)}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='quiz')
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package_number}"
+    package_info.short_description = "الرقم"
+
+    def price_info(self, obj):
+        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+    price_info.short_description = "السعر"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return format_html('<b style="color:{};">{}</b>', 'green' if obj.is_active else 'red', 'فعّالة' if obj.is_active else 'غير فعّالة')
+    status_badge.short_description = "الحالة"
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'quiz'
+        super().save_model(request, obj, form, change)
+
+
+# ===========================
+#  Admin: أسئلة خلية الحروف (مباشر)
+# ===========================
+
 @admin.register(LettersGameQuestion)
 class LettersGameQuestionAdmin(admin.ModelAdmin):
-    list_display = ['package_num', 'letter', 'question_type_ar', 'question_preview', 'answer']
-    list_filter = ['package__package_number', 'letter', 'question_type']
-    search_fields = ['question', 'answer', 'letter']
-    list_per_page = 25
-    
-    def package_num(self, obj):
-        return f"حزمة {obj.package.package_number}"
-    package_num.short_description = 'الحزمة'
-    
-    def question_type_ar(self, obj):
-        types = {'main': 'رئيسي', 'alt1': 'بديل 1', 'alt2': 'بديل 2'}
-        return types.get(obj.question_type, obj.question_type)
-    question_type_ar.short_description = 'النوع'
-    
-    def question_preview(self, obj):
-        return obj.question[:50] + '...' if len(obj.question) > 50 else obj.question
-    question_preview.short_description = 'السؤال'
-    
+    list_display = ('package_num', 'letter', 'question_type_ar', 'category', 'question_preview', 'answer')
+    list_filter = ('package__package_number', 'letter', 'question_type', 'category')
+    search_fields = ('question', 'answer', 'letter', 'category')
+    list_per_page = 30
+
     def get_queryset(self, request):
         return super().get_queryset(request).filter(package__game_type='letters')
 
-# إدارة المشتريات (للمدير فقط)
+    def package_num(self, obj):
+        return f"حزمة {obj.package.package_number}"
+    package_num.short_description = "الحزمة"
+
+    def question_type_ar(self, obj):
+        types = {'main': 'رئيسي', 'alt1': 'بديل 1', 'alt2': 'بديل 2'}
+        return types.get(obj.question_type, obj.question_type)
+    question_type_ar.short_description = "النوع"
+
+    def question_preview(self, obj):
+        return (obj.question[:50] + '...') if len(obj.question) > 50 else obj.question
+    question_preview.short_description = "السؤال"
+
+
+# ===========================
+#  Admin: الجلسات (مقسّمة)
+# ===========================
+
+class _BaseSessionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'host', 'package_info', 'scores', 'is_active', 'created_at')
+    list_filter = ('is_active', 'is_completed', 'created_at')
+    search_fields = ('id', 'host__username', 'package__package_number')
+    date_hierarchy = 'created_at'
+    readonly_fields = ()
+    ordering = ('-created_at',)
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package.package_number} / {'مجانية' if obj.package.is_free else 'مدفوعة'}"
+    package_info.short_description = "الحزمة"
+
+    def scores(self, obj):
+        return f"{obj.team1_name}: {obj.team1_score} | {obj.team2_name}: {obj.team2_score}"
+    scores.short_description = "النقاط"
+
+@admin.register(LettersSession)
+class LettersSessionAdmin(_BaseSessionAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='letters')
+
+@admin.register(ImagesSession)
+class ImagesSessionAdmin(_BaseSessionAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='images')
+
+@admin.register(QuizSession)
+class QuizSessionAdmin(_BaseSessionAdmin):
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='quiz')
+
+
+# ===========================
+#  Admin: المشتريات والمتسابقين
+# ===========================
+
 @admin.register(UserPurchase)
 class UserPurchaseAdmin(admin.ModelAdmin):
-    list_display = ['user', 'package', 'purchase_date', 'is_completed']
-    list_filter = ['is_completed', 'purchase_date']
-    
-    def has_module_permission(self, request):
-        return request.user.is_superuser
+    list_display = ('user', 'package_ref', 'is_completed', 'purchase_date')
+    list_filter = ('is_completed', 'purchase_date', 'package__game_type')
+    search_fields = ('user__username', 'package__package_number')
+    date_hierarchy = 'purchase_date'
+    ordering = ('-purchase_date',)
 
-@admin.register(GameSession)
-class GameSessionAdmin(admin.ModelAdmin):
-    list_display = ['host', 'package', 'created_at', 'is_active']
-    list_filter = ['is_active', 'created_at']
-    
-    def has_module_permission(self, request):
-        return request.user.is_superuser
+    def package_ref(self, obj):
+        return f"{obj.package.get_game_type_display()} / حزمة {obj.package.package_number}"
+    package_ref.short_description = "الحزمة"
 
-admin.site.site_header = '🔤 خلية الحروف'
-admin.site.site_title = 'إدارة خلية الحروف'
-admin.site.index_title = 'لوحة التحكم'
+@admin.register(Contestant)
+class ContestantAdmin(admin.ModelAdmin):
+    list_display = ('name', 'team', 'session_ref', 'is_active', 'joined_at')
+    list_filter = ('team', 'is_active', 'session__game_type')
+    search_fields = ('name', 'session__id')
+    date_hierarchy = 'joined_at'
+    ordering = ('-joined_at',)
+
+    def session_ref(self, obj):
+        return f"{obj.session.game_type} / {obj.session.id}"
+    session_ref.short_description = "الجلسة"
+
+
+# ===========================
+#  Admin: تحسينات عامة
+# ===========================
+
+admin.site.site_header = '🎮 إدارة الألعاب'
+admin.site.site_title = 'لوحة تحكم وش الجواب'
+admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
+
+# روابط سريعة في واجهة الأدمن (نصيحة للمشرف):
+# - حزم خلية الحروف: Letters Package
+# - حزم الصور: Images Package
+# - حزم سؤال وجواب: Quiz Package
+# - أسئلة خلية الحروف: Letters game question
+# - جلسات خلية الحروف/الصور/سؤال وجواب
+# - المشتريات، المتسابقون

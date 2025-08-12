@@ -3,12 +3,23 @@ from django.db import models
 from django.contrib.auth.models import User
 import uuid
 
+# games/models.py (مقتطف: كلاس GamePackage فقط)
+from django.db import models
+from django.contrib.auth.models import User
+import uuid
+
 class GamePackage(models.Model):
     """حزم الألعاب"""
     GAME_TYPES = [
         ('letters', 'خلية الحروف'),
         ('images', 'تحدي الصور'),
         ('quiz', 'سؤال وجواب'),
+    ]
+
+    # ✅ جديد: أنواع الأسئلة (قابلة للتوسّع لاحقًا)
+    QUESTION_THEMES = [
+        ('mixed', 'متنوعة'),
+        ('sports', 'رياضية'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -39,6 +50,23 @@ class GamePackage(models.Model):
         verbose_name="فعالة؟",
         help_text="هل الحزمة متاحة للشراء؟"
     )
+
+    # ✅ جديد: وصف الحزمة
+    description = models.TextField(
+        blank=True,
+        verbose_name="الوصف",
+        help_text="وصف قصير للحزمة يظهر للمستخدمين"
+    )
+
+    # ✅ جديد: نوع الأسئلة
+    question_theme = models.CharField(
+        max_length=20,
+        choices=QUESTION_THEMES,
+        default='mixed',
+        verbose_name="نوع الأسئلة",
+        help_text="مثال: متنوعة، رياضية"
+    )
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الإنشاء"
@@ -52,6 +80,7 @@ class GamePackage(models.Model):
     
     def __str__(self):
         return f"{self.get_game_type_display()} - حزمة {self.package_number}"
+
 
 class LettersGameQuestion(models.Model):
     """أسئلة لعبة خلية الحروف"""
