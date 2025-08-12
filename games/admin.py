@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.middleware.csrf import get_token  # ← بديل آمن لـ csrf_input_lazy
 import csv
 import io
-
+from django.template.response import TemplateResponse
 # حاول استيراد openpyxl إن وُجد
 try:
     import openpyxl
@@ -258,10 +258,11 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
     def upload_letters_view(self, request, pk):
         """
-        رفع أسئلة (Excel/CSV) للحزمة المحددة
-        الحقول: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2), السؤال, الإجابة, التصنيف]
+        رفع أسئلة (CSV أو Excel) للحزمة المحددة
+        الأعمدة: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2), السؤال, الإجابة, التصنيف]
         """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
+
         if request.method == 'POST':
             file = request.FILES.get('file')
             replace_existing = bool(request.POST.get('replace'))
@@ -273,11 +274,15 @@ class LettersPackageAdmin(admin.ModelAdmin):
             if replace_existing:
                 package.letters_questions.all().delete()
 
-            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2', 'بديل 1': 'alt1', 'بديل 2': 'alt2'}
+            type_map = {
+                'رئيسي': 'main', 'بديل1': 'alt1', 'بديل 1': 'alt1',
+                'بديل2': 'alt2', 'بديل 2': 'alt2'
+            }
             added = 0
 
             try:
-                if file.name.lower().endswith('.csv'):
+                name = file.name.lower()
+                if name.endswith('.csv'):
                     decoded = file.read().decode('utf-8-sig')
                     reader = csv.reader(io.StringIO(decoded))
                     next(reader, None)  # تخطي الهيدر
@@ -293,13 +298,19 @@ class LettersPackageAdmin(admin.ModelAdmin):
                             )
                             added += 1
 
-                elif file.name.lower().endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')) and HAS_OPENPYXL:
+                elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
+                    if not HAS_OPENPYXL:
+                        messages.error(request, "openpyxl غير مثبت. ثبّت الحزمة لاستخدام ملفات Excel.")
+                        return HttpResponseRedirect(request.path)
+
                     wb = openpyxl.load_workbook(file)
                     sh = wb.active
                     for row in sh.iter_rows(min_row=2, values_only=True):
                         if not row or len(row) < 5:
                             continue
-                        letter, qtype_ar, question, answer, category = [str(x).strip() if x is not None else '' for x in row[:5]]
+                        letter, qtype_ar, question, answer, category = [
+                            str(x).strip() if x is not None else '' for x in row[:5]
+                        ]
                         qtype = type_map.get(qtype_ar)
                         if not qtype:
                             continue
@@ -309,7 +320,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                         )
                         added += 1
                 else:
-                    messages.error(request, "نوع الملف غير مدعوم، أو openpyxl غير متاح.")
+                    messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
                     return HttpResponseRedirect(request.path)
 
                 messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
@@ -319,22 +330,24 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 messages.error(request, f"خطأ أثناء الرفع: {e}")
                 return HttpResponseRedirect(request.path)
 
-        # صفحة رفع بسيطة بدون قالب خارجي — مع CSRF token يدوي
-        csrf = get_token(request)
-        html = f"""
-        <div style="padding:20px;font-family:Tahoma,Arial;">
-          <h3>رفع أسئلة - حزمة {package.package_number}</h3>
-          <form method="post" enctype="multipart/form-data">
-            <input type="hidden" name="csrfmiddlewaretoken" value="{csrf}">
-            <p><label>الملف (CSV أو Excel): <input type="file" name="file" accept=".csv,.xlsx,.xlsm,.xltx,.xltm" required></label></p>
-            <p><label><input type="checkbox" name="replace"> حذف الأسئلة الحالية قبل الرفع</label></p>
-            <button class="button" type="submit" style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:6px;">رفع</button>
-            <a class="button" href="{reverse('admin:games_letterspackage_download_template')}" style="margin-right:10px;">⬇️ تنزيل القالب</a>
-            <a class="button" href="{reverse('admin:games_letterspackage_changelist')}" style="margin-right:10px;">عودة</a>
-          </form>
-        </div>
-        """
-        return HttpResponse(html)
+        # استخدم قالب الأدمن الموحد
+        context = {
+            **self.admin_site.each_context(request),  # يضيف عنوان الموقع، القوائم، المستخدم..الخ
+            "opts": self.model._meta,                # مهم لعناوين الأدمن والbreadcrumbs
+            "title": f"رفع أسئلة - حزمة {package.package_number}",
+            "package": package,
+            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",  # يُستخدم في input[type=file]
+            "download_template_url": reverse('admin:games_letterspackage_download_template'),
+            "help_rows": [
+                "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
+                "أعمدة مرتبة كالتالي: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
+                "قيم نوع السؤال المقبولة: رئيسي، بديل1، بديل2 (أو بديل 1، بديل 2).",
+            ],
+            "extra_note": "عند تفعيل خيار الحذف، سيتم حذف جميع الأسئلة الحالية في هذه الحزمة قبل الاستيراد.",
+            "submit_label": "رفع الملف",
+            "replace_label": "حذف الأسئلة الحالية قبل الرفع",
+        }
+        return TemplateResponse(request, "admin/import_csv.html", context)
 
     def download_letters_template_view(self, request):
         """تنزيل قالب الأسئلة (XLSX إن أمكن، وإلا CSV)"""
