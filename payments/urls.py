@@ -5,7 +5,13 @@ app_name = 'payments'
 
 urlpatterns = [
     path('', views.payments_home, name='home'),
+
+    # الاسم المعتمد في القوالب
+    path('purchase/<uuid:package_id>/', views.purchase_package, name='purchase_package'),
+
+    # alias اختياري للتوافق مع أي كود قديم يستخدم 'purchase'
     path('purchase/<uuid:package_id>/', views.purchase_package, name='purchase'),
+
     path('success/', views.payment_success, name='success'),
     path('cancel/', views.payment_cancel, name='cancel'),
     path('history/', views.transaction_history, name='history'),

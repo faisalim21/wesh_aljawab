@@ -13,7 +13,9 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('games/', include('games.urls')),
     path('accounts/', include('accounts.urls')),
-    path('payments/', include('payments.urls', namespace='payments')),
+
+    # تأكيد الـ namespace لتطبيق المدفوعات
+    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
 ]
 
 # ملفات الوسائط وملفات الستاتيك (فقط في التطوير)
