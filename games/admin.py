@@ -193,24 +193,142 @@ class LettersPackageAdmin(admin.ModelAdmin):
     status_badge.short_description = "الحالة"
 
     def letters_actions(self, obj):
-        # روابط رفع/تنزيل بأسماء ثابتة وواضحة
-        upload_url = reverse('admin:games_letterspackage_upload', args=[obj.pk])
+        upload_url = reverse('admin:games_letterspackage_upload', args=[obj.id])
         template_url = reverse('admin:games_letterspackage_download_template')
+        export_url = reverse('admin:games_letterspackage_export', args=[obj.id])
         return mark_safe(
             f'<a class="button" href="{upload_url}" style="background:#28a745;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع أسئلة</a>'
-            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">⬇️ قالب</a>'
+            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
+            f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
         )
-    letters_actions.short_description = "إجراءات"
 
-    # ------- روابط مخصصة -------
     def get_urls(self):
         urls = super().get_urls()
         custom = [
             path("stats/", self.admin_site.admin_view(self.stats_view), name="games_letterspackage_stats"),
             path("<uuid:pk>/upload/", self.admin_site.admin_view(self.upload_letters_view), name="games_letterspackage_upload"),
+            path("<uuid:pk>/export/", self.admin_site.admin_view(self.export_letters_view), name="games_letterspackage_export"),
             path("download-template/", self.admin_site.admin_view(self.download_letters_template_view), name="games_letterspackage_download_template"),
         ]
         return custom + urls
+
+    def upload_letters_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
+        if request.method == 'POST':
+            file = request.FILES.get('file')
+            replace_existing = bool(request.POST.get('replace'))
+
+            if not file:
+                messages.error(request, "يرجى اختيار ملف")
+                return HttpResponseRedirect(request.path)
+
+            if replace_existing:
+                package.letters_questions.all().delete()
+
+            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل 1': 'alt1', 'بديل2': 'alt2', 'بديل 2': 'alt2'}
+            added = 0
+
+            try:
+                name = file.name.lower()
+                if name.endswith('.csv'):
+                    decoded = file.read().decode('utf-8-sig')
+                    reader = csv.reader(io.StringIO(decoded))
+                    next(reader, None)
+                    for row in reader:
+                        if len(row) >= 5:
+                            letter, qtype_ar, question, answer, category = [str(x).strip() for x in row[:5]]
+                            qtype = type_map.get(qtype_ar)
+                            if not qtype:
+                                continue
+                            LettersGameQuestion.objects.update_or_create(
+                                package=package, letter=letter, question_type=qtype,
+                                defaults={'question': question, 'answer': answer, 'category': category}
+                            )
+                            added += 1
+                elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
+                    if not HAS_OPENPYXL:
+                        messages.error(request, "openpyxl غير مثبت. ثبّت الحزمة لاستخدام Excel.")
+                        return HttpResponseRedirect(request.path)
+                    wb = openpyxl.load_workbook(file)
+                    sh = wb.active
+                    for row in sh.iter_rows(min_row=2, values_only=True):
+                        if not row or len(row) < 5:
+                            continue
+                        letter, qtype_ar, question, answer, category = [
+                            (str(x).strip() if x is not None else '') for x in row[:5]
+                        ]
+                        qtype = type_map.get(qtype_ar)
+                        if not qtype:
+                            continue
+                        LettersGameQuestion.objects.update_or_create(
+                            package=package, letter=letter, question_type=qtype,
+                            defaults={'question': question, 'answer': answer, 'category': category}
+                        )
+                        added += 1
+                else:
+                    messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
+                    return HttpResponseRedirect(request.path)
+
+                messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
+                return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
+
+            except Exception as e:
+                messages.error(request, f"خطأ أثناء الرفع: {e}")
+                return HttpResponseRedirect(request.path)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": f"رفع أسئلة - حزمة {package.package_number}",
+            "package": package,
+            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",
+            "download_template_url": reverse('admin:games_letterspackage_download_template'),
+            "export_url": reverse('admin:games_letterspackage_export', args=[package.id]),
+            "change_url": reverse('admin:games_letterspackage_change', args=[package.id]),
+            "back_url": reverse('admin:games_letterspackage_changelist'),
+            "submit_label": "رفع الملف",
+            "replace_label": "استبدال الأسئلة الموجودة",
+        }
+        return TemplateResponse(request, "admin/import_csv.html", context)
+
+    def download_letters_template_view(self, request):
+        if not HAS_OPENPYXL:
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
+            writer = csv.writer(response)
+            writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
+            writer.writerow(['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'])
+            writer.writerow(['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'])
+            writer.writerow(['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'])
+            return response
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="letters_template.xlsx"'
+        wb = openpyxl.Workbook()
+        sh = wb.active
+        sh.title = "قالب الأسئلة"
+        headers = ['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف']
+        sh.append(headers)
+        examples = [
+            ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
+            ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
+            ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
+        ]
+        for row in examples:
+            sh.append(row)
+        wb.save(response)
+        return response
+
+    def export_letters_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="letters_package_{package.package_number}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
+        type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2'}
+        for q in package.letters_questions.all().order_by('letter', 'question_type'):
+            writer.writerow([q.letter, type_map_ar.get(q.question_type, q.question_type), q.question, q.answer, q.category])
+        return response
 
     # ------- صفحات مخصصة (HTML مبسّط) -------
     def stats_view(self, request):
@@ -349,38 +467,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
         }
         return TemplateResponse(request, "admin/import_csv.html", context)
 
-    def download_letters_template_view(self, request):
-        """تنزيل قالب الأسئلة (XLSX إن أمكن، وإلا CSV)"""
-        if not HAS_OPENPYXL:
-            response = HttpResponse(content_type='text/csv; charset=utf-8')
-            response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
-            writer.writerow(['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'])
-            writer.writerow(['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'])
-            writer.writerow(['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'])
-            return response
 
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="letters_template.xlsx"'
-        wb = openpyxl.Workbook()
-        sh = wb.active
-        sh.title = "قالب الأسئلة"
-        headers = ['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف']
-        sh.append(headers)
-        examples = [
-            ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
-            ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
-            ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
-        ]
-        for row in examples:
-            sh.append(row)
-        wb.save(response)
-        return response
-
-    def save_model(self, request, obj, form, change):
-        obj.game_type = 'letters'
-        super().save_model(request, obj, form, change)
 
 # ===========================
 #  Admin: حِزم الصور

@@ -1,9 +1,9 @@
 # wesh_aljawab/settings.py
 from pathlib import Path
 from decouple import config
-import os
 import sys
 from urllib.parse import urlparse
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.append(str(BASE_DIR))
@@ -64,25 +64,46 @@ WSGI_APPLICATION = 'wesh_aljawab.wsgi.application'
 ASGI_APPLICATION = 'wesh_aljawab.asgi.application'
 
 # ============== 🗄 قاعدة البيانات ==============
-if DEBUG:
+# نفهم من متغيرات البيئة ما إذا كان Postgres متاحًا
+DB_NAME = config('DB_NAME', default='')
+DB_USER = config('DB_USER', default='')
+DB_PASSWORD = config('DB_PASSWORD', default='')
+DB_HOST = config('DB_HOST', default='')
+DB_PORT = config('DB_PORT', default='5432')
+
+USE_POSTGRES = bool(DB_NAME and DB_HOST)
+
+if USE_POSTGRES:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'OPTIONS': {'sslmode': 'require'},
+        }
+    }
+else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST'),
-            'PORT': config('DB_PORT', default='5432'),
-            'OPTIONS': {'sslmode': 'require'},
-        }
-    }
+
+# منع تشغيل الإنتاج على SQLite بالغلط
+if not DEBUG and not USE_POSTGRES:
+    raise ImproperlyConfigured(
+        "Production is configured without Postgres. Set DB_* env vars on the server."
+    )
+
+# تشخيص عند الإقلاع
+print(
+    f"[BOOT] DEBUG={DEBUG} | DB_ENGINE={DATABASES['default']['ENGINE']} | "
+    f"DB_HOST={DATABASES['default'].get('HOST','-')} | DB_NAME={DATABASES['default'].get('NAME','-')}"
+)
 
 # ============== ⚙️ إعدادات اللعبة ==============
 GAME_SETTINGS = {
@@ -108,13 +129,12 @@ def _is_rediss(url: str) -> bool:
 
 def _channels_hosts(url: str):
     """
-    مهم: channels_redis يفهم TLS من rediss:// تلقائياً.
-    لا نمرّر مفتاح ssl نهائياً لتجنب TypeError في redis/valkey.
+    channels_redis يدعم TLS تلقائيًا عند استخدام rediss://
+    لا نمرر مفتاح SSL هنا لتفادي أخطاء عدم التوافق.
     """
     if not url:
         return []
-    # يكفي تمرير الـ URL نفسه
-    return [url]  # أو [{'address': url}] بدون أي مفاتيح إضافية
+    return [url]  # إرسال الـ URL مباشرة يكفي
 
 # Channels
 try:
@@ -125,9 +145,8 @@ try:
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
                 "CONFIG": {
                     "hosts": _channels_hosts(REDIS_URL),
-                    # خيارات اختيارية لتحسين الأداء والضغط
-                    "capacity": 1000,   # حجم الطوابير
-                    "expiry": 10,       # ثواني لبقاء الرسائل
+                    "capacity": 1000,  # حجم الطوابير
+                    "expiry": 10,      # ثواني لبقاء الرسائل
                 },
             }
         }
@@ -149,7 +168,6 @@ try:
                 "OPTIONS": {
                     "CLIENT_CLASS": "django_redis.client.DefaultClient",
                     "CONNECTION_POOL_KWARGS": {"max_connections": 50},
-                    # ضروري عند استخدام rediss://
                     **({"SSL": True} if _is_rediss(REDIS_CACHE_URL) else {}),
                 },
                 "KEY_PREFIX": "wesh",
@@ -248,8 +266,14 @@ LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}', 'style': '{'},
-        'simple': {'format': '{levelname} {message}', 'style': '{'},
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{'
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{'
+        },
     },
     'handlers': {
         'file': {
