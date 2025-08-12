@@ -1,12 +1,13 @@
 # games/admin.py - لوحة تحكم مُقسّمة لكل لعبة + إحصائيات + رفع أسئلة
 from django.contrib import admin
 from django.urls import path, reverse
-from django.db.models import Count, Sum, Q, Max
+from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
+from django.middleware.csrf import get_token  # ← بديل آمن لـ csrf_input_lazy
 import csv
 import io
 
@@ -27,17 +28,8 @@ from .models import (
 )
 
 # ===========================
-#  Helpers / Utilities
+#  Actions / Utilities
 # ===========================
-
-def _admin_url_for(model, view="changelist"):
-    """
-    يبني اسم الـ URL الخاص بالأدمن ديناميكيًا من الموديل.
-    view: "changelist" | "add" | "change"
-    """
-    app_label = model._meta.app_label
-    model_name = model._meta.model_name
-    return f"admin:{app_label}_{model_name}_{view}"
 
 def action_mark_active(modeladmin, request, queryset):
     updated = queryset.update(is_active=True)
@@ -50,9 +42,7 @@ def action_mark_inactive(modeladmin, request, queryset):
 action_mark_inactive.short_description = "تعطيل المحدد"
 
 def action_export_csv(modeladmin, request, queryset):
-    """
-    تصدير مختصر CSV للحزم المحددة
-    """
+    """تصدير مختصر CSV للحزم المحددة"""
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="packages_export.csv"'
     writer = csv.writer(response)
@@ -62,11 +52,10 @@ def action_export_csv(modeladmin, request, queryset):
             str(obj.id), obj.game_type, obj.package_number,
             '1' if obj.is_free else '0', str(obj.price),
             '1' if obj.is_active else '0', getattr(obj, 'question_theme', ''),
-            (obj.description or '').replace('\n', ' '), obj.created_at.isoformat()
+            (getattr(obj, 'description', '') or '').replace('\n', ' '), obj.created_at.isoformat()
         ])
     return response
 action_export_csv.short_description = "تصدير CSV (حزم)"
-
 
 # ===========================
 #  Proxy Models لتقسيم الأدمن
@@ -110,7 +99,6 @@ class QuizSession(GameSession):
         verbose_name = "جلسة - سؤال وجواب"
         verbose_name_plural = "جلسات - سؤال وجواب"
 
-
 # ===========================
 #  Inlines
 # ===========================
@@ -120,7 +108,6 @@ class LettersGameQuestionInline(admin.TabularInline):
     extra = 0
     fields = ('letter', 'question_type', 'question', 'answer', 'category')
     show_change_link = True
-
 
 # ===========================
 #  Admin: حِزم خلية الحروف
@@ -162,9 +149,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
     # ------- أعمدة العرض -------
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        return qs.filter(game_type='letters').annotate(
-            _qcount=Count('letters_questions')
-        )
+        return qs.filter(game_type='letters').annotate(_qcount=Count('letters_questions'))
 
     def package_info(self, obj):
         return f"حزمة {obj.package_number}"
@@ -174,8 +159,14 @@ class LettersPackageAdmin(admin.ModelAdmin):
         theme = getattr(obj, 'question_theme', 'mixed') or 'mixed'
         label = obj.get_question_theme_display() if hasattr(obj, 'get_question_theme_display') else theme
         if theme == 'sports':
-            return format_html('<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
-        return format_html('<span style="background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
+            return format_html(
+                '<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>',
+                label
+            )
+        return format_html(
+            '<span style="background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>',
+            label
+        )
     theme_badge.short_description = "نوع الأسئلة"
 
     def questions_count_badge(self, obj):
@@ -202,9 +193,9 @@ class LettersPackageAdmin(admin.ModelAdmin):
     status_badge.short_description = "الحالة"
 
     def letters_actions(self, obj):
-        # روابط رفع/تنزيل
-        upload_url = reverse(f"{_admin_url_for(self.model, 'changelist')}".replace('_changelist', '_upload_letters'), args=[obj.id])
-        template_url = reverse(f"{_admin_url_for(self.model, 'changelist')}".replace('_changelist', '_download_letters_template'))
+        # روابط رفع/تنزيل بأسماء ثابتة وواضحة
+        upload_url = reverse('admin:games_letterspackage_upload', args=[obj.pk])
+        template_url = reverse('admin:games_letterspackage_download_template')
         return mark_safe(
             f'<a class="button" href="{upload_url}" style="background:#28a745;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع أسئلة</a>'
             f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">⬇️ قالب</a>'
@@ -215,13 +206,13 @@ class LettersPackageAdmin(admin.ModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path("stats/", self.admin_site.admin_view(self.stats_view), name=_admin_url_for(self.model, 'stats').split(':', 1)[1]),
-            path("<uuid:pk>/upload/", self.admin_site.admin_view(self.upload_letters_view), name=_admin_url_for(self.model, 'upload_letters').split(':', 1)[1]),
-            path("download-template/", self.admin_site.admin_view(self.download_letters_template_view), name=_admin_url_for(self.model, 'download_letters_template').split(':', 1)[1]),
+            path("stats/", self.admin_site.admin_view(self.stats_view), name="games_letterspackage_stats"),
+            path("<uuid:pk>/upload/", self.admin_site.admin_view(self.upload_letters_view), name="games_letterspackage_upload"),
+            path("download-template/", self.admin_site.admin_view(self.download_letters_template_view), name="games_letterspackage_download_template"),
         ]
         return custom + urls
 
-    # ------- صفحات مخصصة (بدون قوالب خارجية) -------
+    # ------- صفحات مخصصة (HTML مبسّط) -------
     def stats_view(self, request):
         """صفحة إحصائيات لحزم/أسئلة خلية الحروف"""
         qs = GamePackage.objects.filter(game_type='letters').annotate(qcount=Count('letters_questions'))
@@ -233,7 +224,11 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
         top_packages = qs.order_by('-qcount', 'package_number')[:10]
         rows = "".join([
-            f"<tr><td>حزمة {p.package_number}</td><td>{p.get_question_theme_display() if hasattr(p,'get_question_theme_display') else ''}</td><td style='text-align:center;'>{p.qcount}</td><td>{'مجانية' if p.is_free else 'مدفوعة'}</td><td>{'فعالة' if p.is_active else 'غير فعالة'}</td></tr>"
+            f"<tr><td>حزمة {p.package_number}</td>"
+            f"<td>{getattr(p, 'get_question_theme_display', lambda: '')()}</td>"
+            f"<td style='text-align:center;'>{p.qcount}</td>"
+            f"<td>{'مجانية' if p.is_free else 'مدفوعة'}</td>"
+            f"<td>{'فعالة' if p.is_active else 'غير فعالة'}</td></tr>"
             for p in top_packages
         ])
         html = f"""
@@ -278,7 +273,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
             if replace_existing:
                 package.letters_questions.all().delete()
 
-            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2'}
+            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل2': 'alt2', 'بديل 1': 'alt1', 'بديل 2': 'alt2'}
             added = 0
 
             try:
@@ -301,7 +296,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 elif file.name.lower().endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')) and HAS_OPENPYXL:
                     wb = openpyxl.load_workbook(file)
                     sh = wb.active
-                    for i, row in enumerate(sh.iter_rows(min_row=2, values_only=True), start=2):
+                    for row in sh.iter_rows(min_row=2, values_only=True):
                         if not row or len(row) < 5:
                             continue
                         letter, qtype_ar, question, answer, category = [str(x).strip() if x is not None else '' for x in row[:5]]
@@ -318,34 +313,32 @@ class LettersPackageAdmin(admin.ModelAdmin):
                     return HttpResponseRedirect(request.path)
 
                 messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
-                return HttpResponseRedirect(reverse(_admin_url_for(self.model, 'changelist')))
+                return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
 
             except Exception as e:
                 messages.error(request, f"خطأ أثناء الرفع: {e}")
                 return HttpResponseRedirect(request.path)
 
-        # صفحة رفع بسيطة بدون قالب خارجي
+        # صفحة رفع بسيطة بدون قالب خارجي — مع CSRF token يدوي
+        csrf = get_token(request)
         html = f"""
         <div style="padding:20px;font-family:Tahoma,Arial;">
           <h3>رفع أسئلة - حزمة {package.package_number}</h3>
           <form method="post" enctype="multipart/form-data">
-            {admin.helpers.csrf_input_lazy(request)}
-            <p><label>الملف (CSV أو Excel): <input type="file" name="file" required></label></p>
+            <input type="hidden" name="csrfmiddlewaretoken" value="{csrf}">
+            <p><label>الملف (CSV أو Excel): <input type="file" name="file" accept=".csv,.xlsx,.xlsm,.xltx,.xltm" required></label></p>
             <p><label><input type="checkbox" name="replace"> حذف الأسئلة الحالية قبل الرفع</label></p>
             <button class="button" type="submit" style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:6px;">رفع</button>
-            <a class="button" href="{reverse(_admin_url_for(self.model, 'download_letters_template'))}" style="margin-right:10px;">⬇️ تنزيل القالب</a>
-            <a class="button" href="{reverse(_admin_url_for(self.model, 'changelist'))}" style="margin-right:10px;">عودة</a>
+            <a class="button" href="{reverse('admin:games_letterspackage_download_template')}" style="margin-right:10px;">⬇️ تنزيل القالب</a>
+            <a class="button" href="{reverse('admin:games_letterspackage_changelist')}" style="margin-right:10px;">عودة</a>
           </form>
         </div>
         """
         return HttpResponse(html)
 
     def download_letters_template_view(self, request):
-        """
-        تنزيل قالب Excel لأسئلة خلية الحروف
-        """
+        """تنزيل قالب الأسئلة (XLSX إن أمكن، وإلا CSV)"""
         if not HAS_OPENPYXL:
-            # بديل CSV
             response = HttpResponse(content_type='text/csv; charset=utf-8')
             response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
             writer = csv.writer(response)
@@ -372,11 +365,9 @@ class LettersPackageAdmin(admin.ModelAdmin):
         wb.save(response)
         return response
 
-    # ------- حفظ / فلترة -------
     def save_model(self, request, obj, form, change):
         obj.game_type = 'letters'
         super().save_model(request, obj, form, change)
-
 
 # ===========================
 #  Admin: حِزم الصور
@@ -421,7 +412,6 @@ class ImagesPackageAdmin(admin.ModelAdmin):
         obj.game_type = 'images'
         super().save_model(request, obj, form, change)
 
-
 # ===========================
 #  Admin: حِزم سؤال وجواب
 # ===========================
@@ -461,7 +451,6 @@ class QuizPackageAdmin(admin.ModelAdmin):
         obj.game_type = 'quiz'
         super().save_model(request, obj, form, change)
 
-
 # ===========================
 #  Admin: أسئلة خلية الحروف (مباشر)
 # ===========================
@@ -488,7 +477,6 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
     def question_preview(self, obj):
         return (obj.question[:50] + '...') if len(obj.question) > 50 else obj.question
     question_preview.short_description = "السؤال"
-
 
 # ===========================
 #  Admin: الجلسات (مقسّمة)
@@ -525,7 +513,6 @@ class QuizSessionAdmin(_BaseSessionAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).filter(game_type='quiz')
 
-
 # ===========================
 #  Admin: المشتريات والمتسابقين
 # ===========================
@@ -554,7 +541,6 @@ class ContestantAdmin(admin.ModelAdmin):
         return f"{obj.session.game_type} / {obj.session.id}"
     session_ref.short_description = "الجلسة"
 
-
 # ===========================
 #  Admin: تحسينات عامة
 # ===========================
@@ -562,11 +548,3 @@ class ContestantAdmin(admin.ModelAdmin):
 admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
 admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
-
-# روابط سريعة في واجهة الأدمن (نصيحة للمشرف):
-# - حزم خلية الحروف: Letters Package
-# - حزم الصور: Images Package
-# - حزم سؤال وجواب: Quiz Package
-# - أسئلة خلية الحروف: Letters game question
-# - جلسات خلية الحروف/الصور/سؤال وجواب
-# - المشتريات، المتسابقون
