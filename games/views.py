@@ -170,22 +170,26 @@ def get_letters_for_session(session):
 
 def check_free_session_eligibility(user, game_type):
     """
-    [وضع مؤقت] السماح بعدد غير محدود من الجلسات المجانية.
-    يُعاد True دائمًا مع رسالة فارغة وعدّاد معلوماتي فقط.
+    يسمح لكل مستخدم بجلسة مجانية واحدة فقط  لكل نوع لعبة.
+
     """
+    if not user or not user.is_authenticated:
+        return False, "يرجى تسجيل الدخول للاستفادة من الجلسة المجانية", 0
+
     try:
-        # عدّاد معلوماتي فقط (لا يستخدم للمنع)
-        if user.is_authenticated:
-            sessions_count = GameSession.objects.filter(
-                host=user, game_type=game_type, package__is_free=True
-            ).count()
-        else:
-            sessions_count = 0
+        # عدد الجلسات المجانية السابقة لهذا النوع
+        sessions_count = GameSession.objects.filter(
+            host=user, game_type=game_type, package__is_free=True
+        ).count()
     except Exception:
         sessions_count = 0
 
-    # السماح دائمًا
+    if sessions_count >= 1:
+        # استنفد الجلسة المجانية
+        return False, "لقد استخدمت الجلسة المجانية الخاصة بك.", sessions_count
+
     return True, "", sessions_count
+
 
 
 
@@ -250,21 +254,33 @@ def letters_game_home(request):
     ).order_by('package_number')
 
     user_purchases = []
+    free_session_eligible = True
+    free_session_message = ""
+    user_free_sessions_count = 0
+
     if request.user.is_authenticated:
         user_purchases = UserPurchase.objects.filter(
             user=request.user, package__game_type='letters'
         ).values_list('package_id', flat=True)
 
-    # وضع مؤقت: السماح دائمًا وإخفاء أي شارة استنفاد
+        free_session_eligible, free_session_message, user_free_sessions_count = check_free_session_eligibility(
+            request.user, 'letters'
+        )
+    else:
+        # غير مسجل: لا نسمح بإنشاء المجاني حتى يسجل دخول
+        free_session_eligible = False
+        free_session_message = "يرجى تسجيل الدخول للاستفادة من الجلسة المجانية"
+
     return render(request, 'games/letters/home.html', {
         'free_package': free_package,
         'paid_packages': paid_packages,
         'user_purchases': user_purchases,
-        'free_session_eligible': True,
-        'free_session_message': "",
-        'user_free_sessions_count': 0,
-        'unlimited_free_mode': True,  # فلاغ يُستخدم بالواجهة
+        'free_session_eligible': free_session_eligible,
+        'free_session_message': free_session_message,
+        'user_free_sessions_count': user_free_sessions_count,
+        'unlimited_free_mode': False,  # ألغيناه
     })
+
 
 def create_letters_session(request):
     # يقبل POST فقط

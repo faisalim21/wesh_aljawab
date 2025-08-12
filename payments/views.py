@@ -8,6 +8,8 @@ from games.models import GamePackage, UserPurchase
 from .models import Transaction, PaymentMethod, FakePaymentGateway, Invoice
 from accounts.models import UserActivity
 from django.utils import timezone
+from django.db import IntegrityError, transaction as db_txn
+
 
 def payments_home(request):
     return render(request, 'payments/home.html')
@@ -16,67 +18,65 @@ def payments_home(request):
 def purchase_package(request, package_id):
     """صفحة شراء الحزمة"""
     package = get_object_or_404(GamePackage, id=package_id, is_active=True)
-    
-    # تحقق من أن المستخدم لم يشتري هذه الحزمة من قبل
-    existing_purchase = UserPurchase.objects.filter(
-        user=request.user,
-        package=package
-    ).first()
-    
+
+    # منع شراء الحزم المجانية احترازياً
+    if package.is_free:
+        messages.info(request, 'هذه حزمة مجانية — لا حاجة للشراء.')
+        return redirect('games:letters_home')
+
+    # تحقق من عدم وجود شراء سابق
+    existing_purchase = UserPurchase.objects.filter(user=request.user, package=package).first()
     if existing_purchase:
         messages.warning(request, 'لديك هذه الحزمة بالفعل!')
         return redirect('games:letters_home')
-    
-    # جلب طرق الدفع المتاحة
+
     payment_methods = PaymentMethod.objects.filter(is_active=True)
-    
+
     if request.method == 'POST':
         payment_method_id = request.POST.get('payment_method')
-        payment_method = get_object_or_404(PaymentMethod, id=payment_method_id)
-        
-        # إنشاء معاملة دفع
-        transaction = Transaction.objects.create(
+        payment_method = get_object_or_404(PaymentMethod, id=payment_method_id, is_active=True)
+
+        # ننشئ معاملة Pending
+        txn = Transaction.objects.create(
             user=request.user,
             package=package,
             amount=package.price,
             payment_method=payment_method,
             status='pending'
         )
-        
-        # معالجة الدفع الوهمي
+
+        # معالجة وهمية (متزامنة)
         gateway = FakePaymentGateway.objects.filter(is_active=True).first()
-        if gateway:
-            success = gateway.process_payment(transaction)
-            
-            if success:
-                # إنشاء مشترى ناجح
-                UserPurchase.objects.create(
-                    user=request.user,
-                    package=package
-                )
-                
-                # إنشاء فاتورة
-                Invoice.objects.create(
-                    transaction=transaction,
-                    customer_name=request.user.get_full_name() or request.user.username,
-                    customer_email=request.user.email,
-                    subtotal=package.price,
-                    total_amount=transaction.calculate_total_with_fees()
-                )
-                
-                # تسجيل النشاط
+        if not gateway:
+            messages.error(request, 'بوابة الدفع غير متوفرة حالياً.')
+            return redirect('payments:cancel')
+
+        success = gateway.process_payment(txn)
+
+        if success:
+            # ضمان عدم تكرار الشراء لو ضغط بسرعة
+            try:
+                with db_txn.atomic():
+                    UserPurchase.objects.get_or_create(user=request.user, package=package)
+            except IntegrityError:
+                pass  # موجودة بالفعل
+
+            # لا ننشئ فاتورة (حسب رغبتك)
+            try:
                 UserActivity.objects.create(
                     user=request.user,
                     activity_type='package_purchased',
                     description=f'شراء حزمة {package.get_game_type_display()} - حزمة {package.package_number}'
                 )
-                
-                messages.success(request, 'تم الشراء بنجاح! يمكنك الآن اللعب')
-                return redirect('payments:success')
-            else:
-                messages.error(request, 'فشل في عملية الدفع، يرجى المحاولة مرة أخرى')
-                return redirect('payments:cancel')
-    
+            except Exception:
+                pass
+
+            messages.success(request, 'تم الشراء بنجاح! يمكنك الآن اللعب 🎉')
+            return redirect('games:letters_home')
+        else:
+            messages.error(request, 'فشل في عملية الدفع، يرجى المحاولة مرة أخرى')
+            return redirect('payments:cancel')
+
     return render(request, 'payments/purchase.html', {
         'package': package,
         'payment_methods': payment_methods,

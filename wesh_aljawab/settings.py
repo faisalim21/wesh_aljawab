@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'channels',  # WebSockets
     'accounts',
     'games',
-    'payments',
+    'payments.apps.PaymentsConfig',
 ]
 
 # ============== ⚙️ الميدل وير ==============

@@ -75,16 +75,30 @@
             <div class="package-card">
               <div class="package-title">حزمة مجانية</div>
               <p class="package-desc">جولة واحدة للتجربة</p>
-              <button type="button" class="btn-play" id="freeBtn"
-                      onclick="createLettersSession('{{ free_package.id }}')">
-                <span class="btn-text">ابدأ الجولة المجانية</span>
-                <div class="loading-spinner">
-                  <div class="spinner"></div>
-                </div>
-              </button>
+
+              {% if free_session_eligible %}
+                <button type="button" class="btn-play" id="freeBtn"
+                        onclick="createLettersSession('{{ free_package.id }}')">
+                  <span class="btn-text">ابدأ الجولة المجانية</span>
+                  <div class="loading-spinner"><div class="spinner"></div></div>
+                </button>
+              {% else %}
+                <button type="button" class="btn-play" id="freeBtn" disabled
+                        title="{{ free_session_message|default:'غير متاح' }}">
+                  <span class="btn-text">
+                    {% if request.user.is_authenticated %}
+                      جربت المجاني بالفعل
+                    {% else %}
+                      سجّل الدخول لتجربة المجاني
+                    {% endif %}
+                  </span>
+                  <div class="loading-spinner"><div class="spinner"></div></div>
+                </button>
+              {% endif %}
             </div>
           </div>
         {% endif %}
+
 
         {% for package in paid_packages %}
           <div class="col-md-6 col-lg-4">
@@ -101,7 +115,7 @@
                   </div>
                 </button>
               {% else %}
-                <a class="btn-play" href="{% url 'payments:purchase' package.id %}">اشترِ هذه الحزمة</a>
+                <a class="btn-play" href="{% url 'payments:purchase_package' package.id %}">اشترِ هذه الحزمة</a>
               {% endif %}
             </div>
           </div>

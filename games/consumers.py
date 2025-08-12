@@ -24,6 +24,20 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
     - صوتيات وعد تنازلي مترابط
     """
 
+    async def broadcast_letters_replace(self, event):
+        """
+        استقبال بث تغيير ترتيب الحروف من الـAPI.
+        يُرسل للمقدم وشاشة العرض (وليس المتسابقين).
+        """
+        if self.role == 'contestant':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'letters_updated',
+            'letters': event.get('letters', []),
+            'reset_progress': bool(event.get('reset_progress', False)),
+        }))
+
+
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"letters_session_{self.session_id}"
