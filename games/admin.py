@@ -295,7 +295,8 @@ class LettersPackageAdmin(admin.ModelAdmin):
     def upload_letters_view(self, request, pk):
         """
         رفع أسئلة (CSV أو Excel) للحزمة المحددة
-        الأعمدة: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2), السؤال, الإجابة, التصنيف]
+        الأعمدة: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2/بديل3/بديل4), السؤال, الإجابة, التصنيف]
+        يدعم صيغ: "رئيسي"، "بديل1/بديل 1/alt1"، وكذلك "بديل أول/ثاني/ثالث/رابع".
         """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
 
@@ -310,15 +311,75 @@ class LettersPackageAdmin(admin.ModelAdmin):
             if replace_existing:
                 package.letters_questions.all().delete()
 
-            type_map = {
-                'رئيسي': 'main',
-                'بديل1': 'alt1', 'بديل 1': 'alt1',
-                'بديل2': 'alt2', 'بديل 2': 'alt2',
-                'بديل3': 'alt3', 'بديل 3': 'alt3',   # ✅ جديد
-                'بديل4': 'alt4', 'بديل 4': 'alt4',   # ✅ جديد
-            }
+            # ===== تطبيع نوع السؤال =====
+            # - يحوّل كل الصيغ إلى: main, alt1, alt2, alt3, alt4
+            # - يدعم الأرقام العربية والهندية، والمسافات، والحروف
+            import re
+
+            ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+            def normalize_qtype(raw: str) -> str | None:
+                if raw is None:
+                    return None
+                s = str(raw).strip()
+                if not s:
+                    return None
+
+                # نزّل الحروف، حوّل أرقام هندية، واحذف المسافات الزائدة
+                s_norm = re.sub(r"\s+", " ", s).lower().translate(ARABIC_INDIC).strip()
+
+                # خرائط مباشرة شائعة
+                direct = {
+                    "رئيسي": "main",
+                    "اساسي": "main",
+                    "أساسي": "main",
+                    "main": "main",
+
+                    "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1",
+                    "بديل اول": "alt1", "بديل أول": "alt1",
+
+                    "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2",
+                    "بديل ثاني": "alt2",
+
+                    "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3",
+                    "بديل ثالث": "alt3",
+
+                    "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4",
+                    "بديل رابع": "alt4",
+                }
+                if s_norm in direct:
+                    return direct[s_norm]
+
+                # أنماط عامة: "بديل X"
+                m = re.match(r"^بديل\s*(\d+)$", s_norm)
+                if m:
+                    n = m.group(1)
+                    if n in {"1", "2", "3", "4"}:
+                        return f"alt{n}"
+
+                # "بديل أول/ثاني/ثالث/رابع"
+                ord_map = {
+                    "اول": "alt1", "أول": "alt1",
+                    "ثاني": "alt2",
+                    "ثالث": "alt3",
+                    "رابع": "alt4",
+                }
+                for k, v in ord_map.items():
+                    if s_norm == f"بديل {k}" or s_norm == k:
+                        return v
+
+                # "alt 1", "alt 2", الخ بنمط عام
+                m2 = re.match(r"^alt\s*(\d+)$", s_norm)
+                if m2:
+                    n = m2.group(1)
+                    if n in {"1", "2", "3", "4"}:
+                        return f"alt{n}"
+
+                # فشل التطبيع
+                return None
 
             added = 0
+            failed_rows = 0
 
             try:
                 name = file.name.lower()
@@ -327,16 +388,29 @@ class LettersPackageAdmin(admin.ModelAdmin):
                     reader = csv.reader(io.StringIO(decoded))
                     next(reader, None)  # تخطي الهيدر
                     for row in reader:
-                        if len(row) >= 5:
-                            letter, qtype_ar, question, answer, category = [str(x).strip() for x in row[:5]]
-                            qtype = type_map.get(qtype_ar)
-                            if not qtype:
-                                continue
-                            LettersGameQuestion.objects.update_or_create(
-                                package=package, letter=letter, question_type=qtype,
-                                defaults={'question': question, 'answer': answer, 'category': category}
-                            )
-                            added += 1
+                        if not row or len(row) < 5:
+                            failed_rows += 1
+                            continue
+
+                        letter, qtype_raw, question, answer, category = [
+                            (str(x).strip() if x is not None else '') for x in row[:5]
+                        ]
+                        qtype = normalize_qtype(qtype_raw)
+                        if not qtype:
+                            failed_rows += 1
+                            continue
+
+                        LettersGameQuestion.objects.update_or_create(
+                            package=package,
+                            letter=letter,
+                            question_type=qtype,
+                            defaults={
+                                'question': question,
+                                'answer': answer,
+                                'category': category
+                            }
+                        )
+                        added += 1
 
                 elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
                     if not HAS_OPENPYXL:
@@ -345,32 +419,49 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
                     wb = openpyxl.load_workbook(file)
                     sh = wb.active
+                    # توقّع هيدر في الصف 1
                     for row in sh.iter_rows(min_row=2, values_only=True):
                         if not row or len(row) < 5:
+                            failed_rows += 1
                             continue
-                        letter, qtype_ar, question, answer, category = [
-                            str(x).strip() if x is not None else '' for x in row[:5]
+
+                        letter, qtype_raw, question, answer, category = [
+                            (str(x).strip() if x is not None else '') for x in row[:5]
                         ]
-                        qtype = type_map.get(qtype_ar)
+                        qtype = normalize_qtype(qtype_raw)
                         if not qtype:
+                            failed_rows += 1
                             continue
+
                         LettersGameQuestion.objects.update_or_create(
-                            package=package, letter=letter, question_type=qtype,
-                            defaults={'question': question, 'answer': answer, 'category': category}
+                            package=package,
+                            letter=letter,
+                            question_type=qtype,
+                            defaults={
+                                'question': question,
+                                'answer': answer,
+                                'category': category
+                            }
                         )
                         added += 1
                 else:
                     messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
                     return HttpResponseRedirect(request.path)
 
-                messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
+                if failed_rows and not added:
+                    messages.error(request, "لم يتم التعرف على أي صف. تفقد عمود نوع السؤال.")
+                elif failed_rows:
+                    messages.warning(request, f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم.")
+                else:
+                    messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
+
                 return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
 
             except Exception as e:
                 messages.error(request, f"خطأ أثناء الرفع: {e}")
                 return HttpResponseRedirect(request.path)
 
-        # استخدم قالب الأدمن الموحد
+        # GET: اعرض صفحة الرفع
         context = {
             **self.admin_site.each_context(request),
             "opts": self.model._meta,
@@ -384,7 +475,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
             "help_rows": [
                 "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
                 "أعمدة مرتبة كالتالي: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
-                "قيم نوع السؤال المقبولة: رئيسي، بديل1، بديل2 (وللحزم المدفوعة أيضًا: بديل3، بديل4).",
+                "قيم نوع السؤال المقبولة: رئيسي، بديل1/بديل 1/بديل أول، بديل2/بديل 2/بديل ثاني، (وللحزم المدفوعة أيضًا: بديل3/بديل 3/بديل ثالث، بديل4/بديل 4/بديل رابع)، أو alt1..alt4.",
             ],
             "extra_note": "عند تفعيل خيار الحذف، سيتم حذف جميع الأسئلة الحالية في هذه الحزمة قبل الاستيراد.",
             "submit_label": "رفع الملف",
