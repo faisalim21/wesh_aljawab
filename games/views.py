@@ -587,6 +587,11 @@ def api_check_free_session_eligibility(request):
 
 @require_http_methods(["GET"])
 def get_question(request):
+    """
+    تُرجع سؤال الحرف مع البدائل حسب نوع الحزمة:
+    - مجانية: main + alt1 + alt2
+    - مدفوعة: main + alt1 + alt2 + alt3 + alt4
+    """
     letter = request.GET.get('letter')
     session_id = request.GET.get('session_id')
 
@@ -595,19 +600,38 @@ def get_question(request):
 
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
+
+        # تحقّق أن الحرف داخل حروف الجلسة
         letters = get_letters_for_session(session)
         if letter not in letters:
             return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
 
-        questions = {}
-        for question_type in ['main', 'alt1', 'alt2']:
-            try:
-                q = LettersGameQuestion.objects.get(package=session.package, letter=letter, question_type=question_type)
-                questions[question_type] = {'question': q.question, 'answer': q.answer, 'category': q.category}
-            except LettersGameQuestion.DoesNotExist:
-                questions[question_type] = {'question': f'لا يوجد سؤال {question_type} للحرف {letter}', 'answer': 'غير متاح', 'category': 'غير محدد'}
+        # حدد الأنواع حسب الحزمة
+        is_free_pkg = session.package.is_free
+        question_types = ['main', 'alt1', 'alt2'] if is_free_pkg else ['main', 'alt1', 'alt2', 'alt3', 'alt4']
 
-        logger.info(f'Questions fetched for letter {letter} in session {session_id}')
+        questions = {}
+        for qtype in question_types:
+            try:
+                q = LettersGameQuestion.objects.get(
+                    package=session.package,
+                    letter=letter,
+                    question_type=qtype
+                )
+                questions[qtype] = {
+                    'question': q.question,
+                    'answer': q.answer,
+                    'category': q.category
+                }
+            except LettersGameQuestion.DoesNotExist:
+                # رسالة افتراضية إن لم يوجد السؤال (لا تُعدّ خطأً)
+                questions[qtype] = {
+                    'question': f'لا يوجد سؤال {qtype} للحرف {letter}',
+                    'answer': 'غير متاح',
+                    'category': 'غير محدد'
+                }
+
+        logger.info(f'Questions fetched for letter {letter} in session {session_id} (free={is_free_pkg})')
         return JsonResponse({
             'success': True,
             'questions': questions,
@@ -616,7 +640,7 @@ def get_question(request):
                 'team1_name': session.team1_name,
                 'team2_name': session.team2_name,
                 'package_name': f"{session.package.get_game_type_display()} - حزمة {session.package.package_number}",
-                'is_free_package': session.package.is_free
+                'is_free_package': is_free_pkg
             }
         })
 

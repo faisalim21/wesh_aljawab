@@ -102,6 +102,8 @@ class LettersGameQuestion(models.Model):
             ('main', 'رئيسي'),
             ('alt1', 'بديل أول'),
             ('alt2', 'بديل ثاني'),
+            ('alt3', 'بديل ثالث'),  
+            ('alt4', 'بديل رابع'),
         ], 
         default='main',
         verbose_name="نوع السؤال",
