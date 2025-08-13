@@ -295,8 +295,9 @@ class LettersPackageAdmin(admin.ModelAdmin):
     def upload_letters_view(self, request, pk):
         """
         رفع أسئلة (CSV أو Excel) للحزمة المحددة
-        الأعمدة: [الحرف, نوع السؤال (رئيسي/بديل1/بديل2/بديل3/بديل4), السؤال, الإجابة, التصنيف]
-        يدعم صيغ: "رئيسي"، "بديل1/بديل 1/alt1"، وكذلك "بديل أول/ثاني/ثالث/رابع".
+        الأعمدة: [الحرف, نوع السؤال, السؤال, الإجابة, التصنيف]
+        يدعم: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4
+        ويتعامل مع الأرقام الهندية، الفراغات، التشكيل، المدود.
         """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
 
@@ -311,12 +312,19 @@ class LettersPackageAdmin(admin.ModelAdmin):
             if replace_existing:
                 package.letters_questions.all().delete()
 
-            # ===== تطبيع نوع السؤال =====
-            # - يحوّل كل الصيغ إلى: main, alt1, alt2, alt3, alt4
-            # - يدعم الأرقام العربية والهندية، والمسافات، والحروف
             import re
+            import unicodedata
 
+            # تحويل الأرقام الهندية إلى إنجليزية
             ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+
+            def strip_diacritics(s: str) -> str:
+                # إزالة التشكيل + المدود + علامات غريبة
+                # U+0640 = TATWEEL (ـ)
+                s = s.replace("\u0640", "")
+                # إزالة التشكيل بالتطبيع
+                norm = unicodedata.normalize('NFD', s)
+                return "".join(ch for ch in norm if unicodedata.category(ch) != 'Mn')
 
             def normalize_qtype(raw: str) -> str | None:
                 if raw is None:
@@ -324,134 +332,116 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 s = str(raw).strip()
                 if not s:
                     return None
+                # تنظيف عام
+                s = strip_diacritics(s)
+                s = s.translate(ARABIC_INDIC)                 # ٣ -> 3
+                s = re.sub(r"\s+", " ", s)                    # فراغات زائدة
+                s = s.lower().strip()
 
-                # نزّل الحروف، حوّل أرقام هندية، واحذف المسافات الزائدة
-                s_norm = re.sub(r"\s+", " ", s).lower().translate(ARABIC_INDIC).strip()
-
-                # خرائط مباشرة شائعة
+                # خرائط مباشرة
                 direct = {
-                    "رئيسي": "main",
-                    "اساسي": "main",
-                    "أساسي": "main",
-                    "main": "main",
-
-                    "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1",
-                    "بديل اول": "alt1", "بديل أول": "alt1",
-
-                    "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2",
-                    "بديل ثاني": "alt2",
-
-                    "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3",
-                    "بديل ثالث": "alt3",
-
-                    "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4",
-                    "بديل رابع": "alt4",
+                    "رئيسي": "main", "اساسي": "main", "أساسي": "main", "main": "main",
+                    "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1", "بديل اول": "alt1",
+                    "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2", "بديل ثاني": "alt2",
+                    "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3", "بديل ثالث": "alt3",
+                    "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4", "بديل رابع": "alt4",
                 }
-                if s_norm in direct:
-                    return direct[s_norm]
+                if s in direct:
+                    return direct[s]
 
-                # أنماط عامة: "بديل X"
-                m = re.match(r"^بديل\s*(\d+)$", s_norm)
+                # "بديل X" حيث X رقم 1..4
+                m = re.match(r"^بديل\s*(\d+)$", s)
                 if m:
                     n = m.group(1)
                     if n in {"1", "2", "3", "4"}:
                         return f"alt{n}"
 
-                # "بديل أول/ثاني/ثالث/رابع"
+                # صيغة ترتيبية مختصرة (أول/ثاني/ثالث/رابع) حتى لو بدون كلمة "بديل"
                 ord_map = {
-                    "اول": "alt1", "أول": "alt1",
-                    "ثاني": "alt2",
-                    "ثالث": "alt3",
-                    "رابع": "alt4",
+                    "اول": "alt1", "أول": "alt1", "اولى": "alt1", "أولى": "alt1",
+                    "ثاني": "alt2", "ثانيه": "alt2", "ثانية": "alt2",
+                    "ثالث": "alt3", "ثالثه": "alt3", "ثالثة": "alt3",
+                    "رابع": "alt4", "رابعه": "alt4", "رابعة": "alt4",
                 }
+                if s in ord_map:
+                    return ord_map[s]
                 for k, v in ord_map.items():
-                    if s_norm == f"بديل {k}" or s_norm == k:
+                    if s == f"بديل {k}":
                         return v
 
-                # "alt 1", "alt 2", الخ بنمط عام
-                m2 = re.match(r"^alt\s*(\d+)$", s_norm)
+                # "alt X" بنمط عام
+                m2 = re.match(r"^alt\s*(\d+)$", s)
                 if m2:
                     n = m2.group(1)
                     if n in {"1", "2", "3", "4"}:
                         return f"alt{n}"
 
-                # فشل التطبيع
                 return None
 
             added = 0
             failed_rows = 0
+            failed_examples = []
+
+            def upsert_row(letter, qtype_raw, question, answer, category):
+                nonlocal added, failed_rows, failed_examples
+                qtype = normalize_qtype(qtype_raw)
+                if not qtype:
+                    failed_rows += 1
+                    if len(failed_examples) < 5:
+                        failed_examples.append(f"[الحرف={letter!s}, النوع='{qtype_raw!s}']")
+                    return
+                # ملاحظة: unique_together يجعل لكل (letter, qtype) سجل واحد فقط
+                LettersGameQuestion.objects.update_or_create(
+                    package=package, letter=str(letter).strip(), question_type=qtype,
+                    defaults={'question': question or '', 'answer': answer or '', 'category': category or ''}
+                )
+                added += 1
 
             try:
                 name = file.name.lower()
                 if name.endswith('.csv'):
-                    decoded = file.read().decode('utf-8-sig')
+                    decoded = file.read().decode('utf-8-sig', errors='ignore')
                     reader = csv.reader(io.StringIO(decoded))
                     next(reader, None)  # تخطي الهيدر
                     for row in reader:
                         if not row or len(row) < 5:
                             failed_rows += 1
                             continue
-
                         letter, qtype_raw, question, answer, category = [
                             (str(x).strip() if x is not None else '') for x in row[:5]
                         ]
-                        qtype = normalize_qtype(qtype_raw)
-                        if not qtype:
-                            failed_rows += 1
-                            continue
-
-                        LettersGameQuestion.objects.update_or_create(
-                            package=package,
-                            letter=letter,
-                            question_type=qtype,
-                            defaults={
-                                'question': question,
-                                'answer': answer,
-                                'category': category
-                            }
-                        )
-                        added += 1
+                        upsert_row(letter, qtype_raw, question, answer, category)
 
                 elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
                     if not HAS_OPENPYXL:
                         messages.error(request, "openpyxl غير مثبت. ثبّت الحزمة لاستخدام ملفات Excel.")
                         return HttpResponseRedirect(request.path)
 
-                    wb = openpyxl.load_workbook(file)
+                    wb = openpyxl.load_workbook(file, data_only=True)
                     sh = wb.active
-                    # توقّع هيدر في الصف 1
                     for row in sh.iter_rows(min_row=2, values_only=True):
                         if not row or len(row) < 5:
                             failed_rows += 1
                             continue
-
                         letter, qtype_raw, question, answer, category = [
                             (str(x).strip() if x is not None else '') for x in row[:5]
                         ]
-                        qtype = normalize_qtype(qtype_raw)
-                        if not qtype:
-                            failed_rows += 1
-                            continue
-
-                        LettersGameQuestion.objects.update_or_create(
-                            package=package,
-                            letter=letter,
-                            question_type=qtype,
-                            defaults={
-                                'question': question,
-                                'answer': answer,
-                                'category': category
-                            }
-                        )
-                        added += 1
+                        upsert_row(letter, qtype_raw, question, answer, category)
                 else:
                     messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
                     return HttpResponseRedirect(request.path)
 
+                # رسائل النتيجة
                 if failed_rows and not added:
-                    messages.error(request, "لم يتم التعرف على أي صف. تفقد عمود نوع السؤال.")
+                    msg = "لم يتم التعرف على أي صف. تفقد عمود (نوع السؤال)."
+                    if failed_examples:
+                        msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
+                    messages.error(request, msg)
                 elif failed_rows:
-                    messages.warning(request, f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم.")
+                    msg = f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم."
+                    if failed_examples:
+                        msg += " أمثلة: " + ", ".join(failed_examples)
+                    messages.warning(request, msg)
                 else:
                     messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
 
@@ -461,7 +451,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 messages.error(request, f"خطأ أثناء الرفع: {e}")
                 return HttpResponseRedirect(request.path)
 
-        # GET: اعرض صفحة الرفع
+        # GET
         context = {
             **self.admin_site.each_context(request),
             "opts": self.model._meta,
@@ -474,14 +464,15 @@ class LettersPackageAdmin(admin.ModelAdmin):
             "back_url": reverse('admin:games_letterspackage_changelist'),
             "help_rows": [
                 "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
-                "أعمدة مرتبة كالتالي: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
-                "قيم نوع السؤال المقبولة: رئيسي، بديل1/بديل 1/بديل أول، بديل2/بديل 2/بديل ثاني، (وللحزم المدفوعة أيضًا: بديل3/بديل 3/بديل ثالث، بديل4/بديل 4/بديل رابع)، أو alt1..alt4.",
+                "الأعمدة: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
+                "أنواع صالحة: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4.",
             ],
-            "extra_note": "عند تفعيل خيار الحذف، سيتم حذف جميع الأسئلة الحالية في هذه الحزمة قبل الاستيراد.",
+            "extra_note": "تفعيل خيار الحذف سيحذف أسئلة هذه الحزمة قبل الاستيراد.",
             "submit_label": "رفع الملف",
             "replace_label": "حذف الأسئلة الحالية قبل الرفع",
         }
         return TemplateResponse(request, "admin/import_csv.html", context)
+
 
     def download_letters_template_view(self, request):
         if not HAS_OPENPYXL:
