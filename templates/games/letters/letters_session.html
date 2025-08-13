@@ -424,57 +424,38 @@
   }
   window.copyLink = copyLink;
 
-  // ========= أصوات أونلاين + فتح الصوت =========
-  // مصادر HTTPS جاهزة؛ يمكنك لاحقاً استضافتها على Cloudinary/Supabase الخاصة بك
-  const BUZZ_URL = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
-  const END_URL  = 'https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg';
-
-  let buzzAudio = null, endAudio = null, audioUnlocked = false;
-
-  function initAudio(){
-    try {
-      buzzAudio = new Audio(BUZZ_URL);
-      endAudio  = new Audio(END_URL);
-      buzzAudio.preload = 'auto';
-      endAudio.preload  = 'auto';
-      buzzAudio.load();
-      endAudio.load();
-    } catch(e){ console.warn('Audio init failed:', e); }
+  // ========= صوت قصير للمسابقة (WebAudio) =========
+  let AUDIO_CTX = null, audioUnlocked = false;
+  function getAudioCtx(){
+    if (!AUDIO_CTX) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      AUDIO_CTX = new AC();
+    }
+    return AUDIO_CTX;
   }
-
-  // تجاوز سياسات التشغيل التلقائي: فتح الصوت عند أول تفاعل
   function unlockAudioOnce(){
     if (audioUnlocked) return;
-    const prime = (a)=> a && a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{});
-    try { prime(buzzAudio); prime(endAudio); } catch {}
+    try { getAudioCtx().resume(); } catch {}
     audioUnlocked = true;
     document.removeEventListener('pointerdown', unlockAudioOnce);
+    document.removeEventListener('keydown', unlockAudioOnce);
   }
-
-  // ========= نغمة بديلة (Fallback) =========
-  function tone(freq=800, dur=300, gain=0.5){
+  function beep({freq=880, duration=0.12, type='square', gain=0.22} = {}){
     try{
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const o = ctx.createOscillator(), g = ctx.createGain();
+      const ctx = getAudioCtx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, ctx.currentTime);
+      g.gain.setValueAtTime(0.0001, ctx.currentTime);
+      g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
       o.connect(g); g.connect(ctx.destination);
-      o.frequency.value=freq; g.gain.setValueAtTime(gain, ctx.currentTime);
-      o.start(); o.stop(ctx.currentTime + dur/1000);
+      o.start(); o.stop(ctx.currentTime + duration + 0.02);
     }catch{}
   }
-
-  function playBuzzSound(){
-    if (buzzAudio){
-      try { buzzAudio.currentTime = 0; buzzAudio.play().catch(()=>tone(800,300,0.6)); }
-      catch { tone(800,300,0.6); }
-    } else { tone(800,300,0.6); }
-  }
-
-  function playEndSound(){
-    if (endAudio){
-      try { endAudio.currentTime = 0; endAudio.play().catch(()=>tone(420,600,0.6)); }
-      catch { tone(420,600,0.6); }
-    } else { tone(420,600,0.6); }
-  }
+  function playBuzzSound(){ beep({freq: 940, duration: 0.14, type:'square', gain:0.2}); }
+  function playEndSound(){  beep({freq: 520, duration: 0.11, type:'sine',   gain:0.24}); }
 
   // ========= واجهة الخلايا =========
   function createHoneycombCells(){
@@ -616,7 +597,7 @@
     const n = document.getElementById('buzzNotification');
     n.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${(team==='team1'?team1Name:team2Name)} ضغط الزر!`;
     n.style.display = 'block';
-    playBuzzSound(); // ← صوت الضغطة
+    playBuzzSound(); // صوت قصير
     setTimeout(()=>{ n.style.display='none'; }, 4000);
   }
 
@@ -658,7 +639,7 @@
       clearHeartbeat();
       heartbeatTimer = setInterval(()=>{
         try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
-      }, 20000); // كل 20 ثانية
+      }, 20000);
     };
 
     socket.onmessage = (ev)=>{
@@ -671,8 +652,7 @@
         case 'buzz_unlocked':
         case 'buzz_reset':
         case 'buzz_reset_by_host':
-          // نهاية العدّ أو فتح القفل من أي طرف
-          playEndSound();
+          playEndSound(); // توت خفيف جداً
           break;
 
         case 'cell_state_updated':
@@ -709,8 +689,8 @@
   // ========= تهيئة =========
   window.addEventListener('beforeunload', ()=>{ try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{}; clearHeartbeat(); });
   document.addEventListener('DOMContentLoaded', ()=>{
-    initAudio();
-    document.addEventListener('pointerdown', unlockAudioOnce, { once: true }); // فك قفل الصوت
+    document.addEventListener('pointerdown', unlockAudioOnce, { once: true });
+    document.addEventListener('keydown',   unlockAudioOnce, { once: true });
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
@@ -725,6 +705,7 @@
   }
   window.resetBuzzer = resetBuzzer;
 </script>
+
 
 
 </body>
