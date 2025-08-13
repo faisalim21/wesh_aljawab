@@ -424,38 +424,16 @@
   }
   window.copyLink = copyLink;
 
-  // ========= صوت قصير للمسابقة (WebAudio) =========
-  let AUDIO_CTX = null, audioUnlocked = false;
-  function getAudioCtx(){
-    if (!AUDIO_CTX) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      AUDIO_CTX = new AC();
-    }
-    return AUDIO_CTX;
-  }
-  function unlockAudioOnce(){
-    if (audioUnlocked) return;
-    try { getAudioCtx().resume(); } catch {}
-    audioUnlocked = true;
-    document.removeEventListener('pointerdown', unlockAudioOnce);
-    document.removeEventListener('keydown', unlockAudioOnce);
-  }
-  function beep({freq=880, duration=0.12, type='square', gain=0.22} = {}){
+  function tone(freq=800, dur=300, gain=0.5){
     try{
-      const ctx = getAudioCtx();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = type;
-      o.frequency.setValueAtTime(freq, ctx.currentTime);
-      g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      const ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
-      o.start(); o.stop(ctx.currentTime + duration + 0.02);
+      o.frequency.value=freq; g.gain.setValueAtTime(gain, ctx.currentTime);
+      o.start(); o.stop(ctx.currentTime + dur/1000);
     }catch{}
   }
-  function playBuzzSound(){ beep({freq: 940, duration: 0.14, type:'square', gain:0.2}); }
-  function playEndSound(){  beep({freq: 520, duration: 0.11, type:'sine',   gain:0.24}); }
+  function playBuzzSound(){ tone(800,300,0.6); }
 
   // ========= واجهة الخلايا =========
   function createHoneycombCells(){
@@ -597,7 +575,7 @@
     const n = document.getElementById('buzzNotification');
     n.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${(team==='team1'?team1Name:team2Name)} ضغط الزر!`;
     n.style.display = 'block';
-    playBuzzSound(); // صوت قصير
+    playBuzzSound();
     setTimeout(()=>{ n.style.display='none'; }, 4000);
   }
 
@@ -639,33 +617,17 @@
       clearHeartbeat();
       heartbeatTimer = setInterval(()=>{
         try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
-      }, 20000);
+      }, 20000); // كل 20 ثانية
     };
 
     socket.onmessage = (ev)=>{
       let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
       switch(d.type){
-        case 'contestant_buzz_accepted':
-          showBuzzNotification(d.contestant_name, d.team);
-          break;
-
-        case 'buzz_unlocked':
-        case 'buzz_reset':
-        case 'buzz_reset_by_host':
-          playEndSound(); // توت خفيف جداً
-          break;
-
-        case 'cell_state_updated':
-          applyCellState(d.letter, d.state);
-          break;
-
-        case 'scores_updated':
-          reflectScores(d.team1_score, d.team2_score);
-          break;
-
-        case 'pong':
-        default:
-          break;
+        case 'contestant_buzz_accepted': showBuzzNotification(d.contestant_name, d.team); break;
+        case 'cell_state_updated': applyCellState(d.letter, d.state); break;
+        case 'scores_updated': reflectScores(d.team1_score, d.team2_score); break;
+        case 'pong': break;
+        default: break;
       }
     };
 
@@ -689,8 +651,6 @@
   // ========= تهيئة =========
   window.addEventListener('beforeunload', ()=>{ try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{}; clearHeartbeat(); });
   document.addEventListener('DOMContentLoaded', ()=>{
-    document.addEventListener('pointerdown', unlockAudioOnce, { once: true });
-    document.addEventListener('keydown',   unlockAudioOnce, { once: true });
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
@@ -705,7 +665,6 @@
   }
   window.resetBuzzer = resetBuzzer;
 </script>
-
 
 
 </body>

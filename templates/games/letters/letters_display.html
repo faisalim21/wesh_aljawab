@@ -171,43 +171,6 @@
   let countdownInterval = null;
   let heartbeatTimer = null;
 
-  // ===================== صوت قصير مناسب للمسابقة (WebAudio) =====================
-  let AUDIO_CTX = null, audioUnlocked = false;
-  function getAudioCtx(){
-    if (!AUDIO_CTX) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      AUDIO_CTX = new AC();
-    }
-    return AUDIO_CTX;
-  }
-  function unlockAudioOnce(){
-    if (audioUnlocked) return;
-    try { getAudioCtx().resume(); } catch {}
-    audioUnlocked = true;
-    document.removeEventListener('pointerdown', unlockAudioOnce);
-    document.removeEventListener('keydown', unlockAudioOnce);
-  }
-  // مولد "توت" قصير مع هجوم/تلاشي سريع لتجنّب الطقطقة
-  function beep({freq=880, duration=0.12, type='square', gain=0.22} = {}){
-    try{
-      const ctx = getAudioCtx();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = type;
-      o.frequency.setValueAtTime(freq, ctx.currentTime);
-      // Envelope: هجوم سريع ثم تلاشي قصير
-      g.gain.setValueAtTime(0.0001, ctx.currentTime);
-      g.gain.linearRampToValueAtTime(gain, ctx.currentTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-      o.connect(g); g.connect(ctx.destination);
-      o.start(); o.stop(ctx.currentTime + duration + 0.02);
-    }catch{}
-  }
-  // صوت الضغطة: توت لافت، قصير
-  function playBuzz(){ beep({freq: 940, duration: 0.14, type: 'square', gain: 0.2}); }
-  // صوت نهاية العد أو فك القفل: توت بسيط أقصر
-  function playEnd(){  beep({freq: 520, duration: 0.11, type: 'sine',   gain: 0.24}); }
-
   // ===================== بناء خلايا العسل مرة واحدة =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
@@ -262,9 +225,21 @@
     }
   }
 
-  // ===================== عرض الضغطة + العدّ =====================
+  // ===================== أصوات + عدّ تنازلي =====================
+  function tone(freq, durMs) {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.frequency.value = freq; g.gain.value = 0.6;
+      osc.start(); osc.stop(ctx.currentTime + durMs / 1000);
+    } catch {}
+  }
+  function playBuzz() { tone(800, 350); }
+  function playEnd()  { tone(420, 600); }
+
   function showBuzz(name, team) {
-    playBuzz(); // صوت قصير
+    playBuzz();
     document.getElementById('buzzedName').textContent = name;
     const ind = document.getElementById('teamIndicator');
     ind.textContent = (team === 'team1') ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
@@ -285,10 +260,10 @@
   }
 
   function endBuzz() {
-    playEnd(); // توت خفيف جداً
+    playEnd();
     setTimeout(() => {
       document.getElementById('buzzedOverlay').classList.remove('show');
-    }, 300);
+    }, 400);
   }
 
   // ===================== تحديث الواجهة =====================
@@ -298,11 +273,18 @@
   }
 
   function updateCell(letter, state) {
-    const el = document.querySelector(`[data-letter="${letter}"]`);
-    if (!el) return;
-    el.classList.remove('team1', 'team2');
-    if (state && state !== 'normal') el.classList.add(state);
+      const el = document.querySelector(`[data-letter="${letter}"]`);
+      if (!el) return;
+
+      // إزالة أي حالة سابقة
+      el.classList.remove('team1', 'team2');
+
+      // إذا وصلت حالة غير normal نضيفها
+      if (state && state !== 'normal') {
+          el.classList.add(state);
+      }
   }
+
 
   // ===================== WebSocket (بدون Polling) =====================
   function setupWebSocket() {
@@ -366,10 +348,7 @@
 
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎬 شاشة العرض – WebSocket + صوت قصير');
-    document.addEventListener('pointerdown', unlockAudioOnce, { once: true });
-    document.addEventListener('keydown', unlockAudioOnce,  { once: true });
-
+    console.log('🎬 شاشة العرض – تشغيل WebSocket فقط');
     createHoneycombCells();
     setupWebSocket();
 
@@ -380,7 +359,6 @@
     });
   });
 </script>
-
 
 
 
