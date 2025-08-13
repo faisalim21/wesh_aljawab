@@ -1,48 +1,124 @@
 {% extends "admin/base_site.html" %}
 {% load i18n static %}
+
 {% block title %}{{ title }}{% endblock %}
 
-{% block content %}
-<div class="container" style="max-width:800px;margin:auto;">
-  <h1 style="margin-bottom:20px;">{{ title }}</h1>
+{% block extrastyle %}
+<style>
+  /* تحسينات خفيفة متوافقة مع ثيم الأدمن */
+  .import-wrap{max-width:980px;margin-inline:auto}
+  .import-head{
+    padding:16px 20px;
+    border:1px solid var(--hairline-color, #e4e4e4);
+    border-radius:8px;
+    background: var(--body-bg, #fff);
+  }
+  .import-head h1{margin:0 0 6px;font-weight:800}
+  .meta-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px}
+  .meta-card{
+    border:1px solid var(--hairline-color, #e4e4e4);
+    background:var(--darkened-bg, #f6f6f6);
+    border-radius:8px;padding:10px 12px;text-align:center
+  }
+  .meta-card b{display:block;font-size:1.1rem;margin-top:4px}
+  .object-tools.inline{margin-top:14px}
+  .object-tools.inline li{margin-inline-start:6px}
+  .module.import-box{border-radius:8px}
+  .help-list{margin:0;padding-inline-start:18px}
+  .help-list li{margin:6px 0}
+  .note-danger{color:#b42318}
+  .file-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .file-row input[type="file"]{max-width:100%}
+  .switch{display:inline-flex;align-items:center;gap:8px}
+  .switch input{transform:scale(1.1)}
+  .submit-row{display:flex;gap:8px;justify-content:flex-start}
+  .btn-secondary{
+    display:inline-block;padding:8px 12px;border-radius:6px;
+    border:1px solid var(--hairline-color, #e4e4e4);
+    background:var(--darkened-bg, #f6f6f6);text-decoration:none;
+  }
+</style>
+{% endblock %}
 
-  <div style="background:#f8f9fa;padding:15px;border:1px solid #ddd;border-radius:6px;margin-bottom:20px;">
-    <strong>الحزمة:</strong> {{ package }}<br>
-    <a href="{{ back_url }}">← رجوع للقائمة</a>
-    {% if change_url %} | <a href="{{ change_url }}">✏ تعديل الحزمة</a>{% endif %}
-    {% if download_template_url %} | <a href="{{ download_template_url }}">⬇ تحميل القالب</a>{% endif %}
-    {% if export_url %} | <a href="{{ export_url }}">📤 تصدير الأسئلة</a>{% endif %}
+{% block content %}
+<div class="import-wrap">
+
+  <!-- رأس الصفحة / عنوان وملخص -->
+  <div class="import-head">
+    <h1>{{ title }}</h1>
+    <ul class="object-tools inline">
+      {% if back_url %}<li><a href="{{ back_url }}" class="btn-secondary">← رجوع</a></li>{% endif %}
+      {% if change_url %}<li><a href="{{ change_url }}" class="btn-secondary">✏️ تعديل الحزمة</a></li>{% endif %}
+      {% if download_template_url %}<li><a href="{{ download_template_url }}" class="btn-secondary">⬇️ تحميل القالب</a></li>{% endif %}
+      {% if export_url %}<li><a href="{{ export_url }}" class="btn-secondary">📤 تصدير الأسئلة</a></li>{% endif %}
+    </ul>
+
+    <div class="meta-cards">
+      <div class="meta-card">
+        الحالة
+        <b>{% if package.is_active %}فعّالة{% else %}غير فعّالة{% endif %}</b>
+      </div>
+      <div class="meta-card">
+        السعر
+        <b>{% if package.is_free %}مجانية{% else %}{{ package.price }} ريال{% endif %}</b>
+      </div>
+      <div class="meta-card">
+        رقم الحزمة
+        <b>{{ package.package_number }}</b>
+      </div>
+    </div>
   </div>
 
+  <!-- رسائل النظام -->
   {% if messages %}
-    <ul class="messagelist">
+    <ul class="messagelist" style="margin-top:16px;">
       {% for message in messages %}
         <li class="{{ message.tags }}">{{ message }}</li>
       {% endfor %}
     </ul>
   {% endif %}
 
-  <div style="margin-bottom:20px;">
-    <h3>تعليمات الرفع:</h3>
-    <ul>
-      {% for row in help_rows %}
-        <li>{{ row }}</li>
-      {% endfor %}
-    </ul>
-    {% if extra_note %}
-      <p style="color:#d9534f;">{{ extra_note }}</p>
-    {% endif %}
+  <!-- إرشادات -->
+  <div class="module" style="margin-top:16px;border-radius:8px;">
+    <h2>تعليمات الرفع</h2>
+    <div class="form-row">
+      <ul class="help-list">
+        {% for row in help_rows %}
+          <li>{{ row }}</li>
+        {% endfor %}
+      </ul>
+      {% if extra_note %}
+        <p class="note-danger">{{ extra_note }}</p>
+      {% endif %}
+    </div>
   </div>
 
-  <form method="post" enctype="multipart/form-data" style="background:#fff;padding:20px;border:1px solid #ddd;border-radius:6px;">
+  <!-- نموذج الرفع -->
+  <form method="post" enctype="multipart/form-data" novalidate>
     {% csrf_token %}
-    <div style="margin-bottom:10px;">
-      <input type="file" name="file" accept="{{ accept }}" required>
+    <div class="module import-box">
+      <h2>رفع ملف الأسئلة</h2>
+      <div class="form-row">
+        <div class="file-row">
+          <input type="file" name="file" accept="{{ accept }}" required>
+          <span class="help">
+            الصيغ المدعومة: {{ accept|default:".csv,.xlsx" }}
+          </span>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="switch">
+          <input type="checkbox" name="replace">
+          <span>{{ replace_label }}</span>
+        </label>
+      </div>
     </div>
-    <div style="margin-bottom:10px;">
-      <label><input type="checkbox" name="replace"> {{ replace_label }}</label>
+
+    <div class="submit-row">
+      <input type="submit" class="default" value="{{ submit_label|default:'رفع الملف' }}">
+      {% if back_url %}<a href="{{ back_url }}" class="btn-secondary">إلغاء</a>{% endif %}
     </div>
-    <button type="submit" class="default" style="background:#007bff;color:#fff;padding:8px 16px;border:none;border-radius:4px;">{{ submit_label }}</button>
   </form>
+
 </div>
 {% endblock %}
