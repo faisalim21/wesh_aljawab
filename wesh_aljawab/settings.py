@@ -1,29 +1,32 @@
 # wesh_aljawab/settings.py
 from pathlib import Path
 from decouple import config
-import sys
+import os
 from urllib.parse import urlparse
-from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.append(str(BASE_DIR))
 
-# ============== 🔐 إعدادات الأمان ==============
+# ============== 🔐 الأمان ==============
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = [h.strip() for h in config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',') if h.strip()]
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in config('CSRF_TRUSTED_ORIGINS', default='').split(',') if o.strip()]
+
+def _split_csv(env_value, default=''):
+    raw = env_value if isinstance(env_value, str) else default
+    return [x.strip() for x in raw.split(',') if x.strip()]
+
+ALLOWED_HOSTS = _split_csv(config('ALLOWED_HOSTS', default='127.0.0.1,localhost'))
+CSRF_TRUSTED_ORIGINS = _split_csv(config('CSRF_TRUSTED_ORIGINS', default=''))
 
 # ============== 🧩 التطبيقات ==============
 INSTALLED_APPS = [
-    'daphne',  # خادم ASGI
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'channels',  # WebSockets
+    'channels',
     'accounts',
     'games',
     'payments.apps.PaymentsConfig',
@@ -32,7 +35,7 @@ INSTALLED_APPS = [
 # ============== ⚙️ الميدل وير ==============
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Serve static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -64,46 +67,41 @@ WSGI_APPLICATION = 'wesh_aljawab.wsgi.application'
 ASGI_APPLICATION = 'wesh_aljawab.asgi.application'
 
 # ============== 🗄 قاعدة البيانات ==============
-# نفهم من متغيرات البيئة ما إذا كان Postgres متاحًا
-DB_NAME = config('DB_NAME', default='')
-DB_USER = config('DB_USER', default='')
-DB_PASSWORD = config('DB_PASSWORD', default='')
-DB_HOST = config('DB_HOST', default='')
-DB_PORT = config('DB_PORT', default='5432')
-
-USE_POSTGRES = bool(DB_NAME and DB_HOST)
-
-if USE_POSTGRES:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-            'OPTIONS': {'sslmode': 'require'},
-        }
+def _db_from_url(url: str):
+    """حوّل DATABASE_URL إلى dict إعدادات Django"""
+    u = urlparse(url)
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': (u.path or '').lstrip('/'),
+        'USER': u.username or '',
+        'PASSWORD': u.password or '',
+        'HOST': u.hostname or '',
+        'PORT': str(u.port or '5432'),
+        'OPTIONS': {'sslmode': 'require'},
     }
+
+DATABASE_URL = os.environ.get('DATABASE_URL') or config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    # استخدم DATABASE_URL إن وُجد (موصى به في Render)
+    DATABASES = {'default': _db_from_url(DATABASE_URL)}
 else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+    if DEBUG:
+        # تطوير محلي: SQLite
+        DATABASES = {'default': {'ENGINE': 'django.db.backends.sqlite3', 'NAME': BASE_DIR / 'db.sqlite3'}}
+    else:
+        # إنتاج بدون DATABASE_URL: خذ المتغيرات المفصلة
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': config('DB_NAME'),
+                'USER': config('DB_USER'),
+                'PASSWORD': config('DB_PASSWORD'),
+                'HOST': config('DB_HOST'),
+                'PORT': config('DB_PORT', default='5432'),
+                'OPTIONS': {'sslmode': 'require'},
+            }
         }
-    }
-
-# منع تشغيل الإنتاج على SQLite بالغلط
-if not DEBUG and not USE_POSTGRES:
-    raise ImproperlyConfigured(
-        "Production is configured without Postgres. Set DB_* env vars on the server."
-    )
-
-# تشخيص عند الإقلاع
-print(
-    f"[BOOT] DEBUG={DEBUG} | DB_ENGINE={DATABASES['default']['ENGINE']} | "
-    f"DB_HOST={DATABASES['default'].get('HOST','-')} | DB_NAME={DATABASES['default'].get('NAME','-')}"
-)
 
 # ============== ⚙️ إعدادات اللعبة ==============
 GAME_SETTINGS = {
@@ -111,56 +109,42 @@ GAME_SETTINGS = {
     'PAID_SESSION_DURATION_DAYS': 3,
     'MAX_FREE_SESSIONS_PER_GAME_TYPE': 1,
     'SESSION_WARNING_THRESHOLDS': {
-        'FREE': {'DANGER': 5, 'WARNING': 10},   # دقائق
-        'PAID': {'DANGER': 2, 'WARNING': 6},    # ساعات
+        'FREE': {'DANGER': 5, 'WARNING': 10},
+        'PAID': {'DANGER': 2, 'WARNING': 6},
     }
 }
 
-# ============== 🔄 إعدادات Redis / Channels ==============
+# ============== 🔄 Redis / Channels ==============
+from urllib.parse import urlparse as _urlparse
+def _is_rediss(url: str) -> bool:
+    try:
+        return _urlparse(url).scheme == 'rediss'
+    except Exception:
+        return False
+
 REDIS_URL = config('REDIS_URL', default='')
 REDIS_CACHE_URL = config('REDIS_CACHE_URL', default=REDIS_URL or '')
 FORCE_REDIS = config('FORCE_REDIS', default=False, cast=bool)
 
-def _is_rediss(url: str) -> bool:
-    try:
-        return urlparse(url).scheme == 'rediss'
-    except Exception:
-        return False
-
-def _channels_hosts(url: str):
-    """
-    channels_redis يدعم TLS تلقائيًا عند استخدام rediss://
-    لا نمرر مفتاح SSL هنا لتفادي أخطاء عدم التوافق.
-    """
-    if not url:
-        return []
-    return [url]  # إرسال الـ URL مباشرة يكفي
-
-# Channels
 try:
     if FORCE_REDIS and REDIS_URL:
-        print("Using Redis for Channels...")
         CHANNEL_LAYERS = {
             "default": {
                 "BACKEND": "channels_redis.core.RedisChannelLayer",
                 "CONFIG": {
-                    "hosts": _channels_hosts(REDIS_URL),
-                    "capacity": 1000,  # حجم الطوابير
-                    "expiry": 10,      # ثواني لبقاء الرسائل
+                    "hosts": [REDIS_URL],  # لا نمرر SSL؛ rediss:// يكفي
+                    "capacity": 1000,
+                    "expiry": 10,
                 },
             }
         }
     else:
-        print("Using InMemory for Channels...")
         CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
-except Exception as e:
-    print(f"Redis connection failed for Channels, falling back to InMemory: {e}")
+except Exception:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
-# Cache
 try:
     if FORCE_REDIS and REDIS_CACHE_URL:
-        print("Using Redis for Cache...")
         CACHES = {
             "default": {
                 "BACKEND": "django_redis.cache.RedisCache",
@@ -175,7 +159,6 @@ try:
             }
         }
     else:
-        print("Using LocMem for Cache...")
         CACHES = {
             "default": {
                 "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -184,8 +167,7 @@ try:
                 "OPTIONS": {"MAX_ENTRIES": 1000},
             }
         }
-except Exception as e:
-    print(f"Redis cache failed, falling back to LocMem: {e}")
+except Exception:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
@@ -213,7 +195,7 @@ TIME_ZONE = 'Asia/Riyadh'
 USE_I18N = True
 USE_TZ = True
 
-# ============== 📁 الملفات الثابتة والميديا ==============
+# ============== 📁 Static/Media ==============
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
@@ -228,7 +210,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# ============== 🛡 إعدادات الأمان ==============
+# ============== 🛡 الأمان ==============
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
@@ -245,7 +227,7 @@ SESSION_COOKIE_AGE = 86400
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# ============== ✉️ إعدادات البريد ==============
+# ============== ✉️ البريد ==============
 EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
@@ -254,34 +236,18 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='وش الجواب <noreply@weshaljawab.com>')
 
-# ============== 📤 حدود رفع الملفات ==============
-DATA_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
-
-# ============== 📊 إعدادات التسجيل ==============
+# ============== 📊 التسجيل ==============
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{'
-        },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{'
-        },
+        'verbose': {'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}', 'style': '{'},
+        'simple': {'format': '{levelname} {message}', 'style': '{'},
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': LOG_DIR / 'django.log',
-            'formatter': 'verbose',
-        },
+        'file': {'level': 'INFO','class': 'logging.FileHandler','filename': LOG_DIR / 'django.log','formatter': 'verbose'},
         'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'simple'},
     },
     'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
@@ -292,7 +258,7 @@ LOGGING = {
     },
 }
 
-# ============== 🚀 إعدادات إضافية للإنتاج ==============
+# ============== 🚀 إنتاج ==============
 if not DEBUG:
     SECURE_SSL_REDIRECT = True
     SECURE_HSTS_SECONDS = 31536000

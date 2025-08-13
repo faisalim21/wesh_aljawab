@@ -1,21 +1,24 @@
 # games/admin.py - لوحة تحكم مُقسّمة لكل لعبة + إحصائيات + رفع أسئلة
 from django.contrib import admin
 from django.urls import path, reverse
-from django.db.models import Count
+from django.db.models import Count, Max
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
-from django.middleware.csrf import get_token  # ← بديل آمن لـ csrf_input_lazy
+from django.middleware.csrf import get_token
+from django.template.response import TemplateResponse
+from django import forms
+from django.db import IntegrityError
 import csv
 import io
-from django.template.response import TemplateResponse
+
 # حاول استيراد openpyxl إن وُجد
 try:
     import openpyxl
     HAS_OPENPYXL = True
-except Exception:
+except ImportError:
     HAS_OPENPYXL = False
 
 from .models import (
@@ -26,6 +29,23 @@ from .models import (
     LettersGameProgress,
     Contestant,
 )
+
+# ===========================
+#  Forms
+# ===========================
+
+class LettersPackageForm(forms.ModelForm):
+    class Meta:
+        model = GamePackage
+        fields = ('package_number', 'is_free', 'price', 'is_active', 'description', 'question_theme')
+
+    def clean_package_number(self):
+        num = self.cleaned_data['package_number']
+        exists = GamePackage.objects.filter(game_type='letters', package_number=num)\
+                                    .exclude(pk=self.instance.pk).exists()
+        if exists:
+            raise forms.ValidationError(f"الحزمة رقم {num} موجودة بالفعل في خلية الحروف.")
+        return num
 
 # ===========================
 #  Actions / Utilities
@@ -136,7 +156,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
     inlines = [LettersGameQuestionInline]
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
-
+    form = LettersPackageForm
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': ('package_number', 'is_free', 'price', 'is_active')
@@ -146,7 +166,6 @@ class LettersPackageAdmin(admin.ModelAdmin):
         }),
     )
 
-    # ------- أعمدة العرض -------
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.filter(game_type='letters').annotate(_qcount=Count('letters_questions'))
@@ -201,6 +220,24 @@ class LettersPackageAdmin(admin.ModelAdmin):
             f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
             f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
         )
+    letters_actions.short_description = "إجراءات"
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['package_number'].help_text = "يجب أن يكون فريدًا داخل خلية الحروف."
+        if not obj:
+            next_num = (GamePackage.objects.filter(game_type='letters')
+                        .aggregate(Max('package_number'))['package_number__max'] or 0) + 1
+            form.base_fields['package_number'].initial = next_num
+        return form
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'letters'
+        try:
+            super().save_model(request, obj, form, change)
+        except IntegrityError:
+            messages.error(request, f"لا يمكن الحفظ: الرقم {obj.package_number} مستخدم بالفعل في خلية الحروف.")
+            raise
 
     def get_urls(self):
         urls = super().get_urls()
@@ -212,125 +249,6 @@ class LettersPackageAdmin(admin.ModelAdmin):
         ]
         return custom + urls
 
-    def upload_letters_view(self, request, pk):
-        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
-        if request.method == 'POST':
-            file = request.FILES.get('file')
-            replace_existing = bool(request.POST.get('replace'))
-
-            if not file:
-                messages.error(request, "يرجى اختيار ملف")
-                return HttpResponseRedirect(request.path)
-
-            if replace_existing:
-                package.letters_questions.all().delete()
-
-            type_map = {'رئيسي': 'main', 'بديل1': 'alt1', 'بديل 1': 'alt1', 'بديل2': 'alt2', 'بديل 2': 'alt2'}
-            added = 0
-
-            try:
-                name = file.name.lower()
-                if name.endswith('.csv'):
-                    decoded = file.read().decode('utf-8-sig')
-                    reader = csv.reader(io.StringIO(decoded))
-                    next(reader, None)
-                    for row in reader:
-                        if len(row) >= 5:
-                            letter, qtype_ar, question, answer, category = [str(x).strip() for x in row[:5]]
-                            qtype = type_map.get(qtype_ar)
-                            if not qtype:
-                                continue
-                            LettersGameQuestion.objects.update_or_create(
-                                package=package, letter=letter, question_type=qtype,
-                                defaults={'question': question, 'answer': answer, 'category': category}
-                            )
-                            added += 1
-                elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
-                    if not HAS_OPENPYXL:
-                        messages.error(request, "openpyxl غير مثبت. ثبّت الحزمة لاستخدام Excel.")
-                        return HttpResponseRedirect(request.path)
-                    wb = openpyxl.load_workbook(file)
-                    sh = wb.active
-                    for row in sh.iter_rows(min_row=2, values_only=True):
-                        if not row or len(row) < 5:
-                            continue
-                        letter, qtype_ar, question, answer, category = [
-                            (str(x).strip() if x is not None else '') for x in row[:5]
-                        ]
-                        qtype = type_map.get(qtype_ar)
-                        if not qtype:
-                            continue
-                        LettersGameQuestion.objects.update_or_create(
-                            package=package, letter=letter, question_type=qtype,
-                            defaults={'question': question, 'answer': answer, 'category': category}
-                        )
-                        added += 1
-                else:
-                    messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
-                    return HttpResponseRedirect(request.path)
-
-                messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
-                return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
-
-            except Exception as e:
-                messages.error(request, f"خطأ أثناء الرفع: {e}")
-                return HttpResponseRedirect(request.path)
-
-        context = {
-            **self.admin_site.each_context(request),
-            "opts": self.model._meta,
-            "title": f"رفع أسئلة - حزمة {package.package_number}",
-            "package": package,
-            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",
-            "download_template_url": reverse('admin:games_letterspackage_download_template'),
-            "export_url": reverse('admin:games_letterspackage_export', args=[package.id]),
-            "change_url": reverse('admin:games_letterspackage_change', args=[package.id]),
-            "back_url": reverse('admin:games_letterspackage_changelist'),
-            "submit_label": "رفع الملف",
-            "replace_label": "استبدال الأسئلة الموجودة",
-        }
-        return TemplateResponse(request, "admin/import_csv.html", context)
-
-    def download_letters_template_view(self, request):
-        if not HAS_OPENPYXL:
-            response = HttpResponse(content_type='text/csv; charset=utf-8')
-            response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
-            writer = csv.writer(response)
-            writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
-            writer.writerow(['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'])
-            writer.writerow(['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'])
-            writer.writerow(['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'])
-            return response
-
-        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-        response['Content-Disposition'] = 'attachment; filename="letters_template.xlsx"'
-        wb = openpyxl.Workbook()
-        sh = wb.active
-        sh.title = "قالب الأسئلة"
-        headers = ['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف']
-        sh.append(headers)
-        examples = [
-            ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
-            ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
-            ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
-        ]
-        for row in examples:
-            sh.append(row)
-        wb.save(response)
-        return response
-
-    def export_letters_view(self, request, pk):
-        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
-        response = HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = f'attachment; filename="letters_package_{package.package_number}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
-        type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2'}
-        for q in package.letters_questions.all().order_by('letter', 'question_type'):
-            writer.writerow([q.letter, type_map_ar.get(q.question_type, q.question_type), q.question, q.answer, q.category])
-        return response
-
-    # ------- صفحات مخصصة (HTML مبسّط) -------
     def stats_view(self, request):
         """صفحة إحصائيات لحزم/أسئلة خلية الحروف"""
         qs = GamePackage.objects.filter(game_type='letters').annotate(qcount=Count('letters_questions'))
@@ -450,12 +368,15 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
         # استخدم قالب الأدمن الموحد
         context = {
-            **self.admin_site.each_context(request),  # يضيف عنوان الموقع، القوائم، المستخدم..الخ
-            "opts": self.model._meta,                # مهم لعناوين الأدمن والbreadcrumbs
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
             "title": f"رفع أسئلة - حزمة {package.package_number}",
             "package": package,
-            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",  # يُستخدم في input[type=file]
+            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",
             "download_template_url": reverse('admin:games_letterspackage_download_template'),
+            "export_url": reverse('admin:games_letterspackage_export', args=[package.id]),
+            "change_url": reverse('admin:games_letterspackage_change', args=[package.id]),
+            "back_url": reverse('admin:games_letterspackage_changelist'),
             "help_rows": [
                 "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
                 "أعمدة مرتبة كالتالي: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
@@ -467,7 +388,44 @@ class LettersPackageAdmin(admin.ModelAdmin):
         }
         return TemplateResponse(request, "admin/import_csv.html", context)
 
+    def download_letters_template_view(self, request):
+        if not HAS_OPENPYXL:
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="letters_template.csv"'
+            writer = csv.writer(response)
+            writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
+            writer.writerow(['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'])
+            writer.writerow(['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'])
+            writer.writerow(['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'])
+            return response
 
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = 'attachment; filename="letters_template.xlsx"'
+        wb = openpyxl.Workbook()
+        sh = wb.active
+        sh.title = "قالب الأسئلة"
+        headers = ['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف']
+        sh.append(headers)
+        examples = [
+            ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
+            ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
+            ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
+        ]
+        for row in examples:
+            sh.append(row)
+        wb.save(response)
+        return response
+
+    def export_letters_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="letters_package_{package.package_number}.csv"'
+        writer = csv.writer(response)
+        writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
+        type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2'}
+        for q in package.letters_questions.all().order_by('letter', 'question_type'):
+            writer.writerow([q.letter, type_map_ar.get(q.question_type, q.question_type), q.question, q.answer, q.category])
+        return response
 
 # ===========================
 #  Admin: حِزم الصور
@@ -512,6 +470,14 @@ class ImagesPackageAdmin(admin.ModelAdmin):
         obj.game_type = 'images'
         super().save_model(request, obj, form, change)
 
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if not obj:
+            next_num = (GamePackage.objects.filter(game_type='images')
+                        .aggregate(Max('package_number'))['package_number__max'] or 0) + 1
+            form.base_fields['package_number'].initial = next_num
+        return form
+
 # ===========================
 #  Admin: حِزم سؤال وجواب
 # ===========================
@@ -550,6 +516,14 @@ class QuizPackageAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.game_type = 'quiz'
         super().save_model(request, obj, form, change)
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if not obj:
+            next_num = (GamePackage.objects.filter(game_type='quiz')
+                        .aggregate(Max('package_number'))['package_number__max'] or 0) + 1
+            form.base_fields['package_number'].initial = next_num
+        return form
 
 # ===========================
 #  Admin: أسئلة خلية الحروف (مباشر)
@@ -642,7 +616,7 @@ class ContestantAdmin(admin.ModelAdmin):
     session_ref.short_description = "الجلسة"
 
 # ===========================
-#  Admin: تحسينات عامة
+#  تحسينات عامة للأدمن
 # ===========================
 
 admin.site.site_header = '🎮 إدارة الألعاب'
