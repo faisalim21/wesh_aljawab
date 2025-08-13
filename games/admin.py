@@ -188,9 +188,13 @@ class LettersPackageAdmin(admin.ModelAdmin):
         )
     theme_badge.short_description = "نوع الأسئلة"
 
+    # ✅ تم التعديل: تلوين العد بناءً على نوع الحزمة
     def questions_count_badge(self, obj):
         count = getattr(obj, '_qcount', 0)
-        if count == 75:
+        expected = 125  # الافتراضي: المدفوعة (5 أسئلة لكل 25 حرف)
+        if obj.is_free and obj.package_number == 0:
+            expected = 75   # المجانية رقم 0 (3 لكل حرف)
+        if count == expected:
             color = 'green'; icon = '✅'
         elif count > 0:
             color = 'orange'; icon = '⚠️'
@@ -298,6 +302,12 @@ class LettersPackageAdmin(admin.ModelAdmin):
         الأعمدة: [الحرف, نوع السؤال, السؤال, الإجابة, التصنيف]
         يدعم: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4
         ويتعامل مع الأرقام الهندية، الفراغات، التشكيل، المدود.
+
+        ✅ تم ضمان:
+          - استيراد كل الصفوف بدون قَصّ إلى 3 أسئلة.
+          - الحزمة المجانية رقم 0: يُقبل فقط main + alt1 + alt2.
+          - الحزم المدفوعة: تُقبل main + alt1..alt4 (5 أسئلة لكل حرف).
+          - تنبيهات واضحة للصفوف المتجاهلة بسبب نوع غير مفهوم/غير مسموح للمجاني.
         """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
 
@@ -322,7 +332,6 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 # إزالة التشكيل + المدود + علامات غريبة
                 # U+0640 = TATWEEL (ـ)
                 s = s.replace("\u0640", "")
-                # إزالة التشكيل بالتطبيع
                 norm = unicodedata.normalize('NFD', s)
                 return "".join(ch for ch in norm if unicodedata.category(ch) != 'Mn')
 
@@ -379,18 +388,33 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 return None
 
             added = 0
-            failed_rows = 0
+            failed_rows = 0                 # أنواع غير مفهومة
+            disallowed_rows_free = 0        # أنواع غير مسموحة للمجاني
             failed_examples = []
+            disallowed_examples = []
+
+            # المحدِّد حسب نوع الحزمة
+            allow_for_free = {"main", "alt1", "alt2"}
+            allow_for_paid = {"main", "alt1", "alt2", "alt3", "alt4"}
+            allowed_set = allow_for_free if (package.is_free and package.package_number == 0) else allow_for_paid
 
             def upsert_row(letter, qtype_raw, question, answer, category):
-                nonlocal added, failed_rows, failed_examples
+                nonlocal added, failed_rows, failed_examples, disallowed_rows_free, disallowed_examples
                 qtype = normalize_qtype(qtype_raw)
                 if not qtype:
                     failed_rows += 1
                     if len(failed_examples) < 5:
-                        failed_examples.append(f"[الحرف={letter!s}, النوع='{qtype_raw!s}']")
+                        failed_examples.append(f"(الحرف: {str(letter).strip()} — النوع: {str(qtype_raw).strip()})")
                     return
-                # ملاحظة: unique_together يجعل لكل (letter, qtype) سجل واحد فقط
+
+                # رفض الأنواع الزائدة في الحزمة المجانية رقم 0
+                if qtype not in allowed_set:
+                    disallowed_rows_free += 1
+                    if len(disallowed_examples) < 5:
+                        disallowed_examples.append(f"(الحرف: {str(letter).strip()} — النوع: {qtype})")
+                    return
+
+                # unique_together يضمن سجلًا واحدًا لكل (letter, qtype) — سنُحدّثه/ننشيئه
                 LettersGameQuestion.objects.update_or_create(
                     package=package, letter=str(letter).strip(), question_type=qtype,
                     defaults={'question': question or '', 'answer': answer or '', 'category': category or ''}
@@ -432,18 +456,23 @@ class LettersPackageAdmin(admin.ModelAdmin):
                     return HttpResponseRedirect(request.path)
 
                 # رسائل النتيجة
-                if failed_rows and not added:
-                    msg = "لم يتم التعرف على أي صف. تفقد عمود (نوع السؤال)."
+                summary = []
+                summary.append(f"تم إضافة/تحديث <b>{added}</b> سؤال.")
+                if failed_rows:
+                    msg = f"تم تجاهل <b>{failed_rows}</b> صف بسبب «نوع سؤال» غير مفهوم."
                     if failed_examples:
-                        msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
-                    messages.error(request, msg)
-                elif failed_rows:
-                    msg = f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم."
-                    if failed_examples:
-                        msg += " أمثلة: " + ", ".join(failed_examples)
-                    messages.warning(request, msg)
+                        msg += " أمثلة: " + "، ".join(failed_examples)
+                    summary.append(msg)
+                if disallowed_rows_free:
+                    msg = f"تم تجاهل <b>{disallowed_rows_free}</b> صف لأن الحزمة المجانية رقم 0 لا تسمح إلا بـ (رئيسي + بديل1 + بديل2)."
+                    if disallowed_examples:
+                        msg += " أمثلة: " + "، ".join(disallowed_examples)
+                    summary.append(msg)
+
+                if failed_rows or disallowed_rows_free:
+                    messages.warning(request, mark_safe(" ".join(summary)))
                 else:
-                    messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
+                    messages.success(request, mark_safe(" ".join(summary)))
 
                 return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
 
@@ -466,6 +495,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
                 "الأعمدة: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
                 "أنواع صالحة: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4.",
+                "الحزمة المجانية رقم 0 تُقبل رئيسي + بديل1 + بديل2 فقط.",
             ],
             "extra_note": "تفعيل خيار الحذف سيحذف أسئلة هذه الحزمة قبل الاستيراد.",
             "submit_label": "رفع الملف",
@@ -496,6 +526,8 @@ class LettersPackageAdmin(admin.ModelAdmin):
             ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
             ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
             ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
+            ['أ', 'بديل3', 'مدينة تبدأ بحرف الألف', 'أبها', 'بلدان/مدن'],
+            ['أ', 'بديل4', 'مهنة تبدأ بحرف الألف', 'أمين', 'وظائف'],
         ]
         for row in examples:
             sh.append(row)
@@ -508,7 +540,8 @@ class LettersPackageAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = f'attachment; filename="letters_package_{package.package_number}.csv"'
         writer = csv.writer(response)
         writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
-        type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2'}
+        # ✅ دعم alt3 و alt4
+        type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2', 'alt3': 'بديل3', 'alt4': 'بديل4'}
         for q in package.letters_questions.all().order_by('letter', 'question_type'):
             writer.writerow([q.letter, type_map_ar.get(q.question_type, q.question_type), q.question, q.answer, q.category])
         return response
@@ -630,7 +663,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
     package_num.short_description = "الحزمة"
 
     def question_type_ar(self, obj):
-        types = {'main': 'رئيسي', 'alt1': 'بديل 1', 'alt2': 'بديل 2'}
+        types = {'main': 'رئيسي', 'alt1': 'بديل 1', 'alt2': 'بديل 2', 'alt3': 'بديل 3', 'alt4': 'بديل 4'}
         return types.get(obj.question_type, obj.question_type)
     question_type_ar.short_description = "النوع"
 
