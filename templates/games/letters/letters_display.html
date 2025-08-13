@@ -171,6 +171,34 @@
   let countdownInterval = null;
   let heartbeatTimer = null;
 
+  // ===================== أصوات أونلاين + فتح الصوت =====================
+  // مصادر آمنة عبر HTTPS (يمكن تغييرها لاحقاً لاستضافة خاصة بك)
+  const BUZZ_URL = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
+  const END_URL  = 'https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg';
+
+  let buzzAudio = null, endAudio = null;
+  let audioUnlocked = false;
+
+  function initAudio() {
+    try {
+      buzzAudio = new Audio(BUZZ_URL);
+      endAudio  = new Audio(END_URL);
+      buzzAudio.preload = 'auto'; endAudio.preload = 'auto';
+      buzzAudio.load(); endAudio.load();
+    } catch (e) {
+      console.warn('Audio init failed:', e);
+    }
+  }
+
+  // محاولة فك حظر التشغيل التلقائي عند أول تفاعل
+  function unlockAudioOnce() {
+    if (audioUnlocked) return;
+    const prime = (a) => a && a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{});
+    try { prime(buzzAudio); prime(endAudio); } catch {}
+    audioUnlocked = true;
+    document.removeEventListener('pointerdown', unlockAudioOnce);
+  }
+
   // ===================== بناء خلايا العسل مرة واحدة =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
@@ -235,8 +263,22 @@
       osc.start(); osc.stop(ctx.currentTime + durMs / 1000);
     } catch {}
   }
-  function playBuzz() { tone(800, 350); }
-  function playEnd()  { tone(420, 600); }
+
+  // تشغيل صوت الضغطة (أولوية لملفات الصوت، وإلا fallback لـ WebAudio)
+  function playBuzz() {
+    if (buzzAudio) {
+      try { buzzAudio.currentTime = 0; buzzAudio.play().catch(() => tone(800, 350)); }
+      catch { tone(800, 350); }
+    } else { tone(800, 350); }
+  }
+
+  // تشغيل صوت النهاية (أولوية لملفات الصوت، وإلا fallback)
+  function playEnd()  {
+    if (endAudio) {
+      try { endAudio.currentTime = 0; endAudio.play().catch(() => tone(420, 600)); }
+      catch { tone(420, 600); }
+    } else { tone(420, 600); }
+  }
 
   function showBuzz(name, team) {
     playBuzz();
@@ -284,7 +326,6 @@
           el.classList.add(state);
       }
   }
-
 
   // ===================== WebSocket (بدون Polling) =====================
   function setupWebSocket() {
@@ -349,6 +390,10 @@
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
     console.log('🎬 شاشة العرض – تشغيل WebSocket فقط');
+    initAudio();                               // ← تهيئة الأصوات
+    document.addEventListener('pointerdown',   // ← فك قفل الصوت عند أول تفاعل
+      unlockAudioOnce, { once: true });
+
     createHoneycombCells();
     setupWebSocket();
 

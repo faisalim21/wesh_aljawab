@@ -424,6 +424,34 @@
   }
   window.copyLink = copyLink;
 
+  // ========= أصوات أونلاين + فتح الصوت =========
+  // مصادر HTTPS جاهزة؛ يمكنك لاحقاً استضافتها على Cloudinary/Supabase الخاصة بك
+  const BUZZ_URL = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
+  const END_URL  = 'https://actions.google.com/sounds/v1/alarms/dinner_bell_triangle.ogg';
+
+  let buzzAudio = null, endAudio = null, audioUnlocked = false;
+
+  function initAudio(){
+    try {
+      buzzAudio = new Audio(BUZZ_URL);
+      endAudio  = new Audio(END_URL);
+      buzzAudio.preload = 'auto';
+      endAudio.preload  = 'auto';
+      buzzAudio.load();
+      endAudio.load();
+    } catch(e){ console.warn('Audio init failed:', e); }
+  }
+
+  // تجاوز سياسات التشغيل التلقائي: فتح الصوت عند أول تفاعل
+  function unlockAudioOnce(){
+    if (audioUnlocked) return;
+    const prime = (a)=> a && a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(()=>{});
+    try { prime(buzzAudio); prime(endAudio); } catch {}
+    audioUnlocked = true;
+    document.removeEventListener('pointerdown', unlockAudioOnce);
+  }
+
+  // ========= نغمة بديلة (Fallback) =========
   function tone(freq=800, dur=300, gain=0.5){
     try{
       const ctx = new (window.AudioContext||window.webkitAudioContext)();
@@ -433,7 +461,20 @@
       o.start(); o.stop(ctx.currentTime + dur/1000);
     }catch{}
   }
-  function playBuzzSound(){ tone(800,300,0.6); }
+
+  function playBuzzSound(){
+    if (buzzAudio){
+      try { buzzAudio.currentTime = 0; buzzAudio.play().catch(()=>tone(800,300,0.6)); }
+      catch { tone(800,300,0.6); }
+    } else { tone(800,300,0.6); }
+  }
+
+  function playEndSound(){
+    if (endAudio){
+      try { endAudio.currentTime = 0; endAudio.play().catch(()=>tone(420,600,0.6)); }
+      catch { tone(420,600,0.6); }
+    } else { tone(420,600,0.6); }
+  }
 
   // ========= واجهة الخلايا =========
   function createHoneycombCells(){
@@ -575,7 +616,7 @@
     const n = document.getElementById('buzzNotification');
     n.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${(team==='team1'?team1Name:team2Name)} ضغط الزر!`;
     n.style.display = 'block';
-    playBuzzSound();
+    playBuzzSound(); // ← صوت الضغطة
     setTimeout(()=>{ n.style.display='none'; }, 4000);
   }
 
@@ -623,11 +664,28 @@
     socket.onmessage = (ev)=>{
       let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
       switch(d.type){
-        case 'contestant_buzz_accepted': showBuzzNotification(d.contestant_name, d.team); break;
-        case 'cell_state_updated': applyCellState(d.letter, d.state); break;
-        case 'scores_updated': reflectScores(d.team1_score, d.team2_score); break;
-        case 'pong': break;
-        default: break;
+        case 'contestant_buzz_accepted':
+          showBuzzNotification(d.contestant_name, d.team);
+          break;
+
+        case 'buzz_unlocked':
+        case 'buzz_reset':
+        case 'buzz_reset_by_host':
+          // نهاية العدّ أو فتح القفل من أي طرف
+          playEndSound();
+          break;
+
+        case 'cell_state_updated':
+          applyCellState(d.letter, d.state);
+          break;
+
+        case 'scores_updated':
+          reflectScores(d.team1_score, d.team2_score);
+          break;
+
+        case 'pong':
+        default:
+          break;
       }
     };
 
@@ -651,6 +709,8 @@
   // ========= تهيئة =========
   window.addEventListener('beforeunload', ()=>{ try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{}; clearHeartbeat(); });
   document.addEventListener('DOMContentLoaded', ()=>{
+    initAudio();
+    document.addEventListener('pointerdown', unlockAudioOnce, { once: true }); // فك قفل الصوت
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
