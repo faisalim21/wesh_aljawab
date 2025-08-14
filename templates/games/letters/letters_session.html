@@ -16,7 +16,9 @@
       displayUrl: '{% url "games:letters_display" session.display_link %}',
       contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
       packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}',
-      arabicLetters: {{ arabic_letters_json|safe }}
+      arabicLetters: {{ arabic_letters_json|safe }},
+      isFree: {{ session.package.is_free|yesno:"true,false" }},
+      packageNumber: '{{ session.package.package_number }}'
     };
   </script>
 
@@ -38,7 +40,17 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
-    /* إشعار ضغط الزر - محسّن */
+    /* شارات العنوان */
+    .header-badges { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .badge-soft {
+      display:inline-block; border:1px solid rgba(0,0,0,.08); padding:6px 10px;
+      border-radius:999px; font-weight:800; font-size:.9rem; background:#fff;
+    }
+    .badge-pkg { color:#1d4ed8; border-color:#93c5fd; background:#eff6ff; }
+    .badge-72 { color:#92400e; border-color:#fcd34d; background:#fffbeb; }
+    .badge-free { color:#166534; border-color:#86efac; background:#f0fdf4; }
+
+    /* إشعار ضغط الزر */
     #buzzNotification {
       position: fixed;
       top: 20px;
@@ -56,169 +68,52 @@
       animation: buzzPulse 0.6s ease-in-out infinite alternate;
       border: 3px solid rgba(255, 255, 255, 0.3);
     }
-
     @keyframes buzzPulse {
-      from { 
-        transform: scale(1); 
-        box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4); 
-      }
-      to { 
-        transform: scale(1.05); 
-        box-shadow: 0 20px 45px rgba(239, 68, 68, 0.6); 
-      }
+      from { transform: scale(1); box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4); }
+      to { transform: scale(1.05); box-shadow: 0 20px 45px rgba(239, 68, 68, 0.6); }
     }
 
-    .buzz-controls {
-      margin: 15px 0;
-      text-align: center;
-    }
-
+    .buzz-controls { margin: 15px 0; text-align: center; }
     .buzz-reset-btn {
       background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px 20px;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
+      color: white; border: none; border-radius: 12px; padding: 12px 20px;
+      font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s ease;
       box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
     }
+    .buzz-reset-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
 
-    .buzz-reset-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-    }
+    .honeycomb-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 10px; }
+    .honeycomb-svg { width: 100%; max-width: 100vw; height: auto; display: block; margin: 0 auto; }
 
-    .honeycomb-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 15px 0;
-      padding: 10px;
-    }
+    .hex-cell { cursor: pointer; transition: all 0.3s ease; }
+    .hex-cell:hover .hex-shape { fill: #f0f9ff; stroke-width: 4; transform: scale(1.05); }
+    .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
+    .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
+    .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
+    .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
+    .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
+    .hex-text { fill: #6b46c1; font-family: 'Tajawal', sans-serif; font-size: 130px; font-weight: 900; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
 
-    .honeycomb-svg {
-      width: 100%;
-      max-width: 100vw;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
+    .info-panel { background: white; border-radius: 15px; padding: 12px; margin: 10px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
-    .hex-cell {
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+    /* لوحة الأسئلة */
+    .question-panel { background: #f8fafc; border: 2px solid #4c51bf; border-radius: 15px; padding: 15px; margin: 15px 0; display: none; animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-    .hex-cell:hover .hex-shape {
-      fill: #f0f9ff;
-      stroke-width: 4;
-      transform: scale(1.05);
-    }
+    .round-card, .alt-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; height:100%; }
+    .round-title { font-weight:900; margin-bottom:6px; }
+    .answer { color:#16a34a; font-weight:900; }
+    .alt-card { background:#fef3c7; }
+    .alt-title { font-weight:800; color:#92400e; }
 
-    .hex-cell.team1 .hex-shape {
-      fill: #22c55e;
-      stroke: #15803d;
-      stroke-width: 4;
-    }
+    .btn-primary { background: linear-gradient(135deg, #4c51bf, #667eea); border: none; border-radius: 10px; padding: 8px 12px; font-weight: bold; font-size: 14px; }
 
-    .hex-cell.team1 .hex-text {
-      fill: white;
-      font-weight: bold;
-    }
+    .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
+    .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
+    .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
+    .timer-display { font-size: 2rem; font-weight: bold; color: #dc2626; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
-    .hex-cell.team2 .hex-shape {
-      fill: #f97316;
-      stroke: #c2410c;
-      stroke-width: 4;
-    }
-
-    .hex-cell.team2 .hex-text {
-      fill: white;
-      font-weight: bold;
-    }
-
-    .hex-shape {
-      fill: white;
-      stroke: #6b46c1;
-      stroke-width: 3;
-      transition: all 0.3s ease;
-      transform-origin: center;
-    }
-
-    .hex-text {
-      fill: #6b46c1;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 130px;
-      font-weight: 900;
-      text-anchor: middle;
-      dominant-baseline: central;
-      pointer-events: none;
-    }
-
-    .info-panel {
-      background: white;
-      border-radius: 15px;
-      padding: 12px;
-      margin: 10px 0;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .question-panel {
-      background: #f8fafc;
-      border: 2px solid #4c51bf;
-      border-radius: 15px;
-      padding: 15px;
-      margin: 15px 0;
-      display: none;
-      animation: slideIn 0.3s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #4c51bf, #667eea);
-      border: none;
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-weight: bold;
-      font-size: 14px;
-    }
-
-    .score-display {
-      font-size: 1.1rem;
-      font-weight: bold;
-      text-align: center;
-      padding: 8px;
-      border-radius: 10px;
-      margin: 3px;
-    }
-
-    .team1-score {
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-      color: #22c55e;
-      border: 2px solid #22c55e;
-    }
-
-    .team2-score {
-      background: linear-gradient(135deg, #fed7aa, #fdba74);
-      color: #f97316;
-      border: 2px solid #f97316;
-    }
-
-    .timer-display {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #dc2626;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    /* تحسينات للجوال */
+    /* موبايل */
     @media (max-width: 768px) {
       body { padding: 5px; }
       .container { padding: 10px; border-radius: 15px; }
@@ -238,7 +133,7 @@
       #buzzNotification { top: 10px; right: 10px; font-size: 16px; padding: 15px 20px; max-width: 90%; }
     }
 
-    /* تحسينات للشاشات الكبيرة */
+    /* دِسك توب */
     @media (min-width: 769px) {
       .container { max-width: 1000px; padding: 20px; }
       .honeycomb-svg { max-width: 650px; transform: scale(0.85); transform-origin: center; }
@@ -251,7 +146,17 @@
 </head>
 <body>
   <div class="container">
-    <h2 class="text-center mb-3">🎯 خلية الحروف - المقدم</h2>
+    <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
+
+    <!-- شارات العنوان (رقم الحزمة + الصلاحية) -->
+    <div class="header-badges mb-3">
+      <span class="badge-soft badge-pkg">حزمة رقم {{ session.package.package_number }}</span>
+      {% if session.package.is_free %}
+        <span class="badge-soft badge-free">تجريبية مجانية</span>
+      {% else %}
+        <span class="badge-soft badge-72">⏳ متاحة لمدة 72 ساعة من وقت الإنشاء</span>
+      {% endif %}
+    </div>
     
     <!-- مؤقت الجلسة المجانية -->
     {% if session.package.is_free and time_remaining %}
@@ -261,22 +166,16 @@
     </div>
     {% endif %}
     
-    <!-- معلومات الجلسة -->
+    <!-- روابط الجلسة -->
     <div class="row justify-content-center mb-3">
       <div class="col-12">
         <div class="card shadow-sm border-0" style="background: #f9fafb;">
           <div class="card-body text-center p-2">
             <p class="mb-2 fw-bold fs-6">🔗 روابط الجلسة:</p>
             <div class="d-flex flex-wrap justify-content-center gap-1">
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.contestantsUrl)">
-                👥 المتسابقين
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.displayUrl)">
-                🖥️ شاشة العرض
-              </button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">
-                🧑‍🏫 المقدم
-              </button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.contestantsUrl)">👥 المتسابقين</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.displayUrl)">🖥️ شاشة العرض</button>
+              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">🧑‍🏫 المقدم</button>
             </div>
             <small id="copySuccess" style="display: none; opacity: 0; transition: opacity 0.3s ease;" class="text-success mt-2 d-block">✅ تم النسخ بنجاح!</small>
           </div>
@@ -289,14 +188,13 @@
       <button class="buzz-reset-btn" onclick="resetBuzzer()">🔄 فك قفل الزر</button>
     </div>
 
-    <!-- عرض السؤال -->
-    <div id="questionDisplay" class="alert alert-light text-dark mt-4 text-center fs-4 fw-bold">
+    <!-- عرض السؤال الحالي -->
+    <div id="questionDisplay" class="alert alert-light text-dark mt-3 text-center fs-5 fw-bold">
       اضغط على أي حرف لعرض السؤال
     </div>
 
     <!-- خلية الحروف SVG مع اللوجو -->
     <div class="honeycomb-container position-relative">
-      <!-- اللوجو فوق يمين الخلية -->
       <div class="position-absolute" style="top: 5px; right: 20px; z-index: 10;">
         <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
              alt="وش الجواب" 
@@ -319,32 +217,77 @@
       </svg>
     </div>
 
-    <!-- لوحة الأسئلة -->
+    <!-- لوحة الأسئلة (مدفوعة: 3 جولات + بديلين، مجانية: رئيسي + بديلين) -->
     <div class="question-panel" id="questionPanel">
-      <h4 class="mb-3">❓ السؤال - حرف <span id="currentLetter">أ</span></h4>
-      <div class="mb-3">
-        <strong>السؤال:</strong> <span id="mainQuestion">السؤال سيظهر هنا</span>
+      <div class="d-flex align-items-center justify-content-between flex-wrap">
+        <h4 class="mb-2">❓ حرف <span id="currentLetter">أ</span></h4>
+        <div class="small text-muted">
+          <span id="panelPkgInfo">حزمة رقم {{ session.package.package_number }}</span>
+          {% if not session.package.is_free %} • <span>⏳ 72 ساعة</span>{% endif %}
+        </div>
       </div>
-      <div class="mb-3">
-        <strong>الإجابة:</strong> <span id="mainAnswer" style="color: #22c55e; font-weight: bold;">الإجابة</span>
-      </div>
-      <div class="row">
-        <div class="col-md-6 mb-2">
-          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt1')">
-            <div class="card-body p-2">
-              <h6 class="mb-1">💡سؤال بديل</h6>
-              <p class="mb-1 small" id="alt1Question">سؤال بديل</p>
-              <small><strong>الإجابة:</strong> <span id="alt1Answer">إجابة</span></small>
-            </div>
+
+      <!-- للمدفوعة: جولات ثلاث -->
+      <div id="paidRounds" class="row g-2 d-none">
+        <div class="col-md-4">
+          <div class="round-card h-100">
+            <div class="round-title">🎯 الجولة 1</div>
+            <div><strong>السؤال:</strong> <span id="r1Question">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span id="r1Answer" class="answer">—</span></div>
           </div>
         </div>
-        <div class="col-md-6 mb-2">
-          <div class="card" style="cursor: pointer; background: #fef3c7;" onclick="switchQuestion('alt2')">
-            <div class="card-body p-2">
-              <h6 class="mb-1">💡 سؤال بديل</h6>
-              <p class="mb-1 small" id="alt2Question">سؤال بديل</p>
-              <small><strong>الإجابة:</strong> <span id="alt2Answer">إجابة</span></small>
-            </div>
+        <div class="col-md-4">
+          <div class="round-card h-100">
+            <div class="round-title">🎯 الجولة 2</div>
+            <div><strong>السؤال:</strong> <span id="r2Question">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span id="r2Answer" class="answer">—</span></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="round-card h-100">
+            <div class="round-title">🎯 الجولة 3</div>
+            <div><strong>السؤال:</strong> <span id="r3Question">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span id="r3Answer" class="answer">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- للمجاني: رئيسي + بديلين -->
+      <div id="freeMainBlock" class="mb-3 d-none">
+        <div><strong>السؤال:</strong> <span id="mainQuestion">—</span></div>
+        <div class="mt-1"><strong>الإجابة:</strong> <span id="mainAnswer" class="answer">—</span></div>
+      </div>
+
+      <!-- البدائل (تظهر في الحالتين) -->
+      <div class="row g-2">
+        <div class="col-md-6">
+          <div class="alt-card h-100" onclick="switchQuestion('alt1')" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
+            <div><span id="alt1Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt1Answer" class="answer">—</span></small></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="alt-card h-100" onclick="switchQuestion('alt2')" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
+            <div><span id="alt2Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt2Answer" class="answer">—</span></small></div>
+          </div>
+        </div>
+
+        <!-- للمدفوعة فقط: بديل 3 وبديل 4 -->
+        <div class="col-md-6 d-none" id="alt3Col">
+          <div class="alt-card h-100" onclick="switchQuestion('alt3')" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 3</div>
+            <div><span id="alt3Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt3Answer" class="answer">—</span></small></div>
+          </div>
+        </div>
+        <div class="col-md-6 d-none" id="alt4Col">
+          <div class="alt-card h-100" onclick="switchQuestion('alt4')" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 4</div>
+            <div><span id="alt4Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt4Answer" class="answer">—</span></small></div>
           </div>
         </div>
       </div>
@@ -391,9 +334,7 @@
     </div>
 
     <!-- إشعار ضغط الزر -->
-    <div id="buzzNotification">
-      🚨 المتسابق ضغط الزر!
-    </div>
+    <div id="buzzNotification">🚨 المتسابق ضغط الزر!</div>
   </div>
 
 <script>
@@ -403,6 +344,7 @@
   const team1Name = '{{ session.team1_name }}';
   const team2Name = '{{ session.team2_name }}';
   const lettersArr = (window.sessionData && window.sessionData.arabicLetters) || [];
+  const isFreeSession = !!window.sessionData?.isFree;
 
   let socket = null;
   let reconnectDelay = 1000;
@@ -513,40 +455,58 @@
     cellStates[letter] = state || 'normal';
   }
 
-  // ========= مساعد لإظهار/إخفاء بطاقة بديل (alt3/alt4) إن وُجدت في الـHTML =========
+  // إظهار/إخفاء بطاقات بدائل 3/4
   function toggleAltCard(idPrefix, exists, questionText, answerText){
+    const col = document.getElementById(idPrefix+'Col');
     const qEl = document.getElementById(`${idPrefix}Question`);
     const aEl = document.getElementById(`${idPrefix}Answer`);
-    if (!qEl || !aEl) return; // في حال القالب لا يحتوي بطاقات alt3/alt4
-    qEl.textContent = exists ? (questionText || '—') : '';
-    aEl.textContent = exists ? (answerText   || '—') : '';
-    const cardCol = qEl.closest('.col-md-6') || qEl.closest('.col-12') || qEl.parentElement;
-    if (cardCol) cardCol.classList.toggle('d-none', !exists);
+    if (!qEl || !aEl || !col) return;
+    qEl.textContent = exists ? (questionText || '—') : '—';
+    aEl.textContent = exists ? (answerText   || '—') : '—';
+    col.classList.toggle('d-none', !exists);
   }
 
-  // ========= الأسئلة (تدعم مجاني: main+alt1+alt2 | مدفوع: +alt3+alt4) =========
+  // ========= الأسئلة (مدفوعة: 3 جولات + بديلين | مجانية: رئيسي + بديلين) =========
   async function showQuestion(letter){
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = '/games/letters/'; }
       if (!r.ok) return;
       const data = await r.json(), q = data.questions || {};
 
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
 
-      // رئيسي
-      document.getElementById('mainQuestion').textContent = (q.main && q.main.question) || 'لا يوجد سؤال';
-      document.getElementById('mainAnswer').textContent   = (q.main && q.main.answer)   || '—';
+      if (isFreeSession) {
+        // مجانية: رئيسي + بديلان
+        document.getElementById('paidRounds').classList.add('d-none');
+        document.getElementById('freeMainBlock').classList.remove('d-none');
 
-      // بديل1
+        document.getElementById('mainQuestion').textContent = (q.main && q.main.question) || '—';
+        document.getElementById('mainAnswer').textContent   = (q.main && q.main.answer)   || '—';
+      } else {
+        // مدفوعة: 3 جولات (main, alt1, alt2)
+        document.getElementById('freeMainBlock').classList.add('d-none');
+        document.getElementById('paidRounds').classList.remove('d-none');
+
+        document.getElementById('r1Question').textContent = (q.main && q.main.question) || '—';
+        document.getElementById('r1Answer').textContent   = (q.main && q.main.answer)   || '—';
+
+        document.getElementById('r2Question').textContent = (q.alt1 && q.alt1.question) || '—';
+        document.getElementById('r2Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
+
+        document.getElementById('r3Question').textContent = (q.alt2 && q.alt2.question) || '—';
+        document.getElementById('r3Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
+      }
+
+      // بديل 1 و 2 (تظهر للحالتين)
       document.getElementById('alt1Question').textContent = (q.alt1 && q.alt1.question) || '—';
       document.getElementById('alt1Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
 
-      // بديل2
       document.getElementById('alt2Question').textContent = (q.alt2 && q.alt2.question) || '—';
       document.getElementById('alt2Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
 
-      // بديل3 وبديل4 (تظهر فقط للحزم المدفوعة – إذا كانت موجودة في JSON والقالب)
+      // بديل 3 وبديل 4 (للمدفوعة فقط)
       toggleAltCard('alt3', !!q.alt3, q.alt3?.question, q.alt3?.answer);
       toggleAltCard('alt4', !!q.alt4, q.alt4?.question, q.alt4?.answer);
 
@@ -576,20 +536,22 @@
 
   async function updateCellStateAPI(letter,state){
     try{
-      await fetch('/games/api/update-cell-state/',{
+      const r = await fetch('/games/api/update-cell-state/',{
         method:'POST',
         headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
         body: JSON.stringify({session_id:sessionId, letter, state})
       });
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href='/games/letters/'; }
     }catch{}
   }
   async function updateScoresAPI(team1,team2){
     try{
-      await fetch('/games/api/update-scores/',{
+      const r = await fetch('/games/api/update-scores/',{
         method:'POST',
         headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
         body: JSON.stringify({session_id:sessionId, team1_score:team1, team2_score:team2})
       });
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href='/games/letters/'; }
     }catch{}
   }
 
@@ -606,15 +568,16 @@
   async function loadSessionState(){
     try{
       const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href='/games/letters/'; }
       if (!r.ok) return;
       const data = await r.json();
       reflectScores(data.team1_score||0, data.team2_score||0);
       if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
-      if (typeof data.time_remaining_seconds==='number') startSessionTimer(data.time_remaining_seconds);
+      if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
     }catch{}
   }
 
-  // ========= مؤقّت الجلسة =========
+  // ========= مؤقّت الجلسة (للمجاني فقط هنا) =========
   let sessionTimerInterval = null;
   function startSessionTimer(seconds){
     const el = document.getElementById('timeRemaining'), box = document.getElementById('sessionTimer');
@@ -687,9 +650,12 @@
     }
   }
   window.resetBuzzer = resetBuzzer;
+
+  // متاح للاستخدام من بطاقات البدائل
+  function switchQuestion(which){
+    // مجرد placeholder لو أردت لاحقًا تبديل السؤال المعروض في مكان مخصص
+    // حاليًا نتركها للضغط البصري فقط
+  }
 </script>
-
-
-
 </body>
 </html>

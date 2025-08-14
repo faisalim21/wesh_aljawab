@@ -113,17 +113,11 @@
                   {% endif %}
                 </div>
               {% endif %}
-
-              <div class="free-mini">مرّة واحدة لكل حساب</div>
-
               {% if free_package.description %}
                 <p class="package-desc dim">{{ free_package.description }}</p>
               {% else %}
                 <p class="package-desc dim">جولة واحدة للتجربة قبل الشراء</p>
               {% endif %}
-
-              <div class="price-text">السعر: 0 ريال</div>
-
               {% if request.user.is_authenticated %}
                 {% if free_session_eligible %}
                   <button type="button" class="btn-play" id="freeBtn"
