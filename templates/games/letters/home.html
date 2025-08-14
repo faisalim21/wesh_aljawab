@@ -13,34 +13,54 @@
       background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
       font-family:'Tajawal',sans-serif;color:#2d3748;min-height:100vh;margin:0;padding:0;
     }
-    .packages-section{background:rgba(255,255,255,.96);padding:80px 0;}
-    .section-title{text-align:center;margin-bottom:60px;}
+    .packages-section{background:rgba(255,255,255,.96);padding:64px 0;}
+    .section-title{text-align:center;margin-bottom:36px;}
     .section-title h2{
-      font-size:2.5rem;font-weight:700;
+      font-size:2.2rem;font-weight:800;
       background:linear-gradient(135deg,#8b5cf6,#06b6d4);
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
     }
+    .section-title p{color:#475569;margin:0}
     .package-card{
-      background:#fff;border-radius:20px;padding:2rem;margin-bottom:2rem;
-      border:1px solid rgba(139,92,246,.1);
-      box-shadow:0 20px 40px rgba(0,0,0,.1);transition:.4s;
+      background:#fff;border-radius:18px;padding:1.5rem;margin-bottom:1.5rem;
+      border:1px solid rgba(139,92,246,.12);
+      box-shadow:0 18px 38px rgba(0,0,0,.08);transition:.35s;position:relative;
     }
-    .package-card:hover{transform:translateY(-10px);box-shadow:0 30px 60px rgba(139,92,246,.2);}
-    .package-title{font-size:1.5rem;font-weight:700;margin-bottom:.5rem;text-align:center;}
-    .package-desc{text-align:center;color:#718096;margin-bottom:1rem;}
-    .theme-badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.85rem;font-weight:700;}
+    .package-card:hover{transform:translateY(-6px);box-shadow:0 28px 56px rgba(139,92,246,.18);}
+    .package-title{font-size:1.2rem;font-weight:800;margin-bottom:.35rem;text-align:center;}
+    .package-desc{text-align:center;color:#64748b;margin-bottom:.75rem;}
+    .theme-badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.8rem;font-weight:800}
     .theme-mixed{background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;}
     .theme-sports{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .theme-tip{cursor:help;border-bottom:1px dotted currentColor}
     .btn-play{
       display:block;width:100%;background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-      color:#fff;padding:12px;border:none;border-radius:15px;font-size:1.1rem;font-weight:700;
+      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;
       transition:.3s;text-decoration:none;text-align:center;position:relative;
     }
-    .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.3);color:#fff;}
-    .btn-play:disabled{background:#e2e8f0 !important;color:#a0aec0 !important;cursor:not-allowed;}
+    .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.25);color:#fff;}
+    .btn-play:disabled{background:#e2e8f0 !important;color:#94a3b8 !important;cursor:not-allowed;}
     .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
     .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
     @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+
+    /* إبراز بطاقة المجاني: أصغر حجمًا لكنها لافتة */
+    .free-card{
+      border:2px dashed #22c55e;
+      background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 60%);
+      box-shadow:0 14px 28px rgba(34,197,94,.14);
+      padding:1.25rem;
+    }
+    .free-ribbon{
+      position:absolute;top:10px;left:-8px;background:#22c55e;color:#fff;
+      padding:6px 12px;border-radius:0 10px 10px 0;font-weight:900;font-size:.9rem;
+      box-shadow:0 6px 16px rgba(34,197,94,.35);
+    }
+    .free-mini{font-size:.9rem;color:#16a34a;font-weight:800;text-align:center;margin:-2px 0 8px 0}
+    .price-text{font-size:.95rem;font-weight:800;text-align:center;margin-bottom:.4rem;color:#0ea5e9}
+    .dim{opacity:.85}
+
+    .note-line{font-size:.85rem;color:#ef4444;text-align:center;margin-top:.5rem}
   </style>
 </head>
 <body>
@@ -71,40 +91,58 @@
         <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب خلية الحروف</p>
       </div>
 
-      <div class="row justify-content-center">
+      <div class="row justify-content-center g-3">
 
         {% if free_package %}
-          <div class="col-md-6 col-lg-4">
-            <div class="package-card">
-              <div class="package-title">حزمة مجانية</div>
+          <!-- بطاقة المجاني: أصغر حجمًا + إبراز بشريط -->
+          <div class="col-md-5 col-lg-4">
+            <div class="package-card free-card">
+              <div class="free-ribbon">مجانية</div>
+              <div class="package-title">جولة مجانية تجريبية</div>
 
-              <!-- نوع الأسئلة للحزمة المجانية -->
               {% if free_package.question_theme %}
                 <div class="text-center mb-2">
                   {% if free_package.question_theme == 'sports' %}
-                    <span class="theme-badge theme-sports">نوع الأسئلة: {{ free_package.get_question_theme_display }}</span>
+                    <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
+                      نوع الأسئلة: {{ free_package.get_question_theme_display }}
+                    </span>
                   {% else %}
-                    <span class="theme-badge theme-mixed">نوع الأسئلة: {{ free_package.get_question_theme_display }}</span>
+                    <span class="theme-badge theme-mixed theme-tip" title="أسئلة منوعة">
+                      نوع الأسئلة: {{ free_package.get_question_theme_display }}
+                    </span>
                   {% endif %}
                 </div>
               {% endif %}
 
-              <!-- الوصف للحزمة المجانية (إن وُجد) -->
+              <div class="free-mini">مرّة واحدة لكل حساب</div>
+
               {% if free_package.description %}
-                <p class="package-desc">{{ free_package.description }}</p>
+                <p class="package-desc dim">{{ free_package.description }}</p>
               {% else %}
-                <p class="package-desc">جولة واحدة للتجربة</p>
+                <p class="package-desc dim">جولة واحدة للتجربة قبل الشراء</p>
               {% endif %}
 
+              <div class="price-text">السعر: 0 ريال</div>
+
               {% if request.user.is_authenticated %}
-                <button type="button" class="btn-play" id="freeBtn"
-                        onclick="createLettersSession('{{ free_package.id }}')">
-                  <span class="btn-text">ابدأ الجولة المجانية</span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
-                </button>
+                {% if free_session_eligible %}
+                  <button type="button" class="btn-play" id="freeBtn"
+                          onclick="createFreeSession('{{ free_package.id }}')">
+                    <span class="btn-text">ابدأ الجولة المجانية</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </button>
+                {% else %}
+                  <button type="button" class="btn-play" id="freeBtn" disabled>
+                    <span class="btn-text">غير متاح</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </button>
+                  <div class="note-line">
+                    {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
+                  </div>
+                {% endif %}
               {% else %}
-                <!-- زر واضح يودّي لتسجيل الدخول -->
-                <a class="btn btn-outline-primary w-100 mt-1" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                <a class="btn btn-outline-primary w-100 mt-1"
+                   href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
                   سجّل الدخول لتجربة المجاني
                 </a>
               {% endif %}
@@ -117,33 +155,38 @@
             <div class="package-card">
               <div class="package-title">حزمة رقم {{ package.package_number }}</div>
 
-              <!-- نوع الأسئلة -->
               {% if package.question_theme %}
                 <div class="text-center mb-2">
                   {% if package.question_theme == 'sports' %}
-                    <span class="theme-badge theme-sports">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+                    <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
+                      نوع الأسئلة: {{ package.get_question_theme_display }}
+                    </span>
                   {% else %}
-                    <span class="theme-badge theme-mixed">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+                    <span class="theme-badge theme-mixed theme-tip" title="أسئلة منوعة">
+                      نوع الأسئلة: {{ package.get_question_theme_display }}
+                    </span>
                   {% endif %}
                 </div>
               {% endif %}
 
-              <!-- السعر -->
               <p class="package-desc">{{ package.price }} ريال - تتضمن عدة جولات</p>
 
-              <!-- الوصف -->
               {% if package.description %}
                 <p class="package-desc">{{ package.description }}</p>
               {% endif %}
 
               {% if package.id in user_purchases %}
+                <!-- مشتراة: ابدأ مباشرة -->
                 <button type="button" class="btn-play"
                         onclick="createLettersSession('{{ package.id }}')">
                   <span class="btn-text">ابدأ اللعب</span>
                   <div class="loading-spinner"><div class="spinner"></div></div>
                 </button>
               {% else %}
-                <a class="btn-play" href="{% url 'payments:purchase' package.id %}">اشترِ هذه الحزمة</a>
+                <!-- غير مشتراة: الذهاب للدفع -->
+                <a class="btn-play" href="{% url 'payments:purchase' package.id %}">
+                  اشترِ هذه الحزمة
+                </a>
               {% endif %}
             </div>
           </div>
@@ -156,60 +199,122 @@
   {% include 'footer.html' %}
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-    const LOGIN_URL = "{% url 'accounts:login' %}";
-    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-    
-    let sessionLocked = false;
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+      const LOGIN_URL = "{% url 'accounts:login' %}";
+      const NEXT_URL = "{{ request.get_full_path|urlencode }}";
 
-    window.createLettersSession = function(packageId) {
-      if (!IS_AUTH) {
-        window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-        return;
-      }
-      if (!packageId) return;
-      if (sessionLocked) {
-        alert('انتظر قليلاً... جاري إنشاء الجلسة');
-        return;
-      }
-      sessionLocked = true;
+      let sessionLocked = false;
 
-      const form = document.getElementById('lettersCreateForm');
-      const input = document.getElementById('lettersPkgId');
-      const submitBtn = document.getElementById('hiddenSubmitBtn');
-
-      input.value = packageId;
-      showLoading(packageId, true);
-
-      const timeoutId = setTimeout(() => { sessionLocked = false; showLoading(packageId, false); }, 10000);
-
-      try {
-        submitBtn ? submitBtn.click() : form.submit();
-        clearTimeout(timeoutId);
-      } catch (e) {
-        alert('خطأ أثناء الإرسال: ' + e.message);
-        clearTimeout(timeoutId);
-        sessionLocked = false;
-        showLoading(packageId, false);
-      }
-    };
-
-    function showLoading(packageId, show) {
-      const buttons = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-      buttons.forEach((btn) => {
-        const text = btn.querySelector('.btn-text');
-        const spinner = btn.querySelector('.loading-spinner');
-        if (text && spinner) {
-          text.style.display = show ? 'none' : 'block';
-          spinner.style.display = show ? 'block' : 'none';
-          btn.disabled = show;
+      // إنشاء جلسة مدفوعة/مشتراة
+      window.createLettersSession = function(packageId) {
+        if (!IS_AUTH) {
+          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+          return;
         }
-      });
-    }
-  });
-</script>
+        if (!packageId) return;
+        if (sessionLocked) {
+          alert('انتظر قليلاً... جاري إنشاء الجلسة');
+          return;
+        }
+        sessionLocked = true;
 
+        const form = document.getElementById('lettersCreateForm');
+        const input = document.getElementById('lettersPkgId');
+        const submitBtn = document.getElementById('hiddenSubmitBtn');
+
+        input.value = packageId;
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }, 10000);
+
+        try {
+          submitBtn ? submitBtn.click() : form.submit();
+          clearTimeout(timeoutId);
+        } catch (e) {
+          alert('خطأ أثناء الإرسال: ' + e.message);
+          clearTimeout(timeoutId);
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }
+      };
+
+      // إنشاء جلسة المجاني مع فحص أهلية لحظي من الـAPI (مرة واحدة لكل حساب)
+      window.createFreeSession = async function(packageId) {
+        if (!IS_AUTH) {
+          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+          return;
+        }
+        if (!packageId) return;
+        if (sessionLocked) {
+          alert('انتظر قليلاً... جاري إنشاء الجلسة');
+          return;
+        }
+
+        // فحص الأهلية عبر API
+        try {
+          const r = await fetch(`/games/api/check-free-session-eligibility/?game_type=letters`, { credentials: 'same-origin' });
+          const data = await r.json();
+          if (!(data && data.success)) {
+            alert('تعذر التحقق من الأهلية، حاول لاحقًا');
+            return;
+          }
+          if (!data.eligible) {
+            alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
+            return;
+          }
+        } catch {
+          // في حال فشل الشبكة: نسمح بالمحاولة (الفيو سيؤكد المنع إن وُجد)
+        }
+
+        sessionLocked = true;
+
+        const form = document.getElementById('lettersCreateForm');
+        const input = document.getElementById('lettersPkgId');
+        const submitBtn = document.getElementById('hiddenSubmitBtn');
+
+        input.value = packageId;
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }, 10000);
+
+        try {
+          submitBtn ? submitBtn.click() : form.submit();
+          clearTimeout(timeoutId);
+        } catch (e) {
+          alert('خطأ أثناء الإرسال: ' + e.message);
+          clearTimeout(timeoutId);
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }
+      };
+
+      function showLoading(packageId, show) {
+        // يوضح اللودر على الزر الموافق لهذا الـpackageId فقط
+        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+        btns.forEach((btn) => {
+          const text = btn.querySelector('.btn-text');
+          const spinner = btn.querySelector('.loading-spinner');
+          if (text && spinner) {
+            text.style.display = show ? 'none' : 'block';
+            spinner.style.display = show ? 'block' : 'none';
+            btn.disabled = show;
+          }
+        });
+      }
+
+      // في حال الرجوع من bf-cache
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) sessionLocked = false;
+      });
+    });
+  </script>
 </body>
 </html>
