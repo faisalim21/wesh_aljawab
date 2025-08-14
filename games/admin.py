@@ -188,19 +188,18 @@ class LettersPackageAdmin(admin.ModelAdmin):
         )
     theme_badge.short_description = "نوع الأسئلة"
 
-    # ✅ تم التعديل: تلوين العد بناءً على نوع الحزمة
     def questions_count_badge(self, obj):
         count = getattr(obj, '_qcount', 0)
-        expected = 125  # الافتراضي: المدفوعة (5 أسئلة لكل 25 حرف)
-        if obj.is_free and obj.package_number == 0:
-            expected = 75   # المجانية رقم 0 (3 لكل حرف)
+        # المتوقع: المجانية (رقم 0) = 25 حرف × 3 أنواع، المدفوعة = 25 × 5 أنواع
+        per_letter = 3 if (obj.is_free and obj.package_number == 0) else 5
+        expected = 25 * per_letter
         if count == expected:
             color = 'green'; icon = '✅'
         elif count > 0:
             color = 'orange'; icon = '⚠️'
         else:
             color = 'red'; icon = '❌'
-        return format_html('<span style="color:{};font-weight:700;">{} {}</span>', color, icon, count)
+        return format_html('<span style="color:{};font-weight:700;">{} {} / {}</span>', color, icon, count, expected)
     questions_count_badge.short_description = "عدد الأسئلة"
 
     def price_info(self, obj):
@@ -300,14 +299,8 @@ class LettersPackageAdmin(admin.ModelAdmin):
         """
         رفع أسئلة (CSV أو Excel) للحزمة المحددة
         الأعمدة: [الحرف, نوع السؤال, السؤال, الإجابة, التصنيف]
-        يدعم: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4
-        ويتعامل مع الأرقام الهندية، الفراغات، التشكيل، المدود.
-
-        ✅ تم ضمان:
-          - استيراد كل الصفوف بدون قَصّ إلى 3 أسئلة.
-          - الحزمة المجانية رقم 0: يُقبل فقط main + alt1 + alt2.
-          - الحزم المدفوعة: تُقبل main + alt1..alt4 (5 أسئلة لكل حرف).
-          - تنبيهات واضحة للصفوف المتجاهلة بسبب نوع غير مفهوم/غير مسموح للمجاني.
+        يدعم: رئيسي/أساسي/main، بديل1..بديل4، (البديل) 1..4، بديل أول/ثاني/ثالث/رابع،
+        وبالإنجليزي alt1..alt4. كما يتسامح مع الأرقام الهندية، التشكيل، المدود، و"الـ" التعريف.
         """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
 
@@ -329,92 +322,81 @@ class LettersPackageAdmin(admin.ModelAdmin):
             ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
             def strip_diacritics(s: str) -> str:
-                # إزالة التشكيل + المدود + علامات غريبة
-                # U+0640 = TATWEEL (ـ)
-                s = s.replace("\u0640", "")
+                # إزالة المدود والتشكيل
+                s = s.replace("\u0640", "")  # TATWEEL
                 norm = unicodedata.normalize('NFD', s)
                 return "".join(ch for ch in norm if unicodedata.category(ch) != 'Mn')
 
-            def normalize_qtype(raw: str) -> str | None:
+            def normalize_qtype(raw):
                 if raw is None:
                     return None
                 s = str(raw).strip()
                 if not s:
                     return None
+
                 # تنظيف عام
+                s = s.replace("\u200f", "").replace("\u200e", "")  # RTL/LTR marks
                 s = strip_diacritics(s)
-                s = s.translate(ARABIC_INDIC)                 # ٣ -> 3
-                s = re.sub(r"\s+", " ", s)                    # فراغات زائدة
+                s = s.translate(ARABIC_INDIC)      # ٣ -> 3
+                s = re.sub(r"\s+", " ", s)
                 s = s.lower().strip()
 
-                # خرائط مباشرة
-                direct = {
-                    "رئيسي": "main", "اساسي": "main", "أساسي": "main", "main": "main",
-                    "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1", "بديل اول": "alt1",
-                    "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2", "بديل ثاني": "alt2",
-                    "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3", "بديل ثالث": "alt3",
-                    "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4", "بديل رابع": "alt4",
-                }
-                if s in direct:
-                    return direct[s]
+                # إزالة "ال" التعريف إن وُجدت (بديل -> البديل، رئيسي -> الرئيسي)
+                s_wo_al = s[2:] if s.startswith("ال") else s
 
-                # "بديل X" حيث X رقم 1..4
-                m = re.match(r"^بديل\s*(\d+)$", s)
+                candidates = {s, s_wo_al}
+
+                # خرائط مباشرة (مع الأخذ بالاعتبار تحوّل "رئيسي" -> "ريسي" بعد التطبيع)
+                direct = {
+                    "main": "main",
+                    "رئيسي": "main", "ريسي": "main",  # رِئيسي بعد إزالة همزة الياء قد تصبح "ريسي"
+                    "اساسي": "main", "أساسي": "main", "الاساسي": "main",
+                    "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1", "بديل اول": "alt1", "البديل 1": "alt1", "البديل الاول": "alt1",
+                    "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2", "بديل ثاني": "alt2", "البديل 2": "alt2", "البديل الثاني": "alt2",
+                    "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3", "بديل ثالث": "alt3", "البديل 3": "alt3", "البديل الثالث": "alt3",
+                    "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4", "بديل رابع": "alt4", "البديل 4": "alt4", "البديل الرابع": "alt4",
+                }
+                for cand in candidates:
+                    if cand in direct:
+                        return direct[cand]
+
+                # أنماط عامة: (ال)بديل + رقم
+                m = re.match(r"^(?:ال)?بديل\s*(\d+)$", s)
                 if m:
                     n = m.group(1)
                     if n in {"1", "2", "3", "4"}:
                         return f"alt{n}"
 
-                # صيغة ترتيبية مختصرة (أول/ثاني/ثالث/رابع) حتى لو بدون كلمة "بديل"
+                # أنماط عامة: (ال)بديل + ترتيبي
                 ord_map = {
-                    "اول": "alt1", "أول": "alt1", "اولى": "alt1", "أولى": "alt1",
+                    "اول": "alt1", "اولى": "alt1",
                     "ثاني": "alt2", "ثانيه": "alt2", "ثانية": "alt2",
                     "ثالث": "alt3", "ثالثه": "alt3", "ثالثة": "alt3",
                     "رابع": "alt4", "رابعه": "alt4", "رابعة": "alt4",
                 }
-                if s in ord_map:
-                    return ord_map[s]
-                for k, v in ord_map.items():
-                    if s == f"بديل {k}":
-                        return v
+                m2 = re.match(r"^(?:ال)?بديل\s*(اول|اولى|ثاني(?:ه|ة)?|ثالث(?:ه|ة)?|رابع(?:ه|ة)?)$", s)
+                if m2:
+                    return ord_map.get(m2.group(1), None)
 
                 # "alt X" بنمط عام
-                m2 = re.match(r"^alt\s*(\d+)$", s)
-                if m2:
-                    n = m2.group(1)
-                    if n in {"1", "2", "3", "4"}:
-                        return f"alt{n}"
+                m3 = re.match(r"^alt\s*(\d+)$", s)
+                if m3 and m3.group(1) in {"1", "2", "3", "4"}:
+                    return f"alt{m3.group(1)}"
 
                 return None
 
             added = 0
-            failed_rows = 0                 # أنواع غير مفهومة
-            disallowed_rows_free = 0        # أنواع غير مسموحة للمجاني
+            failed_rows = 0
             failed_examples = []
-            disallowed_examples = []
-
-            # المحدِّد حسب نوع الحزمة
-            allow_for_free = {"main", "alt1", "alt2"}
-            allow_for_paid = {"main", "alt1", "alt2", "alt3", "alt4"}
-            allowed_set = allow_for_free if (package.is_free and package.package_number == 0) else allow_for_paid
 
             def upsert_row(letter, qtype_raw, question, answer, category):
-                nonlocal added, failed_rows, failed_examples, disallowed_rows_free, disallowed_examples
+                nonlocal added, failed_rows, failed_examples
                 qtype = normalize_qtype(qtype_raw)
                 if not qtype:
                     failed_rows += 1
                     if len(failed_examples) < 5:
-                        failed_examples.append(f"(الحرف: {str(letter).strip()} — النوع: {str(qtype_raw).strip()})")
+                        failed_examples.append(f"[الحرف={letter!s}, النوع='{qtype_raw!s}']")
                     return
-
-                # رفض الأنواع الزائدة في الحزمة المجانية رقم 0
-                if qtype not in allowed_set:
-                    disallowed_rows_free += 1
-                    if len(disallowed_examples) < 5:
-                        disallowed_examples.append(f"(الحرف: {str(letter).strip()} — النوع: {qtype})")
-                    return
-
-                # unique_together يضمن سجلًا واحدًا لكل (letter, qtype) — سنُحدّثه/ننشيئه
                 LettersGameQuestion.objects.update_or_create(
                     package=package, letter=str(letter).strip(), question_type=qtype,
                     defaults={'question': question or '', 'answer': answer or '', 'category': category or ''}
@@ -456,23 +438,18 @@ class LettersPackageAdmin(admin.ModelAdmin):
                     return HttpResponseRedirect(request.path)
 
                 # رسائل النتيجة
-                summary = []
-                summary.append(f"تم إضافة/تحديث <b>{added}</b> سؤال.")
-                if failed_rows:
-                    msg = f"تم تجاهل <b>{failed_rows}</b> صف بسبب «نوع سؤال» غير مفهوم."
+                if failed_rows and not added:
+                    msg = "لم يتم التعرف على أي صف. تفقد عمود (نوع السؤال)."
                     if failed_examples:
-                        msg += " أمثلة: " + "، ".join(failed_examples)
-                    summary.append(msg)
-                if disallowed_rows_free:
-                    msg = f"تم تجاهل <b>{disallowed_rows_free}</b> صف لأن الحزمة المجانية رقم 0 لا تسمح إلا بـ (رئيسي + بديل1 + بديل2)."
-                    if disallowed_examples:
-                        msg += " أمثلة: " + "، ".join(disallowed_examples)
-                    summary.append(msg)
-
-                if failed_rows or disallowed_rows_free:
-                    messages.warning(request, mark_safe(" ".join(summary)))
+                        msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
+                    messages.error(request, msg)
+                elif failed_rows:
+                    msg = f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم."
+                    if failed_examples:
+                        msg += " أمثلة: " + ", ".join(failed_examples)
+                    messages.warning(request, msg)
                 else:
-                    messages.success(request, mark_safe(" ".join(summary)))
+                    messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
 
                 return HttpResponseRedirect(reverse('admin:games_letterspackage_changelist'))
 
@@ -494,15 +471,13 @@ class LettersPackageAdmin(admin.ModelAdmin):
             "help_rows": [
                 "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
                 "الأعمدة: الحرف | نوع السؤال | السؤال | الإجابة | التصنيف.",
-                "أنواع صالحة: رئيسي/أساسي/main، بديل1..بديل4، بديل أول/ثاني/ثالث/رابع، alt1..alt4.",
-                "الحزمة المجانية رقم 0 تُقبل رئيسي + بديل1 + بديل2 فقط.",
+                "أنواع صالحة: رئيسي/أساسي/main، بديل1..بديل4، (البديل) 1..4، بديل أول/ثاني/ثالث/رابع، alt1..alt4.",
             ],
             "extra_note": "تفعيل خيار الحذف سيحذف أسئلة هذه الحزمة قبل الاستيراد.",
             "submit_label": "رفع الملف",
             "replace_label": "حذف الأسئلة الحالية قبل الرفع",
         }
         return TemplateResponse(request, "admin/import_csv.html", context)
-
 
     def download_letters_template_view(self, request):
         if not HAS_OPENPYXL:
@@ -526,8 +501,6 @@ class LettersPackageAdmin(admin.ModelAdmin):
             ['أ', 'رئيسي', 'بلد يبدأ بحرف الألف', 'الأردن', 'بلدان'],
             ['أ', 'بديل1', 'حيوان يبدأ بحرف الألف', 'أسد', 'حيوانات'],
             ['أ', 'بديل2', 'طعام يبدأ بحرف الألف', 'أرز', 'أطعمة'],
-            ['أ', 'بديل3', 'مدينة تبدأ بحرف الألف', 'أبها', 'بلدان/مدن'],
-            ['أ', 'بديل4', 'مهنة تبدأ بحرف الألف', 'أمين', 'وظائف'],
         ]
         for row in examples:
             sh.append(row)
@@ -540,7 +513,6 @@ class LettersPackageAdmin(admin.ModelAdmin):
         response['Content-Disposition'] = f'attachment; filename="letters_package_{package.package_number}.csv"'
         writer = csv.writer(response)
         writer.writerow(['الحرف', 'نوع السؤال', 'السؤال', 'الإجابة', 'التصنيف'])
-        # ✅ دعم alt3 و alt4
         type_map_ar = {'main': 'رئيسي', 'alt1': 'بديل1', 'alt2': 'بديل2', 'alt3': 'بديل3', 'alt4': 'بديل4'}
         for q in package.letters_questions.all().order_by('letter', 'question_type'):
             writer.writerow([q.letter, type_map_ar.get(q.question_type, q.question_type), q.question, q.answer, q.category])
