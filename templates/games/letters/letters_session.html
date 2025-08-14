@@ -40,7 +40,7 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
-    /* شارات العنوان */
+    /* شارات أعلى الصفحة */
     .header-badges { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
     .badge-soft {
       display:inline-block; border:1px solid rgba(0,0,0,.08); padding:6px 10px;
@@ -52,26 +52,13 @@
 
     /* إشعار ضغط الزر */
     #buzzNotification {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-      padding: 20px 25px;
-      border-radius: 15px;
-      font-weight: bold;
-      display: none;
-      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
-      z-index: 9999;
-      font-size: 18px;
-      max-width: 320px;
-      animation: buzzPulse 0.6s ease-in-out infinite alternate;
-      border: 3px solid rgba(255, 255, 255, 0.3);
+      position: fixed; top: 20px; right: 20px;
+      background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+      padding: 20px 25px; border-radius: 15px; font-weight: bold; display: none;
+      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4); z-index: 9999; font-size: 18px; max-width: 320px;
+      animation: buzzPulse 0.6s ease-in-out infinite alternate; border: 3px solid rgba(255, 255, 255, 0.3);
     }
-    @keyframes buzzPulse {
-      from { transform: scale(1); box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4); }
-      to { transform: scale(1.05); box-shadow: 0 20px 45px rgba(239, 68, 68, 0.6); }
-    }
+    @keyframes buzzPulse { from{transform:scale(1)} to{transform:scale(1.05)} }
 
     .buzz-controls { margin: 15px 0; text-align: center; }
     .buzz-reset-btn {
@@ -101,7 +88,7 @@
     @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .round-card, .alt-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; height:100%; }
-    .round-title { font-weight:900; margin-bottom:6px; }
+    .round-title { font-weight:900; margin-bottom:6px; font-size:1.05rem; }
     .answer { color:#16a34a; font-weight:900; }
     .alt-card { background:#fef3c7; }
     .alt-title { font-weight:800; color:#92400e; }
@@ -111,22 +98,30 @@
     .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
     .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
     .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
+
     .timer-display { font-size: 2rem; font-weight: bold; color: #dc2626; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
-    /* موبايل */
+    /* موبايل: تحسين مظهر كروت النقاط */
     @media (max-width: 768px) {
       body { padding: 5px; }
       .container { padding: 10px; border-radius: 15px; }
+
       .honeycomb-container .position-absolute img { max-height: 35px !important; right: 10px !important; }
       .honeycomb-container { margin: 10px 0; padding: 5px; }
       .honeycomb-svg { max-width: 95vw; width: 100%; transform: scale(1.0); transform-origin: center; }
       .hex-text { font-size: 150px; font-weight: 900; }
-      .score-display { font-size: 1rem; padding: 6px; margin: 2px; }
+
+      .scores-mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+      .scores-mobile .score-display { 
+        font-size: 0.95rem; padding: 10px 8px; 
+        display:flex; flex-direction:column; justify-content:center; align-items:center;
+        min-height: 112px;
+      }
+      .scores-mobile .score-display > .mt-1 { margin-top: auto; }
+      .scores-mobile .btn { font-size: 12px; padding: 4px 10px; margin: 0 2px; }
+
       .timer-display { font-size: 1.8rem; }
       .question-panel { padding: 12px; margin: 10px 0; }
-      .scores-mobile { display: flex; gap: 8px; margin: 10px 0; }
-      .scores-mobile .score-display { flex: 1; font-size: 0.95rem; padding: 6px 4px; }
-      .scores-mobile .btn { font-size: 12px; padding: 2px 6px; margin: 0 1px; }
       .info-panel { padding: 8px; margin: 8px 0; }
       .btn-primary { font-size: 12px; padding: 6px 10px; }
       h2 { font-size: 1.3rem; margin-bottom: 10px; }
@@ -148,7 +143,7 @@
   <div class="container">
     <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
 
-    <!-- شارات العنوان (رقم الحزمة + الصلاحية) -->
+    <!-- شارات أعلى الصفحة فقط -->
     <div class="header-badges mb-3">
       <span class="badge-soft badge-pkg">حزمة رقم {{ session.package.package_number }}</span>
       {% if session.package.is_free %}
@@ -188,7 +183,7 @@
       <button class="buzz-reset-btn" onclick="resetBuzzer()">🔄 فك قفل الزر</button>
     </div>
 
-    <!-- عرض السؤال الحالي -->
+    <!-- تلميح -->
     <div id="questionDisplay" class="alert alert-light text-dark mt-3 text-center fs-5 fw-bold">
       اضغط على أي حرف لعرض السؤال
     </div>
@@ -217,15 +212,15 @@
       </svg>
     </div>
 
-    <!-- لوحة الأسئلة (مدفوعة: 3 جولات + بديلين، مجانية: رئيسي + بديلين) -->
+    <!-- لوحة الأسئلة -->
     <div class="question-panel" id="questionPanel">
-      <div class="d-flex align-items-center justify-content-between flex-wrap">
-        <h4 class="mb-2">❓ حرف <span id="currentLetter">أ</span></h4>
-      <!-- للمدفوعة: جولات لاث -->
+      <h4 class="mb-3">❓ حرف <span id="currentLetter">أ</span></h4>
+
+      <!-- الحزمة المدفوعة: 3 جولات -->
       <div id="paidRounds" class="row g-2 d-none">
         <div class="col-md-4">
           <div class="round-card h-100">
-            <div class="round-title">🎯 الجولة 1</div>
+            <div class="round-title">🎯 الجولة 1 (سؤال رئيسي)</div>
             <div><strong>السؤال:</strong> <span id="r1Question">—</span></div>
             <div class="mt-1"><strong>الإجابة:</strong> <span id="r1Answer" class="answer">—</span></div>
           </div>
@@ -246,24 +241,44 @@
         </div>
       </div>
 
-      <!-- للمجاني: رئيسي + بديلين -->
+      <!-- الحزمة المجانية: سؤال الجولة الأولى + بديلين -->
       <div id="freeMainBlock" class="mb-3 d-none">
-        <div><strong>السؤال:</strong> <span id="mainQuestion">—</span></div>
-        <div class="mt-1"><strong>الإجابة:</strong> <span id="mainAnswer" class="answer">—</span></div>
+        <div class="round-card">
+          <div class="round-title">🎯 سؤال الجولة الأولى (1)</div>
+          <div><strong>السؤال:</strong> <span id="mainQuestion">—</span></div>
+          <div class="mt-1"><strong>الإجابة:</strong> <span id="mainAnswer" class="answer">—</span></div>
+        </div>
       </div>
 
-      <!-- البدائل (تظهر في الحالتين) -->
-      <div class="row g-2">
-        <!-- للمدفوعة فقط: بديل 3 وبديل 4 -->
+      <!-- بدائل للمجاني فقط: بديل 1 + بديل 2 -->
+      <div id="freeAlt12" class="row g-2 d-none">
+        <div class="col-md-6">
+          <div class="alt-card h-100" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
+            <div><span id="alt1Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt1Answer" class="answer">—</span></small></div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="alt-card h-100" style="cursor:pointer">
+            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
+            <div><span id="alt2Question">—</span></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt2Answer" class="answer">—</span></small></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- بدائل للمدفوعة فقط: بديل 3 + بديل 4 -->
+      <div id="paidAlt34" class="row g-2 d-none">
         <div class="col-md-6 d-none" id="alt3Col">
-          <div class="alt-card h-100" onclick="switchQuestion('alt3')" style="cursor:pointer">
+          <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 3</div>
             <div><span id="alt3Question">—</span></div>
             <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt3Answer" class="answer">—</span></small></div>
           </div>
         </div>
         <div class="col-md-6 d-none" id="alt4Col">
-          <div class="alt-card h-100" onclick="switchQuestion('alt4')" style="cursor:pointer">
+          <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 4</div>
             <div><span id="alt4Question">—</span></div>
             <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt4Answer" class="answer">—</span></small></div>
@@ -434,7 +449,6 @@
     cellStates[letter] = state || 'normal';
   }
 
-  // إظهار/إخفاء بطاقات بدائل 3/4
   function toggleAltCard(idPrefix, exists, questionText, answerText){
     const col = document.getElementById(idPrefix+'Col');
     const qEl = document.getElementById(`${idPrefix}Question`);
@@ -445,7 +459,7 @@
     col.classList.toggle('d-none', !exists);
   }
 
-  // ========= الأسئلة (مدفوعة: 3 جولات + بديلين | مجانية: رئيسي + بديلين) =========
+  // ========= الأسئلة =========
   async function showQuestion(letter){
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
@@ -457,16 +471,28 @@
       document.getElementById('currentLetter').textContent = data.letter || letter;
 
       if (isFreeSession) {
-        // مجانية: رئيسي + بديلان
+        // مجانية: سؤال الجولة الأولى (main) + بديل1 + بديل2
         document.getElementById('paidRounds').classList.add('d-none');
+        document.getElementById('paidAlt34').classList.add('d-none');
+
         document.getElementById('freeMainBlock').classList.remove('d-none');
+        document.getElementById('freeAlt12').classList.remove('d-none');
 
         document.getElementById('mainQuestion').textContent = (q.main && q.main.question) || '—';
         document.getElementById('mainAnswer').textContent   = (q.main && q.main.answer)   || '—';
+
+        document.getElementById('alt1Question').textContent = (q.alt1 && q.alt1.question) || '—';
+        document.getElementById('alt1Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
+
+        document.getElementById('alt2Question').textContent = (q.alt2 && q.alt2.question) || '—';
+        document.getElementById('alt2Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
       } else {
-        // مدفوعة: 3 جولات (main, alt1, alt2)
+        // مدفوعة: 3 جولات (main, alt1, alt2) + بديل3 + بديل4
         document.getElementById('freeMainBlock').classList.add('d-none');
+        document.getElementById('freeAlt12').classList.add('d-none');
+
         document.getElementById('paidRounds').classList.remove('d-none');
+        document.getElementById('paidAlt34').classList.remove('d-none');
 
         document.getElementById('r1Question').textContent = (q.main && q.main.question) || '—';
         document.getElementById('r1Answer').textContent   = (q.main && q.main.answer)   || '—';
@@ -476,18 +502,11 @@
 
         document.getElementById('r3Question').textContent = (q.alt2 && q.alt2.question) || '—';
         document.getElementById('r3Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
+
+        // بدائل إضافية 3 و 4 (اختيارية)
+        toggleAltCard('alt3', !!q.alt3, q.alt3?.question, q.alt3?.answer);
+        toggleAltCard('alt4', !!q.alt4, q.alt4?.question, q.alt4?.answer);
       }
-
-      // بديل 1 و 2 (تظهر للحالتين)
-      document.getElementById('alt1Question').textContent = (q.alt1 && q.alt1.question) || '—';
-      document.getElementById('alt1Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
-
-      document.getElementById('alt2Question').textContent = (q.alt2 && q.alt2.question) || '—';
-      document.getElementById('alt2Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
-
-      // بديل 3 وبديل 4 (للمدفوعة فقط)
-      toggleAltCard('alt3', !!q.alt3, q.alt3?.question, q.alt3?.answer);
-      toggleAltCard('alt4', !!q.alt4, q.alt4?.question, q.alt4?.answer);
 
       document.getElementById('questionDisplay').textContent = `حرف ${letter}`;
     }catch{}
@@ -556,7 +575,7 @@
     }catch{}
   }
 
-  // ========= مؤقّت الجلسة (للمجاني فقط هنا) =========
+  // ========= مؤقّت الجلسة (للمجاني فقط) =========
   let sessionTimerInterval = null;
   function startSessionTimer(seconds){
     const el = document.getElementById('timeRemaining'), box = document.getElementById('sessionTimer');
@@ -582,7 +601,7 @@
       clearHeartbeat();
       heartbeatTimer = setInterval(()=>{
         try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
-      }, 20000); // كل 20 ثانية
+      }, 20000);
     };
 
     socket.onmessage = (ev)=>{
@@ -629,12 +648,6 @@
     }
   }
   window.resetBuzzer = resetBuzzer;
-
-  // متاح للاستخدام من بطاقات البدائل
-  function switchQuestion(which){
-    // مجرد placeholder لو أردت لاحقًا تبديل السؤال المعروض في مكان مخصص
-    // حاليًا نتركها للضغط البصري فقط
-  }
 </script>
 </body>
 </html>
