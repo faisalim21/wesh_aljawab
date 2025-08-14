@@ -1,12 +1,10 @@
-# games/models.py - النسخة العربية الكاملة
+# games/models.py - النسخة العربية الكاملة (محدّث)
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.db.models import Q, UniqueConstraint, Index
 import uuid
-
-# games/models.py (مقتطف: كلاس GamePackage فقط)
-from django.db import models
-from django.contrib.auth.models import User
-import uuid
+from datetime import timedelta
 
 class GamePackage(models.Model):
     """حزم الألعاب"""
@@ -51,14 +49,14 @@ class GamePackage(models.Model):
         help_text="هل الحزمة متاحة للشراء؟"
     )
 
-    # ✅ جديد: وصف الحزمة
+    # ✅ وصف الحزمة
     description = models.TextField(
         blank=True,
         verbose_name="الوصف",
         help_text="وصف قصير للحزمة يظهر للمستخدمين"
     )
 
-    # ✅ جديد: نوع الأسئلة
+    # ✅ نوع الأسئلة
     question_theme = models.CharField(
         max_length=20,
         choices=QUESTION_THEMES,
@@ -133,8 +131,17 @@ class LettersGameQuestion(models.Model):
     def __str__(self):
         return f"{self.letter} - {self.get_question_type_display()} - {self.question[:30]}..."
 
+
 class UserPurchase(models.Model):
-    """مشتريات المستخدمين"""
+    """
+    مشتريات المستخدمين
+    ✅ السياسة: تنتهي صلاحية المشتريات المدفوعة بعد 72 ساعة من وقت الشراء.
+    - يُسمح بشراء الحزمة مرة أخرى بعد انتهاء الصلاحية (أو إتمام الاستخدام).
+    - قيد فريد (شرطي) يمنع وجود أكثر من "شراء نشط" واحد غير مكتمل لنفس الحزمة لكل مستخدم.
+    - "نشط" = is_completed=False. عند مرور 72 ساعة يتم اعتباره منتهيًا (expired) ويمكن إكماله تلقائيًا.
+    """
+    EXPIRY_HOURS = 72  # سياسة الانتهاء بعد الشراء
+    
     user = models.ForeignKey(
         User, 
         on_delete=models.CASCADE,
@@ -145,14 +152,23 @@ class UserPurchase(models.Model):
         on_delete=models.CASCADE,
         verbose_name="الحزمة"
     )
+
+    # وقت الشراء + نهاية الصلاحية
     purchase_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الشراء"
     )
+    expires_at = models.DateTimeField(
+        blank=True, null=True,
+        verbose_name="ينتهي في",
+        help_text="وقت انتهاء صلاحية الشراء (يُحدَّد تلقائيًا إلى 72 ساعة بعد الشراء)"
+    )
+
+    # حالة الشراء
     is_completed = models.BooleanField(
         default=False,
         verbose_name="مكتملة؟",
-        help_text="هل انتهى المستخدم من اللعب؟"
+        help_text="هل انتهى المستخدم من الاستخدام/اللعب على هذه الحزمة؟"
     )
     games_played = models.IntegerField(
         default=0,
@@ -161,13 +177,79 @@ class UserPurchase(models.Model):
     )
     
     class Meta:
-        unique_together = ('user', 'package')
         verbose_name = "مشترى حزمة"
         verbose_name_plural = "مشتريات الحزم"
         ordering = ['-purchase_date']
+        # ✅ يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
+        constraints = [
+            UniqueConstraint(
+                fields=['user', 'package'],
+                condition=Q(is_completed=False),
+                name='unique_active_purchase_per_package'
+            ),
+        ]
+        indexes = [
+            Index(fields=['user', 'package']),
+            Index(fields=['is_completed']),
+            Index(fields=['expires_at']),
+        ]
     
     def __str__(self):
-        return f"{self.user.username} - {self.package}"
+        status = "نشط" if not self.is_completed else "مكتمل"
+        return f"{self.user.username} - {self.package} ({status})"
+
+    # ========= منافع/خصائص للمساعدة في الفيوز والخدمات =========
+    @property
+    def expiry_duration(self) -> timedelta:
+        """مدة صلاحية الشراء (افتراضيًا 72 ساعة)."""
+        return timedelta(hours=self.EXPIRY_HOURS)
+
+    @property
+    def computed_expires_at(self):
+        """تاريخ الانتهاء المحسوب إن لم يكن مضبوطًا في الحقل."""
+        base = self.purchase_date or timezone.now()
+        return base + self.expiry_duration
+
+    @property
+    def is_expired(self) -> bool:
+        """
+        هل الشراء منتهي الصلاحية الآن؟
+        - يعتمد على expires_at إن وُجد، وإلا يُحسب من purchase_date.
+        """
+        now = timezone.now()
+        end = self.expires_at or self.computed_expires_at
+        return now >= end
+
+    def mark_expired_if_needed(self, auto_save=True) -> bool:
+        """
+        يضع is_completed=True تلقائيًا إذا انتهت الصلاحية.
+        يعيد True لو تغيّرت الحالة.
+        """
+        if not self.is_completed and self.is_expired:
+            self.is_completed = True
+            if auto_save:
+                self.save(update_fields=['is_completed'])
+            return True
+        return False
+
+    # ========= ضمان ضبط expires_at ومواءمة السياسة =========
+    def save(self, *args, **kwargs):
+        # ضبط expires_at عند الإنشاء إن لم يحدَّد
+        if self.expires_at is None and self.purchase_date:
+            self.expires_at = self.purchase_date + self.expiry_duration
+
+        # في حال تم إنشاء السجل للتو ولم تُضبط purchase_date بعد (قبل الحفظ الأول)
+        if self.expires_at is None and not self.purchase_date:
+            # سيُملأ purchase_date تلقائيًا بعد الحفظ الأول؛ نضبط expires_at في حفظ لاحق
+            pass
+
+        # قبل الحفظ: إن انتهت الصلاحية نُكمِل الشراء
+        if not self.is_completed:
+            if self.expires_at and timezone.now() >= self.expires_at:
+                self.is_completed = True
+
+        super().save(*args, **kwargs)
+
 
 class GameSession(models.Model):
     """جلسة لعب"""
@@ -270,6 +352,7 @@ class GameSession(models.Model):
     def __str__(self):
         return f"جلسة {self.get_game_type_display()} - {self.host.username}"
 
+
 class LettersGameProgress(models.Model):
     """تقدم لعبة الحروف"""
     session = models.OneToOneField(
@@ -312,6 +395,7 @@ class LettersGameProgress(models.Model):
     
     def __str__(self):
         return f"تقدم جلسة {self.session.id}"
+
 
 class Contestant(models.Model):
     """المتسابقون"""

@@ -558,11 +558,12 @@ def quiz_game_home(request):
 
 @require_http_methods(["GET"])
 def api_check_free_session_eligibility(request):
+    # ✅ تغيّر: غير مسجّل → غير مؤهل، ويُلزم تسجيل الدخول
     if not request.user.is_authenticated:
         return JsonResponse({
             'success': True,
-            'eligible': True,
-            'message': 'غير مسجل دخول - مسموح بجلسة مجانية',
+            'eligible': False,
+            'message': 'يرجى تسجيل الدخول للاستفادة من الجلسة المجانية',
             'sessions_count': 0
         })
 
@@ -575,7 +576,7 @@ def api_check_free_session_eligibility(request):
         return JsonResponse({
             'success': True,
             'eligible': eligible,
-            'message': message,
+            'message': message or ('مؤهل لجلسة مجانية' if eligible else 'لقد استخدمت الجلسة المجانية الخاصة بك.'),
             'sessions_count': sessions_count,
             'user_id': request.user.id,
             'username': request.user.username,
@@ -585,13 +586,10 @@ def api_check_free_session_eligibility(request):
         logger.error(f'Error checking free session eligibility: {e}')
         return JsonResponse({'success': False, 'error': 'خطأ في التحقق من الأهلية'}, status=500)
 
+
+# games/views.py
 @require_http_methods(["GET"])
 def get_question(request):
-    """
-    تُرجع سؤال الحرف مع البدائل حسب نوع الحزمة:
-    - مجانية: main + alt1 + alt2
-    - مدفوعة: main + alt1 + alt2 + alt3 + alt4
-    """
     letter = request.GET.get('letter')
     session_id = request.GET.get('session_id')
 
@@ -601,12 +599,19 @@ def get_question(request):
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
 
-        # تحقّق أن الحرف داخل حروف الجلسة
+        # ✅ جديد: اغلاق عند الانتهاء (مدفوع أو مجاني)
+        if is_session_expired(session):
+            return JsonResponse({
+                'success': False,
+                'error': 'انتهت صلاحية الجلسة',
+                'session_expired': True
+            }, status=410)
+
+        # تأكد أن الحرف ضمن حروف الجلسة...
         letters = get_letters_for_session(session)
         if letter not in letters:
             return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
 
-        # حدد الأنواع حسب الحزمة
         is_free_pkg = session.package.is_free
         question_types = ['main', 'alt1', 'alt2'] if is_free_pkg else ['main', 'alt1', 'alt2', 'alt3', 'alt4']
 
@@ -618,20 +623,10 @@ def get_question(request):
                     letter=letter,
                     question_type=qtype
                 )
-                questions[qtype] = {
-                    'question': q.question,
-                    'answer': q.answer,
-                    'category': q.category
-                }
+                questions[qtype] = {'question': q.question, 'answer': q.answer, 'category': q.category}
             except LettersGameQuestion.DoesNotExist:
-                # رسالة افتراضية إن لم يوجد السؤال (لا تُعدّ خطأً)
-                questions[qtype] = {
-                    'question': f'لا يوجد سؤال {qtype} للحرف {letter}',
-                    'answer': 'غير متاح',
-                    'category': 'غير محدد'
-                }
+                questions[qtype] = {'question': f'لا يوجد سؤال {qtype} للحرف {letter}', 'answer': 'غير متاح', 'category': 'غير محدد'}
 
-        logger.info(f'Questions fetched for letter {letter} in session {session_id} (free={is_free_pkg})')
         return JsonResponse({
             'success': True,
             'questions': questions,
@@ -649,6 +644,7 @@ def get_question(request):
     except Exception as e:
         logger.error(f'Error fetching question: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
 
 @require_http_methods(["GET"])
 def get_session_letters(request):
