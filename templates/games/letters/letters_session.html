@@ -221,13 +221,7 @@
     <div class="question-panel" id="questionPanel">
       <div class="d-flex align-items-center justify-content-between flex-wrap">
         <h4 class="mb-2">❓ حرف <span id="currentLetter">أ</span></h4>
-        <div class="small text-muted">
-          <span id="panelPkgInfo">حزمة رقم {{ session.package.package_number }}</span>
-          {% if not session.package.is_free %} • <span>⏳ 72 ساعة</span>{% endif %}
-        </div>
-      </div>
-
-      <!-- للمدفوعة: جولات ثلاث -->
+      <!-- للمدفوعة: جولات لاث -->
       <div id="paidRounds" class="row g-2 d-none">
         <div class="col-md-4">
           <div class="round-card h-100">
@@ -260,21 +254,6 @@
 
       <!-- البدائل (تظهر في الحالتين) -->
       <div class="row g-2">
-        <div class="col-md-6">
-          <div class="alt-card h-100" onclick="switchQuestion('alt1')" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
-            <div><span id="alt1Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt1Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="alt-card h-100" onclick="switchQuestion('alt2')" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
-            <div><span id="alt2Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt2Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-
         <!-- للمدفوعة فقط: بديل 3 وبديل 4 -->
         <div class="col-md-6 d-none" id="alt3Col">
           <div class="alt-card h-100" onclick="switchQuestion('alt3')" style="cursor:pointer">
