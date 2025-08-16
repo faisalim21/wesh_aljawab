@@ -4,384 +4,185 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب - وش الجواب</title>
+
+    <!-- Canonical + dynamic URL للـ OG -->
+    <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}/accounts/register/{% endif %}">
+
+    <!-- Open Graph -->
+    <meta property="og:locale" content="ar_SA">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="إنشاء حساب - وش الجواب">
+    <meta property="og:description" content="انضم إلى منصة وش الجواب للألعاب الذكية وابدأ رحلتك التفاعلية الآن.">
+    <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}/accounts/register/{% endif %}">
+    <meta property="og:site_name" content="وش الجواب">
+    <meta property="og:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+    <meta property="og:image:secure_url" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+    <meta property="og:image:alt" content="شعار وش الجواب">
+    <!-- بإمكانك تحديد أبعاد الصورة إن كانت 1200x630 -->
+    <!-- <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"> -->
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="إنشاء حساب - وش الجواب">
+    <meta name="twitter:description" content="انضم إلى منصة وش الجواب للألعاب الذكية وابدأ رحلتك التفاعلية الآن.">
+    <meta name="twitter:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+
+    <!-- PWA / Favicons (تستخدم نفس الشعار مؤقتًا) -->
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+    <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+    <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
+    <!-- إن كان لديك manifest حقيقي ضع مساره هنا -->
+    <!-- <link rel="manifest" href="{% static 'site.webmanifest' %}"> -->
+
+    <!-- CSS Libs -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
     <style>
-        :root {
+        :root{
             --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             --secondary-gradient: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-light: #f8fafc;
+            --success-color:#10b981; --danger-color:#ef4444; --warning-color:#f59e0b;
+            /* سطح المكتب */
+            --glass-bg: rgba(255,255,255,0.12);
+            --glass-border: rgba(255,255,255,0.22);
+            --text-light:#f8fafc;
+            /* الجوال: خلفية أغمق وأكثر راحة */
+            --glass-bg-mobile: rgba(15,18,39,0.86);
+            --glass-border-mobile: rgba(255,255,255,0.08);
+            --field-bg-mobile: rgba(255,255,255,0.12);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'Tajawal',sans-serif;
+            background:var(--primary-gradient);
+            min-height:100vh; display:flex; align-items:center; justify-content:center;
+            padding:20px; position:relative; overflow-x:hidden; color-scheme:dark;
         }
-
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--primary-gradient);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
+        /* خلفية زخرفية لطيفة */
+        body::before{
+            content:''; position:absolute; inset:0; z-index:-1;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(79,70,229,0.28) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(124,58,237,0.26) 0%, transparent 50%),
+                radial-gradient(circle at 60% 20%, rgba(251,146,60,0.16) 0%, transparent 50%);
+            animation:floatingBubbles 20s ease-in-out infinite;
         }
+        @keyframes floatingBubbles{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-20px) scale(1.05)}}
 
-        /* خلفية متحركة */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 60% 20%, rgba(251, 146, 60, 0.2) 0%, transparent 50%);
-            animation: floatingBubbles 20s ease-in-out infinite;
-            z-index: -1;
+        .auth-container{
+            background:var(--glass-bg);
+            backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+            border:1px solid var(--glass-border);
+            border-radius:24px; padding:40px; width:100%; max-width:500px;
+            box-shadow:0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+            position:relative; animation:slideIn .6s ease-out;
         }
-
-        @keyframes floatingBubbles {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-20px) scale(1.05); }
+        @keyframes slideIn{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .auth-header{text-align:center;margin-bottom:30px}
+        .logo-container{
+            width:120px;height:120px;margin:0 auto 24px;
+            background:rgba(255,255,255,.16); border-radius:24px; padding:20px;
+            display:flex;align-items:center;justify-content:center;
+            box-shadow:0 20px 40px rgba(0,0,0,.22), 0 0 80px rgba(124,58,237,.28), inset 0 2px 14px rgba(255,255,255,.28);
+            backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            border:2px solid rgba(255,255,255,.28); animation:logoFloat 4s ease-in-out infinite;
         }
+        .logo-img{width:100%;height:100%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.3));transition:transform .3s ease}
+        @keyframes logoFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.02)}}
+        .auth-title{font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,.08)}
+        .auth-subtitle{color:rgba(255,255,255,.86);font-size:1rem}
 
-        .auth-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 40px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 
-                0 25px 50px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
-            position: relative;
-            animation: slideIn 0.6s ease-out;
+        .form-group{position:relative;margin-bottom:20px}
+        .form-label{color:#fff;font-weight:500;margin-bottom:8px;display:block;font-size:.95rem}
+        .form-control{
+            background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.22);
+            border-radius:12px; padding:14px 20px; color:#fff; width:100%;
+            transition:all .25s ease; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
         }
+        .form-control:focus{
+            outline:none; border-color:rgba(124,58,237,.9); background:rgba(255,255,255,.16);
+            box-shadow:0 0 0 4px rgba(124,58,237,.14); transform:translateY(-1px);
+        }
+        .form-control::placeholder{color:rgba(255,255,255,.68)}
+        .input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);font-size:1.1rem}
+        .form-control.with-icon{padding-left:45px}
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(30px) scale(0.95);
+        .password-toggle{position:absolute;left:45px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,.7);z-index:10}
+        .text-danger{color:#fca5a5!important;font-size:.85rem;margin-top:5px}
+        .text-muted{color:rgba(255,255,255,.66)!important;font-size:.8rem;margin-top:5px}
+
+        .password-strength{height:4px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:8px;overflow:hidden}
+        .password-strength-fill{height:100%;width:0%;transition:width .3s ease;border-radius:2px}
+        .strength-weak{background:var(--danger-color);width:30%}
+        .strength-fair{background:var(--warning-color);width:60%}
+        .strength-strong{background:var(--success-color);width:100%}
+
+        .btn-register{
+            background:var(--secondary-gradient); border:none; border-radius:12px; padding:15px 30px;
+            color:#fff; font-size:1.1rem; font-weight:700; width:100%;
+            cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;
+            box-shadow:0 10px 24px rgba(139,92,246,.35); position:relative; overflow:hidden; margin-top:10px;
+        }
+        .btn-register:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(139,92,246,.45)}
+        .btn-register:disabled{opacity:.75;cursor:not-allowed}
+
+        .auth-links{text-align:center;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
+        .auth-link{color:rgba(255,255,255,.88);text-decoration:none;font-weight:600;transition:color .2s ease}
+        .auth-link:hover{color:#fff;text-decoration:underline}
+
+        .alert{border-radius:12px;border:none;padding:15px 20px;margin-bottom:22px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+        .alert-success{background:rgba(16,185,129,.2);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+        .alert-danger,.alert-error{background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+
+        .loading{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}
+        .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top:2px solid #fff;border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        /* الجوال: تقليل الشفافية وإغلاق البلور لراحة العين */
+        @media (max-width:768px){
+            .auth-container{
+                padding:30px 24px; margin:10px;
+                background:var(--glass-bg-mobile);
+                backdrop-filter:none; -webkit-backdrop-filter:none;
+                border:1px solid var(--glass-border-mobile);
+                box-shadow:0 20px 44px rgba(0,0,0,.28);
             }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
+            body::before{
+                background:
+                    radial-gradient(circle at 20% 30%, rgba(79,70,229,.18) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(124,58,237,.16) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 20%, rgba(251,146,60,.10) 0%, transparent 50%);
+                animation:none;
             }
+            .logo-container{width:100px;height:100px;margin-bottom:20px;padding:15px;animation:none}
+            .auth-title{font-size:1.6rem}
+            .auth-subtitle{font-size:.95rem}
+            .form-control{background:var(--field-bg-mobile);border-color:rgba(255,255,255,.22);padding:12px 16px}
+            .form-control.with-icon{padding-left:42px}
         }
-
-        .auth-header {
-            text-align: center;
-            margin-bottom: 30px;
+        @media (max-width:480px){
+            .logo-container{width:90px;height:90px;padding:12px}
+            .auth-title{font-size:1.45rem}
         }
-
-        .logo-container {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 25px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-shadow: 
-                0 20px 40px rgba(0, 0, 0, 0.2),
-                0 0 80px rgba(124, 58, 237, 0.3),
-                inset 0 2px 15px rgba(255, 255, 255, 0.3);
-            backdrop-filter: blur(15px);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            animation: logoFloat 4s ease-in-out infinite;
-        }
-
-        .logo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 12px;
-            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
-            transition: all 0.3s ease;
-        }
-
-        @keyframes logoFloat {
-            0%, 100% { 
-                transform: translateY(0px) scale(1); 
-                box-shadow: 
-                    0 20px 40px rgba(0, 0, 0, 0.2),
-                    0 0 80px rgba(124, 58, 237, 0.3),
-                    inset 0 2px 15px rgba(255, 255, 255, 0.3);
-            }
-            50% { 
-                transform: translateY(-8px) scale(1.02); 
-                box-shadow: 
-                    0 25px 50px rgba(0, 0, 0, 0.25),
-                    0 0 100px rgba(124, 58, 237, 0.4),
-                    inset 0 2px 20px rgba(255, 255, 255, 0.4);
-            }
-        }
-
-        .auth-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .auth-subtitle {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 1rem;
-            font-weight: 400;
-        }
-
-        .form-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            color: white;
-            font-weight: 500;
-            margin-bottom: 8px;
-            display: block;
-            font-size: 0.95rem;
-        }
-
-        .form-control {
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 14px 20px;
-            color: white;
-            font-size: 1rem;
-            width: 100%;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: rgba(124, 58, 237, 0.8);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.6);
-        }
-
-        .input-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 1.1rem;
-        }
-
-        .form-control.with-icon {
-            padding-left: 45px;
-        }
-
-        .btn-register {
-            background: var(--secondary-gradient);
-            border: none;
-            border-radius: 12px;
-            padding: 15px 30px;
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.3);
-            position: relative;
-            overflow: hidden;
-            margin-top: 10px;
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(139, 92, 246, 0.4);
-        }
-
-        .btn-register:active {
-            transform: translateY(0);
-        }
-
-        .password-strength {
-            height: 4px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 2px;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .password-strength-fill {
-            height: 100%;
-            width: 0%;
-            transition: width 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .strength-weak {
-            background: var(--danger-color);
-            width: 30%;
-        }
-
-        .strength-fair {
-            background: var(--warning-color);
-            width: 60%;
-        }
-
-        .strength-strong {
-            background: var(--success-color);
-            width: 100%;
-        }
-
-        .auth-links {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .auth-link {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .auth-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
-
-        .alert {
-            border-radius: 12px;
-            border: none;
-            padding: 15px 20px;
-            margin-bottom: 25px;
-            backdrop-filter: blur(10px);
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .alert-danger, .alert-error {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .loading {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .password-toggle {
-            position: absolute;
-            left: 45px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.6);
-            z-index: 10;
-        }
-
-        .text-danger {
-            color: #fca5a5 !important;
-            font-size: 0.85rem;
-            margin-top: 5px;
-        }
-
-        .text-muted {
-            color: rgba(255, 255, 255, 0.6) !important;
-            font-size: 0.8rem;
-            margin-top: 5px;
-        }
-
-        /* تحسينات الجوال */
-        @media (max-width: 768px) {
-            .auth-container {
-                padding: 30px 25px;
-                margin: 10px;
-            }
-
-            .logo-container {
-                width: 100px;
-                height: 100px;
-                margin-bottom: 20px;
-                padding: 15px;
-            }
-
-            .auth-title {
-                font-size: 1.6rem;
-            }
-
-            .auth-subtitle {
-                font-size: 0.95rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logo-container {
-                width: 90px;
-                height: 90px;
-                padding: 12px;
-            }
-
-            .auth-title {
-                font-size: 1.4rem;
-            }
+        /* تقليل الحركة احترامًا لتفضيلات النظام */
+        @media (prefers-reduced-motion: reduce){
+            *{animation:none!important;transition:none!important}
         }
     </style>
 </head>
 <body>
-    <div class="auth-container">
+    <div class="auth-container" role="main" aria-labelledby="registerTitle">
         <div class="auth-header">
-            <div class="logo-container">
-                <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
-                     alt="وش الجواب" 
-                     class="logo-img">
+            <div class="logo-container" aria-hidden="true">
+                <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+                     alt="وش الجواب" class="logo-img" width="120" height="120"
+                     loading="eager" decoding="async">
             </div>
-            <h1 class="auth-title">إنشاء حساب جديد</h1>
+            <h1 class="auth-title" id="registerTitle">إنشاء حساب جديد</h1>
             <p class="auth-subtitle">املأ النموذج للبدء في رحلتك معنا</p>
         </div>
 
@@ -390,9 +191,9 @@
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                     {% if message.tags == 'success' %}
-                        <i class="fas fa-check-circle me-2"></i>
+                        <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
                     {% else %}
-                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
                     {% endif %}
                     {{ message }}
                 </div>
@@ -401,26 +202,22 @@
 
         <form method="post" action="{% url 'accounts:register' %}" id="registerForm" novalidate>
         {% csrf_token %}
-        
+
         <!-- الاسم -->
         <div class="form-group">
             <label class="form-label" for="{{ form.first_name.id_for_label }}">
-                <i class="fas fa-user me-1"></i> {{ form.first_name.label }}
+                <i class="fas fa-user me-1" aria-hidden="true"></i> {{ form.first_name.label }}
             </label>
             <div class="position-relative">
-                <input 
-                    type="text" 
-                    class="form-control with-icon" 
-                    id="{{ form.first_name.id_for_label }}" 
-                    name="{{ form.first_name.name }}" 
+                <input type="text" class="form-control with-icon"
+                    id="{{ form.first_name.id_for_label }}" name="{{ form.first_name.name }}"
                     value="{{ form.first_name.value|default:'' }}"
                     placeholder="{{ form.first_name.field.widget.attrs.placeholder }}"
                     required
                     inputmode="{{ form.first_name.field.widget.attrs.inputmode }}"
                     autocomplete="{{ form.first_name.field.widget.attrs.autocomplete }}"
-                    {% if form.first_name.field.widget.attrs.autofocus %}autofocus{% endif %}
-                >
-                <i class="fas fa-user input-icon"></i>
+                    {% if form.first_name.field.widget.attrs.autofocus %}autofocus{% endif %}>
+                <i class="fas fa-user input-icon" aria-hidden="true"></i>
             </div>
             {% if form.first_name.errors %}
                 {% for error in form.first_name.errors %}
@@ -432,21 +229,17 @@
         <!-- البريد الإلكتروني -->
         <div class="form-group">
             <label class="form-label" for="{{ form.email.id_for_label }}">
-                <i class="fas fa-envelope me-1"></i> {{ form.email.label }}
+                <i class="fas fa-envelope me-1" aria-hidden="true"></i> {{ form.email.label }}
             </label>
             <div class="position-relative">
-                <input 
-                    type="email" 
-                    class="form-control with-icon" 
-                    id="{{ form.email.id_for_label }}" 
-                    name="{{ form.email.name }}" 
+                <input type="email" class="form-control with-icon"
+                    id="{{ form.email.id_for_label }}" name="{{ form.email.name }}"
                     value="{{ form.email.value|default:'' }}"
                     placeholder="{{ form.email.field.widget.attrs.placeholder }}"
                     required
                     inputmode="{{ form.email.field.widget.attrs.inputmode }}"
-                    autocomplete="{{ form.email.field.widget.attrs.autocomplete }}"
-                >
-                <i class="fas fa-envelope input-icon"></i>
+                    autocomplete="{{ form.email.field.widget.attrs.autocomplete }}">
+                <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
             </div>
             {% if form.email.errors %}
                 {% for error in form.email.errors %}
@@ -458,21 +251,19 @@
         <!-- كلمة المرور -->
         <div class="form-group">
             <label class="form-label" for="{{ form.password.id_for_label }}">
-                <i class="fas fa-lock me-1"></i> {{ form.password.label }}
+                <i class="fas fa-lock me-1" aria-hidden="true"></i> {{ form.password.label }}
             </label>
             <div class="position-relative">
-                <input 
-                    type="password" 
-                    class="form-control with-icon" 
-                    id="{{ form.password.id_for_label }}" 
-                    name="{{ form.password.name }}" 
+                <input type="password" class="form-control with-icon"
+                    id="{{ form.password.id_for_label }}" name="{{ form.password.name }}"
                     placeholder="{{ form.password.field.widget.attrs.placeholder }}"
-                    required
-                    minlength="{{ form.password.field.min_length }}"
-                    autocomplete="{{ form.password.field.widget.attrs.autocomplete }}"
-                >
-                <i class="fas fa-lock input-icon"></i>
-                <i class="fas fa-eye password-toggle" id="togglePassword"></i>
+                    required minlength="{{ form.password.field.min_length }}"
+                    autocomplete="{{ form.password.field.widget.attrs.autocomplete }}">
+                <i class="fas fa-lock input-icon" aria-hidden="true"></i>
+                <button type="button" class="password-toggle btn btn-link p-0 text-decoration-none"
+                        id="togglePassword" aria-label="إظهار/إخفاء كلمة المرور" title="إظهار/إخفاء كلمة المرور">
+                    <i class="fas fa-eye" aria-hidden="true"></i>
+                </button>
             </div>
             {% if form.password.errors %}
                 {% for error in form.password.errors %}
@@ -487,167 +278,135 @@
         <!-- رقم الجوال -->
         <div class="form-group">
             <label class="form-label" for="{{ form.phone_number.id_for_label }}">
-                <i class="fas fa-phone me-1"></i> {{ form.phone_number.label }}
+                <i class="fas fa-phone me-1" aria-hidden="true"></i> {{ form.phone_number.label }}
             </label>
             <div class="position-relative">
-                <input 
-                    type="tel" 
-                    class="form-control with-icon" 
-                    id="{{ form.phone_number.id_for_label }}" 
-                    name="{{ form.phone_number.name }}" 
+                <input type="tel" class="form-control with-icon"
+                    id="{{ form.phone_number.id_for_label }}" name="{{ form.phone_number.name }}"
                     value="{{ form.phone_number.value|default:'' }}"
                     placeholder="{{ form.phone_number.field.widget.attrs.placeholder }}"
                     required
                     pattern="{{ form.phone_number.field.widget.attrs.pattern }}"
                     inputmode="{{ form.phone_number.field.widget.attrs.inputmode }}"
-                    autocomplete="{{ form.phone_number.field.widget.attrs.autocomplete }}"
-                >
-                <i class="fas fa-phone input-icon"></i>
+                    autocomplete="{{ form.phone_number.field.widget.attrs.autocomplete }}">
+                <i class="fas fa-phone input-icon" aria-hidden="true"></i>
             </div>
             {% if form.phone_number.errors %}
                 {% for error in form.phone_number.errors %}
                     <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
             {% endif %}
-            <small class="text-muted">يجب أن يبدأ الرقم بـ 05 ويتكون من 10 أرقام</small>
+            <small class="text-muted d-block">يجب أن يبدأ الرقم بـ 05 ويتكون من 10 أرقام</small>
         </div>
 
         <button type="submit" class="btn-register" id="registerBtn">
             <span class="btn-text">إنشاء الحساب</span>
-            <div class="loading">
-                <div class="spinner"></div>
-            </div>
+            <div class="loading"><div class="spinner" role="status" aria-label="جاري التحميل"></div></div>
         </button>
         </form>
 
         <div class="auth-links">
             <p class="mb-0">
-                لديك حساب بالفعل؟ 
+                لديك حساب بالفعل؟
                 <a href="{% url 'accounts:login' %}" class="auth-link">
-                    <i class="fas fa-sign-in-alt me-1"></i>
+                    <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>
                     تسجيل الدخول
                 </a>
             </p>
         </div>
     </div>
 
+    <!-- JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('registerForm');
-            const registerBtn = document.getElementById('registerBtn');
-            const btnText = registerBtn.querySelector('.btn-text');
-            const loading = registerBtn.querySelector('.loading');
-            
-            // عناصر كلمة المرور
-            const password = document.getElementById('{{ form.password.id_for_label }}');
-            const togglePassword = document.getElementById('togglePassword');
-            const strengthFill = document.getElementById('passwordStrengthFill');
+    document.addEventListener('DOMContentLoaded', function(){
+        const form = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+        const btnText = registerBtn.querySelector('.btn-text');
+        const loading = registerBtn.querySelector('.loading');
 
-            // إظهار/إخفاء كلمة المرور
-            togglePassword.addEventListener('click', function() {
-                if (password.type === 'password') {
-                    password.type = 'text';
-                    this.classList.remove('fa-eye');
-                    this.classList.add('fa-eye-slash');
-                } else {
-                    password.type = 'password';
-                    this.classList.remove('fa-eye-slash');
-                    this.classList.add('fa-eye');
-                }
-            });
+        const password = document.getElementById('{{ form.password.id_for_label }}');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const togglePasswordIcon = togglePasswordBtn.querySelector('i');
+        const strengthFill = document.getElementById('passwordStrengthFill');
 
-            // تحقق من قوة كلمة المرور
-            password.addEventListener('input', function() {
-                const passwordValue = this.value;
-                let strength = 0;
-                
-                // التحقق من الطول
-                if (passwordValue.length >= 6) strength++;
-                
-                // التحقق من الحروف والأرقام
-                if (/[A-Za-z]/.test(passwordValue)) strength++;
-                if (/[0-9]/.test(passwordValue)) strength++;
-                
-                // تحديث شريط القوة
-                strengthFill.className = 'password-strength-fill';
-                if (strength === 1) strengthFill.classList.add('strength-weak');
-                else if (strength === 2) strengthFill.classList.add('strength-fair');
-                else if (strength >= 3) strengthFill.classList.add('strength-strong');
-            });
-
-            // معالجة إرسال النموذج
-            form.addEventListener('submit', function(e) {
-                // التحقق من صحة البيانات
-                const email = document.getElementById('{{ form.email.id_for_label }}').value.trim();
-                const phone = document.getElementById('{{ form.phone_number.id_for_label }}').value.trim();
-                const name = document.getElementById('{{ form.first_name.id_for_label }}').value.trim();
-                
-                if (!name || !email || !password.value || !phone) {
-                    e.preventDefault();
-                    showAlert('يرجى ملء جميع الحقول المطلوبة', 'danger');
-                    return;
-                }
-
-                if (!/^05\d{8}$/.test(phone)) {
-                    e.preventDefault();
-                    showAlert('رقم الجوال غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام', 'danger');
-                    return;
-                }
-
-                // إظهار حالة التحميل
-                btnText.style.display = 'none';
-                loading.style.display = 'block';
-                registerBtn.disabled = true;
-            });
-
-            // إظهار تنبيه
-            function showAlert(message, type) {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-                const iconClass = type === 'success' ? 'check-circle' : 'exclamation-triangle';
-                alertDiv.innerHTML = `
-                    <i class="fas fa-${iconClass} me-2"></i>
-                    ${message}
-                `;
-                
-                const authHeader = document.querySelector('.auth-header');
-                authHeader.parentNode.insertBefore(alertDiv, form);
-
-                // إزالة التنبيه تلقائياً
-                setTimeout(() => {
-                    if (alertDiv.parentNode) {
-                        alertDiv.remove();
-                    }
-                }, 5000);
-
-                // إعادة تعيين الزر
-                setTimeout(() => {
-                    btnText.style.display = 'inline';
-                    loading.style.display = 'none';
-                    registerBtn.disabled = false;
-                }, 1000);
-            }
-
-            // تحسين تجربة المستخدم للجوال
-            if (window.innerWidth <= 768) {
-                // تقليل التأثيرات للجوال لتحسين الأداء
-                const logoContainer = document.querySelector('.logo-container');
-                if (logoContainer) {
-                    logoContainer.style.animation = 'none';
-                }
-            }
-
-            // إزالة رسائل التنبيه تلقائياً بعد 5 ثواني
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => {
-                setTimeout(() => {
-                    if (alert.parentNode) {
-                        alert.remove();
-                    }
-                }, 5000);
-            });
+        // إظهار/إخفاء كلمة المرور
+        togglePasswordBtn.addEventListener('click', function(){
+            const hidden = password.type === 'password';
+            password.type = hidden ? 'text' : 'password';
+            togglePasswordIcon.classList.toggle('fa-eye', !hidden);
+            togglePasswordIcon.classList.toggle('fa-eye-slash', hidden);
+            this.setAttribute('aria-pressed', String(hidden));
         });
+
+        // قياس قوة كلمة المرور (بسيط)
+        password.addEventListener('input', function(){
+            const val = this.value;
+            let strength = 0;
+            if (val.length >= 8) strength++;
+            if (/[A-Z]/.test(val)) strength++;
+            if (/[a-z]/.test(val)) strength++;
+            if (/[0-9]/.test(val)) strength++;
+            if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+            strengthFill.className = 'password-strength-fill';
+            if (strength <= 2) strengthFill.classList.add('strength-weak');
+            else if (strength <= 4) strengthFill.classList.add('strength-fair');
+            else strengthFill.classList.add('strength-strong');
+        });
+
+        // إرسال النموذج مع تحقق أساسي
+        form.addEventListener('submit', function(e){
+            const email = document.getElementById('{{ form.email.id_for_label }}').value.trim().toLowerCase();
+            const phone = document.getElementById('{{ form.phone_number.id_for_label }}').value.trim();
+            const name = document.getElementById('{{ form.first_name.id_for_label }}').value.trim();
+
+            if (!name || !email || !password.value || !phone){
+                e.preventDefault();
+                showAlert('يرجى ملء جميع الحقول المطلوبة', 'danger');
+                return;
+            }
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)){
+                e.preventDefault();
+                showAlert('البريد الإلكتروني غير صحيح', 'danger');
+                return;
+            }
+            if (!/^05\d{8}$/.test(phone)){
+                e.preventDefault();
+                showAlert('رقم الجوال غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام', 'danger');
+                return;
+            }
+
+            // تحضير للإرسال
+            btnText.style.display = 'none';
+            loading.style.display = 'block';
+            registerBtn.disabled = true;
+        });
+
+        function showAlert(message, type){
+            const el = document.createElement('div');
+            el.className = `alert alert-${type} alert-dismissible fade show`;
+            el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2" aria-hidden="true"></i>${message}`;
+            const header = document.querySelector('.auth-header');
+            header.parentNode.insertBefore(el, form);
+            setTimeout(()=>{ el?.remove(); }, 5000);
+            setTimeout(()=>{
+                btnText.style.display = 'inline';
+                loading.style.display = 'none';
+                registerBtn.disabled = false;
+            }, 800);
+        }
+
+        // تخفيف الحركة إن كان المستخدم يفضل ذلك
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+            document.body.style.animation = 'none';
+            const logo = document.querySelector('.logo-container'); if (logo) logo.style.animation = 'none';
+        }
+
+        // إزالة رسائل التنبيه من Django بعد فترة
+        document.querySelectorAll('.alert').forEach(a => setTimeout(()=>a?.remove(), 5000));
+    });
     </script>
 </body>
 </html>

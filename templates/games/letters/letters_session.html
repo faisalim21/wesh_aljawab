@@ -3,7 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>خلية الحروف - المقدم</title>
+  {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
+
+  {# ——— الأساسيات ——— #}
+  <title>
+    {% block title %}{{ page_title|default:"وش الجواب - منصة الألعاب الذكية" }}{% endblock %}
+  </title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="robots" content="index,follow">
+
+  {# ——— Canonical ——— #}
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+
+  {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
+  <meta property="og:locale" content="ar_SA">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  {# غيّر الصورة لكل صفحة عبر المتغير page_og_image إن وُجد #}
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
+  {# يفضّل استخدام أبعاد 1200x630 #}
+  <!-- <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630"> -->
+
+  {# ——— Twitter Card ——— #}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+
+  {# ——— Favicons / PWA ——— #}
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
+  {# لو عندك manifest حقيقي فعّله #}
+  {# <link rel="manifest" href="{% static 'site.webmanifest' %}"> #}
+
+  {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  {# لو بتثبت خط Tajawal عالميًا، حمّله هنا #}
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"> -->
+
+  {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "وش الجواب",
+    "url": "https://wesh-aljawab.onrender.com/",
+    "inLanguage": "ar",
+    "publisher": {
+      "@type": "Organization",
+      "name": "وش الجواب",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+      }
+    }
+  }
+  </script>
+
+  {# ——— مساحة لتجاوزات/إضافات خاصة بكل صفحة عند الحاجة ——— #}
+  {% block meta_overrides %}{% endblock %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
