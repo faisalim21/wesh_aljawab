@@ -1,18 +1,26 @@
-# games/admin.py - لوحة تحكم مُقسّمة لكل لعبة + إحصائيات + رفع أسئلة
+# games/admin.py - لوحة تحكم مُقسّمة + رفع أسئلة + تحليلات أعمال عصرية
+
 from django.contrib import admin
+from decimal import Decimal
 from django.urls import path, reverse
-from django.db.models import Count, Max
+from django.db import models
+from django.db.models import (
+    Count, Max, Sum, F, Q, Case, When, DecimalField, IntegerField
+)
+from django.db.models.functions import TruncDate, Coalesce
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.contrib import messages
-from django.shortcuts import get_object_or_404
-from django.middleware.csrf import get_token
+from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django import forms
 from django.db import IntegrityError
+from django.utils import timezone
+
 import csv
 import io
+from datetime import timedelta
 
 # حاول استيراد openpyxl إن وُجد
 try:
@@ -28,7 +36,136 @@ from .models import (
     GameSession,
     LettersGameProgress,
     Contestant,
+    FreeTrialUsage,
 )
+
+# ===========================
+#  أدوات عامة
+# ===========================
+
+def _price_case_expr():
+    """
+    تفضيل discounted_price عندما يكون فعّالًا (له قيمة، >0، وأقل من الأصلية)، وإلا price.
+    (تقدير للإيرادات لأنه لا يوجد سعر مُثبت على UserPurchase).
+    """
+    return Case(
+        When(
+            package__discounted_price__isnull=False,
+            package__original_price__isnull=False,
+            package__discounted_price__gt=0,
+            package__original_price__gt=F('package__discounted_price'),
+            then=F('package__discounted_price'),
+        ),
+        default=F('package__price'),
+        output_field=DecimalField(max_digits=10, decimal_places=2),
+    )
+
+
+USD_TO_SAR = Decimal('3.75')
+
+# --- قائمة التكاليف الدورية للتحليلات (سهل تعديلها/زيادة بنود) ---
+# period: "monthly" أو "daily" أو "once"
+ANALYTICS_COSTS = [
+    {"label": "استضافة/خوادم", "period": "monthly", "amount_sar": Decimal('90'), "note": "بند ثابت شهري"},
+    {"label": "خدمة خارجية", "period": "monthly", "amount_usd": Decimal('7'), "note": "مدفوعة بالدولار"},
+    {"label": "قناة ريدز المدفوعة", "period": "monthly", "amount_sar": Decimal('250'), "note": "تسويق/تحسين تجربة"}
+
+    # مثال لبند مستقبلي:
+    # {"label": "قناة ريدز المدفوعة", "period": "monthly", "amount_sar": Decimal('0'), "note": "ترويج/تحسين تجربة"},
+]
+
+def _sar(v):
+    try:
+        if isinstance(v, Decimal):
+            v = v.quantize(Decimal('0.01'))
+        return f"{v} ﷼"
+    except Exception:
+        return f"{v} ﷼"
+
+def _to_sar(entry: dict) -> Decimal:
+    """يحوله للريال: amount_sar + amount_usd*USD_TO_SAR"""
+    sar = Decimal(entry.get('amount_sar') or 0)
+    usd = Decimal(entry.get('amount_usd') or 0)
+    return sar + (usd * USD_TO_SAR)
+
+def _prorate(amount_sar: Decimal, period: str, days: int) -> Decimal:
+    """
+    يقسّم الشهري على 30 يوم تقريبًا.
+    daily = قيمة يومية × عدد الأيام
+    once = بالكامل داخل الفترة (بدون تأريخ مخصص)
+    """
+    amount_sar = Decimal(amount_sar or 0)
+    if period == 'monthly':
+        return (amount_sar * Decimal(days) / Decimal(30)).quantize(Decimal('0.01'))
+    if period == 'daily':
+        return (amount_sar * Decimal(days)).quantize(Decimal('0.01'))
+    if period == 'once':
+        return amount_sar.quantize(Decimal('0.01'))
+    return Decimal('0.00')
+
+def _compute_period_costs(days: int):
+    """يعيد (إجمالي التكاليف للفترة، تفصيل البنود) بالريال."""
+    total = Decimal('0.00')
+    breakdown = []
+    for c in ANALYTICS_COSTS:
+        monthly_sar = _to_sar(c)
+        prorated = _prorate(monthly_sar, c.get('period', 'monthly'), days)
+        breakdown.append({
+            "label": c.get('label', '—'),
+            "period": c.get('period', 'monthly'),
+            "note": c.get('note', ''),
+            "monthly_sar": monthly_sar,
+            "prorated_sar": prorated,
+        })
+        total += prorated
+    return total, breakdown
+
+
+def _sar(v):
+    try:
+        return f"{v:.2f} ﷼"
+    except Exception:
+        return f"{v} ﷼"
+
+def _kpi_card(label, value, sub=None, tone="info"):
+    colors = {
+        "ok":   ("#10b981", "#064e3b"),
+        "warn": ("#f59e0b", "#7c2d12"),
+        "bad":  ("#ef4444", "#7f1d1d"),
+        "info": ("#3b82f6", "#1e3a8a"),
+    }
+    bg, border = colors.get(tone, colors["info"])
+    return f"""
+    <div style="flex:1;min-width:220px;margin:8px;padding:16px;border-radius:12px;
+                background:{bg}22;border:1px solid {bg};box-shadow:0 1px 2px #0002;">
+      <div style="color:{border};font-weight:700;font-size:13px;margin-bottom:8px;">{label}</div>
+      <div style="color:#0ea5e9;font-size:22px;font-weight:800;letter-spacing:0.3px;">{value}</div>
+      <div style="color:#94a3b8;font-size:12px;margin-top:6px;">{sub or ''}</div>
+    </div>
+    """
+
+def _listing_table(headers, rows_html):
+    head = "".join(f"<th style='padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;'>{h}</th>" for h in headers)
+    body = "".join(rows_html) or f"<tr><td colspan='{len(headers)}' style='padding:12px;color:#94a3b8;'>لا توجد بيانات</td></tr>"
+    return f"""
+    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+        <thead style="background:#0f172a;color:#cbd5e1;">{head}</thead>
+        <tbody style="color:#e2e8f0;">{body}</tbody>
+      </table>
+    </div>
+    """
+
+def _progress_bar(label, pct):
+    pct = max(0, min(100, int(pct or 0)))
+    return f"""
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;background:#111827;border-radius:999px;overflow:hidden;height:8px;">
+        <div style="width:{pct}%;height:8px;background:#3b82f6;"></div>
+      </div>
+      <span style="font-size:12px;color:#94a3b8;">{label}</span>
+    </div>
+    """
 
 # ===========================
 #  Forms
@@ -141,9 +278,10 @@ class LettersGameQuestionInline(admin.TabularInline):
 class LettersPackageAdmin(admin.ModelAdmin):
     """
     قسم مخصص لحزم خلية الحروف:
-    - يعرض عدد الأسئلة
-    - يدعم رفع الأسئلة (Excel/CSV) + تنزيل قالب
-    - يدعم الحقول الجديدة (الوصف + نوع الأسئلة)
+    - عدّاد الأسئلة
+    - رفع الأسئلة (Excel/CSV) + تنزيل قالب
+    - الحقول (الوصف + نوع الأسئلة)
+    - زر للوصول السريع لإحصائيات الحروف
     """
     list_display = (
         'package_info',
@@ -158,9 +296,11 @@ class LettersPackageAdmin(admin.ModelAdmin):
     list_filter = ('is_free', 'is_active', 'question_theme', 'created_at')
     search_fields = ('package_number', 'description')
     inlines = [LettersGameQuestionInline]
-    actions = (action_mark_active, action_mark_inactive, action_export_csv)
+    actions = (action_mark_active, action_mark_inactive, action_export_csv, 'open_stats')
     ordering = ('package_number',)
     form = LettersPackageForm
+    list_select_related = ()
+
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': (
@@ -174,6 +314,9 @@ class LettersPackageAdmin(admin.ModelAdmin):
         }),
     )
 
+    @admin.action(description="📊 فتح صفحة إحصائيات خلية الحروف")
+    def open_stats(self, request, queryset):
+        return redirect('admin:games_letterspackage_stats')
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -199,14 +342,12 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
     def questions_count_badge(self, obj):
         """
-        يعرض عدّاد الأسئلة الحالية مقابل العدد المتوقع.
         - المجانية (رقم 0): 25 حرف × 3 أنواع
         - المدفوعة: 28 حرف × 5 أنواع  (إن كانت شبكتك 25 بالمدفوع، غيّر 28 إلى 25)
         """
         count = getattr(obj, '_qcount', 0)
-
         per_letter = 3 if (obj.is_free and obj.package_number == 0) else 5
-        expected_letters = 25 if (obj.is_free and obj.package_number == 0) else 28  # <-- غيّر لـ 25 لو شبكتك المدفوعة 25
+        expected_letters = 25 if (obj.is_free and obj.package_number == 0) else 28
         expected = expected_letters * per_letter
 
         if count >= expected and expected > 0:
@@ -221,17 +362,16 @@ class LettersPackageAdmin(admin.ModelAdmin):
             color, icon, count, expected
         )
     questions_count_badge.short_description = "عدد الأسئلة"
+
     def price_info(self, obj):
         if obj.is_free:
             return "🆓 مجانية"
-        # إن وُجد خصم فعّال
         if getattr(obj, 'has_discount', False):
             return format_html(
                 '<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → '
                 '<b style="color:#0ea5e9;">{} ﷼</b>',
                 obj.original_price, obj.discounted_price
             )
-        # بدون خصم
         return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
 
@@ -247,10 +387,12 @@ class LettersPackageAdmin(admin.ModelAdmin):
         upload_url = reverse('admin:games_letterspackage_upload', args=[obj.id])
         template_url = reverse('admin:games_letterspackage_download_template')
         export_url = reverse('admin:games_letterspackage_export', args=[obj.id])
+        stats_url = reverse('admin:games_letterspackage_stats')
         return mark_safe(
-            f'<a class="button" href="{upload_url}" style="background:#28a745;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع أسئلة</a>'
-            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
-            f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
+            f'<a class="button" href="{upload_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع</a>'
+            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
+            f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📤 تصدير</a>'
+            f'<a class="button" href="{stats_url}" style="background:#3b82f6;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;">📊 إحصاءات</a>'
         )
     letters_actions.short_description = "إجراءات"
 
@@ -281,74 +423,57 @@ class LettersPackageAdmin(admin.ModelAdmin):
         ]
         return custom + urls
 
-    # داخل LettersPackageAdmin
-
+    # ===== إحصاءات حزم وأسئلة الحروف =====
     def stats_view(self, request):
-        """صفحة إحصائيات لحزم/أسئلة خلية الحروف (تعرض السعر الفعلي مع الخصم إن وُجد)."""
         qs = GamePackage.objects.filter(game_type='letters').annotate(qcount=Count('letters_questions'))
         total_packages = qs.count()
         total_questions = LettersGameQuestion.objects.count()
         free_count = qs.filter(is_free=True).count()
         paid_count = qs.filter(is_free=False).count()
         active_count = qs.filter(is_active=True).count()
-
         top_packages = qs.order_by('-qcount', 'package_number')[:10]
 
         def price_str(p):
             if p.is_free:
                 return "🆓 مجانية"
-            # خصم فعّال؟
             if getattr(p, 'discounted_price', None) and getattr(p, 'original_price', None) and p.discounted_price < p.original_price:
                 return f"<span style='text-decoration:line-through;color:#64748b;'>{p.original_price} ﷼</span> → " \
-                    f"<b style='color:#0ea5e9;'>{p.discounted_price} ﷼</b>"
+                       f"<b style='color:#0ea5e9;'>{p.discounted_price} ﷼</b>"
             return f"💰 {p.price} ﷼"
 
         rows = "".join([
             (
                 "<tr>"
-                f"<td>حزمة {p.package_number}</td>"
-                f"<td>{getattr(p, 'get_question_theme_display', lambda: '')()}</td>"
-                f"<td style='text-align:center;'>{p.qcount}</td>"
-                f"<td>{price_str(p)}</td>"
-                f"<td>{'فعّالة' if p.is_active else 'غير فعّالة'}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>حزمة {p.package_number}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{getattr(p, 'get_question_theme_display', lambda: '')()}</td>"
+                f"<td style='text-align:center;padding:10px 12px;border-bottom:1px solid #1f2937;'>{p.qcount}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{price_str(p)}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'فعّالة' if p.is_active else 'غير فعّالة'}</td>"
                 "</tr>"
-            )
-            for p in top_packages
+            ) for p in top_packages
         ])
 
         html = f"""
-        <div style="padding:20px;font-family:Tahoma,Arial;">
-        <h2>📊 إحصائيات خلية الحروف</h2>
-        <ul>
-            <li>إجمالي الحزم: <b>{total_packages}</b> (مجانية: {free_count} / مدفوعة: {paid_count})</li>
-            <li>إجمالي الأسئلة: <b>{total_questions}</b></li>
-            <li>حزم فعّالة: <b>{active_count}</b></li>
-        </ul>
-        <h4>أكثر الحزم من حيث عدد الأسئلة</h4>
-        <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="6">
-            <thead style="background:#f1f5f9;">
-            <tr>
-                <th>الحزمة</th>
-                <th>نوع الأسئلة</th>
-                <th>عدد الأسئلة</th>
-                <th>السعر</th>
-                <th>الحالة</th>
-            </tr>
-            </thead>
-            <tbody>{rows or '<tr><td colspan="5">لا توجد بيانات</td></tr>'}</tbody>
-        </table>
+        <div style="padding:16px 20px;">
+          <h2 style="margin:0 0 10px;">📊 إحصائيات خلية الحروف</h2>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;">
+            {_kpi_card("إجمالي الحزم", total_packages, f"مجانية: {free_count} / مدفوعة: {paid_count}", "info")}
+            {_kpi_card("إجمالي الأسئلة", total_questions, "إجمالي في جميع الحزم", "ok")}
+            {_kpi_card("حزم فعّالة", active_count, "قابلة للشراء الآن", "warn" if active_count==0 else "ok")}
+          </div>
+          <h4 style="margin:20px 0 8px;">أكثر الحزم من حيث عدد الأسئلة</h4>
+          {_listing_table(["الحزمة","نوع الأسئلة","عدد الأسئلة","السعر","الحالة"], rows)}
         </div>
         """
-        return HttpResponse(html)
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "إحصائيات خلية الحروف",
+            "content": mark_safe(html),
+        }
+        return TemplateResponse(request, "admin/base_site.html", context)
 
-
+    # ===== رفع/تنزيل/تصدير أسئلة =====
     def upload_letters_view(self, request, pk):
-        """
-        رفع أسئلة (CSV أو Excel) للحزمة المحددة
-        الأعمدة: [الحرف, نوع السؤال, السؤال, الإجابة, التصنيف]
-        يدعم: رئيسي/أساسي/main، بديل1..بديل4، (البديل) 1..4، بديل أول/ثاني/ثالث/رابع،
-        وبالإنجليزي alt1..alt4. كما يتسامح مع الأرقام الهندية، التشكيل، المدود، و"الـ" التعريف.
-        """
         package = get_object_or_404(GamePackage, pk=pk, game_type='letters')
 
         if request.method == 'POST':
@@ -369,130 +494,43 @@ class LettersPackageAdmin(admin.ModelAdmin):
             ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
             def strip_diacritics(s: str) -> str:
-                # إزالة المدود والتشكيل
                 s = s.replace("\u0640", "")  # TATWEEL
                 norm = unicodedata.normalize('NFD', s)
                 return "".join(ch for ch in norm if unicodedata.category(ch) != 'Mn')
 
             def normalize_qtype(raw):
-                """
-                🔧 دالة محسّنة لتطبيع أنواع الأسئلة مع دعم شامل لجميع التشكيلات
-                تدعم: رئيسي، أساسي، main، بديل1-4، (البديل) 1-4، بديل أول/ثاني/ثالث/رابع، alt1-4
-                """
                 if raw is None:
                     return None
                 s = str(raw).strip()
                 if not s:
                     return None
-
-                # تنظيف عام
-                s = s.replace("\u200f", "").replace("\u200e", "")  # RTL/LTR marks
-                s = strip_diacritics(s)  # إزالة التشكيل والمدود
-                s = s.translate(ARABIC_INDIC)  # تحويل الأرقام الهندية: ٣ -> 3
-                s = re.sub(r"\s+", " ", s)  # توحيد المسافات
-                s = s.lower().strip()
-
-                # إزالة "الـ" التعريف إن وُجدت
+                s = s.replace("\u200f", "").replace("\u200e", "")
+                s = strip_diacritics(s)
+                s = s.translate(ARABIC_INDIC)
+                s = re.sub(r"\s+", " ", s).lower().strip()
                 s_wo_al = s[2:] if s.startswith("ال") else s
                 candidates = {s, s_wo_al}
-
-                # خرائط مباشرة شاملة
                 direct_map = {
-                    # الرئيسي/الأساسي
-                    "main": "main",
-                    "رئيسي": "main", 
-                    "ريسي": "main",      # بعد إزالة الهمزة قد تصبح هكذا
-                    "رييسي": "main",     # تشكيلات أخرى محتملة
-                    "اساسي": "main", 
-                    "أساسي": "main", 
-                    "اساس": "main",
-                    "أساس": "main",
-                    "رئيس": "main",
-                    
-                    # البديل الأول
-                    "alt1": "alt1", 
-                    "alt 1": "alt1", 
-                    "بديل1": "alt1", 
-                    "بديل 1": "alt1", 
-                    "بديل اول": "alt1", 
-                    "بديل أول": "alt1",
-                    "بديل اولى": "alt1",
-                    "بديل أولى": "alt1",
-                    "بديل الاول": "alt1",
-                    "بديل الأول": "alt1",
-                    "بديل الاولى": "alt1", 
-                    "بديل الأولى": "alt1",
-                    
-                    # البديل الثاني  
-                    "alt2": "alt2", 
-                    "alt 2": "alt2", 
-                    "بديل2": "alt2", 
-                    "بديل 2": "alt2", 
-                    "بديل ثاني": "alt2",
-                    "بديل ثانيه": "alt2",
-                    "بديل ثانية": "alt2", 
-                    "بديل الثاني": "alt2",
-                    "بديل الثانيه": "alt2",
-                    "بديل الثانية": "alt2",
-                    
-                    # البديل الثالث
-                    "alt3": "alt3", 
-                    "alt 3": "alt3", 
-                    "بديل3": "alt3", 
-                    "بديل 3": "alt3", 
-                    "بديل ثالث": "alt3",
-                    "بديل ثالثه": "alt3",
-                    "بديل ثالثة": "alt3",
-                    "بديل الثالث": "alt3",
-                    "بديل الثالثه": "alt3", 
-                    "بديل الثالثة": "alt3",
-                    
-                    # البديل الرابع
-                    "alt4": "alt4", 
-                    "alt 4": "alt4", 
-                    "بديل4": "alt4", 
-                    "بديل 4": "alt4", 
-                    "بديل رابع": "alt4",
-                    "بديل رابعه": "alt4",
-                    "بديل رابعة": "alt4",
-                    "بديل الرابع": "alt4",
-                    "بديل الرابعه": "alt4",
-                    "بديل الرابعة": "alt4",
+                    "main":"main","رئيسي":"main","ريسي":"main","رييسي":"main","اساسي":"main","أساسي":"main","اساس":"main","أساس":"main","رئيس":"main",
+                    "alt1":"alt1","alt 1":"alt1","بديل1":"alt1","بديل 1":"alt1","بديل اول":"alt1","بديل أول":"alt1","بديل اولى":"alt1","بديل أولى":"alt1","بديل الاول":"alt1","بديل الأول":"alt1","بديل الاولى":"alt1","بديل الأولى":"alt1",
+                    "alt2":"alt2","alt 2":"alt2","بديل2":"alt2","بديل 2":"alt2","بديل ثاني":"alt2","بديل ثانيه":"alt2","بديل ثانية":"alt2","بديل الثاني":"alt2","بديل الثانيه":"alt2","بديل الثانية":"alt2",
+                    "alt3":"alt3","alt 3":"alt3","بديل3":"alt3","بديل 3":"alt3","بديل ثالث":"alt3","بديل ثالثه":"alt3","بديل ثالثة":"alt3","بديل الثالث":"alt3","بديل الثالثه":"alt3","بديل الثالثة":"alt3",
+                    "alt4":"alt4","alt 4":"alt4","بديل4":"alt4","بديل 4":"alt4","بديل رابع":"alt4","بديل رابعه":"alt4","بديل رابعة":"alt4","بديل الرابع":"alt4","بديل الرابعه":"alt4","بديل الرابعة":"alt4",
                 }
-
-                # فحص الخرائط المباشرة
-                for candidate in candidates:
-                    if candidate in direct_map:
-                        return direct_map[candidate]
-
-                # أنماط regex للحالات المعقدة
-                
-                # نمط: (ال)بديل + رقم
-                for candidate in candidates:
-                    m = re.match(r"^(?:ال)?بديل\s*([1-4])$", candidate)
-                    if m:
-                        return f"alt{m.group(1)}"
-                
-                # نمط: (ال)بديل + ترتيبي
-                ordinal_map = {
-                    "اول": "1", "اولى": "1", "أول": "1", "أولى": "1",
-                    "ثاني": "2", "ثانيه": "2", "ثانية": "2", 
-                    "ثالث": "3", "ثالثه": "3", "ثالثة": "3",
-                    "رابع": "4", "رابعه": "4", "رابعة": "4",
-                }
-                
-                for candidate in candidates:
-                    for ordinal, num in ordinal_map.items():
-                        if re.match(rf"^(?:ال)?بديل\s*{re.escape(ordinal)}$", candidate):
+                for c in candidates:
+                    if c in direct_map:
+                        return direct_map[c]
+                for c in candidates:
+                    m = re.match(r"^(?:ال)?بديل\s*([1-4])$", c)
+                    if m: return f"alt{m.group(1)}"
+                ordinal_map = {"اول":"1","اولى":"1","أول":"1","أولى":"1","ثاني":"2","ثانيه":"2","ثانية":"2","ثالث":"3","ثالثه":"3","ثالثة":"3","رابع":"4","رابعه":"4","رابعة":"4"}
+                for c in candidates:
+                    for ord_, num in ordinal_map.items():
+                        if re.match(rf"^(?:ال)?بديل\s*{ord_}$", c):
                             return f"alt{num}"
-
-                # نمط: alt + رقم (مع مسافات)
-                for candidate in candidates:
-                    m = re.match(r"^alt\s*([1-4])$", candidate)
-                    if m:
-                        return f"alt{m.group(1)}"
-
-                # إذا لم يتم العثور على مطابقة
+                for c in candidates:
+                    m = re.match(r"^alt\s*([1-4])$", c)
+                    if m: return f"alt{m.group(1)}"
                 return None
 
             added = 0
@@ -518,7 +556,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 if name.endswith('.csv'):
                     decoded = file.read().decode('utf-8-sig', errors='ignore')
                     reader = csv.reader(io.StringIO(decoded))
-                    next(reader, None)  # تخطي الهيدر
+                    next(reader, None)
                     for row in reader:
                         if not row or len(row) < 5:
                             failed_rows += 1
@@ -547,16 +585,13 @@ class LettersPackageAdmin(admin.ModelAdmin):
                     messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
                     return HttpResponseRedirect(request.path)
 
-                # رسائل النتيجة
                 if failed_rows and not added:
                     msg = "لم يتم التعرف على أي صف. تفقد عمود (نوع السؤال)."
-                    if failed_examples:
-                        msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
+                    if failed_examples: msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
                     messages.error(request, msg)
                 elif failed_rows:
                     msg = f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم."
-                    if failed_examples:
-                        msg += " أمثلة: " + ", ".join(failed_examples)
+                    if failed_examples: msg += " أمثلة: " + ", ".join(failed_examples)
                     messages.warning(request, msg)
                 else:
                     messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
@@ -639,6 +674,8 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     search_fields = ('package_number', 'description')
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
+    list_select_related = ()
+
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': (
@@ -649,7 +686,6 @@ class ImagesPackageAdmin(admin.ModelAdmin):
         }),
         ('المحتوى', {'fields': ('description',)}),
     )
-
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(game_type='images')
@@ -669,7 +705,6 @@ class ImagesPackageAdmin(admin.ModelAdmin):
             )
         return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
-
 
     def is_free_icon(self, obj):
         return "✅" if obj.is_free else "—"
@@ -706,6 +741,8 @@ class QuizPackageAdmin(admin.ModelAdmin):
     search_fields = ('package_number', 'description')
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
+    list_select_related = ()
+
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': (
@@ -766,6 +803,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
     list_filter = ('package__package_number', 'letter', 'question_type', 'category')
     search_fields = ('question', 'answer', 'letter', 'category')
     list_per_page = 30
+    list_select_related = ('package',)
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(package__game_type='letters')
@@ -788,12 +826,13 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 # ===========================
 
 class _BaseSessionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'host', 'package_info', 'scores', 'is_active', 'created_at')
-    list_filter = ('is_active', 'is_completed', 'created_at')
+    list_display = ('id', 'host', 'package_info', 'scores', 'is_active', 'is_completed', 'created_at')
+    list_filter = ('is_active', 'is_completed', 'package__is_free', 'created_at')
     search_fields = ('id', 'host__username', 'package__package_number')
     date_hierarchy = 'created_at'
     readonly_fields = ()
     ordering = ('-created_at',)
+    list_select_related = ('package', 'host')
 
     def package_info(self, obj):
         return f"حزمة {obj.package.package_number} / {'مجانية' if obj.package.is_free else 'مدفوعة'}"
@@ -819,20 +858,468 @@ class QuizSessionAdmin(_BaseSessionAdmin):
         return super().get_queryset(request).filter(game_type='quiz')
 
 # ===========================
-#  Admin: المشتريات والمتسابقين
+#  Admin: المشتريات والمتسابقين + تحليلات
 # ===========================
 
 @admin.register(UserPurchase)
 class UserPurchaseAdmin(admin.ModelAdmin):
-    list_display = ('user', 'package_ref', 'is_completed', 'purchase_date')
-    list_filter = ('is_completed', 'purchase_date', 'package__game_type')
+    list_display = ('user', 'package_ref', 'is_completed', 'is_expired_badge', 'purchase_date', 'expires_at')
+    list_filter = ('is_completed', 'purchase_date', 'expires_at', 'package__game_type')
     search_fields = ('user__username', 'package__package_number')
     date_hierarchy = 'purchase_date'
     ordering = ('-purchase_date',)
+    list_select_related = ('user', 'package')
+    actions = ('open_analytics',)
 
     def package_ref(self, obj):
         return f"{obj.package.get_game_type_display()} / حزمة {obj.package.package_number}"
     package_ref.short_description = "الحزمة"
+
+    def is_expired_badge(self, obj):
+        ok = obj.is_expired
+        color = '#ef4444' if ok else '#10b981'
+        label = 'منتهي' if ok else 'نشط'
+        return mark_safe(f'<b style="color:{color};">{label}</b>')
+    is_expired_badge.short_description = "حالة الصلاحية"
+
+    @admin.action(description="📈 فتح لوحة التحليلات")
+    def open_analytics(self, request, queryset):
+        return redirect('admin:games_purchases_analytics')
+
+    # ===== روابط/عروض مخصصة =====
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("analytics/", self.admin_site.admin_view(self.analytics_view), name="games_purchases_analytics"),
+            path("analytics.csv", self.admin_site.admin_view(self.analytics_csv_view), name="games_purchases_analytics_csv"),
+        ]
+        return custom + urls
+
+    def analytics_view(self, request):
+        """
+        لوحة تحليلات أعمال مرنة:
+        - إيراد تقديري للفترة (اعتمادًا على سعر/خصم الحزمة الحالي).
+        - رسوم البوابة (٪ حسب طريقة الدفع + رسوم ثابتة للطريقة).
+        - 1 ريال لكل عملية (قابلة للتعديل من الواجهة).
+        - تكاليف شهرية (SAR و USD) مع خيار سعر صرف.
+        - مبالغ مقطوعة (حتى 5) بعملة مستقلة.
+        - صافي الربح وهامش الربح.
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        from django.db.models.functions import TruncDate, Coalesce
+        from django.db.models import Count, Sum, F, DecimalField
+
+        # --------- مدخلات واجهة التحكم ----------
+        def _d(val, default):
+            try:
+                return Decimal(str(val)) if val not in (None, "") else Decimal(str(default))
+            except Exception:
+                return Decimal(str(default))
+
+        days = int(request.GET.get("days", 30) or 30)
+        usd_rate = _d(request.GET.get("usd_to_sar"), 3.75)
+        monthly_sar = _d(request.GET.get("monthly_sar"), 90)
+        monthly_usd = _d(request.GET.get("monthly_usd"), 7)
+        per_tx_platform = _d(request.GET.get("per_tx_platform_sar"), 1.00)
+
+        # مبالغ مقطوعة (حتى 5)
+        one_time_items = []
+        for i in range(1, 6):
+            name = (request.GET.get(f"one_time_{i}_name", "") or "").strip()
+            try:
+                amount = Decimal(request.GET.get(f"one_time_{i}_amount", "0") or "0")
+            except Exception:
+                amount = Decimal("0")
+            currency = (request.GET.get(f"one_time_{i}_currency", "SAR") or "SAR").upper()
+            currency = "USD" if currency == "USD" else "SAR"
+            if amount > 0:
+                one_time_items.append({"name": name or f"مقطوع {i}", "amount": amount, "currency": currency})
+
+        # --------- نطاق الفترة ----------
+        end = timezone.now()
+        start = end - timedelta(days=days)
+
+        # --------- معادلة السعر الفعّال للحزمة ----------
+        price_expr = Case(
+            When(
+                package__discounted_price__isnull=False,
+                package__original_price__isnull=False,
+                package__discounted_price__gt=0,
+                package__original_price__gt=F('package__discounted_price'),
+                then=F('package__discounted_price'),
+            ),
+            default=F('package__price'),
+            output_field=DecimalField(max_digits=10, decimal_places=2),
+        )
+
+        # --------- مشتريات الفترة ----------
+        period_purchases = UserPurchase.objects.filter(purchase_date__gte=start, purchase_date__lte=end)
+        period_total = period_purchases.count()
+        period_revenue = period_purchases.aggregate(total=Coalesce(Sum(price_expr), 0))['total'] or Decimal("0.00")
+
+        # مشترون مميزون في الفترة
+        period_buyers = set(period_purchases.values_list('user_id', flat=True))
+        period_unique_buyers = len(period_buyers)
+
+        # عائد العملاء مدى الحياة
+        all_buyers_agg = UserPurchase.objects.values('user').annotate(c=Count('id'))
+        lifetime_buyers = all_buyers_agg.count()
+        lifetime_returning = all_buyers_agg.filter(c__gt=1).count()
+        lifetime_return_rate = (lifetime_returning / lifetime_buyers * 100) if lifetime_buyers else 0
+
+        # عائد العملاء خلال الفترة
+        prior_buyers_in_period = UserPurchase.objects.filter(
+            user_id__in=period_buyers, purchase_date__lt=start
+        ).values('user_id').distinct().count()
+        period_return_rate = (prior_buyers_in_period / period_unique_buyers * 100) if period_unique_buyers else 0
+
+        # أفضل المشترين/الحزم/الأنواع
+        top_buyers_count_qs = (period_purchases
+            .values('user__username', 'user__first_name', 'user__email')
+            .annotate(n=Count('id')).order_by('-n')[:10])
+
+        top_buyers_spend_qs = (period_purchases
+            .values('user__username', 'user__first_name', 'user__email')
+            .annotate(spend=Coalesce(Sum(price_expr), 0)).order_by('-spend')[:10])
+
+        top_packages_qs = (period_purchases
+            .values('package__package_number', 'package__game_type')
+            .annotate(n=Count('id')).order_by('-n')[:10])
+
+        top_types_qs = (period_purchases
+            .values('package__game_type')
+            .annotate(n=Count('id')).order_by('-n'))
+
+        type_map_ar = {'letters': 'خلية الحروف', 'images': 'تحدي الصور', 'quiz': 'سؤال وجواب'}
+        most_type_label = type_map_ar.get(top_types_qs[0]['package__game_type'], '—') if top_types_qs else '—'
+
+        # جلسات الفترة
+        period_sessions = GameSession.objects.filter(created_at__gte=start, created_at__lte=end)
+        total_sessions = period_sessions.count()
+        completed_sessions = period_sessions.filter(is_completed=True).count()
+        active_sessions = period_sessions.filter(is_active=True).count()
+        completion_rate = (completed_sessions / total_sessions * 100) if total_sessions else 0
+
+        # اتجاه يومي (آخر 14 يوم)
+        trend_days = 14
+        trend_start = end - timedelta(days=trend_days)
+        by_day_purchases = (UserPurchase.objects.filter(purchase_date__gte=trend_start, purchase_date__lte=end)
+            .annotate(d=TruncDate('purchase_date')).values('d').annotate(n=Count('id')).order_by('d'))
+        by_day_sessions = (GameSession.objects.filter(created_at__gte=trend_start, created_at__lte=end)
+            .annotate(d=TruncDate('created_at')).values('d').annotate(n=Count('id')).order_by('d'))
+
+        # تحويل التجربة المجانية → مدفوع (letters) (محاطة بـ try لو الموديل غير موجود)
+        try:
+            trial_users = FreeTrialUsage.objects.filter(game_type='letters').values_list('user_id', flat=True).distinct()
+            trial_count = len(trial_users)
+            converted_count = (UserPurchase.objects
+                .filter(user_id__in=trial_users, package__game_type='letters', package__is_free=False)
+                .values('user_id').distinct().count())
+            trial_conv_rate = (converted_count / trial_count * 100) if trial_count else 0
+
+            recent_trials = FreeTrialUsage.objects.filter(game_type='letters', used_at__gte=start)\
+                .values_list('user_id', flat=True).distinct()
+            recent_trial_count = len(recent_trials)
+            recent_converted = (UserPurchase.objects
+                .filter(user_id__in=recent_trials, package__game_type='letters', package__is_free=False,
+                        purchase_date__gte=start)
+                .values('user_id').distinct().count())
+            recent_trial_conv_rate = (recent_converted / recent_trial_count * 100) if recent_trial_count else 0
+        except Exception:
+            trial_conv_rate = 0
+            recent_trial_conv_rate = 0
+
+        # --------- رسوم البوابة + ريال لكل عملية ----------
+        gateway_fees_sar = Decimal("0.00")
+        per_tx_platform_total = Decimal("0.00")
+        tx_count = 0
+
+        def _to_sar_amt(amount, currency):
+            currency = (currency or "SAR").upper()
+            return (Decimal(amount or 0) * usd_rate) if currency == "USD" else Decimal(amount or 0)
+
+        def _guess_percent_for_method(pm):
+            if not pm:
+                return Decimal("0")
+            if hasattr(pm, "percentage_fee") and pm.percentage_fee is not None:
+                try:
+                    return Decimal(pm.percentage_fee)
+                except Exception:
+                    pass
+            name = (pm.name_ar or pm.name or "").lower()
+            if ("مدى" in name) or ("mada" in name):
+                return Decimal("1.0")
+            if ("visa" in name) or ("فيزا" in name) or ("master" in name) or ("ماستر" in name):
+                return Decimal("2.7")
+            return Decimal("0.0")
+
+        try:
+            from payments.models import Transaction  # type: ignore
+            tx_qs = Transaction.objects.filter(
+                status="completed",
+                completed_at__gte=start,
+                completed_at__lte=end
+            ).select_related("payment_method")
+            tx_count = tx_qs.count()
+
+            for t in tx_qs:
+                amt_sar = _to_sar_amt(t.amount, t.currency)
+                pm = t.payment_method
+                perc = _guess_percent_for_method(pm)
+                perc_fee = (amt_sar * perc) / Decimal("100.0")
+                flat_fee = Decimal(pm.processing_fee) if (pm and pm.processing_fee) else Decimal("0.0")
+                gateway_fees_sar += (perc_fee + flat_fee)
+                per_tx_platform_total += per_tx_platform  # 1 ريال (أو حسب المدخل)
+        except Exception:
+            tx_count = 0  # لو ما فيه app payments
+
+        # --------- التكاليف الشهرية + المقطوعة ----------
+        def _months_overlap_count(dt1, dt2):
+            d1, d2 = dt1.date(), dt2.date()
+            return (d2.year - d1.year) * 12 + (d2.month - d1.month) + 1
+
+        monthly_total_one = (monthly_sar or 0) + (_to_sar_amt(monthly_usd or 0, "USD"))
+        months_count = _months_overlap_count(start, end)
+        monthly_applied = monthly_total_one * months_count
+
+        one_time_total = sum(_to_sar_amt(it["amount"], it["currency"]) for it in one_time_items)
+
+        # إجمالي التكاليف وصافي الربح
+        total_costs = gateway_fees_sar + per_tx_platform_total + monthly_applied + one_time_total
+        net_profit = (period_revenue or 0) - total_costs
+        profit_margin = (net_profit / period_revenue * 100) if period_revenue else 0
+
+        # --------- جداول/عناصر العرض ----------
+        tb_buyers_count = "".join([
+            f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{(i+1)}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{(b.get('user__first_name') or b.get('user__username') or '—')}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{b['n']}</td></tr>"
+            for i, b in enumerate(top_buyers_count_qs)
+        ])
+        tb_buyers_spend = "".join([
+            f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{(i+1)}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{(b.get('user__first_name') or b.get('user__username') or '—')}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{_sar(b['spend'])}</td></tr>"
+            for i, b in enumerate(top_buyers_spend_qs)
+        ])
+        tb_packages = "".join([
+            f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>حزمة {p['package__package_number']}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{type_map_ar.get(p['package__game_type'],'—')}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{p['n']}</td></tr>"
+            for p in top_packages_qs
+        ])
+        tb_types = "".join([
+            f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{type_map_ar.get(t['package__game_type'],'—')}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{t['n']}</td></tr>"
+            for t in top_types_qs
+        ])
+
+        # اتجاه يومي
+        days_map = {}
+        for r in by_day_purchases:
+            days_map.setdefault(r['d'], {'p': 0, 's': 0})
+            days_map[r['d']]['p'] = r['n']
+        for r in by_day_sessions:
+            days_map.setdefault(r['d'], {'p': 0, 's': 0})
+            days_map[r['d']]['s'] = r['n']
+        peak = max([v['p'] for v in days_map.values()] or [1])
+        trend_rows = []
+        for d in sorted(days_map.keys()):
+            p = days_map[d]['p']; s = days_map[d]['s']
+            pct = (p * 100 / peak) if peak else 0
+            trend_rows.append(
+                f"<tr>"
+                f"<td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>{d}</td>"
+                f"<td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>{p}</td>"
+                f"<td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>{s}</td>"
+                f"<td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>"
+                f"<div style='display:flex;align-items:center;gap:8px;'>"
+                f"<div style='flex:1;background:#111827;border-radius:999px;overflow:hidden;height:8px;'>"
+                f"<div style='width:{int(pct)}%;height:8px;background:#3b82f6;'></div>"
+                f"</div><span style='font-size:12px;color:#94a3b8;'>{int(pct)}%</span></div></td></tr>"
+            )
+
+        # جدول التكاليف المفصّل (بوابة + لكل عملية + شهري + مقطوع)
+        one_time_rows = "".join(
+            f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{it['name']}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{it['currency']}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{it['amount']}</td></tr>"
+            for it in one_time_items
+        ) or "<tr><td colspan='3' style='padding:10px 12px;border-bottom:1px solid #1f2937;color:#94a3b8;'>لا مبالغ مقطوعة</td></tr>"
+
+        costs_table = f"""
+        <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+        <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+            <thead style="background:#0f172a;color:#cbd5e1;">
+            <tr><th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">البند</th>
+                <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">القيمة</th></tr>
+            </thead>
+            <tbody style="color:#e2e8f0;">
+            <tr><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">رسوم البوابات (النسبة + الثابت)</td><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">{_sar(gateway_fees_sar)}</td></tr>
+            <tr><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">تكلفة المنصة لكل عملية × {tx_count}</td><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">{_sar(per_tx_platform_total)}</td></tr>
+            <tr><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">تكاليف شهرية × {months_count}</td><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">{_sar(monthly_applied)}</td></tr>
+            <tr><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">مبالغ مقطوعة (إجمالي)</td><td style="padding:10px 12px;border-bottom:1px solid #1f2937;">{_sar(one_time_total)}</td></tr>
+            </tbody>
+        </table>
+        </div>
+        <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+        <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+            <thead style="background:#0f172a;color:#cbd5e1;">
+            <tr><th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المذكرة</th>
+                <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">العملة</th>
+                <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المبلغ</th></tr>
+            </thead>
+            <tbody style="color:#e2e8f0;">{one_time_rows}</tbody>
+        </table>
+        </div>
+        """
+
+        # كروت KPI
+        kpis = [
+            _kpi_card("مشتريات (آخر 30 يوم)" if days == 30 else f"مشتريات (آخر {days} يوم)", f"{period_total:,}",
+                    f"مستخدمون مميزون: {period_unique_buyers:,}", "ok" if period_total else "warn"),
+            _kpi_card("إيراد تقديري الفترة", _sar(period_revenue), "يعتمد على سعر الحزمة الحالي", "info"),
+            _kpi_card("رسوم البوابات", _sar(gateway_fees_sar), "النسبة + الثابت حسب الطريقة", "warn"),
+            _kpi_card("تكلفة المنصة (لكل عملية)", _sar(per_tx_platform_total), f"عدد العمليات: {tx_count}", "info"),
+            _kpi_card(f"التكاليف الشهرية × {months_count}", _sar(monthly_applied), f"SAR {monthly_sar} + USD {monthly_usd}", "info"),
+            _kpi_card("مبالغ مقطوعة", _sar(one_time_total), "تُضاف كما هي للفترة", "info"),
+            _kpi_card("صافي الربح", _sar(net_profit), f"هامش: {profit_margin:.1f}%", "ok" if net_profit >= 0 else "bad"),
+            _kpi_card("أكثر نوع هذه الفترة", most_type_label, "حسب عدد المشتريات", "info"),
+            _kpi_card("معدّل إكمال الجلسات", f"{completion_rate:.1f}%", f"نشطة: {active_sessions} / مكتملة: {completed_sessions}", "ok" if completion_rate >= 60 else "warn"),
+            _kpi_card("عائد العملاء (مدى الحياة)", f"{lifetime_return_rate:.1f}%", "من اشتروا أكثر من مرة", "info"),
+            _kpi_card("تحويل تجربة مجانية → مدفوع (letters)", f"{trial_conv_rate:.1f}%", f"خلال المدة: {recent_trial_conv_rate:.1f}%", "warn" if trial_conv_rate < 20 else "ok"),
+        ]
+
+        # --- نموذج التحكم (بدون f-strings متداخلة) ---
+        one_time_controls = []
+        for i in range(1, 6):
+            name_val = (request.GET.get(f"one_time_{i}_name", "") or "")
+            amount_val = (request.GET.get(f"one_time_{i}_amount", "") or "")
+            currency_val = (request.GET.get(f"one_time_{i}_currency", "SAR") or "SAR").upper()
+            sar_sel = "selected" if currency_val == "SAR" else ""
+            usd_sel = "selected" if currency_val == "USD" else ""
+            one_time_controls.append(
+                f"<div style='display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:6px;'>"
+                f"<input type='text' name='one_time_{i}_name' placeholder='المذكرة' value='{name_val}'>"
+                f"<input type='number' step='0.01' name='one_time_{i}_amount' placeholder='المبلغ' value='{amount_val}'>"
+                f"<select name='one_time_{i}_currency'>"
+                f"<option value='SAR' {sar_sel}>SAR</option>"
+                f"<option value='USD' {usd_sel}>USD</option>"
+                f"</select></div>"
+            )
+        one_time_controls_html = "".join(one_time_controls)
+
+        control_html = f"""
+        <form method="get" style="margin:8px 0;">
+        <div class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;">
+            <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;">
+            <div><label>الأيام</label><input type="number" min="1" name="days" value="{days}" style="width:100%"></div>
+            <div><label>USD→SAR</label><input type="number" step="0.01" name="usd_to_sar" value="{usd_rate}" style="width:100%"></div>
+            <div><label>شهري (SAR)</label><input type="number" step="0.01" name="monthly_sar" value="{monthly_sar}" style="width:100%"></div>
+            <div><label>شهري (USD)</label><input type="number" step="0.01" name="monthly_usd" value="{monthly_usd}" style="width:100%"></div>
+            <div><label>لكل عملية (SAR)</label><input type="number" step="0.01" name="per_tx_platform_sar" value="{per_tx_platform}" style="width:100%"></div>
+            <div style="display:flex;align-items:flex-end;"><button class="button" style="width:100%">تحديث</button></div>
+            </div>
+            <h3 style="margin:12px 0 6px;color:#93c5fd;">مبالغ مقطوعة (مرة واحدة)</h3>
+            {one_time_controls_html}
+        </div>
+        </form>
+        """
+
+        html = f"""
+        <div style="padding:16px 20px;">
+        <h2 style="margin:0 0 10px;">📈 لوحة التحليلات (مرنة)</h2>
+        <div style="margin:6px 0 14px;color:#94a3b8;font-size:13px;">
+            المدة الحالية: آخر {days} يوم —
+            <a href="?days=14">14</a> · <a href="?days=30">30</a> · <a href="?days=60">60</a> · <a href="?days=90">90</a>
+            &nbsp;|&nbsp;
+            <a href="{reverse('admin:games_purchases_analytics_csv')}?days={days}">تنزيل CSV للتقرير</a>
+        </div>
+
+        {control_html}
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">{''.join(kpis)}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+            <div>
+            <h3 style="margin:6px 0;">👤 أكثر المشترين (عددًا)</h3>
+            {_listing_table(["#","المستخدم","عدد المشتريات"], [tb_buyers_count])}
+            </div>
+            <div>
+            <h3 style="margin:6px 0;">💳 أكثر المشترين (إنفاقًا) — تقديري</h3>
+            {_listing_table(["#","المستخدم","الإنفاق التقديري"], [tb_buyers_spend])}
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+            <div>
+            <h3 style="margin:6px 0;">📦 أكثر الحزم مبيعًا (الفترة)</h3>
+            {_listing_table(["الحزمة","النوع","العدد"], [tb_packages])}
+            </div>
+            <div>
+            <h3 style="margin:6px 0;">🎮 توزيع حسب نوع اللعبة</h3>
+            {_listing_table(["نوع اللعبة","عدد المشتريات"], [tb_types])}
+            </div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <h3 style="margin:6px 0;">💰 تفاصيل التكاليف للفترة</h3>
+            {costs_table}
+            <div style="text-align:left;color:#cbd5e1;padding:8px 12px;">الإجمالي: <b>{_sar(total_costs)}</b></div>
+        </div>
+
+        <div style="margin-top:16px;">
+            <h3 style="margin:6px 0;">📅 اتجاه يومي (آخر {trend_days} يوم)</h3>
+            {_listing_table(["اليوم","مشتريات","جلسات","نسبة إلى الذروة"], trend_rows)}
+        </div>
+
+        <div style="margin-top:16px;color:#6b7280;font-size:12px;">
+            * الإيراد المعروض تقديري (يعتمد على سعر/خصم الحزمة الحالي). لزيادة الدقة يمكنك حفظ السعر المدفوع فعليًا لكل شراء.
+            <br>* لتعظيم الربحية يمكنك تعطيل طرق مرتفعة الرسوم (مثل بعض بطاقات الائتمان) من صفحة طرق الدفع في الأدمن.
+        </div>
+        </div>
+        """
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "لوحة التحليلات",
+            "content": mark_safe(html),
+        }
+        return TemplateResponse(request, "admin/base_site.html", context)
+
+
+    def analytics_csv_view(self, request):
+        days = int(request.GET.get("days", 30))
+        end = timezone.now()
+        start = end - timedelta(days=days)
+
+        p_expr = _price_case_expr()
+        qs = (UserPurchase.objects
+              .filter(purchase_date__gte=start, purchase_date__lte=end)
+              .select_related("user", "package")
+              .order_by("-purchase_date"))
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="analytics_{days}d.csv"'
+        w = csv.writer(response)
+        w.writerow(["purchase_id","user","game_type","package_number","is_completed","purchase_date","expires_at","price_estimated"])
+        for p in qs:
+            # حساب السعر التقديري لكل صف
+            price = (p.package.discounted_price
+                     if (p.package.discounted_price and p.package.original_price and
+                         p.package.discounted_price > 0 and p.package.original_price > p.package.discounted_price)
+                     else p.package.price)
+            w.writerow([
+                p.id, p.user.username,
+                p.package.game_type, p.package.package_number,
+                "1" if p.is_completed else "0",
+                p.purchase_date.isoformat(),
+                p.expires_at.isoformat() if p.expires_at else "",
+                str(price),
+            ])
+        return response
+
 
 @admin.register(Contestant)
 class ContestantAdmin(admin.ModelAdmin):
@@ -841,6 +1328,7 @@ class ContestantAdmin(admin.ModelAdmin):
     search_fields = ('name', 'session__id')
     date_hierarchy = 'joined_at'
     ordering = ('-joined_at',)
+    list_select_related = ('session',)
 
     def session_ref(self, obj):
         return f"{obj.session.game_type} / {obj.session.id}"

@@ -1,0 +1,128 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block content %}
+<style>
+  .cards {display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:12px 0;}
+  .card {background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:14px;color:#d1d5db;}
+  .card h3 {margin:0 0 6px 0;font-size:13px;color:#93c5fd;}
+  .card div {font-size:18px;font-weight:700;color:#e5e7eb;}
+  .grid {display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;}
+  .panel {background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:14px;}
+  .panel h3 {margin:0 0 10px 0;color:#93c5fd;}
+  table {width:100%;border-collapse:collapse;}
+  th,td {border-bottom:1px solid #111827;padding:8px;text-align:right;color:#cbd5e1;}
+  th {text-align:right;color:#93c5fd;background:#0f172a;}
+  .form-grid {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}
+  .subgrid {display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;}
+  .btn {display:inline-block;background:#2563eb;color:white;padding:6px 10px;border-radius:8px;text-decoration:none;border:0;cursor:pointer;}
+</style>
+
+<h1>{{ title }}</h1>
+
+<form method="get">
+  <div class="panel">
+    <h3>إعدادات الحساب</h3>
+    <div class="form-grid">
+      <div>
+        <label>من</label>
+        <input type="date" name="date_from" value="{{ form.initial.date_from|default:form.data.date_from|default_if_none:'' }}" class="vDateField" />
+      </div>
+      <div>
+        <label>إلى</label>
+        <input type="date" name="date_to" value="{{ form.initial.date_to|default:form.data.date_to|default_if_none:'' }}" class="vDateField" />
+      </div>
+      <div>
+        <label>سعر الصرف USD→SAR</label>
+        <input type="number" step="0.01" name="usd_to_sar" value="{{ form.initial.usd_to_sar|default:form.data.usd_to_sar|default_if_none:'' }}">
+      </div>
+      <div>
+        <label>تكلفة المنصة (لكل عملية) SAR</label>
+        <input type="number" step="0.01" name="per_tx_platform_sar" value="{{ form.initial.per_tx_platform_sar|default:form.data.per_tx_platform_sar|default_if_none:'' }}">
+      </div>
+      <div>
+        <label>شهري (SAR)</label>
+        <input type="number" step="0.01" name="monthly_sar" value="{{ form.initial.monthly_sar|default:form.data.monthly_sar|default_if_none:'' }}">
+      </div>
+      <div>
+        <label>شهري (USD)</label>
+        <input type="number" step="0.01" name="monthly_usd" value="{{ form.initial.monthly_usd|default:form.data.monthly_usd|default_if_none:'' }}">
+      </div>
+    </div>
+
+    <h3 style="margin-top:12px;">مبالغ مقطوعة (مرة واحدة)</h3>
+    <div class="subgrid">
+      <input type="text" name="one_time_1_name" placeholder="المذكرة" value="{{ form.data.one_time_1_name }}">
+      <input type="number" step="0.01" name="one_time_1_amount" placeholder="المبلغ" value="{{ form.data.one_time_1_amount }}">
+      <select name="one_time_1_currency"><option {% if form.data.one_time_1_currency == "SAR" %}selected{% endif %}>SAR</option><option {% if form.data.one_time_1_currency == "USD" %}selected{% endif %}>USD</option></select>
+    </div>
+    <div class="subgrid">
+      <input type="text" name="one_time_2_name" placeholder="المذكرة" value="{{ form.data.one_time_2_name }}">
+      <input type="number" step="0.01" name="one_time_2_amount" placeholder="المبلغ" value="{{ form.data.one_time_2_amount }}">
+      <select name="one_time_2_currency"><option {% if form.data.one_time_2_currency == "SAR" %}selected{% endif %}>SAR</option><option {% if form.data.one_time_2_currency == "USD" %}selected{% endif %}>USD</option></select>
+    </div>
+    <div class="subgrid">
+      <input type="text" name="one_time_3_name" placeholder="المذكرة" value="{{ form.data.one_time_3_name }}">
+      <input type="number" step="0.01" name="one_time_3_amount" placeholder="المبلغ" value="{{ form.data.one_time_3_amount }}">
+      <select name="one_time_3_currency"><option {% if form.data.one_time_3_currency == "SAR" %}selected{% endif %}>SAR</option><option {% if form.data.one_time_3_currency == "USD" %}selected{% endif %}>USD</option></select>
+    </div>
+    <div class="subgrid">
+      <input type="text" name="one_time_4_name" placeholder="المذكرة" value="{{ form.data.one_time_4_name }}">
+      <input type="number" step="0.01" name="one_time_4_amount" placeholder="المبلغ" value="{{ form.data.one_time_4_amount }}">
+      <select name="one_time_4_currency"><option {% if form.data.one_time_4_currency == "SAR" %}selected{% endif %}>SAR</option><option {% if form.data.one_time_4_currency == "USD" %}selected{% endif %}>USD</option></select>
+    </div>
+    <div class="subgrid">
+      <input type="text" name="one_time_5_name" placeholder="المذكرة" value="{{ form.data.one_time_5_name }}">
+      <input type="number" step="0.01" name="one_time_5_amount" placeholder="المبلغ" value="{{ form.data.one_time_5_amount }}">
+      <select name="one_time_5_currency"><option {% if form.data.one_time_5_currency == "SAR" %}selected{% endif %}>SAR</option><option {% if form.data.one_time_5_currency == "USD" %}selected{% endif %}>USD</option></select>
+    </div>
+
+    <div style="margin-top:10px;">
+      <button class="btn" type="submit">تحديث الإحصائيات</button>
+      <a class="btn" style="background:#374151" href="?">إعادة التعيين</a>
+    </div>
+  </div>
+</form>
+
+<div class="cards">
+  {% for title, value in cards %}
+    <div class="card"><h3>{{ title }}</h3><div>{{ value }}</div></div>
+  {% endfor %}
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <h3>حسب طريقة الدفع</h3>
+    <table>
+      <thead><tr><th>الطريقة</th><th>عدد العمليات</th><th>الإجمالي (SAR)</th></tr></thead>
+      <tbody>{{ method_rows|safe }}</tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>أفضل المشترين</h3>
+    <table>
+      <thead><tr><th>المستخدم</th><th>إجمالي الشراء (SAR)</th></tr></thead>
+      <tbody>{{ buyers_rows|safe }}</tbody>
+    </table>
+  </div>
+</div>
+
+<div class="grid" style="margin-top:12px;">
+  <div class="panel">
+    <h3>مبالغ مقطوعة مُضافة</h3>
+    <table>
+      <thead><tr><th>المذكرة</th><th>المبلغ (SAR)</th></tr></thead>
+      <tbody>{{ one_time_rows|safe }}</tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h3>ملاحظات</h3>
+    <p style="color:#9ca3af;line-height:1.8">
+      • تُحتسب التكاليف الشهرية بعدد الأشهر المغطّاة في الفلتر.<br>
+      • المبالغ المقطوعة تُضاف كما هي للفترة الحالية (مفيدة لمصاريف لمرة واحدة مثل اشتراك أو حملة).<br>
+      • رسوم البوابة = نسبة حسب الطريقة + رسوم ثابتة لطريقة الدفع (إن وُجدت).<br>
+      • تكلفة المنصة لكل عملية تُضرب في عدد المعاملات المكتملة.
+    </p>
+  </div>
+</div>
+
+{% endblock %}
