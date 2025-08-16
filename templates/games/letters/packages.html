@@ -7,6 +7,7 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <!-- خط/أيقونة الريال السعودي -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
 
   <style>
@@ -17,7 +18,6 @@
       --sprBg:#dcfce7; --sprText:#166534; --sprBorder:#86efac;
       --ok:#22c55e; --warn:#f59e0b; --primary:#8b5cf6; --cyan:#06b6d4;
       --muted:#64748b; --ink:#2d3748;
-      --riyal: "SaudiRiyal", "Tajawal", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     }
 
     body{
@@ -33,6 +33,7 @@
       font-size:2.2rem;font-weight:800;
       background:linear-gradient(135deg,var(--primary),var(--cyan));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
     }
     .section-title p{color:#475569;margin:0}
 
@@ -52,16 +53,26 @@
     .theme-tip{cursor:help;border-bottom:1px dotted currentColor}
 
     /* السعر العصري */
-    .price-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:8px 0 6px;}
+    .price-wrap{
+      display:flex;align-items:center;justify-content:center;gap:12px;
+      margin:8px 0 6px;
+      flex-wrap:wrap;
+    }
+    .price-new,.price-old{
+      display:inline-flex;align-items:baseline;gap:6px;
+    }
     .price-new{
-      font-weight:900;font-size:1.2rem; color:#0ea5e9;
-      display:flex;align-items:baseline;gap:4px;
+      font-weight:900;font-size:1.2rem;color:#0ea5e9;
     }
     .price-old{
-      color:#94a3b8; text-decoration: line-through; font-weight:700;
-      display:flex;align-items:baseline;gap:2px;
+      color:#94a3b8;text-decoration:line-through;font-weight:700;
     }
-    .riyal { font-family: var(--riyal); letter-spacing:.2px; }
+    .price-new .icon-saudi_riyal,
+    .price-old .icon-saudi_riyal{
+      font-size:1.05em; line-height:1; display:inline-block;
+      position:relative; top:1px;
+    }
+
     .save-badge{
       display:inline-flex;align-items:center;gap:6px;
       background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;
@@ -72,6 +83,7 @@
     .trust-row{
       display:flex;align-items:center;justify-content:center;gap:12px;
       color:#0f172a;font-weight:700;font-size:.9rem;margin-top:4px;
+      flex-wrap:wrap;
     }
     .trust-row .pill{
       display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
@@ -116,6 +128,13 @@
       display:flex; align-items:center; gap:6px;
     }
     .used-before i{ color:#f97316; }
+
+    /* موبايل */
+    @media (max-width: 768px){
+      .package-card{padding:1.25rem}
+      .price-wrap{gap:10px}
+      .price-new{font-size:1.1rem}
+    }
   </style>
 </head>
 <body>
@@ -153,7 +172,7 @@
           <div class="col-md-5 col-lg-4">
             <div class="package-card free-card">
               <div class="free-ribbon">مجانية</div>
-              <div class="package-title">جولة مجانية تجريبية</div>
+              <div class="package-title">جولة تجريبية</div>
 
               {% if free_package.question_theme %}
                 <div class="text-center mb-2">
@@ -171,8 +190,6 @@
 
               {% if free_package.description %}
                 <p class="package-desc dim">{{ free_package.description }}</p>
-              {% else %}
-                <p class="package-desc dim">جولة واحدة للتجربة قبل الشراء</p>
               {% endif %}
 
               {% if request.user.is_authenticated %}
@@ -194,7 +211,7 @@
               {% else %}
                 <a class="btn btn-outline-primary w-100 mt-1"
                    href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
-                  سجّل الدخول لتجربة المجاني
+                  سجّل الدخول للتجربة
                 </a>
               {% endif %}
             </div>
@@ -230,16 +247,18 @@
               {% if package.has_discount %}
                 <div class="price-wrap">
                   <div class="price-new">
-                    <span class="riyal">﷼</span>
                     <span class="val val-new">{{ package.discounted_price }}</span>
+                    <span class="icon-saudi_riyal"></span>
                   </div>
                   <div class="price-old">
-                    <span class="riyal">﷼</span>
                     <span class="val val-old">{{ package.original_price }}</span>
+                    <span class="icon-saudi_riyal"></span>
                   </div>
                 </div>
                 <div class="text-center">
-                  <span class="save-badge" data-orig="{{ package.original_price }}" data-disc="{{ package.discounted_price }}">
+                  <span class="save-badge"
+                        data-orig="{{ package.original_price }}"
+                        data-disc="{{ package.discounted_price }}">
                     <i class="fa-solid fa-tag"></i>
                     وفّر <b class="save-pct">—</b>
                   </span>
@@ -247,21 +266,19 @@
               {% else %}
                 <div class="price-wrap">
                   <div class="price-new">
-                    <span class="riyal">﷼</span>
                     <span class="val">{{ package.price }}</span>
+                    <span class="icon-saudi_riyal"></span>
                   </div>
                 </div>
               {% endif %}
 
               <div class="trust-row">
-                <span class="pill"><i class="fa-solid fa-lock"></i> دفع آمن</span>
                 <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
               </div>
 
               {% if package.description %}
                 <p class="package-desc">{{ package.description }}</p>
               {% endif %}
-              <div class="note-72">⏳ بعد الشراء يمكنك اللعب خلال 72 ساعة.</div>
 
               {% if package.id in user_purchases %}
                 <!-- مشتراة/نشطة: ابدأ مباشرة -->
