@@ -249,12 +249,15 @@ LOGGING = {
     'handlers': {
         'file': {'level': 'INFO','class': 'logging.FileHandler','filename': LOG_DIR / 'django.log','formatter': 'verbose'},
         'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'simple'},
+        'admin_file': {'level': 'INFO','class': 'logging.FileHandler','filename': LOG_DIR / 'admin_activities.log','formatter': 'verbose'},
     },
     'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
     'loggers': {
         'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
         'accounts': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
         'games': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
+        'admin_analytics': {'handlers': ['admin_file', 'console'], 'level': 'INFO', 'propagate': True},
+        'payments': {'handlers': ['file', 'console'], 'level': 'INFO', 'propagate': True},
     },
 }
 
@@ -267,3 +270,137 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
     SECURE_SSL_REDIRECT = False
+
+# ===============================
+# 📊 إعدادات الإدارة المحسنة - إضافات جديدة
+# ===============================
+
+# إعدادات التحليلات والتقارير
+ADMIN_ANALYTICS_SETTINGS = {
+    'CACHE_TIMEOUT': 300,  # 5 دقائق تخزين مؤقت للتحليلات
+    'REPORTS_PER_PAGE': 20,
+    'MAX_CHART_ITEMS': 10,
+    'DEFAULT_CURRENCY': 'SAR',
+    'COST_CALCULATION_MONTHS': 6,  # عدد الأشهر لحساب التكاليف
+}
+
+# إعدادات الرسوم والتكاليف الافتراضية
+DEFAULT_GATEWAY_FEES = {
+    'FIXED_FEE': 1.00,  # ريال واحد لكل معاملة
+    'VISA_PERCENTAGE': 0.027,  # 2.7% للفيزا
+    'MADA_PERCENTAGE': 0.01,   # 1% لمدى
+}
+
+# إعدادات التكاليف الافتراضية (سيتم إدراجها تلقائياً)
+DEFAULT_COSTS = [
+    {
+        'name': 'رسوم تأسيس بوابة الدفع',
+        'description': 'رسوم إعداد بوابة الدفع',
+        'cost_type': 'one_time',
+        'amount': 460.00,
+        'currency': 'SAR'
+    },
+    {
+        'name': 'السيرفر الشهري',
+        'description': 'تكلفة استضافة السيرفر',
+        'cost_type': 'monthly', 
+        'amount': 26.25,  # 7 دولار تقريباً
+        'currency': 'SAR'
+    },
+    {
+        'name': 'اشتراك GPT',
+        'description': 'اشتراك واجهة برمجة GPT',
+        'cost_type': 'monthly',
+        'amount': 90.00,
+        'currency': 'SAR'
+    }
+]
+
+# إعدادات الصفحات المخصصة للإدارة
+ADMIN_CUSTOM_SETTINGS = {
+    'SHOW_ANALYTICS_LINK': True,
+    'SHOW_FINANCIAL_REPORTS': True,
+    'ENABLE_USER_MANAGEMENT': True,
+    'ENABLE_COST_TRACKING': True,
+    'AUTO_REFRESH_STATS': True,
+    'REFRESH_INTERVAL': 30000,  # 30 ثانية
+}
+
+# إعدادات الأمان للإدارة
+ADMIN_SECURITY_SETTINGS = {
+    'REQUIRE_STAFF_LOGIN': True,
+    'ENABLE_ACTIVITY_LOGGING': True,
+    'MAX_LOGIN_ATTEMPTS': 3,
+    'LOCKOUT_DURATION': 300,  # 5 دقائق
+}
+
+# إعدادات التصدير والتقارير
+REPORT_SETTINGS = {
+    'ENABLE_PDF_EXPORT': True,
+    'ENABLE_EXCEL_EXPORT': True,
+    'MAX_EXPORT_RECORDS': 10000,
+    'REPORT_CACHE_TIMEOUT': 600,  # 10 دقائق
+}
+
+# متغيرات البيئة للتكاليف (يمكن تعديلها بسهولة)
+from decimal import Decimal
+
+GATEWAY_SETUP_FEE = Decimal(os.getenv('GATEWAY_SETUP_FEE', '460.00'))
+MONTHLY_SERVER_COST = Decimal(os.getenv('MONTHLY_SERVER_COST', '26.25'))
+MONTHLY_GPT_COST = Decimal(os.getenv('MONTHLY_GPT_COST', '90.00'))
+VISA_FEE_PERCENTAGE = Decimal(os.getenv('VISA_FEE_PERCENTAGE', '0.027'))
+MADA_FEE_PERCENTAGE = Decimal(os.getenv('MADA_FEE_PERCENTAGE', '0.01'))
+
+# تنسيق التواريخ والأرقام في التقارير
+DATE_FORMAT = 'Y-m-d'
+DATETIME_FORMAT = 'Y-m-d H:i:s'
+NUMBER_GROUPING = 3
+
+# إعدادات الرسائل للإدارة
+MESSAGE_TAGS = {
+    50: 'danger',  # ERROR
+    40: 'danger',  # ERROR
+    30: 'warning', # WARNING  
+    25: 'success', # SUCCESS
+    20: 'info',    # INFO
+    10: 'info',    # DEBUG
+}
+
+# ===============================
+# 🔧 إعدادات قاعدة البيانات لإنشاء البيانات الافتراضية
+# ===============================
+
+def create_default_admin_data():
+    """إنشاء البيانات الافتراضية للإدارة"""
+    try:
+        from wesh_aljawab.models import AdminCost, AdminSettings
+        
+        # إنشاء التكاليف الافتراضية
+        for cost_data in DEFAULT_COSTS:
+            AdminCost.objects.get_or_create(
+                name=cost_data['name'],
+                defaults=cost_data
+            )
+        
+        # إنشاء الإعدادات الافتراضية
+        default_settings = [
+            ('analytics_refresh_interval', '30000', 'فترة تحديث التحليلات بالميلي ثانية'),
+            ('max_chart_items', '10', 'أقصى عدد عناصر في الرسوم البيانية'),
+            ('reports_cache_timeout', '300', 'مدة تخزين التقارير مؤقتاً بالثواني'),
+            ('enable_email_reports', 'false', 'تفعيل إرسال التقارير بالبريد'),
+            ('default_report_period', '30', 'فترة التقرير الافتراضية بالأيام'),
+        ]
+        
+        for key, value, description in default_settings:
+            AdminSettings.objects.get_or_create(
+                key=key,
+                defaults={'value': value, 'description': description}
+            )
+    except Exception:
+        pass  # تجاهل الأخطاء أثناء التهيئة الأولى
+
+# تشغيل إنشاء البيانات الافتراضية عند بدء الخادم
+try:
+    create_default_admin_data()
+except Exception:
+    pass  # تجاهل الأخطاء أثناء التهيئة الأولى

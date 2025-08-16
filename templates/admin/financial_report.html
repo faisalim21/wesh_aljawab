@@ -1,0 +1,593 @@
+<!-- المسار: templates/admin/financial_report.html -->
+{% extends "admin/base_site.html" %}
+{% load admin_urls static admin_list %}
+
+{% block title %}التقرير المالي | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .financial-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .financial-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .summary-card {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-right: 5px solid #417690;
+    }
+    
+    .summary-card.revenue {
+        border-right-color: #28a745;
+    }
+    
+    .summary-card.cost {
+        border-right-color: #dc3545;
+    }
+    
+    .summary-card.profit {
+        border-right-color: #007bff;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .summary-card h3 {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .summary-card .amount {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+        color: #333;
+    }
+    
+    .summary-card .details {
+        font-size: 12px;
+        color: #666;
+        margin-top: 8px;
+    }
+    
+    .revenue-amount { color: #28a745; }
+    .cost-amount { color: #dc3545; }
+    .profit-amount { color: #007bff; }
+    
+    .financial-section {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .financial-section h2 {
+        margin: 0 0 20px 0;
+        color: #333;
+        font-size: 18px;
+        border-bottom: 2px solid #417690;
+        padding-bottom: 10px;
+    }
+    
+    .breakdown-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .breakdown-table th,
+    .breakdown-table td {
+        padding: 12px;
+        text-align: right;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .breakdown-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .breakdown-table tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .chart-container {
+        background: white;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+    }
+    
+    .chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 30px;
+        margin-bottom: 30px;
+    }
+    
+    .cost-breakdown {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+    
+    .cost-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border-right: 3px solid #dc3545;
+    }
+    
+    .cost-item h4 {
+        margin: 0 0 5px 0;
+        color: #333;
+        font-size: 14px;
+    }
+    
+    .cost-item .amount {
+        font-size: 20px;
+        font-weight: bold;
+        color: #dc3545;
+    }
+    
+    .cost-item .type {
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+    }
+    
+    .profit-analysis {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        border: 2px solid #2196f3;
+    }
+    
+    .profit-analysis h3 {
+        margin: 0 0 15px 0;
+        color: #1976d2;
+        text-align: center;
+    }
+    
+    .profit-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .profit-details div {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 768px) {
+        .chart-grid {
+            grid-template-columns: 1fr;
+        }
+        .financial-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+    
+    .alert-success {
+        background-color: #d1f2eb;
+        border: 1px solid #a3d5a3;
+        color: #155724;
+    }
+    
+    .alert-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+    }
+    
+    .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="financial-container">
+    <h1 style="color: #333; margin-bottom: 30px; text-align: center;">💰 التقرير المالي الشامل</h1>
+    
+    <!-- ملخص مالي سريع -->
+    <div class="financial-summary">
+        <div class="summary-card revenue">
+            <h3>إجمالي الإيرادات</h3>
+            <p class="amount revenue-amount">{{ total_revenue|floatformat:0 }}</p>
+            <p class="details">ريال سعودي</p>
+        </div>
+        
+        <div class="summary-card cost">
+            <h3>رسوم البوابات</h3>
+            <p class="amount cost-amount">{{ gateway_fees|floatformat:0 }}</p>
+            <p class="details">1 ر.س + نسبة متغيرة</p>
+        </div>
+        
+        <div class="summary-card cost">
+            <h3>إجمالي التكاليف</h3>
+            <p class="amount cost-amount">{{ costs_breakdown.total|floatformat:0 }}</p>
+            <p class="details">شهرية + مقطوعة</p>
+        </div>
+        
+        <div class="summary-card profit">
+            <h3>صافي الربح</h3>
+            <p class="amount profit-amount">{{ net_profit|floatformat:0 }}</p>
+            <p class="details">بعد خصم جميع التكاليف</p>
+        </div>
+    </div>
+    
+    <!-- تحليل الربحية -->
+    {% if net_profit > 0 %}
+    <div class="alert alert-success">
+        <strong>🎉 تهانينا!</strong> المشروع يحقق أرباحاً صافية قدرها {{ net_profit|floatformat:0 }} ريال سعودي.
+    </div>
+    {% elif net_profit == 0 %}
+    <div class="alert alert-warning">
+        <strong>⚖️ نقطة التعادل:</strong> المشروع يغطي تكاليفه تماماً بدون ربح أو خسارة.
+    </div>
+    {% else %}
+    <div class="alert alert-danger">
+        <strong>⚠️ تنبيه:</strong> المشروع يسجل خسارة قدرها {{ net_profit|floatformat:0 }} ريال سعودي. يُنصح بمراجعة التكاليف أو زيادة الإيرادات.
+    </div>
+    {% endif %}
+    
+    <!-- الرسوم البيانية -->
+    <div class="chart-grid">
+        <div class="chart-container">
+            <h2>📊 توزيع الإيرادات حسب طريقة الدفع</h2>
+            <canvas id="paymentMethodChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="chart-container">
+            <h2>🎮 الإيرادات حسب نوع الحزمة</h2>
+            <canvas id="packageRevenueChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+    
+    <!-- تفاصيل التكاليف -->
+    <div class="financial-section">
+        <h2>💸 تفاصيل التكاليف التشغيلية</h2>
+        <div class="cost-breakdown">
+            {% for cost in costs_breakdown.breakdown %}
+            <div class="cost-item">
+                <h4>{{ cost.name }}</h4>
+                <div class="amount">{{ cost.amount|floatformat:0 }} ر.س</div>
+                <div class="type">{{ cost.cost_type }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+            <h4>ملخص التكاليف:</h4>
+            <ul style="margin: 10px 0; padding-right: 20px;">
+                <li><strong>التكاليف الشهرية:</strong> {{ costs_breakdown.monthly|floatformat:0 }} ر.س/شهر</li>
+                <li><strong>التكاليف المقطوعة:</strong> {{ costs_breakdown.one_time|floatformat:0 }} ر.س (موزعة على 6 أشهر)</li>
+                <li><strong>رسوم البوابات:</strong> {{ gateway_fees|floatformat:0 }} ر.س (متغيرة حسب المبيعات)</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- تحليل الإيرادات -->
+    <div class="financial-section">
+        <h2>💰 تحليل الإيرادات التفصيلي</h2>
+        
+        <!-- الإيرادات حسب الحزم -->
+        <h3 style="margin-top: 30px;">حسب نوع الحزمة:</h3>
+        <table class="breakdown-table">
+            <thead>
+                <tr>
+                    <th>الحزمة</th>
+                    <th>نوع اللعبة</th>
+                    <th>عدد المبيعات</th>
+                    <th>إجمالي الإيرادات</th>
+                    <th>السعر الحالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for package in revenue_by_package %}
+                <tr>
+                    <td>{{ package }}</td>
+                    <td>{{ package.get_game_type_display }}</td>
+                    <td>{{ package.purchases }}</td>
+                    <td class="revenue-amount">{{ package.revenue|default:0|floatformat:0 }} ر.س</td>
+                    <td>{{ package.price|floatformat:0 }} ر.س</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center; color: #666;">لا توجد مبيعات بعد</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- تحليل الربحية المفصل -->
+    <div class="profit-analysis">
+        <h3>📈 تحليل الربحية التفصيلي</h3>
+        <div class="profit-details">
+            <div>
+                <h4>هامش الربح الإجمالي</h4>
+                <strong style="font-size: 18px; color: #1976d2;">
+                    {% widthratio net_profit total_revenue 100 %}%
+                </strong>
+            </div>
+            <div>
+                <h4>التكلفة لكل ريال إيراد</h4>
+                <strong style="font-size: 18px; color: #f57c00;">
+                    {% widthratio costs_breakdown.total total_revenue 1 %} ر.س
+                </strong>
+            </div>
+            <div>
+                <h4>نقطة التعادل</h4>
+                <strong style="font-size: 18px; color: #388e3c;">
+                    {{ costs_breakdown.total|floatformat:0 }} ر.س
+                </strong>
+            </div>
+            <div>
+                <h4>الفائض/العجز</h4>
+                <strong style="font-size: 18px; color: {% if net_profit > 0 %}#2e7d32{% else %}#d32f2f{% endif %};">
+                    {% if net_profit > 0 %}+{% endif %}{{ net_profit|floatformat:0 }} ر.س
+                </strong>
+            </div>
+        </div>
+    </div>
+    
+    <!-- توصيات مالية -->
+    <div class="financial-section">
+        <h2>💡 التوصيات المالية</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <h4>🚀 لزيادة الإيرادات:</h4>
+                <ul style="color: #28a745;">
+                    <li>تطوير حزم جديدة للألعاب الشائعة</li>
+                    <li>تقديم عروض وخصومات موسمية</li>
+                    <li>برامج ولاء للعملاء المتكررين</li>
+                    <li>التسويق للمؤسسات التعليمية</li>
+                </ul>
+            </div>
+            <div>
+                <h4>💰 لتقليل التكاليف:</h4>
+                <ul style="color: #dc3545;">
+                    <li>مراجعة تكاليف السيرفر والاستضافة</li>
+                    <li>تحسين كفاءة استخدام موارد GPT</li>
+                    <li>التفاوض على رسوم بوابة الدفع</li>
+                    <li>أتمتة العمليات لتقليل التكاليف اليدوية</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- أزرار الإجراءات -->
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="{% url 'admin:admin_analytics' %}" class="button" style="background: #417690; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px;">
+            📊 التحليلات العامة
+        </a>
+        <a href="{% url 'admin:index' %}" class="button" style="background: #6c757d; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; margin: 5px;">
+            ← العودة للوحة الإدارة
+        </a>
+        <button onclick="window.print()" class="button" style="background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 5px; margin: 5px; cursor: pointer;">
+            🖨️ طباعة التقرير
+        </button>
+    </div>
+</div>
+
+<script>
+// رسم بياني لطرق الدفع
+const paymentCtx = document.getElementById('paymentMethodChart').getContext('2d');
+const paymentChart = new Chart(paymentCtx, {
+    type: 'pie',
+    data: {
+        labels: [
+            {% for method in revenue_by_method %}
+            '{{ method.payment_method__name_ar|default:"غير محدد" }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for method in revenue_by_method %}
+                {{ method.total|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#417690',
+                '#28a745', 
+                '#ffc107',
+                '#dc3545',
+                '#6f42c1',
+                '#fd7e14'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'توزيع الإيرادات حسب طريقة الدفع'
+            },
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                        return context.label + ': ' + context.parsed.toLocaleString() + ' ر.س (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// رسم بياني للحزم
+const packageCtx = document.getElementById('packageRevenueChart').getContext('2d');
+const packageChart = new Chart(packageCtx, {
+    type: 'bar',
+    data: {
+        labels: [
+            {% for package in revenue_by_package %}
+            '{{ package|truncatechars:20 }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'الإيرادات (ر.س)',
+            data: [
+                {% for package in revenue_by_package %}
+                {{ package.revenue|default:0 }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#417690',
+                '#28a745',
+                '#ffc107', 
+                '#dc3545',
+                '#6f42c1'
+            ],
+            borderWidth: 1,
+            borderColor: '#333'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            title: {
+                display: true,
+                text: 'إيرادات الحزم المختلفة'
+            },
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'الإيرادات (ريال سعودي)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'الحزم'
+                }
+            }
+        },
+        elements: {
+            bar: {
+                borderRadius: 4
+            }
+        }
+    }
+});
+
+// تحديث الألوان بناءً على الربحية
+document.addEventListener('DOMContentLoaded', function() {
+    const netProfit = {{ net_profit }};
+    const profitElements = document.querySelectorAll('.profit-amount');
+    
+    profitElements.forEach(element => {
+        if (netProfit > 0) {
+            element.style.color = '#28a745';
+        } else if (netProfit < 0) {
+            element.style.color = '#dc3545';
+        } else {
+            element.style.color = '#ffc107';
+        }
+    });
+});
+</script>
+
+<!-- طباعة محسنة -->
+<style media="print">
+    .financial-container {
+        max-width: none;
+        margin: 0;
+        padding: 10px;
+    }
+    
+    .chart-container canvas {
+        max-height: 300px;
+    }
+    
+    .button {
+        display: none;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+    
+    .financial-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .chart-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+</style>
+{% endblock %} طريقة الدفع -->
+        <h3>حسب طريقة الدفع:</h3>
+        <table class="breakdown-table">
+            <thead>
+                <tr>
+                    <th>طريقة الدفع</th>
+                    <th>عدد المعاملات</th>
+                    <th>إجمالي الإيرادات</th>
+                    <th>متوسط المعاملة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for method in revenue_by_method %}
+                <tr>
+                    <td>{{ method.payment_method__name_ar|default:"غير محدد" }}</td>
+                    <td>{{ method.count }}</td>
+                    <td class="revenue-amount">{{ method.total|floatformat:0 }} ر.س</td>
+                    <td>{{ method.total|div:method.count|floatformat:0 }} ر.س</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #666;">لا توجد إيرادات بعد</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- الإيرادات حسب
