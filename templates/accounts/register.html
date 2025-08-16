@@ -18,7 +18,6 @@
     <meta property="og:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <meta property="og:image:secure_url" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <meta property="og:image:alt" content="شعار وش الجواب">
-    <!-- بإمكانك تحديد أبعاد الصورة إن كانت 1200x630 -->
     <!-- <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"> -->
 
     <!-- Twitter Card -->
@@ -27,17 +26,15 @@
     <meta name="twitter:description" content="انضم إلى منصة وش الجواب للألعاب الذكية وابدأ رحلتك التفاعلية الآن.">
     <meta name="twitter:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
 
-    <!-- PWA / Favicons (تستخدم نفس الشعار مؤقتًا) -->
+    <!-- PWA / Favicons -->
     <meta name="theme-color" content="#4f46e5">
     <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-    <!-- إن كان لديك manifest حقيقي ضع مساره هنا -->
-    <!-- <link rel="manifest" href="{% static 'site.webmanifest' %}"> -->
 
     <!-- CSS Libs -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
@@ -51,10 +48,11 @@
             --glass-border: rgba(255,255,255,0.22);
             --text-light:#f8fafc;
             /* الجوال: خلفية أغمق وأكثر راحة */
-            --glass-bg-mobile: rgba(15,18,39,0.86);
+            --glass-bg-mobile: rgba(15,18,39,0.88);
             --glass-border-mobile: rgba(255,255,255,0.08);
             --field-bg-mobile: rgba(255,255,255,0.12);
         }
+
         *{margin:0;padding:0;box-sizing:border-box}
         body{
             font-family:'Tajawal',sans-serif;
@@ -62,6 +60,7 @@
             min-height:100vh; display:flex; align-items:center; justify-content:center;
             padding:20px; position:relative; overflow-x:hidden; color-scheme:dark;
         }
+
         /* خلفية زخرفية لطيفة */
         body::before{
             content:''; position:absolute; inset:0; z-index:-1;
@@ -77,41 +76,52 @@
             background:var(--glass-bg);
             backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
             border:1px solid var(--glass-border);
-            border-radius:24px; padding:40px; width:100%; max-width:500px;
+            border-radius:24px; padding:44px 40px 32px; width:100%; max-width:520px;
             box-shadow:0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
             position:relative; animation:slideIn .6s ease-out;
         }
         @keyframes slideIn{from{opacity:0;transform:translateY(30px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
-        .auth-header{text-align:center;margin-bottom:30px}
+
+        .auth-header{text-align:center;margin-bottom:26px}
+        /* شعار كبير وبروز أعلى */
+        .logo-link{display:inline-block;text-decoration:none}
         .logo-container{
-            width:120px;height:120px;margin:0 auto 24px;
-            background:rgba(255,255,255,.16); border-radius:24px; padding:20px;
+            width:160px;height:160px; /* أكبر */
+            margin:0 auto 14px;
+            background:rgba(255,255,255,.18); border-radius:28px; padding:18px;
             display:flex;align-items:center;justify-content:center;
-            box-shadow:0 20px 40px rgba(0,0,0,.22), 0 0 80px rgba(124,58,237,.28), inset 0 2px 14px rgba(255,255,255,.28);
-            backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            box-shadow:0 22px 44px rgba(0,0,0,.24), 0 0 90px rgba(124,58,237,.30), inset 0 2px 16px rgba(255,255,255,.28);
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
             border:2px solid rgba(255,255,255,.28); animation:logoFloat 4s ease-in-out infinite;
         }
-        .logo-img{width:100%;height:100%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.3));transition:transform .3s ease}
+        .logo-img{width:100%;height:100%;object-fit:contain;border-radius:14px;filter:drop-shadow(0 6px 12px rgba(0,0,0,.35));transition:transform .25s ease, filter .25s ease}
+        .logo-link:hover .logo-img{transform:scale(1.02);filter:drop-shadow(0 8px 16px rgba(0,0,0,.4))}
         @keyframes logoFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.02)}}
-        .auth-title{font-size:1.8rem;font-weight:700;color:#fff;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,.08)}
-        .auth-subtitle{color:rgba(255,255,255,.86);font-size:1rem}
+
+        .auth-title{font-size:2rem;font-weight:800;color:#fff;margin-bottom:4px;text-shadow:2px 2px 4px rgba(0,0,0,.08)}
+        .auth-subtitle{color:rgba(255,255,255,.9);font-size:1rem}
 
         .form-group{position:relative;margin-bottom:20px}
-        .form-label{color:#fff;font-weight:500;margin-bottom:8px;display:block;font-size:.95rem}
+        .form-label{color:#fff;font-weight:600;margin-bottom:8px;display:block;font-size:.98rem}
+
         .form-control{
             background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.22);
-            border-radius:12px; padding:14px 20px; color:#fff; width:100%;
-            transition:all .25s ease; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+            border-radius:14px; padding:14px 20px; color:#fff; width:100%;
+            transition:all .2s ease; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
         }
         .form-control:focus{
-            outline:none; border-color:rgba(124,58,237,.9); background:rgba(255,255,255,.16);
-            box-shadow:0 0 0 4px rgba(124,58,237,.14); transform:translateY(-1px);
+            outline:none; border-color:rgba(124,58,237,.95);
+            background:rgba(255,255,255,.16);
+            box-shadow:0 0 0 4px rgba(124,58,237,.14);
+            transform:translateY(-1px);
         }
-        .form-control::placeholder{color:rgba(255,255,255,.68)}
-        .input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);font-size:1.1rem}
-        .form-control.with-icon{padding-left:45px}
+        .form-control::placeholder{color:rgba(255,255,255,.7)}
+        .input-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.75);font-size:1.1rem}
+        .form-control.with-icon{padding-left:46px}
 
-        .password-toggle{position:absolute;left:45px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,.7);z-index:10}
+        .password-toggle{position:absolute;left:46px;top:50%;transform:translateY(-50%);cursor:pointer;color:rgba(255,255,255,.75);z-index:10}
+        .password-toggle:hover{color:#fff}
+
         .text-danger{color:#fca5a5!important;font-size:.85rem;margin-top:5px}
         .text-muted{color:rgba(255,255,255,.66)!important;font-size:.8rem;margin-top:5px}
 
@@ -122,16 +132,16 @@
         .strength-strong{background:var(--success-color);width:100%}
 
         .btn-register{
-            background:var(--secondary-gradient); border:none; border-radius:12px; padding:15px 30px;
-            color:#fff; font-size:1.1rem; font-weight:700; width:100%;
-            cursor:pointer; transition:transform .2s ease, box-shadow .2s ease;
-            box-shadow:0 10px 24px rgba(139,92,246,.35); position:relative; overflow:hidden; margin-top:10px;
+            background:var(--secondary-gradient); border:none; border-radius:14px; padding:15px 30px;
+            color:#fff; font-size:1.1rem; font-weight:800; width:100%;
+            cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+            box-shadow:0 12px 26px rgba(139,92,246,.38); position:relative; overflow:hidden; margin-top:10px;
         }
-        .btn-register:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(139,92,246,.45)}
-        .btn-register:disabled{opacity:.75;cursor:not-allowed}
+        .btn-register:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(139,92,246,.48)}
+        .btn-register:disabled{opacity:.78;cursor:not-allowed}
 
-        .auth-links{text-align:center;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
-        .auth-link{color:rgba(255,255,255,.88);text-decoration:none;font-weight:600;transition:color .2s ease}
+        .auth-links{text-align:center;margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.12)}
+        .auth-link{color:rgba(255,255,255,.9);text-decoration:none;font-weight:700}
         .auth-link:hover{color:#fff;text-decoration:underline}
 
         .alert{border-radius:12px;border:none;padding:15px 20px;margin-bottom:22px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
@@ -142,14 +152,15 @@
         .spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top:2px solid #fff;border-radius:50%;animation:spin 1s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
 
-        /* الجوال: تقليل الشفافية وإغلاق البلور لراحة العين */
+        /* الجوال: تقليل الشفافية/الزخارف وتكبير الشعار */
         @media (max-width:768px){
             .auth-container{
-                padding:30px 24px; margin:10px;
+                padding:32px 22px 24px;
+                max-width:94vw;
                 background:var(--glass-bg-mobile);
                 backdrop-filter:none; -webkit-backdrop-filter:none;
                 border:1px solid var(--glass-border-mobile);
-                box-shadow:0 20px 44px rgba(0,0,0,.28);
+                box-shadow:0 22px 46px rgba(0,0,0,.30);
             }
             body::before{
                 background:
@@ -158,30 +169,31 @@
                     radial-gradient(circle at 60% 20%, rgba(251,146,60,.10) 0%, transparent 50%);
                 animation:none;
             }
-            .logo-container{width:100px;height:100px;margin-bottom:20px;padding:15px;animation:none}
-            .auth-title{font-size:1.6rem}
-            .auth-subtitle{font-size:.95rem}
-            .form-control{background:var(--field-bg-mobile);border-color:rgba(255,255,255,.22);padding:12px 16px}
-            .form-control.with-icon{padding-left:42px}
+            .logo-container{width:140px;height:140px;padding:16px;animation:none} /* شعار أكبر على الجوال */
+            .auth-title{font-size:1.8rem}
+            .form-control{background:var(--field-bg-mobile);border-color:rgba(255,255,255,.22);padding:13px 16px}
+            .form-control.with-icon{padding-left:44px}
         }
         @media (max-width:480px){
-            .logo-container{width:90px;height:90px;padding:12px}
-            .auth-title{font-size:1.45rem}
+            .logo-container{width:130px;height:130px}
+            .auth-title{font-size:1.6rem}
         }
-        /* تقليل الحركة احترامًا لتفضيلات النظام */
-        @media (prefers-reduced-motion: reduce){
-            *{animation:none!important;transition:none!important}
-        }
+
+        /* احترام تفضيل تقليل الحركة */
+        @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
     </style>
 </head>
 <body>
     <div class="auth-container" role="main" aria-labelledby="registerTitle">
         <div class="auth-header">
-            <div class="logo-container" aria-hidden="true">
-                <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-                     alt="وش الجواب" class="logo-img" width="120" height="120"
-                     loading="eager" decoding="async">
-            </div>
+            <!-- شعار قابل للنقر للرجوع للرئيسية -->
+            <a href="{% url 'home' %}" class="logo-link" aria-label="العودة للرئيسية">
+                <div class="logo-container" aria-hidden="true">
+                    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+                         alt="وش الجواب" class="logo-img" width="160" height="160"
+                         loading="eager" decoding="async">
+                </div>
+            </a>
             <h1 class="auth-title" id="registerTitle">إنشاء حساب جديد</h1>
             <p class="auth-subtitle">املأ النموذج للبدء في رحلتك معنا</p>
         </div>
@@ -317,7 +329,7 @@
     </div>
 
     <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
     document.addEventListener('DOMContentLoaded', function(){
         const form = document.getElementById('registerForm');
@@ -339,7 +351,7 @@
             this.setAttribute('aria-pressed', String(hidden));
         });
 
-        // قياس قوة كلمة المرور (بسيط)
+        // قياس قوة كلمة المرور
         password.addEventListener('input', function(){
             const val = this.value;
             let strength = 0;
@@ -398,10 +410,11 @@
             }, 800);
         }
 
-        // تخفيف الحركة إن كان المستخدم يفضل ذلك
+        // تقليل الحركة عند تفضيل المستخدم
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){
             document.body.style.animation = 'none';
-            const logo = document.querySelector('.logo-container'); if (logo) logo.style.animation = 'none';
+            const logo = document.querySelector('.logo-container');
+            if (logo) logo.style.animation = 'none';
         }
 
         // إزالة رسائل التنبيه من Django بعد فترة

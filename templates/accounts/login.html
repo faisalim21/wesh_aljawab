@@ -1,83 +1,45 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <!-- أساسيات -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-    {% block title %}{{ page_title|default:" تسجيل الدخول - وش الجواب" }}{% endblock %}
-    </title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <title>{% block title %}{{ page_title|default:"تسجيل الدخول - وش الجواب" }}{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
     <meta name="robots" content="index,follow">
 
-    {# ——— Canonical ——— #}
+    <!-- Canonical -->
     <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
 
-    {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
+    <!-- Open Graph -->
     <meta property="og:locale" content="ar_SA">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="وش الجواب">
     <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
     <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-    {# غيّر الصورة لكل صفحة عبر المتغير page_og_image إن وُجد #}
     <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-    {# يفضّل استخدام أبعاد 1200x630 #}
-    <!-- <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630"> -->
+    <!-- <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"> -->
 
-    {# ——— Twitter Card ——— #}
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
     <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
 
-    {# ——— Favicons / PWA ——— #}
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
+    <!-- Favicons / Theme -->
+    <meta name="theme-color" content="#4f46e5">
     <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-    {# لو عندك manifest حقيقي فعّله #}
-    {# <link rel="manifest" href="{% static 'site.webmanifest' %}"> #}
-
-    {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    {# لو بتثبت خط Tajawal عالميًا، حمّله هنا #}
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"> -->
-
-    {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
-    <script type="application/ld+json">
-    {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "وش الجواب",
-    "url": "https://wesh-aljawab.onrender.com/",
-    "inLanguage": "ar",
-    "publisher": {
-        "@type": "Organization",
-        "name": "وش الجواب",
-        "logo": {
-        "@type": "ImageObject",
-        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-        }
-    }
-    }
-    </script>
-
-    {# ——— مساحة لتجاوزات/إضافات خاصة بكل صفحة عند الحاجة ——— #}
     {% block meta_overrides %}{% endblock %}
 
-    <!-- ينسّق لون شريط المتصفح على الجوال ليتماشى مع الثيم -->
-    <meta name="theme-color" content="#4f46e5">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- مكتبات واجهة -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 
@@ -89,19 +51,17 @@
             --danger-color: #ef4444;
             --warning-color: #f59e0b;
 
-            /* خلفية زجاجية افتراضية لسطح المكتب */
+            /* سطح المكتب */
             --glass-bg: rgba(255, 255, 255, 0.12);
             --glass-border: rgba(255, 255, 255, 0.22);
-            --text-light: #f8fafc;
 
-            /* متغيرات تخفّض الشفافية على الجوال */
-            --glass-bg-mobile: rgba(15, 18, 39, 0.85);  /* داكنة مريحة للعين */
+            /* الجوال: أقل شفافية وأكثر راحة */
+            --glass-bg-mobile: rgba(15, 18, 39, 0.88);
             --glass-border-mobile: rgba(255, 255, 255, 0.08);
             --field-bg-mobile: rgba(255, 255, 255, 0.12);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         body {
             font-family: 'Tajawal', sans-serif;
             background: var(--primary-gradient);
@@ -112,24 +72,20 @@
             padding: 20px;
             position: relative;
             overflow-x: hidden;
-            color-scheme: dark; /* يحسّن التباين لعناصر النظام */
+            color-scheme: dark;
         }
 
-        /* خلفية زخرفية متحركة (لطيفة) */
+        /* خلفية زخرفية لطيفة */
         body::before {
             content: '';
-            position: absolute; inset: 0;
+            position: absolute; inset: 0; z-index: -1;
             background:
                 radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.28) 0%, transparent 50%),
                 radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.26) 0%, transparent 50%),
                 radial-gradient(circle at 60% 20%, rgba(251, 146, 60, 0.16) 0%, transparent 50%);
             animation: floatingBubbles 20s ease-in-out infinite;
-            z-index: -1;
         }
-        @keyframes floatingBubbles {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-20px) scale(1.05); }
-        }
+        @keyframes floatingBubbles { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-20px) scale(1.05)} }
 
         .auth-container {
             background: var(--glass-bg);
@@ -137,184 +93,162 @@
             -webkit-backdrop-filter: blur(18px);
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            padding: 40px;
+            padding: 44px 40px 32px;
             width: 100%;
-            max-width: 450px;
-            box-shadow:
-                0 25px 50px rgba(0, 0, 0, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            max-width: 520px; /* أكبر وأريح */
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
             position: relative;
-            animation: slideIn 0.6s ease-out;
+            animation: slideIn .6s ease-out;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(30px) scale(0.95); }
-            to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        @keyframes slideIn { from{opacity:0;transform:translateY(30px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-        .auth-header { text-align: center; margin-bottom: 35px; }
+        .auth-header { text-align: center; margin-bottom: 28px; }
 
+        /* شعار أكبر وبروز أعلى */
+        .logo-link { display:inline-block; text-decoration:none; }
         .logo-container {
-            width: 120px; height: 120px; margin: 0 auto 25px;
-            background: rgba(255, 255, 255, 0.16);
-            border-radius: 24px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 20px;
-            box-shadow:
-                0 20px 40px rgba(0, 0, 0, 0.22),
-                0 0 80px rgba(124, 58, 237, 0.28),
-                inset 0 2px 14px rgba(255, 255, 255, 0.28);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 2px solid rgba(255, 255, 255, 0.28);
+            width: 160px; height: 160px; /* تكبير واضح */
+            margin: 0 auto 16px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 28px;
+            display:flex; align-items:center; justify-content:center;
+            padding: 18px;
+            box-shadow: 0 22px 44px rgba(0,0,0,.24), 0 0 90px rgba(124,58,237,.3), inset 0 2px 16px rgba(255,255,255,.28);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,.28);
             animation: logoFloat 4s ease-in-out infinite;
         }
         .logo-img {
-            width: 100%; height: 100%; object-fit: contain; border-radius: 12px;
-            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.3));
-            transition: transform 0.3s ease, filter 0.3s ease;
+            width: 100%; height: 100%; object-fit: contain; border-radius: 14px;
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,.35));
+            transition: transform .25s ease, filter .25s ease;
         }
-        @keyframes logoFloat {
-            0%, 100% { transform: translateY(0px) scale(1); }
-            50% { transform: translateY(-8px) scale(1.02); }
-        }
+        .logo-link:hover .logo-img { transform: scale(1.02); filter: drop-shadow(0 8px 16px rgba(0,0,0,.4)); }
+        @keyframes logoFloat { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-8px) scale(1.02)} }
 
-        .auth-title { font-size: 1.8rem; font-weight: 700; color: #fff; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.08); }
-        .auth-subtitle { color: rgba(255, 255, 255, 0.86); font-size: 1rem; font-weight: 400; }
+        .auth-title { font-size: 2rem; font-weight: 800; color:#fff; margin-bottom: 4px; text-shadow: 2px 2px 4px rgba(0,0,0,.08); }
+        .auth-subtitle { color: rgba(255,255,255,.9); font-size: 1rem; margin-bottom: 8px; }
 
-        .form-group { position: relative; margin-bottom: 22px; }
-        .form-label { color: #fff; font-weight: 500; margin-bottom: 8px; display: block; font-size: 0.95rem; }
+        .form-group { position: relative; margin-bottom: 20px; }
+        .form-label { color:#fff; font-weight:600; margin-bottom:8px; display:block; font-size:.98rem; }
 
         .form-control {
-            background: rgba(255, 255, 255, 0.12);
-            border: 2px solid rgba(255, 255, 255, 0.22);
-            border-radius: 12px;
-            padding: 15px 20px;
-            color: #fff;
-            font-size: 1rem;
-            width: 100%;
-            transition: all 0.25s ease;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: rgba(255,255,255,.12);
+            border: 2px solid rgba(255,255,255,.22);
+            border-radius: 14px;
+            padding: 14px 20px;
+            color:#fff; font-size:1rem; width:100%;
+            transition: all .2s ease;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
         .form-control:focus {
-            outline: none;
-            border-color: rgba(124, 58, 237, 0.9);
-            background: rgba(255, 255, 255, 0.16);
-            box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14);
+            outline:none; border-color: rgba(124,58,237,.95);
+            background: rgba(255,255,255,.16);
+            box-shadow: 0 0 0 4px rgba(124,58,237,.14);
             transform: translateY(-1px);
         }
-        .form-control::placeholder { color: rgba(255, 255, 255, 0.68); }
+        .form-control::placeholder { color: rgba(255,255,255,.7); }
 
-        .input-icon {
-            position: absolute; left: 15px; top: 50%;
-            transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 1.1rem;
-        }
-        .form-control.with-icon { padding-left: 45px; }
+        .input-icon { position:absolute; left:16px; top:50%; transform:translateY(-50%); color:rgba(255,255,255,.75); font-size:1.1rem; }
+        .form-control.with-icon { padding-left: 46px; }
 
         .password-toggle {
-            position: absolute; left: 45px; top: 50%;
-            transform: translateY(-50%); cursor: pointer; color: rgba(255,255,255,0.7);
-            z-index: 10; font-size: 1rem;
+            position:absolute; left:46px; top:50%; transform:translateY(-50%);
+            cursor:pointer; color:rgba(255,255,255,.75); z-index:10;
         }
-        .password-toggle:hover { color: rgba(255, 255, 255, 0.92); }
+        .password-toggle:hover { color:#fff; }
 
         .remember-me {
-            display: flex; align-items: center; margin-bottom: 24px; margin-top: -6px;
+            display:flex; align-items:center; gap:10px; margin: 6px 0 18px;
         }
-        .remember-me input[type="checkbox"] {
-            appearance: none; width: 20px; height: 20px;
-            background: rgba(255,255,255,0.12); border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 4px; margin-left: 10px; cursor: pointer; transition: all .2s ease; position: relative;
+        .remember-me input[type="checkbox"]{
+            appearance:none; width:20px; height:20px;
+            background: rgba(255,255,255,.12);
+            border:2px solid rgba(255,255,255,.3);
+            border-radius: 6px; cursor:pointer; position:relative; transition: all .2s ease;
         }
-        .remember-me input[type="checkbox"]:checked {
-            background: var(--secondary-gradient); border-color: rgba(124,58,237,0.85);
+        .remember-me input[type="checkbox"]:checked{
+            background: var(--secondary-gradient);
+            border-color: rgba(124,58,237,.85);
         }
-        .remember-me input[type="checkbox"]:checked::after {
-            content: '✓'; position: absolute; top: -2px; left: 3px; color: #fff; font-size: 14px; font-weight: 700;
+        .remember-me input[type="checkbox"]:checked::after{
+            content:'✓'; position:absolute; top:-2px; left:3px; color:#fff; font-weight:700; font-size:14px;
         }
-        .remember-me label { color: rgba(255,255,255,0.86); font-size: 0.92rem; cursor: pointer; user-select: none; }
+        .remember-me label{ color:rgba(255,255,255,.9); cursor:pointer; user-select:none; }
 
         .btn-login {
             background: var(--secondary-gradient);
-            border: none; border-radius: 12px; padding: 15px 30px;
-            color: #fff; font-size: 1.1rem; font-weight: 700; width: 100%;
-            cursor: pointer; transition: transform .2s ease, box-shadow .2s ease;
-            box-shadow: 0 10px 24px rgba(139, 92, 246, 0.35);
-            position: relative; overflow: hidden; margin-top: 10px;
+            border:none; border-radius:14px; padding: 15px 30px;
+            color:#fff; font-size:1.1rem; font-weight:800; width:100%;
+            transition: transform .15s ease, box-shadow .15s ease;
+            box-shadow: 0 12px 26px rgba(139,92,246,.38);
+            position:relative; overflow:hidden;
         }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(139, 92, 246, 0.45); }
-        .btn-login:active { transform: translateY(0); }
-        .btn-login:disabled { opacity: .75; transform: none; cursor: not-allowed; }
+        .btn-login:hover { transform: translateY(-2px); box-shadow:0 16px 34px rgba(139,92,246,.48); }
+        .btn-login:disabled { opacity:.78; cursor:not-allowed; }
 
-        .auth-links {
-            text-align: center; margin-top: 24px; padding-top: 18px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .auth-link { color: rgba(255,255,255,0.88); text-decoration: none; font-weight: 600; transition: color .2s ease, text-decoration .2s ease; }
-        .auth-link:hover { color: #fff; text-decoration: underline; }
+        .loading { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); }
+        .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,.3); border-top:2px solid #fff; border-radius:50%; animation:spin 1s linear infinite; }
+        @keyframes spin { to{transform:rotate(360deg)} }
 
-        .alert {
-            border-radius: 12px; border: none; padding: 15px 20px; margin-bottom: 22px;
-            backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        }
-        .alert-success { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .alert-danger, .alert-error { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .auth-links { text-align:center; margin-top: 18px; padding-top:14px; border-top:1px solid rgba(255,255,255,.12); }
+        .auth-link { color:rgba(255,255,255,.9); font-weight:700; text-decoration:none; }
+        .auth-link:hover { color:#fff; text-decoration:underline; }
 
-        .loading { display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
-        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top: 2px solid #fff; border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* تحسينات الجوال: تقليل الشفافية وزيادة وضوح الحقول */
-        @media (max-width: 768px) {
-            .auth-container {
-                padding: 30px 24px; margin: 10px;
+        /* الجوال: تخفيف الزخارف والشفافية وتكبير الشعار */
+        @media (max-width: 768px){
+            .auth-container{
+                padding: 32px 22px 24px;
+                max-width: 94vw;
                 background: var(--glass-bg-mobile);
-                backdrop-filter: none; /* وقف البلور على الجوال لراحة العين والأداء */
-                -webkit-backdrop-filter: none;
+                backdrop-filter: none; -webkit-backdrop-filter: none;
                 border: 1px solid var(--glass-border-mobile);
-                box-shadow: 0 20px 44px rgba(0,0,0,.28);
+                box-shadow: 0 22px 46px rgba(0,0,0,.30);
             }
-            body::before {
-                /* تخفيف الزخارف على الجوال حتى ما تعطي إحساس بالشفافية */
+            body::before{
                 background:
-                    radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.18) 0%, transparent 50%),
-                    radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.16) 0%, transparent 50%),
-                    radial-gradient(circle at 60% 20%, rgba(251, 146, 60, 0.10) 0%, transparent 50%);
-                animation: none; /* هدوء بصري */
+                    radial-gradient(circle at 20% 30%, rgba(79,70,229,.18) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(124,58,237,.16) 0%, transparent 50%),
+                    radial-gradient(circle at 60% 20%, rgba(251,146,60,.10) 0%, transparent 50%);
+                animation: none;
             }
-            .logo-container { width: 100px; height: 100px; margin-bottom: 18px; padding: 14px; animation: none; }
-            .auth-title { font-size: 1.6rem; }
-            .auth-subtitle { font-size: 0.95rem; }
-
-            .form-control {
-                background: var(--field-bg-mobile);
-                border-color: rgba(255,255,255,0.22);
-                padding: 12px 16px;
-            }
-            .form-control.with-icon { padding-left: 42px; }
+            .logo-container{ width: 140px; height: 140px; padding: 16px; animation: none; } /* شعار أكبر على الجوال */
+            .auth-title{ font-size: 1.8rem; }
+            .form-control{ background: var(--field-bg-mobile); padding: 13px 16px; }
+            .form-control.with-icon{ padding-left: 44px; }
         }
 
-        @media (max-width: 480px) {
-            .logo-container { width: 90px; height: 90px; padding: 12px; }
-            .auth-title { font-size: 1.45rem; }
+        @media (max-width: 480px){
+            .logo-container{ width: 130px; height: 130px; }
+            .auth-title{ font-size: 1.6rem; }
+        }
+
+        /* احترام تفضيل تقليل الحركة */
+        @media (prefers-reduced-motion: reduce){
+            *{ animation:none !important; transition:none !important; }
         }
     </style>
 </head>
 <body>
     <div class="auth-container" role="main" aria-labelledby="loginTitle">
         <div class="auth-header">
-            <div class="logo-container" aria-hidden="true">
-                <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-                     alt="وش الجواب"
-                     class="logo-img"
-                     width="120" height="120"
-                     loading="eager" decoding="async">
-            </div>
-            <h1 class="auth-title" id="loginTitle">أهلاً بك مرة أخرى</h1>
-            <p class="auth-subtitle">أدخل بياناتك للوصول إلى حسابك</p>
+            <!-- الشعار كبير ومضيء ويمكن الضغط عليه للرجوع للرئيسية -->
+            <a href="{% url 'home' %}" class="logo-link" aria-label="العودة للرئيسية">
+                <div class="logo-container" aria-hidden="true">
+                    <img
+                        src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+                        alt="وش الجواب"
+                        class="logo-img"
+                        width="160" height="160"
+                        loading="eager" decoding="async">
+                </div>
+            </a>
+            <h1 class="auth-title" id="loginTitle">أهلاً بك من جديد</h1>
+            <p class="auth-subtitle">سجّل دخولك للبدء في اللعب والتحدي</p>
         </div>
 
-        <!-- رسائل التنبيه -->
+        <!-- رسائل التنبيه من Django -->
         {% if messages %}
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
@@ -334,8 +268,7 @@
             <!-- البريد الإلكتروني -->
             <div class="form-group">
                 <label class="form-label" for="email">
-                    <i class="fas fa-envelope me-1" aria-hidden="true"></i>
-                    البريد الإلكتروني
+                    <i class="fas fa-envelope me-1" aria-hidden="true"></i> البريد الإلكتروني
                 </label>
                 <div class="position-relative">
                     <input
@@ -343,14 +276,13 @@
                         class="form-control with-icon"
                         id="email"
                         name="email"
-                        placeholder="أدخل بريدك الإلكتروني"
+                        placeholder="example@email.com"
                         required
                         inputmode="email"
                         autocomplete="email username"
                         autofocus
                         aria-required="true"
-                        aria-describedby="emailHelp"
-                    >
+                        aria-describedby="emailHelp">
                     <i class="fas fa-envelope input-icon" aria-hidden="true"></i>
                 </div>
                 <small id="emailHelp" class="visually-hidden">أدخل بريدك الإلكتروني بصيغة صحيحة</small>
@@ -359,8 +291,7 @@
             <!-- كلمة المرور -->
             <div class="form-group">
                 <label class="form-label" for="password">
-                    <i class="fas fa-lock me-1" aria-hidden="true"></i>
-                    كلمة المرور
+                    <i class="fas fa-lock me-1" aria-hidden="true"></i> كلمة المرور
                 </label>
                 <div class="position-relative">
                     <input
@@ -368,11 +299,10 @@
                         class="form-control with-icon"
                         id="password"
                         name="password"
-                        placeholder="أدخل كلمة المرور"
+                        placeholder="••••••••"
                         required
                         autocomplete="current-password"
-                        aria-required="true"
-                    >
+                        aria-required="true">
                     <i class="fas fa-lock input-icon" aria-hidden="true"></i>
                     <button type="button" class="password-toggle btn btn-link p-0 text-decoration-none" id="togglePassword" aria-label="إظهار/إخفاء كلمة المرور" title="إظهار/إخفاء كلمة المرور">
                         <i class="fas fa-eye" aria-hidden="true"></i>
@@ -395,22 +325,17 @@
 
         <div class="auth-links">
             <p class="mb-3">
-                <a href="#" class="auth-link">
-                    <i class="fas fa-key me-1" aria-hidden="true"></i>
-                    نسيت كلمة المرور؟
-                </a>
+                <a href="#" class="auth-link"><i class="fas fa-key me-1" aria-hidden="true"></i> نسيت كلمة المرور؟</a>
             </p>
             <p class="mb-0">
                 ليس لديك حساب؟
-                <a href="{% url 'accounts:register' %}" class="auth-link">
-                    <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
-                    إنشاء حساب جديد
-                </a>
+                <a href="{% url 'accounts:register' %}" class="auth-link"><i class="fas fa-user-plus me-1" aria-hidden="true"></i> إنشاء حساب جديد</a>
             </p>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('loginForm');
@@ -437,7 +362,7 @@
                 this.value = this.value.trim().toLowerCase();
             });
 
-            // معالجة إرسال النموذج + تحقّق سريع من البيانات
+            // معالجة الإرسال + تحقق بسيط
             form.addEventListener('submit', function(e) {
                 const email = emailField.value.trim().toLowerCase();
                 const password = passwordField.value;
@@ -447,7 +372,6 @@
                     showAlert('يرجى ملء جميع الحقول المطلوبة', 'danger');
                     return;
                 }
-
                 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!emailRegex.test(email)) {
                     e.preventDefault();
@@ -456,31 +380,24 @@
                     return;
                 }
 
-                emailField.value = email; // حفظ النسخة المنظفة
+                emailField.value = email;
 
                 // حالة التحميل
                 btnText.style.display = 'none';
                 loading.style.display = 'block';
                 loginBtn.disabled = true;
-
-                // إن أردت إضافة حماية بسيطة ضد النقر المكرر
-                setTimeout(() => { loginBtn.disabled = true; }, 0);
             });
 
-            // عرض تنبيه عائم
+            // تنبيه عائم
             function showAlert(message, type) {
-                const alertDiv = document.createElement('div');
-                alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-                const iconClass = type === 'success' ? 'check-circle' : 'exclamation-triangle';
-                alertDiv.innerHTML = `<i class="fas fa-${iconClass} me-2" aria-hidden="true"></i>${message}`;
-
+                const el = document.createElement('div');
+                el.className = `alert alert-${type} alert-dismissible fade show`;
+                const icon = type === 'success' ? 'check-circle' : 'exclamation-triangle';
+                el.innerHTML = `<i class="fas fa-${icon} me-2" aria-hidden="true"></i>${message}`;
                 const header = document.querySelector('.auth-header');
-                header.parentNode.insertBefore(alertDiv, form);
+                header.parentNode.insertBefore(el, form);
 
-                // إزالة التنبيه تلقائياً
-                setTimeout(() => { alertDiv?.remove(); }, 5000);
-
-                // إعادة الزر لو تم إيقافه
+                setTimeout(() => { el?.remove(); }, 5000);
                 setTimeout(() => {
                     btnText.style.display = 'inline';
                     loading.style.display = 'none';
@@ -488,19 +405,18 @@
                 }, 800);
             }
 
-            // تفضيل تقليل الحركة
+            // احترام تفضيل تقليل الحركة
             if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-                document.body.style.setProperty('animation', 'none');
-                document.body.style.setProperty('transition', 'none');
-                const logoContainer = document.querySelector('.logo-container');
-                if (logoContainer) logoContainer.style.animation = 'none';
+                document.body.style.animation = 'none';
+                document.body.style.transition = 'none';
+                const logo = document.querySelector('.logo-container');
+                if (logo) logo.style.animation = 'none';
             }
 
-            // رسائل التنبيه من Django (إن وجدت)
-            const alerts = document.querySelectorAll('.alert');
-            alerts.forEach(alert => setTimeout(() => alert?.remove(), 5000));
+            // رسائل Django الجاهزة (إن وجدت)
+            document.querySelectorAll('.alert').forEach(a => setTimeout(() => a?.remove(), 5000));
 
-            // تذكرني: حفظ البريد محلياً
+            // تذكرني: حفظ البريد محليًا
             try {
                 if (localStorage.getItem('rememberedEmail')) {
                     emailField.value = localStorage.getItem('rememberedEmail');
@@ -513,9 +429,7 @@
                         localStorage.removeItem('rememberedEmail');
                     }
                 });
-            } catch (_) {
-                // تجاهل أخطاء التخزين المحلي
-            }
+            } catch (_) { /* ignore */ }
         });
     </script>
 </body>
