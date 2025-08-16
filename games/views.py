@@ -317,7 +317,7 @@ def create_letters_session(request):
     إنشاء جلسة خلية الحروف:
     - المجانية: تتطلب تسجيل دخول + أهلية جلسة مجانية واحدة (FreeTrialUsage).
     - المدفوعة: تتطلب تسجيل دخول + وجود شراء نشط واحد غير مكتمل.
-      * إن كان عنده جلسة نشطة لنفس الحزمة بعد وقت الشراء → نعيد توجيهه إليها (لا ننشئ ثانية).
+      * إن كان عنده جلسة نشطة لنفس الحزمة/الشراء → نعيد توجيهه إليها.
       * وإلا ننشئ جلسة واحدة ونثبت ترتيب الحروف.
     - حماية ضد النقر المزدوج عبر قفل كاش (3 ثواني).
     """
@@ -336,8 +336,8 @@ def create_letters_session(request):
     cache.set(lock_key, 1, timeout=3)
 
     try:
+        # ========= الحزمة المجانية =========
         if package.is_free:
-            # يجب تسجيل الدخول للمجاني
             if not request.user.is_authenticated:
                 messages.error(request, 'يرجى تسجيل الدخول للاستفادة من الجلسة المجانية')
                 return redirect(f'/accounts/login/?next={request.path}')
@@ -350,10 +350,11 @@ def create_letters_session(request):
                 messages.error(request, 'لقد استخدمت الجلسة المجانية الخاصة بك.')
                 return redirect('games:letters_home')
 
-            # التحقق إن كان للمستخدم جلسة مجانية نشطة حالياً لنفس الحزمة (من باب الأمان)
-            existing = GameSession.objects.filter(
-                host=request.user, package=package, is_active=True
-            ).order_by('-created_at').first()
+            # توجيه إلى جلسة مجانية نشطة لنفس الحزمة إن وُجدت
+            existing = (GameSession.objects
+                        .filter(host=request.user, package=package, is_active=True)
+                        .order_by('-created_at')
+                        .first())
             if existing and not is_session_expired(existing):
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
                 return redirect('games:letters_session', session_id=existing.id)
@@ -368,6 +369,7 @@ def create_letters_session(request):
                 game_type='letters',
                 team1_name=team1_name,
                 team2_name=team2_name,
+                purchase=None,  # تأكيد أن المجاني بدون شراء
             )
 
             # ترتيب الحروف + التقدم
@@ -384,63 +386,75 @@ def create_letters_session(request):
             return redirect(f'/accounts/login/?next={request.path}')
 
         with transaction.atomic():
-            # الحصول على شراء نشط واحد غير مكتمل
             now = timezone.now()
-            purchase = (
-                UserPurchase.objects
-                .select_for_update()
-                .filter(user=request.user, package=package, is_completed=False, expires_at__gt=now)
-                .order_by('-purchase_date')
-                .first()
-            )
+            # شراء نشط واحد غير مكتمل
+            purchase = (UserPurchase.objects
+                        .select_for_update()
+                        .filter(user=request.user, package=package, is_completed=False, expires_at__gt=now)
+                        .order_by('-purchase_date')
+                        .first())
 
-            # إن لم يوجد، ربما انتهت الصلاحية لحقل expires_at غير محدّث
             if not purchase:
-                # ابحث آخر شراء غير مكتمل وحدث حالته إن لزم
-                stale = (
-                    UserPurchase.objects
-                    .select_for_update()
-                    .filter(user=request.user, package=package, is_completed=False)
-                    .order_by('-purchase_date')
-                    .first()
-                )
+                # حدّث أي شراء قديم غير مكتمل إن لزم
+                stale = (UserPurchase.objects
+                         .select_for_update()
+                         .filter(user=request.user, package=package, is_completed=False)
+                         .order_by('-purchase_date')
+                         .first())
                 if stale:
                     stale.mark_expired_if_needed(auto_save=True)
 
                 messages.error(request, 'يجب شراء هذه الحزمة أولًا أو أن شراءك السابق انتهت صلاحيته.')
                 return redirect('games:letters_home')
 
-            # إنتهى؟ اكتمل تلقائيًا
+            # حدّث حالة انتهاء الصلاحية لو لزم
             if purchase.mark_expired_if_needed(auto_save=True):
                 messages.error(request, 'انتهت صلاحية الشراء السابق. لإعادة اللعب تحتاج شراء جديد.')
                 return redirect('games:letters_home')
 
-            # إن كان للمستخدم جلسة نشطة لنفس الحزمة بعد وقت الشراء → نعيد توجيهه لها
-            existing_session = (
-                GameSession.objects
-                .filter(host=request.user, package=package, is_active=True, created_at__gte=purchase.purchase_date)
-                .order_by('-created_at')
-                .first()
-            )
+            # جلسة موجودة مرتبطة بنفس الشراء؟
+            existing_by_purchase = GameSession.objects.filter(purchase=purchase, is_active=True).first()
+            if existing_by_purchase and not is_session_expired(existing_by_purchase):
+                messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
+                return redirect('games:letters_session', session_id=existing_by_purchase.id)
+
+            # بديل احتياطي: جلسة بعد وقت الشراء لنفس الحزمة والمضيف
+            existing_session = (GameSession.objects
+                                .filter(host=request.user, package=package, is_active=True, created_at__gte=purchase.purchase_date)
+                                .order_by('-created_at')
+                                .first())
             if existing_session and not is_session_expired(existing_session):
+                # لو موجودة وما كانت مربوطة، اربطها بهذا الشراء (لو كان الحقل فارغ)
+                if existing_session.purchase_id is None:
+                    existing_session.purchase = purchase
+                    existing_session.full_clean()
+                    existing_session.save(update_fields=['purchase'])
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
                 return redirect('games:letters_session', session_id=existing_session.id)
 
-            # إنشاء جلسة واحدة فقط لهذا الشراء
+            # إنشاء جلسة واحدة لهذا الشراء (OneToOne)
             team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
             team2_name = request.POST.get('team2_name', 'الفريق البرتقالي')
 
-            session = GameSession.objects.create(
-                host=request.user,
-                package=package,
-                game_type='letters',
-                team1_name=team1_name,
-                team2_name=team2_name,
-            )
+            try:
+                session = GameSession.objects.create(
+                    host=request.user,
+                    package=package,
+                    game_type='letters',
+                    team1_name=team1_name,
+                    team2_name=team2_name,
+                    purchase=purchase,  # ← الربط المهم
+                )
+            except IntegrityError:
+                # في حالة سباق وسبق وانربط الشراء بجلسة
+                session = GameSession.objects.get(purchase=purchase)
 
             letters = get_paid_order_fresh()
             set_session_order(session.id, letters, is_free=False)
-            LettersGameProgress.objects.create(session=session, cell_states={}, used_letters=[])
+            # أنشئ التقدم إن ما كان موجود
+            LettersGameProgress.objects.get_or_create(
+                session=session, defaults={'cell_states': {}, 'used_letters': []}
+            )
 
         messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع باللعب 🎉')
         logger.info(f'New paid letters session created: {session.id} by {request.user.username}')

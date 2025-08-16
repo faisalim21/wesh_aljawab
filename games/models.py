@@ -337,6 +337,8 @@ class GameSession(models.Model):
         verbose_name="نوع اللعبة"
     )
 
+
+
     # جلسة واحدة فقط لكل شراء
     purchase = models.OneToOneField(
         UserPurchase,
