@@ -6,21 +6,6 @@
   <title>خلية الحروف - المقدم</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-  
-  <script>
-    window.sessionData = {
-      sessionId: '{{ session.id }}',
-      csrfToken: '{{ csrf_token }}',
-      team1Name: '{{ session.team1_name }}',
-      team2Name: '{{ session.team2_name }}',
-      displayUrl: '{% url "games:letters_display" session.display_link %}',
-      contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
-      packageName: '{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}',
-      arabicLetters: {{ arabic_letters_json|safe }},
-      isFree: {{ session.package.is_free|yesno:"true,false" }},
-      packageNumber: '{{ session.package.package_number }}'
-    };
-  </script>
 
   <style>
     body {

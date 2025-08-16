@@ -33,12 +33,40 @@ def _expired_text(session):
     return 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)' if session.package.is_free else 'انتهت صلاحية الجلسة (72 ساعة)'
 
 def is_session_expired(session):
-    """انتهاء صلاحية الجلسة أو تعطيلها: المجاني 1 ساعة، المدفوع 72 ساعة."""
+    """انتهاء صلاحية الجلسة أو تعطيلها:
+    - المجاني: 1 ساعة من وقت إنشاء الجلسة
+    - المدفوع: حتى 72 ساعة كحد أقصى من وقت إنشاء الجلسة، وبشرط بقاء الشراء نشطًا
+    """
     if not session or not getattr(session, "created_at", None):
         return True
-    hours = 1 if (getattr(session, "package", None) and session.package.is_free) else 72
-    expiry_time = session.created_at + timedelta(hours=hours)
-    return (timezone.now() >= expiry_time) or (not session.is_active)
+
+    now = timezone.now()
+
+    # مجانياً: ساعة من إنشاء الجلسة
+    if getattr(session, "package", None) and session.package.is_free:
+        expiry_time = session.created_at + timedelta(hours=1)
+        return (now >= expiry_time) or (not session.is_active)
+
+    # مدفوع: لا تتجاوز 72 ساعة من إنشاء الجلسة،
+    # واعتبرها منتهية فور انتهاء صلاحية الشراء النشط للمضيف/الحزمة
+    hard_cap = session.created_at + timedelta(hours=72)
+    if (now >= hard_cap) or (not session.is_active):
+        return True
+
+    # مهم: لو ما فيه host نكتفي بالـ hard cap
+    if not session.host_id:
+        return False
+
+    # لابد من شراء نشط أثناء الجلسة
+    has_active_purchase = UserPurchase.objects.filter(
+        user_id=session.host_id,
+        package=session.package,
+        is_completed=False,
+        expires_at__gt=now
+    ).exists()
+
+    return not has_active_purchase
+
 
 # للتوافق مع أي استخدام سابق
 _session_expired = is_session_expired
