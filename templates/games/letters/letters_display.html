@@ -171,10 +171,12 @@
   let countdownInterval = null;
   let heartbeatTimer = null;
 
-  // ===================== بناء خلايا العسل مرة واحدة =====================
+  // ===================== بناء خلايا العسل =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
-    const letters = (window.sessionData && window.sessionData.arabicLetters) || [];
+    const letters = (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
+      ? window.sessionData.arabicLetters
+      : [];
 
     const P = [
       {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
@@ -222,6 +224,21 @@
       g.appendChild(poly);
       g.appendChild(t);
       svg.appendChild(g);
+    }
+  }
+
+  function rebuildHoneycomb(letters, resetProgress = false) {
+    const svg = document.getElementById('honeycombSvg');
+    [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
+
+    window.sessionData = window.sessionData || {};
+    window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
+
+    createHoneycombCells();
+
+    // لو resetProgress = true نخلي الألوان ترجع افتراضيًا
+    if (resetProgress) {
+      // ما نسوي شيء إضافي هنا — بنعتمد على API الحالة لإعادة الرسم
     }
   }
 
@@ -273,20 +290,42 @@
   }
 
   function updateCell(letter, state) {
-      const el = document.querySelector(`[data-letter="${letter}"]`);
-      if (!el) return;
-
-      // إزالة أي حالة سابقة
-      el.classList.remove('team1', 'team2');
-
-      // إذا وصلت حالة غير normal نضيفها
-      if (state && state !== 'normal') {
-          el.classList.add(state);
-      }
+    const el = document.querySelector(`[data-letter="${letter}"]`);
+    if (!el) return;
+    el.classList.remove('team1', 'team2');
+    if (state && state !== 'normal') el.classList.add(state);
   }
 
+  // ===================== مزامنة أوليّة من الخادم =====================
+  async function loadSessionState() {
+    try {
+      const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
+      if (r.status === 410) {
+        alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.');
+        return (window.location.href = '/games/letters/');
+      }
+      if (!r.ok) return;
+      const data = await r.json();
 
-  // ===================== WebSocket (بدون Polling) =====================
+      // لو ترتيب الحروف تغيّر من جهة السيرفر نعيد البناء (بدون تصفير تقدّم العرض)
+      if (Array.isArray(data.arabic_letters)) {
+        const cur = (window.sessionData && window.sessionData.arabicLetters) || [];
+        const changed = (cur.length !== data.arabic_letters.length) ||
+                        (cur.join('|') !== data.arabic_letters.join('|'));
+        if (changed) rebuildHoneycomb(data.arabic_letters, false);
+      }
+
+      updateScores(data.team1_score || 0, data.team2_score || 0);
+
+      if (data.cell_states && typeof data.cell_states === 'object') {
+        for (const [ltr, st] of Object.entries(data.cell_states)) {
+          updateCell(ltr, st);
+        }
+      }
+    } catch {}
+  }
+
+  // ===================== WebSocket =====================
   function setupWebSocket() {
     try {
       const proto = (location.protocol === 'https:') ? 'wss' : 'ws';
@@ -321,6 +360,11 @@
           case 'scores_updated':
             updateScores(d.team1_score, d.team2_score);
             break;
+          case 'letters_updated':
+            // جولة جديدة: أعِد بناء الخلايا ثم اطلب الحالة لتلوينها وتحديث النقاط
+            rebuildHoneycomb(d.letters || [], !!d.reset_progress);
+            setTimeout(loadSessionState, 50);
+            break;
           case 'pong':
             break;
           default:
@@ -348,9 +392,10 @@
 
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎬 شاشة العرض – تشغيل WebSocket فقط');
-    createHoneycombCells();
-    setupWebSocket();
+    console.log('🎬 شاشة العرض – WebSocket + مزامنة أولية للحالة');
+    createHoneycombCells();   // رسم أولي
+    loadSessionState();       // مزامنة أوليّة (نقاط + تلوين الخلايا)
+    setupWebSocket();         // بثّ حي
 
     window.addEventListener('beforeunload', () => {
       try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
@@ -359,6 +404,7 @@
     });
   });
 </script>
+
 
 
 

@@ -1,416 +1,460 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#7c3aed" />
   <title>المتسابق - خلية الحروف</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-  
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+
   <style>
-    body {
-      background: linear-gradient(135deg, #c084fc 0%, #7c3aed 50%, #5b21b6 100%);
-      font-family: 'Tajawal', sans-serif;
-      min-height: 100vh;
-      padding: 0;
-      margin: 0;
-      color: white;
-      overflow-x: hidden;
+    :root{
+      --bg1:#c084fc;--bg2:#7c3aed;--bg3:#5b21b6;
+      --white: #fff;
+      --glass: rgba(255,255,255,.1);
+      --glass-b: rgba(255,255,255,.2);
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --gray: #94a3b8;
+      --btn1:#ef4444; --btn2:#dc2626; --btn3:#b91c1c;
     }
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-      position: relative;
-    }
-    .logo-container {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 8px 12px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-      backdrop-filter: blur(10px);
-    }
-    .logo-container img {
-      max-height: 50px;
-      width: auto;
-      display: block;
-    }
-    .main-title {
-      text-align: center;
-      margin-bottom: 30px;
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-    }
-    .main-title h1 {
-      font-size: 2.5rem;
-      font-weight: 900;
-      background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin: 0;
-    }
-    .main-title .subtitle {
-      font-size: 1.1rem;
-      color: #e2e8f0;
-      margin-top: 8px;
-    }
-    .contestant-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      border-radius: 25px;
-      padding: 40px 30px;
-      max-width: 500px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
-    }
-    .name-input {
-      background: rgba(255, 255, 255, 0.9);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
-      padding: 15px 20px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      text-align: center;
-      color: #2d3748;
-      width: 100%;
-      margin-bottom: 25px;
-      transition: all 0.3s ease;
-    }
-    .name-input:focus {
-      outline: none;
-      border-color: #8b5cf6;
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-      transform: scale(1.02);
-    }
-    .team-selection {
-      margin-bottom: 30px;
-    }
-    .team-selection label {
-      display: block;
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 15px;
-      color: #e2e8f0;
-    }
-    .team-options {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-    }
-    .team-option {
-      flex: 1;
-      position: relative;
-    }
-    .team-radio {
-      position: absolute;
-      opacity: 0;
-    }
-    .team-label {
-      display: block;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 15px;
-      padding: 15px 10px;
-      text-align: center;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-height: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .team-radio:checked + .team-label.team1 {
-      background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1));
-      border-color: #22c55e;
-      color: #22c55e;
-      box-shadow: 0 8px 20px rgba(34, 197, 94, 0.3);
-    }
-    .team-radio:checked + .team-label.team2 {
-      background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.1));
-      border-color: #f97316;
-      color: #f97316;
-      box-shadow: 0 8px 20px rgba(249, 115, 22, 0.3);
+    *{ box-sizing: border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0; padding:0;
+      font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--white);
+      background: radial-gradient(1200px 600px at 70% -20%, rgba(255,255,255,.08), transparent 60%),
+                  linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+      overflow-x:hidden;
     }
 
-    /* زر الطنطيط محسّن */
-    .buzz-button {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 140px;
-      height: 140px;
-      font-size: 1.6rem;
-      font-weight: 900;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
-      position: relative;
-      overflow: hidden;
+    .main{
+      min-height:100dvh;
+      display:flex; align-items:center; justify-content:center;
+      padding: clamp(12px, 3vw, 28px);
+      position:relative;
     }
 
-    .buzz-button:hover:not(:disabled) {
-      transform: scale(1.05) translateY(-3px);
-      background: linear-gradient(135deg, #dc2626, #b91c1c);
-      box-shadow: 0 20px 40px rgba(239, 68, 68, 0.5);
-    }
-
-    .buzz-button:active:not(:disabled) {
-      transform: scale(0.95);
-      transition: all 0.1s ease;
-    }
-
-    .buzz-button:disabled {
-      background: linear-gradient(135deg, #6b7280, #4b5563);
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    /* تأثير الموجة عند الضغط */
-    .buzz-button.wave::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.5);
-      transform: translate(-50%, -50%);
-      animation: wave-animation 0.6s ease-out;
-    }
-
-    @keyframes wave-animation {
-      0% {
-        width: 0;
-        height: 0;
-        opacity: 1;
-      }
-      100% {
-        width: 300px;
-        height: 300px;
-        opacity: 0;
-      }
-    }
-
-    .status-message {
-      margin-top: 20px;
-      padding: 15px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      text-align: center;
-      display: none;
-      transition: all 0.3s ease;
-    }
-    .status-message.success {
-      background: rgba(34, 197, 94, 0.2);
-      border: 1px solid #22c55e;
-      color: #22c55e;
-      animation: successPulse 0.5s ease-in-out;
-    }
-    .status-message.error {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      animation: shake 0.5s ease-in-out;
-    }
-
-    @keyframes successPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      75% { transform: translateX(5px); }
-    }
-
-    /* حالة الاتصال */
-    .connection-status {
+    /* شِعار */
+    .logo{
       position: fixed;
-      top: 10px;
-      left: 10px;
-      padding: 8px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      z-index: 1000;
+      top: env(safe-area-inset-top, 12px);
+      right: 12px;
+      background: rgba(255,255,255,.95);
+      padding: 8px 12px; border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      z-index: 10;
     }
-    .connection-status.connected {
-      background: rgba(34, 197, 94, 0.9);
-      color: white;
+    .logo img{ max-height: 46px; display:block; }
+
+    /* لمبة الاتصال */
+    .conn{
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 12px) + 8px);
+      left: 12px; z-index: 10;
+      padding: 8px 12px; border-radius: 999px; font-weight:800; font-size:.85rem;
     }
-    .connection-status.disconnected {
-      background: rgba(239, 68, 68, 0.9);
-      color: white;
-      animation: blink 1s infinite;
+    .conn.connected{ background: rgba(34,197,94,.92); }
+    .conn.disconnected{ background: rgba(239,68,68,.92); animation: blink 1s infinite; }
+    @keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:.6} }
+
+    /* البطاقة */
+    .card-ct{
+      width: min(560px, 96vw);
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: 24px;
+      padding: clamp(18px, 3.2vw, 34px);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      text-align: center;
+    }
+    .title h1{
+      font-size: clamp(1.6rem, 5.5vw, 2.3rem);
+      margin:0; font-weight:900;
+      letter-spacing:.3px;
+      background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+      text-shadow: 0 1px 0 rgba(0,0,0,.1);
+    }
+    .subtitle{ color:#e2e8f0; margin-top: 6px; font-size: .95rem; }
+
+    /* الحقول */
+    .name-input{
+      width:100%;
+      margin: 18px 0 16px;
+      background: rgba(255,255,255,.96);
+      color:#1f2937;
+      border: 2px solid rgba(255,255,255,.45);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-weight:800; font-size:1.05rem; text-align:center;
+      transition:.2s ease;
+    }
+    .name-input:focus{
+      outline:none; border-color:#8b5cf6; box-shadow:0 0 0 4px rgba(139,92,246,.22);
+      transform: scale(1.01);
+    }
+    .teams{ margin: 8px 0 18px; }
+    .teams label.h{ display:block; font-weight:800; margin-bottom:10px; color:#e2e8f0; }
+    .team-grid{
+      display:grid; grid-template-columns:1fr 1fr; gap:10px;
+    }
+    .topt{ position:relative; }
+    .topt input{ position:absolute; inset:0; opacity:0; }
+    .tbtn{
+      display:flex; align-items:center; justify-content:center;
+      min-height:56px; padding: 10px 8px;
+      border-radius: 14px; font-weight:800; font-size:1rem;
+      border:2px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.1);
+      transition:.2s ease;
+      user-select:none;
+    }
+    .topt input:checked + .tbtn.team1{
+      border-color:#22c55e; color:#22c55e;
+      background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(34,197,94,.08));
+      box-shadow: 0 10px 25px rgba(34,197,94,.25);
+    }
+    .topt input:checked + .tbtn.team2{
+      border-color:#f97316; color:#f97316;
+      background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
+      box-shadow: 0 10px 25px rgba(249,115,22,.25);
     }
 
-    @keyframes blink {
-      0%, 50% { opacity: 1; }
-      51%, 100% { opacity: 0.5; }
+    /* زر الطنطيط (شكل زر حقيقي) */
+    .buzz-wrap{ margin-top: 8px; }
+    .buzz-btn{
+      --size: clamp(120px, 36vw, 170px);
+      width: var(--size); height: var(--size);
+      margin-inline:auto;
+      border-radius: 999px;
+      position: relative;
+      border: 0;
+      cursor: pointer;
+      outline: none;
+      display: grid; place-items:center;
+      font-weight: 900; letter-spacing:.4px;
+      font-size: clamp(1.15rem, 4.2vw, 1.6rem);
+      color: #fff;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      background:
+        radial-gradient(140% 60% at 50% 8%, rgba(255,255,255,.35), transparent 40%),
+        linear-gradient(165deg, var(--btn1) 0%, var(--btn2) 45%, var(--btn3) 100%);
+      box-shadow:
+        0 18px 35px rgba(239,68,68,.45),
+        inset 0 -10px 18px rgba(0,0,0,.25),
+        inset 0 8px 12px rgba(255,255,255,.08);
+      isolation: isolate;
+    }
+    /* حافة لامعة علوية */
+    .buzz-btn::before{
+      content:"";
+      position:absolute; inset:0; border-radius:inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.45), transparent 35% 90%, rgba(0,0,0,.25));
+      mix-blend-mode: soft-light; pointer-events:none;
+    }
+    /* لمعة مقطوعة */
+    .buzz-btn::after{
+      content:""; position:absolute; top:6%; left:16%;
+      width:68%; height:18%; border-radius:999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.15));
+      filter: blur(1px); transform: rotate(-6deg);
+      pointer-events:none;
+    }
+    /* موجة عند الضغط */
+    .buzz-btn.wave > i{
+      content:""; position:absolute; inset:0; border-radius:inherit;
+      animation: wave .6s ease-out forwards;
+      background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 60%);
+      mix-blend-mode: screen; pointer-events:none;
+    }
+    @keyframes wave{
+      from{ transform: scale(.1); opacity:1 }
+      to{ transform: scale(2.2); opacity:0 }
+    }
+    .buzz-btn:hover{ transform: translateY(-2px) scale(1.03); }
+    .buzz-btn:active:not(:disabled){ transform: translateY(1px) scale(.97); filter: saturate(1.1); }
+    .buzz-btn:disabled{
+      background: linear-gradient(165deg, #6b7280, #4b5563);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 -10px 18px rgba(0,0,0,.2);
+      cursor:not-allowed;
     }
 
-    /* موبايل */
-    @media (max-width: 768px) {
-      .contestant-card {
-        padding: 30px 20px;
-        margin: 10px;
-      }
-      .buzz-button {
-        width: 120px;
-        height: 120px;
-        font-size: 1.4rem;
-      }
-      .main-title h1 {
-        font-size: 2rem;
-      }
+    /* نص داخل الزر */
+    .buzz-label{ position:relative; z-index:2; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+    .hint{ color:#e2e8f0; font-size:.95rem; margin-top:12px; opacity:.9; }
+
+    /* رسائل الحالة */
+    .status{
+      margin-top: 18px; display:none;
+      border-radius: 14px; padding: 14px 16px; font-weight:800; text-align:center;
+    }
+    .status.show{ display:block; }
+    .status.ok{ background: rgba(34,197,94,.2); border:1px solid var(--ok); color: var(--ok); animation: pulse .4s ease; }
+    .status.err{ background: rgba(239,68,68,.2); border:1px solid var(--err); color: var(--err); animation: shake .38s ease; }
+    .status.info{ background: rgba(59,130,246,.2); border:1px solid #3b82f6; color:#3b82f6; }
+
+    @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+    @keyframes shake{
+      0%,100%{ transform:translateX(0) }
+      25%{ transform:translateX(-6px) }
+      75%{ transform:translateX(6px) }
+    }
+
+    /* شاشة صغيرة تحسينات */
+    @media (max-width: 768px){
+      .card-ct{ padding: 20px 16px; border-radius: 20px; }
+      .logo{ right: 10px; top: 10px; }
     }
   </style>
 </head>
 <body>
-  <div class="connection-status connected" id="connectionStatus">
-    🟢 متصل
+
+  <!-- لمبة الاتصال -->
+  <div id="conn" class="conn disconnected">🔴 منقطع</div>
+
+  <!-- الشعار -->
+  <div class="logo">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" />
   </div>
 
-  <div class="logo-container">
-    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="img-fluid">
-  </div>
-
-  <div class="main-container">
-    <div class="main-title">
-      <h1>🎤 صفحة المتسابق</h1>
-      <div class="subtitle">{{ session.package.get_game_type_display }} - حزمة {{ session.package.package_number }}</div>
-    </div>
-
-    <div class="contestant-card">
-      <input type="text" class="name-input" id="contestantName" placeholder="🏷️ اكتب اسمك هنا" maxlength="20" autocomplete="off" />
-
-      <div class="team-selection">
-        <label>اختر فريقك:</label>
-        <div class="team-options">
-          <div class="team-option">
-            <input type="radio" class="team-radio" id="team1" name="team" value="team1">
-            <label for="team1" class="team-label team1">🟢 {{ session.team1_name }}</label>
-          </div>
-          <div class="team-option">
-            <input type="radio" class="team-radio" id="team2" name="team" value="team2">
-            <label for="team2" class="team-label team2">🟠 {{ session.team2_name }}</label>
-          </div>
+  <!-- المحتوى -->
+  <main class="main">
+    <section class="card-ct" aria-labelledby="title">
+      <div class="title" id="title">
+        <h1>🎤 صفحة المتسابق</h1>
+        <div class="subtitle">
+          {{ session.package.get_game_type_display }} — حزمة {{ session.package.package_number }}
         </div>
       </div>
 
-      <button class="buzz-button" id="buzzBtn" onclick="buzzAnswer()">
-        <span id="buzzText">جاوب!</span>
-      </button>
+      <input id="name" class="name-input" type="text" inputmode="text" maxlength="20"
+             placeholder="🏷️ اكتب اسمك هنا" autocomplete="off" aria-label="اسم المتسابق" />
 
-      <div class="status-message" id="statusMessage"></div>
-    </div>
-  </div>
+      <div class="teams">
+        <label class="h">اختر فريقك:</label>
+        <div class="team-grid">
+          <label class="topt">
+            <input id="t1" type="radio" name="team" value="team1" />
+            <div class="tbtn team1">🟢 {{ session.team1_name }}</div>
+          </label>
+          <label class="topt">
+            <input id="t2" type="radio" name="team" value="team2" />
+            <div class="tbtn team2">🟠 {{ session.team2_name }}</div>
+          </label>
+        </div>
+      </div>
 
-<script>
-  const sessionId = '{{ session.id }}';
-  let socket = null;
-  let reconnectDelay = 1000;
-  const maxDelay = 5000;
+      <div class="buzz-wrap">
+        <button id="buzz" class="buzz-btn" type="button" aria-live="polite" aria-label="اضغط للإجابة">
+          <span class="buzz-label" id="buzzText">جاوِب!</span>
+        </button>
+      </div>
 
-  // حالة الاتصال (اللمبة)
-  function setConn(ok){
-    const s = document.getElementById('connectionStatus');
-    if (!s) return;
-    s.className = 'connection-status ' + (ok ? 'connected' : 'disconnected');
-    s.textContent = ok ? '🟢 متصل' : '🔴 منقطع';
-  }
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
 
-  // اتصال WebSocket كمتسابق
-  function connectWS(){
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    socket = new WebSocket(`${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`);
+  <script>
+    // ======== ثوابت عامة ========
+    const sessionId = '{{ session.id }}';
+    const LS_NAME_KEY = `wjg_name_${sessionId}`;
+    const LS_TEAM_KEY = `wjg_team_${sessionId}`;
 
-    socket.onopen = () => { setConn(true); reconnectDelay = 1000; };
+    let socket = null;
+    let reconnectDelay = 1000;
+    const maxDelay = 5000;
+    let heartbeat = null;
 
-    socket.onmessage = (evt) => {
-      let msg = {};
-      try { msg = JSON.parse(evt.data || '{}'); } catch { return; }
-
-      // ردود السيرفر
-      if (msg.type === 'buzz_confirmed') {
-        showSuccess(msg.message || '✅ تم تسجيل ضغطتك!');
-        // مافي شيء آخر هنا — شاشة العرض/المقدم بيتكفلون بالباقي
-      } else if (msg.type === 'buzz_rejected') {
-        showError(msg.message || '⚠️ الزر محجوز حالياً');
-      }
+    // ======== عناصر ========
+    const el = {
+      conn: document.getElementById('conn'),
+      name: document.getElementById('name'),
+      t1: document.getElementById('t1'),
+      t2: document.getElementById('t2'),
+      buzz: document.getElementById('buzz'),
+      status: document.getElementById('status'),
+      buzzText: document.getElementById('buzzText'),
     };
 
-    socket.onclose = () => {
-      setConn(false);
-      setTimeout(connectWS, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
-    };
-
-    socket.onerror = () => {
-      setConn(false);
-      try { socket.close(); } catch {}
-    };
-  }
-
-  // إرسال حدث الضغط
-  function buzzAnswer(){
-    const name = document.getElementById('contestantName').value.trim();
-    const team = document.querySelector('input[name="team"]:checked')?.value;
-
-    if (!name) { showError('اكتب اسمك'); return; }
-    if (!team) { showError('اختر فريقك'); return; }
-    if (!socket || socket.readyState !== WebSocket.OPEN) { showError('الاتصال غير جاهز'); return; }
-
-    // أرسل الرسالة المتوقّعة من السيرفر
-    try {
-      socket.send(JSON.stringify({
-        type: 'contestant_buzz',
-        contestant_name: name,
-        team: team,
-        timestamp: new Date().toISOString()
-      }));
-      // إحساس فوري للمستخدم
-      showInfo('⏳ تم الإرسال...');
-      addWaveEffect && addWaveEffect();
-    } catch(e) {
-      showError('تعذر الإرسال، حاول ثانية');
+    // ======== أدوات واجهة ========
+    function setConn(connected){
+      el.conn.className = 'conn ' + (connected ? 'connected' : 'disconnected');
+      el.conn.textContent = connected ? '🟢 متصل' : '🔴 منقطع';
     }
-  }
+    function showMsg(kind, text, autoHideMs){
+      el.status.className = 'status show ' + (kind||'info');
+      el.status.textContent = text || '';
+      if (autoHideMs){
+        setTimeout(()=>{ el.status.classList.remove('show'); }, autoHideMs);
+      }
+    }
+    function waveButton(){
+      el.buzz.classList.add('wave');
+      const i = document.createElement('i');
+      el.buzz.appendChild(i);
+      setTimeout(()=>{ i.remove(); el.buzz.classList.remove('wave'); }, 600);
+    }
+    function haptic(ms=35){ try{ navigator.vibrate && navigator.vibrate(ms); }catch{} }
+    // نغمة قصيرة (تعتمد على تفاعل المستخدم المسبق)
+    function tone(freq=740, dur=160, gain=.35){
+      try{
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.connect(g); g.connect(actx.destination);
+        o.frequency.value = freq; g.gain.value = gain;
+        o.start(); o.stop(actx.currentTime + dur/1000);
+      }catch{}
+    }
 
-  // رسائل الحالة البسيطة (موجودة عندك مسبقًا)
-  function showSuccess(t){ const el = document.getElementById('statusMessage'); el.className='status-message success'; el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
-  function showError(t){ const el = document.getElementById('statusMessage'); el.className='status-message error';   el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
-  function showInfo(t){ const el = document.getElementById('statusMessage'); el.className='status-message'; el.style.background='rgba(59,130,246,.2)'; el.style.borderColor='#3b82f6'; el.style.color='#3b82f6'; el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',2000); }
+    // ======== LocalStorage ========
+    function loadPrefs(){
+      const n = localStorage.getItem(LS_NAME_KEY) || '';
+      if (n){ el.name.value = n; }
+      const t = localStorage.getItem(LS_TEAM_KEY);
+      if (t === 'team1') el.t1.checked = true;
+      if (t === 'team2') el.t2.checked = true;
+    }
+    function savePrefs(){
+      const n = (el.name.value || '').trim();
+      if (n) localStorage.setItem(LS_NAME_KEY, n);
+      const t = document.querySelector('input[name="team"]:checked')?.value;
+      if (t) localStorage.setItem(LS_TEAM_KEY, t);
+    }
 
-  // تهيئة
-  document.addEventListener('DOMContentLoaded', () => {
-    connectWS();
-    document.getElementById('contestantName').focus();
-    document.getElementById('contestantName').addEventListener('keypress', e => { if (e.key === 'Enter') buzzAnswer(); });
-    document.getElementById('buzzBtn').onclick = buzzAnswer;
-  });
+    // ======== WebSocket ========
+    function connectWS(){
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=contestant`;
+      try{
+        socket = new WebSocket(url);
+      }catch(e){
+        setConn(false); showMsg('err','تعذّر إنشاء الاتصال.'); return;
+      }
 
-  window.buzzAnswer = buzzAnswer;
-</script>
+      socket.onopen = ()=>{
+        setConn(true);
+        reconnectDelay = 1000;
+        clearInterval(heartbeat);
+        heartbeat = setInterval(()=>{
+          try{ socket.readyState === 1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
+        }, 20000);
+      };
 
+      socket.onmessage = (ev)=>{
+        let d = {};
+        try{ d = JSON.parse(ev.data || '{}'); }catch{ return; }
 
+        if (d.type === 'buzz_confirmed'){
+          // ✅ نجاح ضغطتك
+          showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
+          tone(840, 220, .4);
+          haptic(30);
+          // نترك الزر يرجع طبيعي بعد شوي
+          setTimeout(()=> enableBuzz(), 900);
+        } else if (d.type === 'buzz_rejected'){
+          // ❌ محجوز
+          showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
+          tone(360, 180, .25);
+          haptic(40);
+          // نعيد تمكين الزر في الحال تقريباً
+          setTimeout(()=> enableBuzz(), 400);
+        } else if (d.type === 'error'){
+          showMsg('err', d.message || 'حدث خطأ.', 3200);
+          setTimeout(()=> enableBuzz(), 600);
+        }
+      };
 
+      socket.onclose = (e)=>{
+        setConn(false);
+        clearInterval(heartbeat);
+        // لو الجلسة منتهية/غير موجودة
+        if (e && (e.code === 4401 || e.code === 4404)){
+          showMsg('err', 'انتهت صلاحية الجلسة أو الرابط غير صحيح.');
+          disableBuzz(true);
+          return;
+        }
+        // إعادة محاولة
+        setTimeout(connectWS, reconnectDelay);
+        reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
+      };
+
+      socket.onerror = ()=>{
+        setConn(false);
+        try{ socket.close(); }catch{}
+      };
+    }
+
+    // ======== إرسال الطنطيط ========
+    let busy = false;
+    function disableBuzz(permanent=false){
+      busy = true;
+      el.buzz.disabled = true;
+      el.buzzText.textContent = permanent ? 'غير متاح' : 'جارٍ...';
+    }
+    function enableBuzz(){
+      busy = false;
+      el.buzz.disabled = false;
+      el.buzzText.textContent = 'جاوِب!';
+    }
+
+    function sendBuzz(){
+      const name = (el.name.value || '').trim();
+      const team = document.querySelector('input[name="team"]:checked')?.value;
+
+      if (!name){ showMsg('err','اكتب اسمك أولاً', 2200); el.name.focus(); haptic(30); return; }
+      if (!team){ showMsg('err','اختر فريقك', 2200); haptic(30); return; }
+      if (!socket || socket.readyState !== 1){ showMsg('err','الاتصال غير جاهز', 2200); haptic(30); return; }
+      if (busy) return;
+
+      // حركات حسّية
+      waveButton(); haptic(50); tone(760, 130, .35);
+
+      // اقفل مؤقتًا لمنع السبام
+      disableBuzz();
+
+      // حفظ تفضيلات
+      savePrefs();
+
+      // إرسال
+      try{
+        socket.send(JSON.stringify({
+          type: 'contestant_buzz',
+          contestant_name: name,
+          team: team,
+          timestamp: new Date().toISOString()
+        }));
+        // لو ما وصل رد خلال ثانية، فكّ الزر (السيرفر عادة يرد فورًا)
+        setTimeout(()=>{ if (busy) enableBuzz(); }, 1200);
+        showMsg('info','⏳ تم الإرسال...', 1200);
+      }catch{
+        showMsg('err','تعذّر الإرسال، حاول مجددًا', 2500);
+        enableBuzz();
+      }
+    }
+
+    // ======== تهيئة ========
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadPrefs();
+      connectWS();
+
+      // أحداث
+      el.buzz.addEventListener('click', sendBuzz);
+      el.name.addEventListener('keypress', (e)=>{ if (e.key === 'Enter') sendBuzz(); });
+      // تحسينات موبايل: لمس أول يفعّل الـAudioContext في بعض الأجهزة
+      document.addEventListener('touchstart', ()=>tone(1,1,.0001), { once:true, passive:true });
+
+      // حالة أونلاين/أوفلاين
+      window.addEventListener('online',  ()=> setConn(socket && socket.readyState===1));
+      window.addEventListener('offline', ()=> setConn(false));
+    });
+
+    window.buzzAnswer = sendBuzz; // إن احتجت تناديها من HTML
+  </script>
 </body>
 </html>

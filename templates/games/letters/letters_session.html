@@ -30,6 +30,12 @@
       padding: 10px;
       margin: 0;
     }
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #fff; border: none; border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(245,158,11,.3);
+    }
+    .btn-warning:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,.4); }
 
     .container {
       background: rgba(255, 255, 255, 0.95);
@@ -178,10 +184,17 @@
       </div>
     </div>
 
-    <!-- تحكم الطنطيط -->
-    <div class="buzz-controls">
-      <button class="buzz-reset-btn" onclick="resetBuzzer()">🔄 فك قفل الزر</button>
+    <!-- تحكم الجولة الجديدة -->
+    <div class="text-center mb-3">
+      <button id="newRoundBtn" class="btn btn-primary"
+              {% if session.package.is_free %}disabled aria-disabled="true" title="الميزة متاحة في الحزم المدفوعة"{% endif %}>
+        🔁 جولة جديدة
+      </button>
+      {% if session.package.is_free %}
+        <small class="text-muted d-block mt-1">الميزة متاحة في الحزم المدفوعة</small>
+      {% endif %}
     </div>
+
 
     <!-- تلميح -->
     <div id="questionDisplay" class="alert alert-light text-dark mt-3 text-center fs-5 fw-bold">
@@ -220,7 +233,7 @@
       <div id="paidRounds" class="row g-2 d-none">
         <div class="col-md-4">
           <div class="round-card h-100">
-            <div class="round-title">🎯 الجولة 1 (سؤال رئيسي)</div>
+            <div class="round-title">🎯 الجولة 1</div>
             <div><strong>السؤال:</strong> <span id="r1Question">—</span></div>
             <div class="mt-1"><strong>الإجابة:</strong> <span id="r1Answer" class="answer">—</span></div>
           </div>
@@ -272,14 +285,14 @@
       <div id="paidAlt34" class="row g-2 d-none">
         <div class="col-md-6 d-none" id="alt3Col">
           <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 3</div>
+            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
             <div><span id="alt3Question">—</span></div>
             <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt3Answer" class="answer">—</span></small></div>
           </div>
         </div>
         <div class="col-md-6 d-none" id="alt4Col">
           <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 4</div>
+            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
             <div><span id="alt4Question">—</span></div>
             <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt4Answer" class="answer">—</span></small></div>
           </div>
@@ -332,12 +345,25 @@
   </div>
 
 <script>
+  // ========= تهيئة بيانات الجلسة (آمنة للـ JS) =========
+  window.sessionData = {
+    sessionId: '{{ session.id|escapejs }}',
+    csrfToken: '{{ csrf_token|escapejs }}',
+    team1Name: '{{ session.team1_name|escapejs }}',
+    team2Name: '{{ session.team2_name|escapejs }}',
+    displayUrl: '{% url "games:letters_display" session.display_link %}',
+    contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
+    packageName: '{{ session.package.get_game_type_display|escapejs }} - حزمة {{ session.package.package_number|escapejs }}',
+    arabicLetters: {{ arabic_letters_json|safe }},
+    isFree: {{ session.package.is_free|yesno:"true,false" }},
+    packageNumber: '{{ session.package.package_number|escapejs }}'
+  };
+  const HOME_URL = "{% url 'games:letters_home' %}";
+
   // ========= متغيرات عامة =========
-  const sessionId = '{{ session.id }}';
-  const hostToken = '{{ host_token }}';
-  const team1Name = '{{ session.team1_name }}';
-  const team2Name = '{{ session.team2_name }}';
-  const lettersArr = (window.sessionData && window.sessionData.arabicLetters) || [];
+  const sessionId     = window.sessionData?.sessionId || '{{ session.id|escapejs }}';
+  const team1Name     = window.sessionData?.team1Name || '{{ session.team1_name|escapejs }}';
+  const team2Name     = window.sessionData?.team2Name || '{{ session.team2_name|escapejs }}';
   const isFreeSession = !!window.sessionData?.isFree;
 
   let socket = null;
@@ -348,7 +374,13 @@
   const cellStates = {};
   let lastClickedLetter = null;
 
-  // ========= أدوات مساعدة =========
+  function getLetters(){
+    return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
+      ? window.sessionData.arabicLetters
+      : [];
+  }
+
+  // ---------- نسخ الروابط ----------
   async function copyLink(text){
     try{
       await navigator.clipboard.writeText(text);
@@ -360,20 +392,39 @@
   }
   window.copyLink = copyLink;
 
+  // ---------- صوتيات موثوقة ----------
+  let audioCtx = null;
+  function ensureAudio() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    } catch {}
+  }
+  document.addEventListener('touchstart', ensureAudio, { once: true, passive: true });
+  document.addEventListener('click',      ensureAudio, { once: true });
+  document.addEventListener('visibilitychange', () => {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+  });
   function tone(freq=800, dur=300, gain=0.5){
     try{
-      const ctx = new (window.AudioContext||window.webkitAudioContext)();
-      const o = ctx.createOscillator(), g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.value=freq; g.gain.setValueAtTime(gain, ctx.currentTime);
-      o.start(); o.stop(ctx.currentTime + dur/1000);
+      ensureAudio();
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.frequency.value=freq;
+      const now = audioCtx.currentTime;
+      g.gain.setValueAtTime(gain, now);
+      o.start(now);
+      o.stop(now + dur/1000);
     }catch{}
   }
-  function playBuzzSound(){ tone(800,300,0.6); }
+  function playBuzzSound(){ tone(880,320,0.55); }
+  function playUnlockSound(){ tone(520,160,0.35); }
 
-  // ========= واجهة الخلايا =========
+  // ========= رسم خلية الحروف =========
   function createHoneycombCells(){
     const svg = document.getElementById('honeycombSvg');
+    const lettersArr = getLetters();
     const P = [
       {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
       {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
@@ -417,6 +468,23 @@
 
       g.addEventListener('click', () => onCellClick(g, letter));
     }
+  }
+
+  function rebuildHoneycomb(letters, resetProgress=false){
+    const svg = document.getElementById('honeycombSvg');
+    [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
+
+    window.sessionData = window.sessionData || {};
+    window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
+
+    if (resetProgress) {
+      Object.keys(cellStates).forEach(k => delete cellStates[k]);
+      lastClickedLetter = null;
+      const qp = document.getElementById('questionPanel'); if (qp) qp.style.display = 'none';
+      const qd = document.getElementById('questionDisplay'); if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
+    }
+
+    createHoneycombCells();
   }
 
   let lastClickAt = 0;
@@ -463,7 +531,7 @@
   async function showQuestion(letter){
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = '/games/letters/'; }
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
       if (!r.ok) return;
       const data = await r.json(), q = data.questions || {};
 
@@ -503,7 +571,6 @@
         document.getElementById('r3Question').textContent = (q.alt2 && q.alt2.question) || '—';
         document.getElementById('r3Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
 
-        // بدائل إضافية 3 و 4 (اختيارية)
         toggleAltCard('alt3', !!q.alt3, q.alt3?.question, q.alt3?.answer);
         toggleAltCard('alt4', !!q.alt4, q.alt4?.question, q.alt4?.answer);
       }
@@ -536,27 +603,35 @@
     try{
       const r = await fetch('/games/api/update-cell-state/',{
         method:'POST',
-        headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({session_id:sessionId, letter, state})
       });
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href='/games/letters/'; }
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
     }catch{}
   }
+
   async function updateScoresAPI(team1,team2){
     try{
       const r = await fetch('/games/api/update-scores/',{
         method:'POST',
-        headers:{'Content-Type':'application/json','X-Host-Token':hostToken},
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({session_id:sessionId, team1_score:team1, team2_score:team2})
       });
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href='/games/letters/'; }
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
     }catch{}
   }
 
-  // ========= إشعار الطنطيط =========
+  // ========= إشعار الطنطيط (XSS-safe) =========
   function showBuzzNotification(contestantName, team){
     const n = document.getElementById('buzzNotification');
-    n.innerHTML = `🚨 <strong>${contestantName}</strong><br>من ${(team==='team1'?team1Name:team2Name)} ضغط الزر!`;
+    if (!n) return;
+    n.textContent = '';
+    n.append('🚨 ');
+    const strong = document.createElement('strong');
+    strong.textContent = contestantName || 'متسابق';
+    n.appendChild(strong);
+    n.appendChild(document.createElement('br'));
+    n.append('من ' + (team==='team1' ? (team1Name||'الفريق 1') : (team2Name||'الفريق 2')) + ' ضغط الزر!');
     n.style.display = 'block';
     playBuzzSound();
     setTimeout(()=>{ n.style.display='none'; }, 4000);
@@ -566,9 +641,16 @@
   async function loadSessionState(){
     try{
       const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href='/games/letters/'; }
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
       if (!r.ok) return;
       const data = await r.json();
+
+      if (Array.isArray(data.arabic_letters)) {
+        const cur = getLetters();
+        const changed = (cur.length !== data.arabic_letters.length) || (cur.join('|') !== data.arabic_letters.join('|'));
+        if (changed) rebuildHoneycomb(data.arabic_letters, false);
+      }
+
       reflectScores(data.team1_score||0, data.team2_score||0);
       if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
       if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
@@ -592,7 +674,8 @@
 
   function setupWebSocket(){
     const proto = (location.protocol==='https:') ? 'wss' : 'ws';
-    const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=host&host_token=${encodeURIComponent(hostToken)}`;
+    const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=host`;
+
     socket = new WebSocket(url);
 
     socket.onopen = ()=>{
@@ -607,11 +690,27 @@
     socket.onmessage = (ev)=>{
       let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
       switch(d.type){
-        case 'contestant_buzz_accepted': showBuzzNotification(d.contestant_name, d.team); break;
-        case 'cell_state_updated': applyCellState(d.letter, d.state); break;
-        case 'scores_updated': reflectScores(d.team1_score, d.team2_score); break;
-        case 'pong': break;
-        default: break;
+        case 'contestant_buzz_accepted':
+          showBuzzNotification(d.contestant_name, d.team);
+          break;
+        case 'cell_state_updated':
+          applyCellState(d.letter, d.state);
+          break;
+        case 'scores_updated':
+          reflectScores(d.team1_score, d.team2_score);
+          break;
+        case 'letters_updated':
+          rebuildHoneycomb(d.letters || [], !!d.reset_progress);
+          setTimeout(loadSessionState, 50);
+          break;
+        case 'buzz_unlocked':
+        case 'buzz_reset_by_host':
+          playUnlockSound();
+          break;
+        case 'pong':
+          break;
+        default:
+          break;
       }
     };
 
@@ -632,22 +731,71 @@
     });
   }
 
+  // ========= جولة جديدة =========
+  let newRoundBusy = false;
+  async function startNewRound(){
+    if (isFreeSession) return; // الـAPI سيمنع أيضًا
+    if (newRoundBusy) return;
+    newRoundBusy = true;
+
+    const btn = document.getElementById('newRoundBtn');
+    if (btn) btn.disabled = true;
+
+    try{
+      const r = await fetch('/games/api/letters-new-round/', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      if (r.status === 410){
+        alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.');
+        return (window.location.href = HOME_URL);
+      }
+      if (r.status === 403){
+        alert('هذه الميزة متاحة للحزم المدفوعة فقط');
+        return;
+      }
+      const data = await r.json().catch(()=> ({}));
+      if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
+        rebuildHoneycomb(data.letters, !!data.reset_progress);
+        setTimeout(loadSessionState, 50);
+      }
+    }catch(e){
+      console.error(e);
+      alert('تعذّر بدء جولة جديدة، حاول مرة أخرى.');
+    }finally{
+      newRoundBusy = false;
+      if (btn && !isFreeSession) btn.disabled = false;
+    }
+  }
+
   // ========= تهيئة =========
-  window.addEventListener('beforeunload', ()=>{ try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{}; clearHeartbeat(); });
+  window.addEventListener('beforeunload', ()=>{
+    try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{};
+    clearHeartbeat();
+  });
+
   document.addEventListener('DOMContentLoaded', ()=>{
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
     setInterval(loadSessionState, 30000);
-  });
 
-  // فك قفل الزر – يرسل للجميع
-  function resetBuzzer(){
-    if (socket && socket.readyState===1){
-      try{ socket.send(JSON.stringify({type:'buzz_reset'})); }catch{}
+    const newRoundBtn = document.getElementById('newRoundBtn');
+    if (newRoundBtn) {
+      if (isFreeSession) {
+        newRoundBtn.disabled = true;
+        newRoundBtn.classList.add('disabled');
+        if (!newRoundBtn.title) newRoundBtn.title = 'الميزة متاحة في الحزم المدفوعة';
+      } else {
+        newRoundBtn.disabled = false;
+        newRoundBtn.addEventListener('click', startNewRound);
+      }
     }
-  }
-  window.resetBuzzer = resetBuzzer;
+  });
 </script>
+
+
+
 </body>
 </html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>انتهت صلاحية الجلسة</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);font-family:'Tajawal',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:20px}
+    .expired-container{background:rgba(255,255,255,.95);border-radius:20px;padding:40px;max-width:520px;width:100%;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,.2)}
+    .expired-icon{font-size:4rem;color:#dc3545;margin-bottom:16px}
+    .expired-title{color:#dc3545;font-size:1.8rem;font-weight:700;margin-bottom:12px}
+    .expired-message{color:#6c757d;font-size:1.05rem;margin-bottom:24px;line-height:1.7}
+    .btn-home{background:linear-gradient(135deg,#28a745,#20c997);color:#fff;border:none;padding:12px 30px;border-radius:15px;font-size:1.05rem;font-weight:700;text-decoration:none;display:inline-block;transition:all .3s ease}
+    .btn-home:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(40,167,69,.3);color:#fff}
+    .session-info{background:#f8f9fa;border-radius:10px;padding:14px;margin:18px 0;border-left:4px solid #dc3545;text-align:start}
+    .countdown{font-size:1.25rem;font-weight:800;color:#dc3545;margin:18px 0}
+    @media (max-width:768px){.expired-container{padding:28px 18px}.expired-icon{font-size:3rem}.expired-title{font-size:1.5rem}}
+  </style>
+</head>
+<body>
+  <div class="expired-container">
+    <div class="expired-icon">⏰</div>
+    <h1 class="expired-title">انتهت صلاحية الجلسة</h1>
+
+    <div class="session-info">
+      <div><strong>نوع الجلسة:</strong> {{ session_type }}</div>
+      <div><strong>السبب:</strong> {{ message }}</div>
+    </div>
+
+    <p class="expired-message">
+      {% if session_type == "مجانية" %}
+        الجلسات المجانية تستمر لمدة <strong>ساعة واحدة</strong> لحماية المنصة من الاستخدام المفرط.
+      {% else %}
+        الجلسات المدفوعة صالحة لمدة <strong>72 ساعة (3 أيام)</strong> من وقت إنشائها.
+      {% endif %}
+      <br><br>
+      {{ upgrade_message|default:"يمكنك إنشاء جلسة مجانية جديدة أو شراء حزمة مدفوعة للاستمتاع بمحتوى أكثر!" }}
+    </p>
+
+    <div class="countdown" id="redirectCountdown"></div>
+
+    <a href="{% url 'games:letters_home' %}" class="btn-home">🏠 إنشاء جلسة جديدة</a>
+
+    <div class="mt-4">
+      <small class="text-muted">
+        💡 <strong>معلومة:</strong>
+        الحزم المدفوعة تحتوي على حروف وأسئلة أكثر تنوعًا، وتدوم صلاحيتها 72 ساعة.
+      </small>
+    </div>
+  </div>
+
+  <script>
+    // إعادة توجيه تلقائية بعد 10 ثوانٍ
+    let countdown = 10;
+    const countdownElement = document.getElementById('redirectCountdown');
+    const targetUrl = "{% url 'games:letters_home' %}";
+
+    (function tick(){
+      if(countdown > 0){
+        countdownElement.textContent = `سيتم توجيهك تلقائيًا خلال ${countdown} ثانية...`;
+        countdown--;
+        setTimeout(tick, 1000);
+      }else{
+        window.location.href = targetUrl;
+      }
+    })();
+
+    // منع الرجوع للخلف
+    history.pushState(null,null,location.href);
+    window.onpopstate=function(){history.go(1);};
+  </script>
+</body>
+</html>

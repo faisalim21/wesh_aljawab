@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.db.models import Q, UniqueConstraint, Index
 import uuid
 from datetime import timedelta
+from decimal import Decimal
+
 
 class GamePackage(models.Model):
     """حزم الألعاب"""
@@ -19,10 +21,12 @@ class GamePackage(models.Model):
         ('mixed', 'متنوعة'),
         ('sports', 'رياضية'),
     ]
-    
+
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="السعر الأصلي قبل الخصم")
+    discounted_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="السعر بعد الخصم (اختياري)")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     game_type = models.CharField(
-        max_length=20, 
+        max_length=20,
         choices=GAME_TYPES,
         verbose_name="نوع اللعبة",
         help_text="اختر نوع اللعبة"
@@ -37,8 +41,8 @@ class GamePackage(models.Model):
         help_text="هل هذه الحزمة مجانية؟"
     )
     price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
+        max_digits=10,
+        decimal_places=2,
         default=0.00,
         verbose_name="السعر",
         help_text="سعر الحزمة بالريال السعودي"
@@ -69,22 +73,45 @@ class GamePackage(models.Model):
         auto_now_add=True,
         verbose_name="تاريخ الإنشاء"
     )
-    
+
     class Meta:
         unique_together = ('game_type', 'package_number')
         ordering = ['game_type', 'package_number']
         verbose_name = "حزمة لعبة"
         verbose_name_plural = "حزم الألعاب"
-    
+        indexes = [
+            Index(fields=['game_type', 'is_active']),
+            Index(fields=['is_free']),
+        ]
+
     def __str__(self):
         return f"{self.get_game_type_display()} - حزمة {self.package_number}"
+
+    @property
+    def has_discount(self):
+        try:
+            return (self.original_price is not None and self.discounted_price is not None
+                    and self.discounted_price > Decimal('0.00')
+                    and self.original_price > self.discounted_price)
+        except Exception:
+            return False
+
+    @property
+    def effective_price(self):
+        """
+        السعر المعتمد للشراء/العرض إن أردت لاحقًا:
+        إن وُجد discounted_price صالح نُعيده، وإلا price.
+        """
+        if self.discounted_price and self.discounted_price > Decimal('0.00'):
+            return self.discounted_price
+        return self.price
 
 
 class LettersGameQuestion(models.Model):
     """أسئلة لعبة خلية الحروف"""
     package = models.ForeignKey(
-        GamePackage, 
-        on_delete=models.CASCADE, 
+        GamePackage,
+        on_delete=models.CASCADE,
         related_name='letters_questions',
         verbose_name="الحزمة",
         help_text="اختر حزمة خلية الحروف"
@@ -95,14 +122,14 @@ class LettersGameQuestion(models.Model):
         help_text="الحرف العربي (أ، ب، ت...)"
     )
     question_type = models.CharField(
-        max_length=10, 
+        max_length=10,
         choices=[
             ('main', 'رئيسي'),
             ('alt1', 'بديل أول'),
             ('alt2', 'بديل ثاني'),
-            ('alt3', 'بديل ثالث'),  
+            ('alt3', 'بديل ثالث'),
             ('alt4', 'بديل رابع'),
-        ], 
+        ],
         default='main',
         verbose_name="نوع السؤال",
         help_text="نوع السؤال (رئيسي أم بديل)"
@@ -121,13 +148,17 @@ class LettersGameQuestion(models.Model):
         verbose_name="التصنيف",
         help_text="تصنيف السؤال (بلدان، وظائف، حيوانات...)"
     )
-    
+
     class Meta:
         unique_together = ('package', 'letter', 'question_type')
         verbose_name = "سؤال خلية حروف"
         verbose_name_plural = "أسئلة خلية الحروف"
         ordering = ['letter', 'question_type']
-    
+        indexes = [
+            Index(fields=['package', 'letter']),
+            Index(fields=['package', 'question_type']),
+        ]
+
     def __str__(self):
         return f"{self.letter} - {self.get_question_type_display()} - {self.question[:30]}..."
 
@@ -138,17 +169,17 @@ class UserPurchase(models.Model):
     ✅ السياسة: تنتهي صلاحية المشتريات المدفوعة بعد 72 ساعة من وقت الشراء.
     - يُسمح بشراء الحزمة مرة أخرى بعد انتهاء الصلاحية (أو إتمام الاستخدام).
     - قيد فريد (شرطي) يمنع وجود أكثر من "شراء نشط" واحد غير مكتمل لنفس الحزمة لكل مستخدم.
-    - "نشط" = is_completed=False. عند مرور 72 ساعة يتم اعتباره منتهيًا (expired) ويمكن إكماله تلقائيًا.
+    - "نشط" = is_completed=False. عند مرور 72 ساعة يتم اعتباره منتهيًا.
     """
     EXPIRY_HOURS = 72  # سياسة الانتهاء بعد الشراء
-    
+
     user = models.ForeignKey(
-        User, 
+        User,
         on_delete=models.CASCADE,
         verbose_name="المستخدم"
     )
     package = models.ForeignKey(
-        GamePackage, 
+        GamePackage,
         on_delete=models.CASCADE,
         verbose_name="الحزمة"
     )
@@ -175,7 +206,7 @@ class UserPurchase(models.Model):
         verbose_name="عدد الألعاب",
         help_text="عدد المرات التي لعب فيها"
     )
-    
+
     class Meta:
         verbose_name = "مشترى حزمة"
         verbose_name_plural = "مشتريات الحزم"
@@ -193,7 +224,7 @@ class UserPurchase(models.Model):
             Index(fields=['is_completed']),
             Index(fields=['expires_at']),
         ]
-    
+
     def __str__(self):
         status = "نشط" if not self.is_completed else "مكتمل"
         return f"{self.user.username} - {self.package} ({status})"
@@ -234,51 +265,57 @@ class UserPurchase(models.Model):
 
     # ========= ضمان ضبط expires_at ومواءمة السياسة =========
     def save(self, *args, **kwargs):
-        # ضبط expires_at عند الإنشاء إن لم يحدَّد
-        if self.expires_at is None and self.purchase_date:
-            self.expires_at = self.purchase_date + self.expiry_duration
-
-        # في حال تم إنشاء السجل للتو ولم تُضبط purchase_date بعد (قبل الحفظ الأول)
-        if self.expires_at is None and not self.purchase_date:
-            # سيُملأ purchase_date تلقائيًا بعد الحفظ الأول؛ نضبط expires_at في حفظ لاحق
-            pass
+        is_create = self._state.adding
 
         # قبل الحفظ: إن انتهت الصلاحية نُكمِل الشراء
-        if not self.is_completed:
-            if self.expires_at and timezone.now() >= self.expires_at:
-                self.is_completed = True
+        if not self.is_completed and self.expires_at and timezone.now() >= self.expires_at:
+            self.is_completed = True
 
         super().save(*args, **kwargs)
+
+        # بعد الحفظ الأول: purchase_date صار متوفر
+        if is_create and self.expires_at is None:
+            self.expires_at = self.purchase_date + self.expiry_duration
+            super().save(update_fields=['expires_at'])
+
+        # بعد الحفظ: لو الوقت تعدّى الانتهاء، نكمّلها (حماية مزدوجة)
+        if not self.is_completed and self.is_expired:
+            self.is_completed = True
+            super().save(update_fields=['is_completed'])
 
 
 class GameSession(models.Model):
     """جلسة لعب"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # ✅ سمحنا تكون None علشان شرطك "أي شخص معه الرابط يقدر"
     host = models.ForeignKey(
-        User, 
+        User,
         on_delete=models.CASCADE,
+        null=True, blank=True,
         verbose_name="المقدم",
-        help_text="الشخص الذي ينظم اللعبة"
+        help_text="الشخص الذي ينظم اللعبة (قد تكون فارغة)"
     )
+
     package = models.ForeignKey(
-        GamePackage, 
+        GamePackage,
         on_delete=models.CASCADE,
         verbose_name="الحزمة"
     )
     game_type = models.CharField(
-        max_length=20, 
+        max_length=20,
         choices=GamePackage.GAME_TYPES,
         verbose_name="نوع اللعبة"
     )
-    
+
     # إعدادات اللعبة
     team1_name = models.CharField(
-        max_length=50, 
+        max_length=50,
         default="الفريق الأخضر",
         verbose_name="اسم الفريق الأول"
     )
     team2_name = models.CharField(
-        max_length=50, 
+        max_length=50,
         default="الفريق البرتقالي",
         verbose_name="اسم الفريق الثاني"
     )
@@ -290,7 +327,7 @@ class GameSession(models.Model):
         default=0,
         verbose_name="نقاط الفريق الثاني"
     )
-    
+
     # حالة اللعبة
     is_active = models.BooleanField(
         default=True,
@@ -303,31 +340,31 @@ class GameSession(models.Model):
         help_text="هل انتهت الجلسة؟"
     )
     winner_team = models.CharField(
-        max_length=10, 
+        max_length=10,
         choices=[
             ('team1', 'الفريق الأول'),
             ('team2', 'الفريق الثاني'),
             ('draw', 'تعادل'),
-        ], 
-        null=True, 
+        ],
+        null=True,
         blank=True,
         verbose_name="الفريق الفائز"
     )
-    
+
     # روابط اللعبة
     display_link = models.CharField(
-        max_length=100, 
+        max_length=100,
         unique=True,
         verbose_name="رابط العرض",
         help_text="رابط شاشة العرض للجمهور"
     )
     contestants_link = models.CharField(
-        max_length=100, 
+        max_length=100,
         unique=True,
         verbose_name="رابط المتسابقين",
         help_text="رابط صفحة المتسابقين"
     )
-    
+
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الإنشاء"
@@ -336,63 +373,68 @@ class GameSession(models.Model):
         auto_now=True,
         verbose_name="تاريخ التحديث"
     )
-    
+
     class Meta:
         verbose_name = "جلسة لعب"
         verbose_name_plural = "جلسات اللعب"
         ordering = ['-created_at']
-    
+        indexes = [
+            Index(fields=['game_type', 'created_at']),
+            Index(fields=['is_active']),
+        ]
+
     def save(self, *args, **kwargs):
         if not self.display_link:
             self.display_link = f"display-{str(self.id)[:8]}"
         if not self.contestants_link:
             self.contestants_link = f"contestants-{str(self.id)[:8]}"
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
-        return f"جلسة {self.get_game_type_display()} - {self.host.username}"
+        host_txt = self.host.username if self.host else "بدون مُضيف"
+        return f"جلسة {self.get_game_type_display()} - {host_txt}"
 
 
 class LettersGameProgress(models.Model):
     """تقدم لعبة الحروف"""
     session = models.OneToOneField(
-        GameSession, 
-        on_delete=models.CASCADE, 
+        GameSession,
+        on_delete=models.CASCADE,
         related_name='letters_progress',
         verbose_name="الجلسة"
     )
-    
-    # حالة الخلايا (25 خلية)
+
+    # حالة الخلايا
     cell_states = models.JSONField(
         default=dict,
         verbose_name="حالة الخلايا",
         help_text="حالة كل خلية في الشبكة"
     )
-    
-    # الخلايا المستخدمة
+
+    # الحروف المستخدمة
     used_letters = models.JSONField(
         default=list,
         verbose_name="الحروف المستخدمة",
         help_text="قائمة الحروف التي تم استخدامها"
     )
-    
+
     # السؤال الحالي
     current_letter = models.CharField(
-        max_length=3, 
-        null=True, 
+        max_length=3,
+        null=True,
         blank=True,
         verbose_name="الحرف الحالي"
     )
     current_question_type = models.CharField(
-        max_length=10, 
+        max_length=10,
         default='main',
         verbose_name="نوع السؤال الحالي"
     )
-    
+
     class Meta:
         verbose_name = "تقدم لعبة الحروف"
         verbose_name_plural = "تقدم ألعاب الحروف"
-    
+
     def __str__(self):
         return f"تقدم جلسة {self.session.id}"
 
@@ -400,8 +442,8 @@ class LettersGameProgress(models.Model):
 class Contestant(models.Model):
     """المتسابقون"""
     session = models.ForeignKey(
-        GameSession, 
-        on_delete=models.CASCADE, 
+        GameSession,
+        on_delete=models.CASCADE,
         related_name='contestants',
         verbose_name="الجلسة"
     )
@@ -410,7 +452,7 @@ class Contestant(models.Model):
         verbose_name="اسم المتسابق"
     )
     team = models.CharField(
-        max_length=10, 
+        max_length=10,
         choices=[
             ('team1', 'الفريق الأول'),
             ('team2', 'الفريق الثاني'),
@@ -425,12 +467,15 @@ class Contestant(models.Model):
         default=True,
         verbose_name="نشط؟"
     )
-    
+
     class Meta:
         unique_together = ('session', 'name')
         verbose_name = "متسابق"
         verbose_name_plural = "المتسابقون"
         ordering = ['team', 'name']
-    
+        indexes = [
+            Index(fields=['session', 'team']),
+        ]
+
     def __str__(self):
         return f"{self.name} - {self.get_team_display()}"

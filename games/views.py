@@ -1,8 +1,8 @@
-# games/views.py - مُحدَّث وفق طلبات الحماية والحروف والقفل 3 ثوانٍ
+# games/views.py 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
@@ -14,7 +14,18 @@ import logging
 import random
 import secrets
 from django.core.cache import cache
-
+from django.views.decorators.http import require_POST
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from games.models import GameSession
+from django.shortcuts import render
+from django.utils import timezone
+from django.db.models import Q
+from .models import GamePackage, UserPurchase
+from games.utils_letters import (
+    get_session_order, set_session_order,
+    get_paid_order_fresh, get_free_order
+)
 from .models import (
     GamePackage, GameSession, UserPurchase, LettersGameProgress,
     LettersGameQuestion, Contestant
@@ -25,25 +36,21 @@ logger = logging.getLogger('games')
 # ===============================
 # Helpers: انتهاء الجلسة/الوقت
 # ===============================
+def _expired_text(session):
+    return 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)' if session.package.is_free else 'انتهت صلاحية الجلسة (72 ساعة)'
 
 def is_session_expired(session):
-    """
-    التحقق من انتهاء صلاحية الجلسة
-    - المجانية: ساعة
-    - المدفوعة: 72 ساعة
-    """
-    if not session.package.is_free:
-        expiry_time = session.created_at + timedelta(hours=72)
-    else:
-        expiry_time = session.created_at + timedelta(hours=1)
-
-    now = timezone.now()
-    if now > expiry_time:
-        session.is_active = False
-        session.is_completed = True
-        session.save(update_fields=['is_active', 'is_completed'])
+    """انتهاء صلاحية الجلسة أو تعطيلها: المجاني 1 ساعة، المدفوع 72 ساعة."""
+    if not session or not getattr(session, "created_at", None):
         return True
-    return False
+    hours = 1 if (getattr(session, "package", None) and session.package.is_free) else 72
+    expiry_time = session.created_at + timedelta(hours=hours)
+    return (timezone.now() >= expiry_time) or (not session.is_active)
+
+# للتوافق مع أي استخدام سابق
+_session_expired = is_session_expired
+
+
 
 def get_session_time_remaining(session):
     if not session.package.is_free:
@@ -140,29 +147,19 @@ FIXED_FREE_0_LETTERS = [
 
 def get_letters_for_session(session):
     """
-    يُرجع قائمة الحروف الخاصة بالجسر:
-    - إذا كانت الحزمة المجانية ورقمها 0 → قائمة ثابتة لا تتغير.
-    - غير ذلك → اختيار 25 حرف عشوائي "لكل جلسة" (ثابتة داخل الجلسة نفسها فقط).
-    * تُخزّن في الكاش حتى انتهاء صلاحية الجلسة لضمان الاتساق بين الصفحات والـAPIs.
+    المصدر الوحيد لترتيب حروف الجلسة.
+    - يقرأ من utils_letters.get_session_order
+    - لو ما لقى ترتيب مخزّن (جلسة قديمة/أول مرة) ينشئه وفق نوع الحزمة ويحفظه.
     """
-    cache_key = f"letters_session_{session.id}"
-    cached = cache.get(cache_key)
-    if cached:
-        return cached
+    is_free = session.package.is_free
+    letters = get_session_order(session.id, is_free)
+    if letters and isinstance(letters, (list, tuple)) and len(letters) > 0:
+        return list(letters)
 
-    if session.package.is_free and session.package.package_number == 0:
-        letters = FIXED_FREE_0_LETTERS[:]  # نسخة ثابتة
-    else:
-        rng = random.Random(str(session.id))  # عشوائي ثابت داخل الجلسة فقط
-        selected = rng.sample(ALL_ARABIC_LETTERS, 25)
-        rng.shuffle(selected)
-        letters = selected
-
-    # اضبط TTL حسب الوقت المتبقي
-    remaining = get_session_time_remaining(session)
-    ttl = max(1, int(remaining.total_seconds())) if remaining else 3600
-    cache.set(cache_key, letters, timeout=ttl)
-    return letters
+    # ترتيب ابتدائي بحسب نوع الحزمة
+    letters = get_free_order() if is_free else get_paid_order_fresh()
+    set_session_order(session.id, letters, is_free=is_free)
+    return list(letters)
 
 # ===============================
 # Helpers: أهلية الجلسات المجانية
@@ -244,46 +241,72 @@ def games_home(request):
         'quiz_available': False,
     })
 
+
 def letters_game_home(request):
-    free_package = GamePackage.objects.filter(
-        game_type='letters', is_free=True, is_active=True
-    ).first()
+    # كل الحزم الفعّالة لخلية الحروف
+    packages_qs = GamePackage.objects.filter(
+        game_type='letters', is_active=True
+    ).order_by('is_free', 'package_number')
 
-    paid_packages = GamePackage.objects.filter(
-        game_type='letters', is_free=False, is_active=True
-    ).order_by('package_number')
+    free_package = packages_qs.filter(is_free=True).order_by('package_number').first()
+    paid_packages = packages_qs.filter(is_free=False)
 
-    user_purchases = []
-    free_session_eligible = True
-    free_session_message = ""
-    user_free_sessions_count = 0
+    # 👇 متغيرات القالب
+    user_purchases = set()   # حزم نشِطة (مشتراة ولم تنتهِ) → يظهر "ابدأ اللعب"
+    used_before_ids = set()  # حزم استُخدمت/انتهت سابقًا → يظهر شريط وتنبيه قبل الشراء
 
     if request.user.is_authenticated:
-        user_purchases = UserPurchase.objects.filter(
-            user=request.user, package__game_type='letters'
+        now = timezone.now()
+        # إجلب كل مشتريات المستخدم لهذه اللعبة
+        purchases = (UserPurchase.objects
+                     .select_related('package')
+                     .filter(user=request.user, package__game_type='letters')
+                     .order_by('-purchase_date'))
+
+        # أولاً: فعّال DB-wise (غير مكتمل + لم تنتهِ صلاحيتها)
+        active_ids_db = purchases.filter(
+            is_completed=False,
+            expires_at__gt=now
         ).values_list('package_id', flat=True)
 
-        free_session_eligible, free_session_message, user_free_sessions_count = check_free_session_eligibility(
-            request.user, 'letters'
-        )
-    else:
-        # غير مسجل: لا نسمح بإنشاء المجاني حتى يسجل دخول
-        free_session_eligible = False
-        free_session_message = "يرجى تسجيل الدخول للاستفادة من الجلسة المجانية"
+        user_purchases = set(active_ids_db)
 
-    return render(request, 'games/letters/home.html', {
+        # باقي السجلات إمّا مكتملة أو منتهية (أو expires_at قديم/فارغ)
+        # نستعمل خاصية is_expired لضمان الدقة حتى لو expires_at كان None بس اتضبط بالحفظ.
+        for p in purchases:
+            if p.package_id in user_purchases:
+                continue
+            if p.is_completed or p.is_expired:
+                used_before_ids.add(p.package_id)
+
+        # (اختياري) لو حاب تحدّث قاعدة البيانات تلقائيًا لو انتهت
+        # for p in purchases:
+        #     p.mark_expired_if_needed(auto_save=True)
+
+    # أهلية المجاني (لو عندك دالة جاهزة)
+    free_session_eligible = False
+    free_session_message = ""
+    # مثال: لو عندك خدمة/دالة للأهلية استدعها هنا
+    # free_session_eligible, free_session_message = check_free_eligibility(request.user, game_type='letters')
+
+    context = {
         'free_package': free_package,
         'paid_packages': paid_packages,
         'user_purchases': user_purchases,
+        'used_before_ids': used_before_ids,  # 👈 هذا المطلوب للقالب
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
-        'user_free_sessions_count': user_free_sessions_count,
-        'unlimited_free_mode': False,  # ألغيناه
-    })
+    }
+    return render(request, 'games/letters/packages.html', context)
 
 
 def create_letters_session(request):
-    # يقبل POST فقط
+    """
+    إنشاء جلسة خلية الحروف:
+    - المجانية: تتطلب تسجيل دخول + أهلية جلسة مجانية واحدة.
+    - المدفوعة: تتطلب تسجيل دخول + شراء نشط غير مستهلَك.
+    - تثبيت ترتيب الحروف الابتدائي عبر utils_letters (ثابت داخل الجلسة).
+    """
     if request.method != 'POST':
         return redirect('games:letters_home')
 
@@ -292,14 +315,13 @@ def create_letters_session(request):
 
     lock_key = None
     try:
-        # تحقق الأهلية/الشراء قبل إنشاء الجلسة
+        # ===== تحقق الأهلية/الشراء حسب نوع الحزمة =====
         if package.is_free:
-            # غير مسجل → وجّهه للتسجيل مباشرة
+            # يجب تسجيل الدخول
             if not request.user.is_authenticated:
                 messages.info(request, 'يرجى تسجيل الدخول لإنشاء جلسة لعب')
                 return redirect(f'/accounts/login/?next={request.path}')
 
-            # وضع مؤقت: السماح دائمًا (لكن أبقي المنطق للمستقبل)
             eligible, anti_cheat_message, sessions_count = check_free_session_eligibility(
                 request.user, 'letters'
             )
@@ -308,23 +330,32 @@ def create_letters_session(request):
                 logger.warning(f'Free session creation blocked for user {request.user.username}: {sessions_count} previous sessions')
                 return redirect('games:letters_home')
         else:
-            # المدفوعة تتطلب شراء
+            # مدفوعة: تسجيل دخول + شراء نشط غير مستهلَك
             if not request.user.is_authenticated:
                 messages.error(request, 'يرجى تسجيل الدخول لشراء الحزم المدفوعة')
                 return redirect(f'/accounts/login/?next={request.path}')
-            purchase = UserPurchase.objects.filter(user=request.user, package=package).first()
+
+            purchase = UserPurchase.objects.filter(
+                user=request.user, package=package, is_completed=False
+            ).order_by('-purchase_date').first()
+
             if not purchase:
-                messages.error(request, 'يجب شراء هذه الحزمة أولاً')
+                messages.error(request, 'يجب شراء هذه الحزمة أولًا')
                 return redirect('games:letters_home')
 
-        # أسماء الفرق (مع تفضيلات المستخدم إن وُجدت)
+            # في حال الشراء منتهي الصلاحية
+            if purchase.mark_expired_if_needed(auto_save=True):
+                messages.error(request, 'انتهت صلاحية الشراء السابق. لإعادة اللعب تحتاج شراء جديد.')
+                return redirect('games:letters_home')
+
+        # ===== أسماء الفرق (مع تفضيلات المستخدم إن وُجدت) =====
         team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
         team2_name = request.POST.get('team2_name', 'الفريق البرتقالي')
         if request.user.is_authenticated and hasattr(request.user, 'preferences'):
             team1_name = request.user.preferences.default_team1_name or team1_name
             team2_name = request.user.preferences.default_team2_name or team2_name
 
-        # قفل خفيف لمنع إنشاء جلستين بالنقر السريع (3 ثوانٍ)
+        # ===== قفل خفيف لمنع الإنشاء المزدوج (3 ثوانٍ) =====
         lock_owner = request.user.id if request.user.is_authenticated else request.META.get('REMOTE_ADDR', 'anon')
         lock_key = f"letters_create_lock:{lock_owner}"
         if cache.get(lock_key):
@@ -332,29 +363,30 @@ def create_letters_session(request):
             return redirect('games:letters_home')
         cache.set(lock_key, 1, timeout=3)
 
-        # إنشاء الجلسة
+        # ===== إنشاء الجلسة =====
         session = GameSession.objects.create(
-            host=request.user,
+            host=request.user if request.user.is_authenticated else None,
             package=package,
             game_type='letters',
             team1_name=team1_name,
             team2_name=team2_name,
         )
 
-        # توليد الحروف وتخزينها في الكاش (حسب قواعد الجلسة)
-        _ = get_letters_for_session(session)
+        # ===== تثبيت ترتيب الحروف الابتدائي في هذه الجلسة =====
+        if package.is_free:
+            letters = get_free_order()          # 25 حرف للمجاني (ثابتة وفق دالتك)
+        else:
+            letters = get_paid_order_fresh()    # 28 حرف كاملة بترتيب جديد
+        set_session_order(session.id, letters, is_free=package.is_free)
 
-        # توليد وحفظ توكن المضيف حتى نهاية الجلسة
-        host_token = _put_host_token(session)
-
-        # إنشاء تقدم اللعبة
+        # ===== إنشاء تقدّم اللعبة (حالة الخلايا + الحروف المستخدمة) =====
         LettersGameProgress.objects.create(
             session=session,
             cell_states={},
             used_letters=[],
         )
 
-        # تسجيل نشاط (غير حرج)
+        # ===== تسجيل نشاط (اختياري) =====
         if request.user.is_authenticated:
             try:
                 from accounts.models import UserActivity
@@ -368,13 +400,13 @@ def create_letters_session(request):
             except Exception:
                 pass
 
-        # رسائل نجاح: وضع المجانية غير محدود حاليًا
+        # ===== رسالة نجاح وتوجيه =====
         if package.is_free:
             messages.success(request, '🎉 تم إنشاء جلستك المجانية بنجاح! ⏰ صالحة لمدة ساعة واحدة.')
         else:
             messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع باللعب 🎉')
 
-        logger.info(f'New letters session created: {session.id} by {request.user.username} ({"FREE" if package.is_free else "PAID"})')
+        logger.info(f'New letters session created: {session.id} by {(request.user.username if request.user.is_authenticated else "anon")} ({"FREE" if package.is_free else "PAID"})')
         return redirect('games:letters_session', session_id=session.id)
 
     except Exception as e:
@@ -383,7 +415,7 @@ def create_letters_session(request):
         return redirect('games:letters_home')
 
     finally:
-        # فك القفل حتى لا يحبس المستخدم
+        # فك القفل دائمًا
         try:
             if lock_key:
                 cache.delete(lock_key)
@@ -391,15 +423,17 @@ def create_letters_session(request):
             pass
 
 
-@login_required
 def letters_session(request, session_id):
-    session = get_object_or_404(GameSession, id=session_id, host=request.user)
+    session = get_object_or_404(GameSession, id=session_id)
 
     if is_session_expired(session):
-        messages.error(request, '⏰ انتهت صلاحية الجلسة المجانية (ساعة واحدة). يرجى شراء الحزم المدفوعة للاستمتاع بجلسات غير محدودة.')
+        messages.error(request, f'⏰ {_expired_text(session)}')
         return redirect('games:letters_home')
 
-    arabic_letters = get_letters_for_session(session)
+    # اقرأ ترتيب الحروف من المصدر الموحّد (مخزون في الكاش/DB عبر utils_letters)
+    arabic_letters = get_session_order(session.id, session.package.is_free) or []
+    if not arabic_letters:
+        arabic_letters = get_letters_for_session(session)  # احتياط
 
     # تنظيم الأسئلة
     questions = session.package.letters_questions.all().order_by('letter', 'question_type')
@@ -417,9 +451,6 @@ def letters_session(request, session_id):
         if remaining_minutes <= 10:
             free_session_warning = f"⚠️ باقي {remaining_minutes} دقيقة فقط على انتهاء الجلسة المجانية!"
 
-    # اجلب توكن المضيف من الكاش (للواجهة الأمامية)
-    host_token = cache.get(_host_token_key(session.id)) or _put_host_token(session)
-
     return render(request, 'games/letters/letters_session.html', {
         'session': session,
         'arabic_letters': arabic_letters,
@@ -430,19 +461,24 @@ def letters_session(request, session_id):
         'free_session_warning': free_session_warning,
         'display_url': request.build_absolute_uri(reverse('games:letters_display', args=[session.display_link])),
         'contestants_url': request.build_absolute_uri(reverse('games:letters_contestants', args=[session.contestants_link])),
-        'host_token': host_token,  # مهم للـHTTP
     })
+
+
+
 
 def letters_display(request, display_link):
     session = get_object_or_404(GameSession, display_link=display_link, is_active=True)
     if is_session_expired(session):
         return render(request, 'games/session_expired.html', {
-            'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)',
-            'session_type': 'مجانية',
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
             'upgrade_message': 'للاستمتاع بجلسات غير محدودة، تصفح الحزم المدفوعة!'
         })
 
-    arabic_letters = get_letters_for_session(session)
+    arabic_letters = get_session_order(session.id, session.package.is_free) or []
+    if not arabic_letters:
+        arabic_letters = get_letters_for_session(session)  # احتياط
+
     time_remaining = get_session_time_remaining(session)
 
     logger.info(f'Display page accessed for session: {session.id}')
@@ -454,14 +490,15 @@ def letters_display(request, display_link):
         'is_free_session': session.package.is_free,
     })
 
+
+
 def letters_contestants(request, contestants_link):
-    """صفحة المتسابقين (بدون تسجيل دخول)"""
     session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True)
 
     if is_session_expired(session):
         return render(request, 'games/session_expired.html', {
-            'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)',
-            'session_type': 'مجانية',
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
             'upgrade_message': 'للاستمتاع بجلسات غير محدودة، تصفح الحزم المدفوعة!'
         })
 
@@ -473,6 +510,7 @@ def letters_contestants(request, contestants_link):
         'time_remaining': time_remaining,
         'is_free_session': session.package.is_free,
     })
+
 
 # ===============================
 # باقي الألعاب (الواجهات)
@@ -587,7 +625,6 @@ def api_check_free_session_eligibility(request):
         return JsonResponse({'success': False, 'error': 'خطأ في التحقق من الأهلية'}, status=500)
 
 
-# games/views.py
 @require_http_methods(["GET"])
 def get_question(request):
     letter = request.GET.get('letter')
@@ -599,7 +636,6 @@ def get_question(request):
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
 
-        # ✅ جديد: اغلاق عند الانتهاء (مدفوع أو مجاني)
         if is_session_expired(session):
             return JsonResponse({
                 'success': False,
@@ -607,8 +643,8 @@ def get_question(request):
                 'session_expired': True
             }, status=410)
 
-        # تأكد أن الحرف ضمن حروف الجلسة...
-        letters = get_letters_for_session(session)
+        # تأكد أن الحرف ضمن ترتيب الجلسة الفعلي (بعد أي جولة جديدة)
+        letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
         if letter not in letters:
             return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
 
@@ -662,7 +698,11 @@ def get_session_letters(request):
                 'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
             }, status=410)
 
-        letters = get_letters_for_session(session)
+        # اقرأ الترتيب الحالي المخزّن (يتحدث بعد كل جولة جديدة)
+        letters = get_session_order(session.id, session.package.is_free) or []
+        if not letters:
+            letters = get_letters_for_session(session)  # احتياط
+
         return JsonResponse({
             'success': True,
             'letters': letters,
@@ -682,63 +722,93 @@ def get_session_letters(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_cell_state(request):
-    """يتطلب توكن المضيف"""
+    """
+    تحديث حالة خلية (team1 / team2 / normal) وتخزينها في LettersGameProgress
+    + التحقق من صلاحية الجلسة والحرف
+    + بثّ التغيير لكل العملاء عبر WebSocket
+    """
+    # --- قراءة JSON بأمان ---
     try:
-        data = json.loads(request.body or "{}")
-        session_id = data.get('session_id')
-        letter = data.get('letter')
-        state = data.get('state')
+        data = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
 
-        if not all([session_id, letter, state]):
-            return JsonResponse({'success': False, 'error': 'جميع المعاملات مطلوبة'}, status=400)
+    session_id = data.get('session_id')
+    letter = data.get('letter')
+    state = data.get('state')
 
-        if state not in ['normal', 'team1', 'team2']:
-            return JsonResponse({'success': False, 'error': 'حالة الخلية غير صحيحة'}, status=400)
+    # --- تحقق من المعاملات ---
+    if not session_id or not letter or state is None:
+        return JsonResponse({'success': False, 'error': 'جميع المعاملات مطلوبة'}, status=400)
 
-        # تحقق توكن المضيف
-        if not _require_host_token(request, session_id):
-            return HttpResponseForbidden('Forbidden')
+    state = str(state)
+    if state not in ('normal', 'team1', 'team2'):
+        return JsonResponse({'success': False, 'error': 'حالة الخلية غير صحيحة'}, status=400)
 
+    # --- الجلسة ---
+    try:
         session = GameSession.objects.get(id=session_id, is_active=True)
-        if is_session_expired(session):
-            return JsonResponse({
-                'success': False,
-                'error': 'انتهت صلاحية الجلسة',
-                'session_expired': True,
-                'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
-            }, status=410)
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
 
-        letters = get_letters_for_session(session)
-        if letter not in letters:
-            return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+    if is_session_expired(session):
+        return JsonResponse({
+            'success': False,
+            'error': 'انتهت صلاحية الجلسة',
+            'session_expired': True,
+            'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
+        }, status=410)
 
-        progress, _ = LettersGameProgress.objects.get_or_create(session=session, defaults={'cell_states': {}, 'used_letters': []})
-        if progress.cell_states is None:
+    # --- تحقق من الحرف ضمن حروف هذه الجلسة ---
+    letters = get_letters_for_session(session)
+    if letter not in letters:
+        return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+
+    # --- حفظ حالة الخلية + تتبّع الحروف المستخدمة ---
+    try:
+        progress, _ = LettersGameProgress.objects.get_or_create(
+            session=session,
+            defaults={'cell_states': {}, 'used_letters': []}
+        )
+
+        if not isinstance(progress.cell_states, dict):
             progress.cell_states = {}
         progress.cell_states[letter] = state
 
-        if progress.used_letters is None:
+        if not isinstance(progress.used_letters, list):
             progress.used_letters = []
         if letter not in progress.used_letters:
             progress.used_letters.append(letter)
 
         progress.save(update_fields=['cell_states', 'used_letters'])
 
+        # --- بثّ التغيير عبر WS (سيحوّله الكونسومر إلى payload type: 'cell_state_updated') ---
+        try:
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f"letters_session_{session_id}",
+                    {
+                        "type": "broadcast_cell_state",  # اسم الميثود داخل الكونسومر
+                        "letter": letter,
+                        "state": state,
+                    }
+                )
+        except Exception as e:
+            logger.error(f'WS broadcast error (cell_state): {e}')
+
         logger.info(f'Cell state updated: {letter} -> {state} in session {session_id}')
         return JsonResponse({'success': True, 'message': 'تم تحديث حالة الخلية', 'letter': letter, 'state': state})
 
-    except GameSession.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
     except Exception as e:
         logger.error(f'Error updating cell state: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_scores(request):
-    """يتطلب توكن المضيف"""
+    """تحديث نقاط الفريقين + بثّ التحديث عبر WS"""
     try:
         data = json.loads(request.body or "{}")
         session_id = data.get('session_id')
@@ -747,10 +817,6 @@ def update_scores(request):
 
         if not session_id:
             return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
-
-        # تحقق توكن المضيف
-        if not _require_host_token(request, session_id):
-            return HttpResponseForbidden('Forbidden')
 
         try:
             team1_score = max(0, int(team1_score))
@@ -780,6 +846,23 @@ def update_scores(request):
 
         session.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
 
+        # بثّ فوري لكل العملاء
+        try:
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f"letters_session_{session_id}",
+                    {
+                        "type": "broadcast_scores",   # الكونسومر يرسلها للمتصفح كـ type: 'scores_updated'
+                        "team1_score": session.team1_score,
+                        "team2_score": session.team2_score,
+                        "winner": session.winner_team,
+                        "is_completed": session.is_completed,
+                    }
+                )
+        except Exception as e:
+            logger.error(f'WS broadcast error (scores): {e}')
+
         logger.info(f'Scores updated in session {session_id}: Team1={team1_score}, Team2={team2_score}')
         return JsonResponse({
             'success': True,
@@ -798,74 +881,38 @@ def update_scores(request):
         logger.error(f'Error updating scores: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
-@require_http_methods(["GET"])
+
 def session_state(request):
-    session_id = request.GET.get('session_id')
-    if not session_id:
-        return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
+    sid = request.GET.get("session_id")
+    if not sid:
+        return HttpResponseBadRequest("missing session_id")
 
-    try:
-        session = GameSession.objects.get(id=session_id, is_active=True)
-        if is_session_expired(session):
-            return JsonResponse({
-                'success': False,
-                'error': 'انتهت صلاحية الجلسة',
-                'session_expired': True,
-                'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)',
-                'upgrade_message': 'للاستمتاع بجلسات غير محدودة، تصفح الحزم المدفوعة!'
-            }, status=410)
+    session = get_object_or_404(GameSession, id=sid)
+    if is_session_expired(session):
+        return JsonResponse({"detail": "expired"}, status=410)
 
-        letters = get_letters_for_session(session)
+    # حالة الخلايا
+    progress = LettersGameProgress.objects.filter(session=session).only("cell_states").first()
+    cell_states = progress.cell_states if (progress and isinstance(progress.cell_states, dict)) else {}
 
-        try:
-            progress = LettersGameProgress.objects.get(session=session)
-            cell_states = progress.cell_states or {}
-            used_letters = progress.used_letters or []
-        except LettersGameProgress.DoesNotExist:
-            cell_states, used_letters = {}, []
+    # الوقت المتبقي للمجاني
+    time_remaining_seconds = None
+    if session.package.is_free:
+        end_at = session.created_at + timedelta(hours=1)
+        left = int((end_at - timezone.now()).total_seconds())
+        time_remaining_seconds = max(0, left)
 
-        contestants = [{
-            'name': c.name,
-            'team': c.team,
-            'is_active': c.is_active,
-            'joined_at': c.joined_at.isoformat()
-        } for c in session.contestants.all()]
+    # ترتيب الحروف من المصدر الموحّد
+    letters = get_session_order(session.id, session.package.is_free) or []
 
-        time_remaining = get_session_time_remaining(session)
-        time_remaining_seconds = int(time_remaining.total_seconds()) if time_remaining else None
+    return JsonResponse({
+        "team1_score": session.team1_score,
+        "team2_score": session.team2_score,
+        "cell_states": cell_states,
+        "time_remaining_seconds": time_remaining_seconds,
+        "arabic_letters": letters,
+    })
 
-        return JsonResponse({
-            'success': True,
-            'session_id': str(session.id),
-            'team1_name': session.team1_name,
-            'team2_name': session.team2_name,
-            'team1_score': session.team1_score,
-            'team2_score': session.team2_score,
-            'is_active': session.is_active,
-            'is_completed': session.is_completed,
-            'winner_team': session.winner_team,
-            'cell_states': cell_states,
-            'used_letters': used_letters,
-            'contestants': contestants,
-            'arabic_letters': letters,
-            'package_info': {
-                'name': f"{session.package.get_game_type_display()} - حزمة {session.package.package_number}",
-                'is_free': session.package.is_free,
-                'package_number': session.package.package_number
-            },
-            'time_remaining_seconds': time_remaining_seconds,
-            'created_at': session.created_at.isoformat(),
-            'anti_cheat_info': {
-                'is_free_session': session.package.is_free,
-                'session_type': 'مجانية' if session.package.is_free else 'مدفوعة'
-            }
-        })
-
-    except GameSession.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
-    except Exception as e:
-        logger.error(f'Error fetching session state: {e}')
-        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -1009,8 +1056,8 @@ def api_session_expiry_info(request):
 @require_http_methods(["POST"])
 def api_contestant_buzz_http(request):
     """
-    لا يوجد حدّ للمحاولات. ينرفض فقط لو الزر محجوز الآن لشخص آخر.
-    القفل: 3 ثوانٍ (متطابق مع WS).
+    زر الطنطيط عبر HTTP بقفل ذرّي (3 ثواني).
+    يقبل أول محاولة فقط خلال مدة القفل، والبقية تُرفض برسالة 'محجوز'.
     """
     try:
         data = json.loads(request.body or "{}")
@@ -1031,24 +1078,29 @@ def api_contestant_buzz_http(request):
         if is_session_expired(session):
             return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-        # قفل الزر لثلاث ثوانٍ
         buzz_lock_key = f"buzz_lock_{session_id}"
-        current_buzzer = cache.get(buzz_lock_key)
-        if current_buzzer:
-            return JsonResponse({
-                'success': False,
-                'message': f'الزر محجوز من {current_buzzer.get("name", "مشارك")}',
-                'locked_by': current_buzzer.get('name'),
-                'locked_team': current_buzzer.get('team')
-            })
-
-        cache.set(buzz_lock_key, {
+        lock_payload = {
             'name': contestant_name,
             'team': team,
             'timestamp': timestamp,
             'session_id': session_id,
-            'method': 'HTTP'
-        }, timeout=3)  # 3 ثوانٍ
+            'method': 'HTTP',
+        }
+
+        # قفل ذرّي: True إذا تم الإنشاء، False إذا كان موجود
+        try:
+            added = cache.add(buzz_lock_key, lock_payload, timeout=3)
+        except Exception:
+            added = False
+
+        if not added:
+            current_buzzer = cache.get(buzz_lock_key) or {}
+            return JsonResponse({
+                'success': False,
+                'message': f'الزر محجوز من {current_buzzer.get("name","مشارك")}',
+                'locked_by': current_buzzer.get('name'),
+                'locked_team': current_buzzer.get('team')
+            })
 
         # ثبّت المتسابق/الفريق في قاعدة البيانات
         contestant, created = Contestant.objects.get_or_create(
@@ -1060,7 +1112,7 @@ def api_contestant_buzz_http(request):
             contestant.team = team
             contestant.save(update_fields=['team'])
 
-        # بث موحّد إلى المجموعة (يتوافق مع consumer: broadcast_buzz_event)
+        # بث موحّد إلى المجموعة (يتوافق مع consumer)
         try:
             from channels.layers import get_channel_layer
             from asgiref.sync import async_to_sync
@@ -1074,12 +1126,12 @@ def api_contestant_buzz_http(request):
                     'team': team,
                     'team_display': team_display,
                     'timestamp': timestamp,
-                    'action': 'buzz_accepted',  # ← المهم
+                    'action': 'buzz_accepted',
                 })
         except Exception as e:
             logger.error(f"Error sending HTTP buzz to WebSocket: {e}")
 
-        logger.info(f"HTTP Buzz accepted: {contestant_name} from {team} in session {session_id}")
+        logger.info(f"HTTP Buzz accepted (atomic): {contestant_name} from {team} in session {session_id}")
         return JsonResponse({
             'success': True,
             'message': f'تم تسجيل إجابتك يا {contestant_name}!',
@@ -1093,3 +1145,65 @@ def api_contestant_buzz_http(request):
     except Exception as e:
         logger.error(f'HTTP Buzz error: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
+# games/.py
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def letters_new_round(request):
+    """
+    بدء جولة جديدة للحزم المدفوعة فقط، بدون أي توكن.
+    - أي شخص يملك رابط المقدم يقدر يشغّلها.
+    - إذا الجلسة مجانية → 403
+    - إذا منتهية الصلاحية → 410
+    - تبث التغيير عبر WebSocket وتفرّغ تقدم الخلايا.
+    """
+    # قراءة JSON
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
+
+    sid = payload.get("session_id")
+    if not sid:
+        return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
+
+    # الجلسة
+    session = get_object_or_404(GameSession, id=sid, is_active=True)
+
+    # انتهاء الصلاحية
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    # منع المجاني
+    if session.package.is_free:
+        return JsonResponse({'success': False, 'error': 'الميزة متاحة للحزم المدفوعة فقط'}, status=403)
+
+    # توليد ترتيب جديد للحروف وتثبيته
+    new_letters = get_paid_order_fresh()
+    set_session_order(session.id, new_letters, is_free=False)
+
+    # تصفير تقدم الخلايا/الحروف المستخدمة (اختياري لكنه أنظف)
+    try:
+        progress = LettersGameProgress.objects.filter(session=session).first()
+        if progress:
+            progress.cell_states = {}
+            progress.used_letters = []
+            progress.save(update_fields=['cell_states', 'used_letters'])
+    except Exception:
+        pass
+
+    # بث التغيير لكل العملاء
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"letters_session_{session.id}",
+                {"type": "broadcast_letters_replace", "letters": new_letters, "reset_progress": True}
+            )
+    except Exception as e:
+        logger.error(f"WS broadcast error (new round): {e}")
+
+    return JsonResponse({'success': True, 'letters': new_letters, 'reset_progress': True})

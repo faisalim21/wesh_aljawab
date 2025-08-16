@@ -37,7 +37,11 @@ from .models import (
 class LettersPackageForm(forms.ModelForm):
     class Meta:
         model = GamePackage
-        fields = ('package_number', 'is_free', 'price', 'is_active', 'description', 'question_theme')
+        fields = (
+            'package_number', 'is_free',
+            'original_price', 'discounted_price', 'price',
+            'is_active', 'description', 'question_theme'
+        )
 
     def clean_package_number(self):
         num = self.cleaned_data['package_number']
@@ -159,12 +163,17 @@ class LettersPackageAdmin(admin.ModelAdmin):
     form = LettersPackageForm
     fieldsets = (
         ('المعلومات الأساسية', {
-            'fields': ('package_number', 'is_free', 'price', 'is_active')
+            'fields': (
+                'package_number', 'is_free',
+                ('original_price', 'discounted_price', 'price'),
+                'is_active'
+            )
         }),
         ('المحتوى', {
             'fields': ('description', 'question_theme')
         }),
     )
+
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -189,21 +198,41 @@ class LettersPackageAdmin(admin.ModelAdmin):
     theme_badge.short_description = "نوع الأسئلة"
 
     def questions_count_badge(self, obj):
+        """
+        يعرض عدّاد الأسئلة الحالية مقابل العدد المتوقع.
+        - المجانية (رقم 0): 25 حرف × 3 أنواع
+        - المدفوعة: 28 حرف × 5 أنواع  (إن كانت شبكتك 25 بالمدفوع، غيّر 28 إلى 25)
+        """
         count = getattr(obj, '_qcount', 0)
-        # المتوقع: المجانية (رقم 0) = 25 حرف × 3 أنواع، المدفوعة = 25 × 5 أنواع
+
         per_letter = 3 if (obj.is_free and obj.package_number == 0) else 5
-        expected = 25 * per_letter
-        if count == expected:
+        expected_letters = 25 if (obj.is_free and obj.package_number == 0) else 28  # <-- غيّر لـ 25 لو شبكتك المدفوعة 25
+        expected = expected_letters * per_letter
+
+        if count >= expected and expected > 0:
             color = 'green'; icon = '✅'
         elif count > 0:
             color = 'orange'; icon = '⚠️'
         else:
             color = 'red'; icon = '❌'
-        return format_html('<span style="color:{};font-weight:700;">{} {} / {}</span>', color, icon, count, expected)
-    questions_count_badge.short_description = "عدد الأسئلة"
 
+        return format_html(
+            '<span style="color:{};font-weight:700;">{} {} / {}</span>',
+            color, icon, count, expected
+        )
+    questions_count_badge.short_description = "عدد الأسئلة"
     def price_info(self, obj):
-        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+        if obj.is_free:
+            return "🆓 مجانية"
+        # إن وُجد خصم فعّال
+        if getattr(obj, 'has_discount', False):
+            return format_html(
+                '<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → '
+                '<b style="color:#0ea5e9;">{} ﷼</b>',
+                obj.original_price, obj.discounted_price
+            )
+        # بدون خصم
+        return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
 
     def is_free_icon(self, obj):
@@ -252,8 +281,10 @@ class LettersPackageAdmin(admin.ModelAdmin):
         ]
         return custom + urls
 
+    # داخل LettersPackageAdmin
+
     def stats_view(self, request):
-        """صفحة إحصائيات لحزم/أسئلة خلية الحروف"""
+        """صفحة إحصائيات لحزم/أسئلة خلية الحروف (تعرض السعر الفعلي مع الخصم إن وُجد)."""
         qs = GamePackage.objects.filter(game_type='letters').annotate(qcount=Count('letters_questions'))
         total_packages = qs.count()
         total_questions = LettersGameQuestion.objects.count()
@@ -262,38 +293,54 @@ class LettersPackageAdmin(admin.ModelAdmin):
         active_count = qs.filter(is_active=True).count()
 
         top_packages = qs.order_by('-qcount', 'package_number')[:10]
+
+        def price_str(p):
+            if p.is_free:
+                return "🆓 مجانية"
+            # خصم فعّال؟
+            if getattr(p, 'discounted_price', None) and getattr(p, 'original_price', None) and p.discounted_price < p.original_price:
+                return f"<span style='text-decoration:line-through;color:#64748b;'>{p.original_price} ﷼</span> → " \
+                    f"<b style='color:#0ea5e9;'>{p.discounted_price} ﷼</b>"
+            return f"💰 {p.price} ﷼"
+
         rows = "".join([
-            f"<tr><td>حزمة {p.package_number}</td>"
-            f"<td>{getattr(p, 'get_question_theme_display', lambda: '')()}</td>"
-            f"<td style='text-align:center;'>{p.qcount}</td>"
-            f"<td>{'مجانية' if p.is_free else 'مدفوعة'}</td>"
-            f"<td>{'فعالة' if p.is_active else 'غير فعالة'}</td></tr>"
+            (
+                "<tr>"
+                f"<td>حزمة {p.package_number}</td>"
+                f"<td>{getattr(p, 'get_question_theme_display', lambda: '')()}</td>"
+                f"<td style='text-align:center;'>{p.qcount}</td>"
+                f"<td>{price_str(p)}</td>"
+                f"<td>{'فعّالة' if p.is_active else 'غير فعّالة'}</td>"
+                "</tr>"
+            )
             for p in top_packages
         ])
+
         html = f"""
         <div style="padding:20px;font-family:Tahoma,Arial;">
-          <h2>📊 إحصائيات خلية الحروف</h2>
-          <ul>
+        <h2>📊 إحصائيات خلية الحروف</h2>
+        <ul>
             <li>إجمالي الحزم: <b>{total_packages}</b> (مجانية: {free_count} / مدفوعة: {paid_count})</li>
             <li>إجمالي الأسئلة: <b>{total_questions}</b></li>
             <li>حزم فعّالة: <b>{active_count}</b></li>
-          </ul>
-          <h4>أكثر الحزم من حيث عدد الأسئلة</h4>
-          <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="6">
+        </ul>
+        <h4>أكثر الحزم من حيث عدد الأسئلة</h4>
+        <table style="width:100%;border-collapse:collapse;" border="1" cellpadding="6">
             <thead style="background:#f1f5f9;">
-              <tr>
+            <tr>
                 <th>الحزمة</th>
                 <th>نوع الأسئلة</th>
                 <th>عدد الأسئلة</th>
                 <th>السعر</th>
                 <th>الحالة</th>
-              </tr>
+            </tr>
             </thead>
             <tbody>{rows or '<tr><td colspan="5">لا توجد بيانات</td></tr>'}</tbody>
-          </table>
+        </table>
         </div>
         """
         return HttpResponse(html)
+
 
     def upload_letters_view(self, request, pk):
         """
@@ -593,9 +640,16 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
     fieldsets = (
-        ('المعلومات الأساسية', {'fields': ('package_number', 'is_free', 'price', 'is_active')}),
+        ('المعلومات الأساسية', {
+            'fields': (
+                'package_number', 'is_free',
+                ('original_price', 'discounted_price', 'price'),
+                'is_active'
+            )
+        }),
         ('المحتوى', {'fields': ('description',)}),
     )
+
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(game_type='images')
@@ -605,8 +659,17 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     package_info.short_description = "الرقم"
 
     def price_info(self, obj):
-        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+        if obj.is_free:
+            return "🆓 مجانية"
+        if getattr(obj, 'has_discount', False):
+            return format_html(
+                '<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → '
+                '<b style="color:#0ea5e9;">{} ﷼</b>',
+                obj.original_price, obj.discounted_price
+            )
+        return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
+
 
     def is_free_icon(self, obj):
         return "✅" if obj.is_free else "—"
@@ -644,7 +707,13 @@ class QuizPackageAdmin(admin.ModelAdmin):
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
     fieldsets = (
-        ('المعلومات الأساسية', {'fields': ('package_number', 'is_free', 'price', 'is_active')}),
+        ('المعلومات الأساسية', {
+            'fields': (
+                'package_number', 'is_free',
+                ('original_price', 'discounted_price', 'price'),
+                'is_active'
+            )
+        }),
         ('المحتوى', {'fields': ('description',)}),
     )
 
@@ -656,7 +725,15 @@ class QuizPackageAdmin(admin.ModelAdmin):
     package_info.short_description = "الرقم"
 
     def price_info(self, obj):
-        return "🆓 مجانية" if obj.is_free else f"💰 {obj.price} ريال"
+        if obj.is_free:
+            return "🆓 مجانية"
+        if getattr(obj, 'has_discount', False):
+            return format_html(
+                '<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → '
+                '<b style="color:#0ea5e9;">{} ﷼</b>',
+                obj.original_price, obj.discounted_price
+            )
+        return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
 
     def is_free_icon(self, obj):

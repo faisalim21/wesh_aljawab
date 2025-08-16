@@ -1,4 +1,4 @@
-# games/urls.py - الملف المُصحح
+# games/urls.py
 from django.urls import path
 from . import views
 
@@ -7,19 +7,18 @@ app_name = 'games'
 urlpatterns = [
     # الصفحات الرئيسية
     path('', views.games_home, name='home'),
-    
+
     # لعبة خلية الحروف
     path('letters/', views.letters_game_home, name='letters_home'),
     path('letters/create/', views.create_letters_session, name='create_letters_session'),
     path('letters/session/<uuid:session_id>/', views.letters_session, name='letters_session'),
-    # تم حذف letters_host لأنه غير موجود في views.py الجديد
     path('letters/display/<str:display_link>/', views.letters_display, name='letters_display'),
     path('letters/contestants/<str:contestants_link>/', views.letters_contestants, name='letters_contestants'),
-    
-    # الألعاب الأخرى (مؤقتة)
+
+    # الألعاب الأخرى
     path('images/', views.images_game_home, name='images_home'),
     path('quiz/', views.quiz_game_home, name='quiz_home'),
-    
+
     # API endpoints
     path('api/get-question/', views.get_question, name='api_get_question'),
     path('api/get-session-letters/', views.get_session_letters, name='api_get_session_letters'),
@@ -31,5 +30,5 @@ urlpatterns = [
     path('api/session-expiry-info/', views.api_session_expiry_info, name='api_session_expiry_info'),
     path('api/user-session-stats/', views.api_user_session_stats, name='api_user_session_stats'),
     path('api/contestant-buzz/', views.api_contestant_buzz_http, name='api_contestant_buzz_http'),
-    
+    path('api/letters-new-round/', views.letters_new_round, name='api_letters_new_round'),
 ]
