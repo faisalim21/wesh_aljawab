@@ -286,9 +286,6 @@
               {% if package.description %}
                 <div class="pkg-desc-wrap">
                   <p class="pkg-desc">{{ package.description }}</p>
-                  <div class="text-center mt-1">
-                    <button type="button" class="btn btn-sm btn-link p-0 toggle-desc">عرض المزيد</button>
-                  </div>
                 </div>
               {% endif %}
 
@@ -349,16 +346,6 @@
         });
       })();
 
-      // زر "عرض المزيد/أقل" للوصف
-      document.querySelectorAll('.toggle-desc').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          const wrap = btn.closest('.pkg-desc-wrap');
-          if (!wrap) return;
-          const p = wrap.querySelector('.pkg-desc');
-          p.classList.toggle('expanded');
-          btn.textContent = p.classList.contains('expanded') ? 'عرض أقل' : 'عرض المزيد';
-        });
-      });
 
       // تنبيه عند محاولة شراء حزمة سبق استخدامها
       document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
