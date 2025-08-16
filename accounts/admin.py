@@ -5,7 +5,6 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
 from django.core.cache import cache
-from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.db.models import Count, Sum, F, Case, When, DecimalField
 from django.db.models.functions import Coalesce, TruncDate
@@ -16,19 +15,16 @@ import csv
 import json
 
 from django.contrib.auth.models import User
-
 from .models import UserProfile, UserActivity, UserPreferences
-from games.models import UserPurchase, GameSession
+from games.models import UserPurchase, GameSession, FreeTrialUsage
+from payments.models import Transaction, PaymentMethod
 
 
-# ===========================
-#  أدوات مساعدة للمدى الزمني
-# ===========================
+# ============== أدوات المدى الزمني + الفلاتر ==============
 def _parse_range(request):
     """
-    يدعم:
-      - ?range=7d|30d|90d|365d|all (افتراضي 30d)
-      - أو ?start=YYYY-MM-DD&end=YYYY-MM-DD
+    ?range=7d|30d|90d|365d|all  (افتراضي 30d)
+    أو ?start=YYYY-MM-DD&end=YYYY-MM-DD
     يعيد: (start_dt, end_dt, label)
     """
     now = timezone.now()
@@ -55,11 +51,14 @@ def _parse_range(request):
     return start, now, "30d"
 
 
+def _game_filter(request):
+    """?game=letters|images|quiz|all"""
+    g = (request.GET.get("game") or "all").lower()
+    return g if g in {"letters", "images", "quiz"} else "all"
+
+
 def _effective_price_expr():
-    """
-    سعر فعلي تقديري للمشتريات:
-    - إن كان discounted_price > 0 استخدمه، وإلا price.
-    """
+    """سعر فعلي تقديري: إن كان discounted_price > 0 استخدمه، وإلا price."""
     return Case(
         When(
             package__discounted_price__isnull=False,
@@ -71,22 +70,10 @@ def _effective_price_expr():
     )
 
 
-def _bool_to_badge(ok, true_label="نعم", false_label="لا"):
-    color = "#16a34a" if ok else "#ef4444"
-    label = true_label if ok else false_label
-    return format_html(
-        '<span style="background:{bg};color:#fff;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>',
-        label,
-        bg=color,
-    )
-
-
-# ===========================
-#  UserProfile
-# ===========================
+# ============== مدراء النماذج الأساسية ==============
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "display_name_col", "account_type", "is_host_col", "phone_number", "created_at")
+    list_display = ("user", "display_name_col", "account_type", "is_host", "phone_number", "created_at")
     list_filter = ("account_type", "is_host", "created_at", "updated_at")
     search_fields = ("user__username", "user__email", "host_name", "phone_number")
     date_hierarchy = "created_at"
@@ -97,14 +84,7 @@ class UserProfileAdmin(admin.ModelAdmin):
         return obj.display_name
     display_name_col.short_description = "الاسم المعروض"
 
-    def is_host_col(self, obj):
-        return mark_safe(_bool_to_badge(obj.is_host, "مقدم", "مستخدم"))
-    is_host_col.short_description = "نوع الحساب"
 
-
-# ===========================
-#  UserActivity
-# ===========================
 @admin.register(UserActivity)
 class UserActivityAdmin(admin.ModelAdmin):
     list_display = ("user", "activity_type", "game_type", "session_id", "created_at", "desc_short")
@@ -128,9 +108,6 @@ class UserActivityAdmin(admin.ModelAdmin):
     purge_old_activities.short_description = "حذف الأنشطة القديمة (> 180 يوم)"
 
 
-# ===========================
-#  UserPreferences
-# ===========================
 @admin.register(UserPreferences)
 class UserPreferencesAdmin(admin.ModelAdmin):
     list_display = ("user", "theme_preference", "sound_enabled", "volume_level", "quick_mode_enabled", "show_statistics")
@@ -138,9 +115,7 @@ class UserPreferencesAdmin(admin.ModelAdmin):
     search_fields = ("user__username", "user__email")
 
 
-# ===========================
-#  لوحة الحسابات والتحليلات (Proxy)
-# ===========================
+# ============== لوحة الحسابات والتحليلات (Proxy) ==============
 class AccountsDashboard(User):
     class Meta:
         proxy = True
@@ -151,19 +126,20 @@ class AccountsDashboard(User):
 @admin.register(AccountsDashboard)
 class AccountsDashboardAdmin(admin.ModelAdmin):
     """
-    صفحة تحليلات تفاعلية داخل الأدمن (بدون قوالب خارجية):
-    - إجمالي المستخدمين/المشتريات/الإيراد التقديري
-    - نسبة العملاء العائدين
-    - أعلى 10 عملاء، أكثر الحزم شراءً
-    - توزيع حسب نوع اللعبة
-    - الجلسات النشطة وأفضل المضيفين
-    - رسم بياني لسرعة الشراء آخر 14 يوم
-    - تصدير CSV لأعلى العملاء والحزم
+    لوحة تحليل سلوك العميل + الإيرادات ورسوم الدفع:
+    - تحويل المجاني → المدفوع (مدى الحياة وداخل المدى)
+    - من جرّب مجاني ولم يشترِ
+    - عدد مجرّبي المجاني / مشترِي المدفوع (+ نسب)
+    - زمن التحويل (وسيط/متوسط بالأيام)
+    - ARPPU، تكرار الشراء، توزيع حسب نوع اللعبة
+    - صافي الإيراد بعد الرسوم (1 ريال/معاملة + % حسب اسم الطريقة + processing_fee)
+    - توصية إذا كانت رسوم فيزا تثقل الهامش
+    - فلاتر: المدى الزمني + نوع اللعبة، وتصدير CSV
     """
     change_list_template = None
-    list_display = ("username", "email", "last_login")  # لن تستخدم فعليًا
+    list_display = ("username", "email", "last_login")  # غير مستخدمة
 
-    # -------- روابط مخصصة --------
+    # ---------- روابط ----------
     def get_urls(self):
         urls = super().get_urls()
         custom = [
@@ -177,19 +153,21 @@ class AccountsDashboardAdmin(admin.ModelAdmin):
     def redirect_to_dashboard(self, request):
         return HttpResponseRedirect(reverse("admin:accounts_dashboard"))
 
-    # -------- تصدير CSV --------
+    # ---------- تصدير ----------
     def export_top_buyers(self, request):
         start, end, _ = _parse_range(request)
+        game = _game_filter(request)
+
         purchases = UserPurchase.objects.select_related("user", "package")
         if start and end:
             purchases = purchases.filter(purchase_date__gte=start, purchase_date__lt=end)
+        if game != "all":
+            purchases = purchases.filter(package__game_type=game)
 
-        eff_price = _effective_price_expr()
-        rows = (
-            purchases.values("user", "user__username", "user__email")
-            .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff_price), Decimal("0")))
-            .order_by("-total_spent", "-purchases_count")[:500]
-        )
+        eff = _effective_price_expr()
+        rows = (purchases.values("user", "user__username", "user__email")
+                 .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
+                 .order_by("-total_spent", "-purchases_count")[:500])
 
         resp = HttpResponse(content_type="text/csv; charset=utf-8")
         resp["Content-Disposition"] = 'attachment; filename="top_buyers.csv"'
@@ -201,126 +179,265 @@ class AccountsDashboardAdmin(admin.ModelAdmin):
 
     def export_top_packages(self, request):
         start, end, _ = _parse_range(request)
+        game = _game_filter(request)
+
         purchases = UserPurchase.objects.select_related("user", "package")
         if start and end:
             purchases = purchases.filter(purchase_date__gte=start, purchase_date__lt=end)
+        if game != "all":
+            purchases = purchases.filter(package__game_type=game)
 
-        eff_price = _effective_price_expr()
-        rows = (
-            purchases.values("package", "package__package_number", "package__game_type")
-            .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff_price), Decimal("0")))
-            .order_by("-purchases_count", "-total_spent")[:500]
-        )
+        eff = _effective_price_expr()
+        rows = (purchases.values("package", "package__package_number", "package__game_type")
+                 .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
+                 .order_by("-purchases_count", "-total_spent")[:500])
 
         resp = HttpResponse(content_type="text/csv; charset=utf-8")
         resp["Content-Disposition"] = 'attachment; filename="top_packages.csv"'
         w = csv.writer(resp)
         w.writerow(["package_id", "game_type", "package_number", "purchases_count", "total_spent"])
         for r in rows:
-            w.writerow([
-                r["package"], r["package__game_type"], r["package__package_number"], r["purchases_count"], str(r["total_spent"] or 0)
-            ])
+            w.writerow([r["package"], r["package__game_type"], r["package__package_number"], r["purchases_count"], str(r["total_spent"] or 0)])
         return resp
 
-    # -------- العرض الرئيسي --------
+    # ---------- العرض الرئيسي ----------
     def dashboard_view(self, request):
-        # كاش خفيف 60 ثانية حسب بارامترات الرابط
+        # نخزّن HTML فقط لتفادي ContentNotRenderedError
         cache_key = f"acc_dash:{request.GET.urlencode()}"
         cached = cache.get(cache_key)
         if cached:
-            return cached
+            return TemplateResponse(
+                request,
+                "admin/base_site.html",
+                context={**self.admin_site.each_context(request), "title": "لوحة الحسابات والتحليلات", "content": mark_safe(cached)},
+            )
 
         start, end, range_label = _parse_range(request)
-        now = timezone.now()
-
-        purchases_qs = UserPurchase.objects.select_related("package", "user")
-        sessions_qs  = GameSession.objects.select_related("package", "host")
-        if start and end:
-            purchases_qs = purchases_qs.filter(purchase_date__gte=start, purchase_date__lt=end)
-            sessions_qs  = sessions_qs.filter(created_at__gte=start, created_at__lt=end)
-
-        # -- مؤشرات عامة --
-        total_users     = User.objects.count()
-        total_profiles  = UserProfile.objects.count()
-        total_purchases = purchases_qs.count()
-
-        eff_price = _effective_price_expr()
-        total_revenue = purchases_qs.aggregate(s=Coalesce(Sum(eff_price), Decimal("0")))["s"]
-
-        # خصومات
-        discounted_count = purchases_qs.filter(
-            package__discounted_price__isnull=False, package__discounted_price__gt=Decimal("0.00")
-        ).count()
-        discount_share = round((discounted_count / total_purchases * 100), 2) if total_purchases else 0.0
-
-        # عائد العملاء
-        buyers_counts = purchases_qs.values("user").annotate(n=Count("id"))
-        buyers_total  = buyers_counts.count()
-        buyers_repeat = sum(1 for b in buyers_counts if b["n"] >= 2)
-        repeat_rate   = round((buyers_repeat / buyers_total * 100), 2) if buyers_total else 0.0
-
-        # أعلى مشترين / حزم
-        top_buyers = (
-            purchases_qs.values("user__username", "user__email")
-            .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff_price), Decimal("0")))
-            .order_by("-total_spent", "-purchases_count")[:10]
-        )
-        top_packages = (
-            purchases_qs.values("package__game_type", "package__package_number")
-            .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff_price), Decimal("0")))
-            .order_by("-purchases_count", "-total_spent")[:10]
-        )
-
-        # حسب نوع اللعبة
-        by_game = (
-            purchases_qs.values("package__game_type")
-            .annotate(cnt=Count("id"), revenue=Coalesce(Sum(eff_price), Decimal("0")))
-            .order_by("-cnt")
-        )
-
-        # الجلسات النشطة + أفضل المضيفين
-        active_sessions = (
-            sessions_qs.filter(is_active=True)
-            .values("game_type").annotate(cnt=Count("id"))
-            .order_by("-cnt")
-        )
-        top_hosts = (
-            sessions_qs.values("host__username")
-            .annotate(sessions_count=Count("id"))
-            .order_by("-sessions_count")[:10]
-        )
-
-        # الرسم (آخر 14 يوم)
-        days_back = 14
-        since_14d = now - timedelta(days=days_back)
-        chart_qs = purchases_qs if (start and start >= since_14d) else purchases_qs.filter(purchase_date__gte=since_14d)
-        per_day = (
-            chart_qs.annotate(day=TruncDate("purchase_date"))
-            .values("day").annotate(cnt=Count("id")).order_by("day")
-        )
-        chart_labels = [p["day"].strftime("%Y-%m-%d") for p in per_day]
-        chart_values = [p["cnt"] for p in per_day]
-        labels_json = json.dumps(chart_labels, ensure_ascii=False)
-        values_json = json.dumps(chart_values, ensure_ascii=False)
-
-        # خرائط عرض
+        game = _game_filter(request)
         gt_display = {"letters": "خلية الحروف", "images": "تحدي الصور", "quiz": "سؤال وجواب"}
 
-        # --- بناء صفوف الجداول ---
-        def rows_top_buyers():
-            if not top_buyers:
-                return '<tr><td colspan="4" class="muted">لا توجد بيانات</td></tr>'
-            out = []
-            for r in top_buyers:
-                u = r.get("user__username") or "-"
-                em = r.get("user__email") or "-"
-                out.append(f"<tr><td>{u}</td><td>{em}</td><td>{r['purchases_count']}</td><td>{r['total_spent']}</td></tr>")
-            return "".join(out)
+        # مصادر
+        purchases_qs = UserPurchase.objects.select_related("package", "user")
+        sessions_qs = GameSession.objects.select_related("package", "host")
+        trials_qs = FreeTrialUsage.objects.all()
 
+        if start and end:
+            purchases_qs = purchases_qs.filter(purchase_date__gte=start, purchase_date__lt=end)
+            sessions_qs = sessions_qs.filter(created_at__gte=start, created_at__lt=end)
+            trials_qs = trials_qs.filter(used_at__gte=start, used_at__lt=end)
+
+        if game != "all":
+            purchases_qs = purchases_qs.filter(package__game_type=game)
+            sessions_qs = sessions_qs.filter(game_type=game)
+            trials_qs = trials_qs.filter(game_type=game)
+
+        # المؤشرات العامة
+        total_users = User.objects.count()
+        active_30d = User.objects.filter(last_login__gte=timezone.now() - timedelta(days=30)).count()
+        new_users_period = 0
+        if start and end:
+            new_users_period = User.objects.filter(date_joined__gte=start, date_joined__lt=end).count()
+
+        # الإيراد الإجمالي التقديري
+        eff = _effective_price_expr()
+        total_revenue = purchases_qs.aggregate(s=Coalesce(Sum(eff), Decimal("0")))["s"]
+
+        # مجرّبو المجاني (مميزون)
+        trial_user_ids = list(trials_qs.values_list("user_id", flat=True).distinct())
+        trials_count_unique = len(trial_user_ids)
+
+        # مشترُو المدفوع (مميزون) داخل المدى
+        paid_buyers_ids = list(
+            purchases_qs.filter(package__is_free=False).values_list("user_id", flat=True).distinct()
+        )
+        paid_buyers_unique = len(paid_buyers_ids)
+
+        # تحويل مجاني→مدفوع (مدى الحياة + داخل المدى)
+        # lifetime: كل من جرّب المجاني (game filter إن وُجد) واشترى مدفوع في أي وقت
+        trials_all = FreeTrialUsage.objects.filter(user_id__in=trial_user_ids) if trial_user_ids else FreeTrialUsage.objects.none()
+        if game != "all":
+            trials_all = trials_all.filter(game_type=game)
+        convert_lifetime_ids = set(
+            UserPurchase.objects.filter(
+                user_id__in=trials_all.values_list("user_id", flat=True),
+                package__is_free=False,
+            ).values_list("user_id", flat=True).distinct()
+        )
+        conv_lifetime = len(convert_lifetime_ids)
+        conv_lifetime_rate = (conv_lifetime / trials_count_unique * 100) if trials_count_unique else 0
+
+        # داخل المدى: من جرّب في المدى واشترى مدفوع ضمن نفس المدى
+        convert_period_ids = set(
+            purchases_qs.filter(package__is_free=False, user_id__in=trial_user_ids).values_list("user_id", flat=True).distinct()
+        )
+        conv_period = len(convert_period_ids)
+        conv_period_rate = (conv_period / trials_count_unique * 100) if trials_count_unique else 0
+
+        # مَن جرّب مجاني ولم يشترِ أبدًا (Non-Converters)
+        non_converters_ids = set(trial_user_ids) - convert_lifetime_ids
+        non_conv_count = len(non_converters_ids)
+        non_conv_rate = (non_conv_count / trials_count_unique * 100) if trials_count_unique else 0
+
+        # زمن التحويل (أيام) لمن حوّلوا (من أول تجربة مجانية لأول شراء مدفوع)
+        time_deltas = []
+        if trial_user_ids:
+            # أول تاريخ تجربة لكل مستخدم
+            first_trial = (FreeTrialUsage.objects
+                           .filter(user_id__in=trial_user_ids, game_type=game if game != "all" else F("game_type"))
+                           .values("user_id")
+                           .annotate(t0=Coalesce(TruncDate("used_at"), TruncDate("used_at")))
+                           )
+            trial_map = {r["user_id"]: r["t0"] for r in first_trial}
+            # أول شراء مدفوع لكل مستخدم
+            first_paid = (UserPurchase.objects
+                          .filter(user_id__in=trial_map.keys(), package__is_free=False)
+                          .values("user_id")
+                          .annotate(p0=Coalesce(TruncDate("purchase_date"), TruncDate("purchase_date"))))
+            paid_map = {r["user_id"]: r["p0"] for r in first_paid}
+            for uid, t0 in trial_map.items():
+                if uid in paid_map and t0 and paid_map[uid]:
+                    delta = (paid_map[uid] - t0).days
+                    if delta >= 0:
+                        time_deltas.append(delta)
+        avg_days = sum(time_deltas) / len(time_deltas) if time_deltas else 0
+        med_days = 0
+        if time_deltas:
+            srt = sorted(time_deltas)
+            mid = len(srt) // 2
+            med_days = (srt[mid] if len(srt) % 2 else (srt[mid - 1] + srt[mid]) / 2)
+
+        # ARPPU: الإيراد / عدد المشترين المدفوعين (داخل المدى)
+        ARPPU = (total_revenue / paid_buyers_unique) if paid_buyers_unique else Decimal("0")
+
+        # شراء متكرر داخل المدى
+        repeat_counts = (purchases_qs.filter(package__is_free=False)
+                         .values("user_id").annotate(n=Count("id")).filter(n__gte=2).count())
+        repeat_rate = (repeat_counts / paid_buyers_unique * 100) if paid_buyers_unique else 0
+
+        # توزيع حسب نوع اللعبة داخل المدى
+        by_game = (purchases_qs.values("package__game_type")
+                   .annotate(cnt=Count("id"), revenue=Coalesce(Sum(eff), Decimal("0")))
+                   .order_by("-cnt"))
+        # أفضل الحزم
+        top_packages = (purchases_qs.values("package__game_type", "package__package_number")
+                        .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
+                        .order_by("-purchases_count", "-total_spent")[:10])
+        # أفضل العملاء
+        top_buyers = (purchases_qs.values("user__username", "user__email")
+                      .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
+                      .order_by("-total_spent", "-purchases_count")[:10])
+
+        # الرسم (آخر 14 يومًا)
+        now = timezone.now()
+        since_14 = now - timedelta(days=14)
+        chart_qs = purchases_qs if (start and start >= since_14) else purchases_qs.filter(purchase_date__gte=since_14)
+        per_day = (chart_qs.annotate(day=TruncDate("purchase_date"))
+                   .values("day").annotate(cnt=Count("id")).order_by("day"))
+        labels_json = json.dumps([p["day"].strftime("%Y-%m-%d") for p in per_day], ensure_ascii=False)
+        values_json = json.dumps([p["cnt"] for p in per_day], ensure_ascii=False)
+
+        # صافي الإيراد بعد رسوم الدفع (من معاملات الدفع)
+        tx_qs = Transaction.objects.filter(status="completed")
+        if start and end:
+            tx_qs = tx_qs.filter(created_at__gte=start, created_at__lt=end)
+        if game != "all":
+            tx_qs = tx_qs.filter(package__game_type=game)
+
+        FIXED_PER_TXN = Decimal("1.00")  # طلبك: 1 ريال لكل عملية
+        PCT_MAP = {
+            "visa": Decimal("2.7"), "فيزا": Decimal("2.7"),
+            "mada": Decimal("1.0"), "مدى":  Decimal("1.0"),
+        }
+
+        gross_amount = Decimal("0")
+        total_fees = Decimal("0")
+        by_method = {}
+
+        for tx in tx_qs.select_related("payment_method"):
+            amt = tx.amount or Decimal("0")
+            gross_amount += amt
+            pm = tx.payment_method
+            pm_name = (pm.name_ar or pm.name or "").strip().lower() if pm else "غير محدد"
+            pct = PCT_MAP.get(pm_name, Decimal("0"))
+            meth_fixed = pm.processing_fee if (pm and pm.processing_fee) else Decimal("0")
+            fee = FIXED_PER_TXN + meth_fixed + (amt * pct / Decimal("100"))
+            total_fees += fee
+
+            bm = by_method.setdefault(pm_name or "غير محدد", {"count": 0, "amount": Decimal("0"), "fees": Decimal("0")})
+            bm["count"] += 1
+            bm["amount"] += amt
+            bm["fees"] += fee
+
+        net_amount = gross_amount - total_fees
+        visa_pressure = 0
+        if gross_amount > 0 and "فيزا" in by_method:
+            visa_pressure = float((by_method["فيزا"]["fees"] / gross_amount) * 100)
+
+        # ========== واجهة ==========
+        style = """
+<style>
+  .dash-wrap {font-family: Tahoma, Arial; padding: 16px;}
+  .kpi-grid {display: grid; grid-template-columns: repeat(4, minmax(200px,1fr)); gap: 12px; margin-bottom: 16px;}
+  .card {background:#0f172a;color:#e2e8f0;border:1px solid #1f2937;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  .card h3 {margin:0 0 8px 0;font-size:14px;color:#93c5fd;}
+  .card .num {font-size:22px;font-weight:800;color:#e5e7eb;}
+  .sub {color:#94a3b8;font-size:12px;}
+  .grid-2 {display:grid;grid-template-columns: 2fr 1fr;gap:12px;}
+  .tbl {width:100%;border-collapse:collapse;}
+  .tbl th, .tbl td {border-bottom:1px solid #1f2937;padding:8px;text-align:start;}
+  .tbl th {color:#93c5fd;font-weight:700;background:#0b1220;}
+  .controls {margin:12px 0;}
+  .links .btn {display:inline-block;background:#1d4ed8;color:#fff;padding:6px 10px;border-radius:8px;text-decoration:none;margin-inline-end:6px;}
+  .links .btn.gray {background:#374151;}
+  .muted {color:#94a3b8;font-size:12px;}
+  .hint {font-size:12px;color:#cbd5e1;}
+  .pill {background:#1d4ed8;color:#fff;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;}
+  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+</style>
+"""
+
+        base = reverse("admin:accounts_dashboard")
+        qs = request.GET.copy()
+        def link_range(code, text):
+            qs["range"] = code; return f'<a class="btn" href="{base}?{qs.urlencode()}">{text}</a>'
+        def link_game(code, text):
+            qs2 = request.GET.copy(); qs2["game"]=code
+            return f'<a class="btn{" gray" if game==code else ""}" href="{base}?{qs2.urlencode()}">{text}</a>'
+
+        links = (
+            '<div class="controls"><div class="links">'
+            + link_range("7d", "آخر 7 أيام")
+            + link_range("30d", "آخر 30 يوم")
+            + link_range("90d", "آخر 90 يوم")
+            + link_range("365d", "آخر سنة")
+            + link_range("all", "كل الوقت")
+            + f'<a class="btn" href="{reverse("admin:accounts_export_top_buyers")}?{request.GET.urlencode()}">📤 تصدير أعلى العملاء</a>'
+            + f'<a class="btn" href="{reverse("admin:accounts_export_top_packages")}?{request.GET.urlencode()}">📤 تصدير أكثر الحزم</a>'
+            + '</div>'
+            f'<div class="hint">المدى: <b>{range_label}</b> &nbsp;|&nbsp; النوع: '
+            + link_game("all","الكل") + " "
+            + link_game("letters","خلية الحروف") + " "
+            + link_game("images","تحدي الصور") + " "
+            + link_game("quiz","سؤال وجواب")
+            + "</div></div>"
+        )
+
+        # الرسم البياني
+        chart = (
+            '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
+            '<canvas id="chart1" height="110"></canvas>'
+            '<script>(function(){var c=document.getElementById("chart1").getContext("2d");'
+            'new Chart(c,{type:"line",data:{labels:' + labels_json +
+            ',datasets:[{label:"عدد المشتريات/اليوم",data:' + values_json +
+            ',fill:false}]},options:{responsive:true,plugins:{legend:{labels:{color:"#e2e8f0"}}},'
+            'scales:{x:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}},y:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}}}}});})();</script>'
+        )
+
+        # جداول
         def rows_top_packages():
             if not top_packages:
                 return '<tr><td colspan="4" class="muted">لا توجد بيانات</td></tr>'
-            out = []
+            out=[]
             for r in top_packages:
                 out.append(
                     f"<tr><td>{gt_display.get(r['package__game_type'], r['package__game_type'])}</td>"
@@ -330,10 +447,23 @@ class AccountsDashboardAdmin(admin.ModelAdmin):
                 )
             return "".join(out)
 
+        def rows_top_buyers():
+            if not top_buyers:
+                return '<tr><td colspan="4" class="muted">لا توجد بيانات</td></tr>'
+            out=[]
+            for r in top_buyers:
+                out.append(
+                    f"<tr><td>{r.get('user__username') or '-'}</td>"
+                    f"<td>{r.get('user__email') or '-'}</td>"
+                    f"<td>{r['purchases_count']}</td>"
+                    f"<td>{r['total_spent']}</td></tr>"
+                )
+            return "".join(out)
+
         def rows_by_game():
             if not by_game:
                 return '<tr><td colspan="3" class="muted">لا توجد بيانات</td></tr>'
-            out = []
+            out=[]
             for r in by_game:
                 out.append(
                     f"<tr><td>{gt_display.get(r['package__game_type'], r['package__game_type'])}</td>"
@@ -341,128 +471,92 @@ class AccountsDashboardAdmin(admin.ModelAdmin):
                 )
             return "".join(out)
 
-        def rows_active_sessions():
-            if not active_sessions:
-                return '<tr><td colspan="2" class="muted">لا توجد جلسات نشطة</td></tr>'
-            out = []
-            for r in active_sessions:
-                out.append(f"<tr><td>{gt_display.get(r['game_type'], r['game_type'])}</td><td>{r['cnt']}</td></tr>")
+        def rows_methods():
+            if not by_method:
+                return '<tr><td colspan="4" class="muted">لا توجد معاملات دفع</td></tr>'
+            out=[]
+            for name, agg in by_method.items():
+                out.append(
+                    f"<tr><td>{name or 'غير محدد'}</td>"
+                    f"<td>{agg['count']}</td>"
+                    f"<td>{agg['amount']}</td>"
+                    f"<td>{agg['fees']}</td></tr>"
+                )
             return "".join(out)
 
-        def rows_top_hosts():
-            if not top_hosts:
-                return '<tr><td colspan="2" class="muted">لا توجد بيانات</td></tr>'
-            out = []
-            for r in top_hosts:
-                out.append(f"<tr><td>{r['host__username'] or '-'}</td><td>{r['sessions_count']}</td></tr>")
-            return "".join(out)
+        # بطاقات KPI
+        kpi = []
+        kpi.append(f'<div class="card"><h3>المستخدمون</h3><div class="num">{total_users}</div><div class="sub">نشطون 30 يوم: {active_30d} — جدد في المدى: {new_users_period}</div></div>')
+        kpi.append(f'<div class="card"><h3>المجاني → المدفوع</h3><div class="num">{conv_lifetime_rate:.1f}%</div><div class="sub">مدى الحياة: {conv_lifetime}/{trials_count_unique} — داخل المدى: {conv_period_rate:.1f}%</div></div>')
+        kpi.append(f'<div class="card"><h3>من جرّب ولم يشترِ</h3><div class="num">{non_conv_rate:.1f}%</div><div class="sub">عددهم: {non_conv_count}</div></div>')
+        kpi.append(f'<div class="card"><h3>إيراد تقديري</h3><div class="num">{total_revenue} ﷼</div><div class="sub">ARPPU: {ARPPU:.2f} ﷼ — تكرار الشراء: {repeat_rate:.1f}%</div></div>')
+        kpi.append(f'<div class="card"><h3>زمن التحويل</h3><div class="num">{med_days:.1f} يوم</div><div class="sub">متوسط: {avg_days:.1f} يوم</div></div>')
+        kpi.append(f'<div class="card"><h3>صافي بعد الرسوم</h3><div class="num">{net_amount:.2f} ﷼</div><div class="sub">إجمالي: {gross_amount:.2f} ﷼ — الرسوم: {total_fees:.2f} ﷼</div></div>')
 
-        # --- تنسيقات (متناسقة مع ألوان الأدمن الأزرق/الأسود) ---
-        style = """
-<style>
-  .dash-wrap {font-family: Tahoma, Arial; padding: 16px;}
-  .kpi-grid {display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;}
-  .card {background: #0f172a; color: #e2e8f0; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,.15);}
-  .card h3 {margin: 0 0 8px 0; font-size: 14px; color: #93c5fd;}
-  .card .num {font-size: 22px; font-weight: 800; color: #e5e7eb;}
-  .sub {color:#94a3b8; font-size:12px;}
-  .grid-2 {display:grid; grid-template-columns: 2fr 1fr; gap: 12px;}
-  .tbl {width: 100%; border-collapse:collapse;}
-  .tbl th, .tbl td {border-bottom:1px solid #1f2937; padding:8px; text-align: start;}
-  .tbl th {color:#93c5fd; font-weight:700; background:#0b1220;}
-  .controls {margin: 12px 0;}
-  .links .btn {display:inline-block; background:#1d4ed8; color:#fff; padding:6px 10px; border-radius:8px; text-decoration:none; margin-inline-end:6px;}
-  .links .btn.gray {background:#374151;}
-  .muted {color:#94a3b8; font-size:12px;}
-  @media (max-width: 1100px) {
-    .kpi-grid {grid-template-columns: repeat(2, 1fr);}
-    .grid-2 {grid-template-columns: 1fr;}
-  }
-</style>
-"""
+        recommend = ""
+        if visa_pressure > 2.0:  # عتبة إرشادية
+            recommend = (
+                '<div class="card" style="border-color:#f59e0b">'
+                '<h3>💡 توصية تسعيرية</h3>'
+                f'<div class="sub">نسبة رسوم فيزا إلى إجمالي الدخل {visa_pressure:.1f}% — إن كانت تؤثر على الهامش جرّب الحد من فيزا أو تشجيع مدى (مثلاً خصم بسيط لمدى).</div>'
+                '</div>'
+            )
 
-        # --- الروابط العلوية ---
-        base = reverse("admin:accounts_dashboard")
-        links = (
-            '<div class="controls"><div class="links">'
-            f'<a class="btn" href="{base}?range=7d">آخر 7 أيام</a>'
-            f'<a class="btn" href="{base}?range=30d">آخر 30 يوم</a>'
-            f'<a class="btn" href="{base}?range=90d">آخر 90 يوم</a>'
-            f'<a class="btn" href="{base}?range=365d">آخر سنة</a>'
-            f'<a class="btn gray" href="{base}?range=all">كل الوقت</a>'
-            f'<a class="btn" href="{reverse("admin:accounts_export_top_buyers")}?{request.GET.urlencode()}">📤 تصدير أعلى العملاء</a>'
-            f'<a class="btn" href="{reverse("admin:accounts_export_top_packages")}?{request.GET.urlencode()}">📤 تصدير أكثر الحزم</a>'
-            '</div>'
-            f'<div class="muted">المدى الحالي: <b>{range_label}</b></div>'
-            '</div>'
-        )
-
-        # --- الرسم البياني (Chart.js عبر CDN) بدون f-string داخل JS ---
-        chart_script = (
-            '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
-            '<canvas id="purchasesChart" height="110"></canvas>'
-            '<script>(function(){'
-            'var ctx=document.getElementById("purchasesChart").getContext("2d");'
-            'new Chart(ctx,{type:"line",data:{labels:'
-            + labels_json +
-            ',datasets:[{label:"عدد المشتريات/اليوم",data:'
-            + values_json +
-            ',fill:false}]},options:{responsive:true,plugins:{legend:{labels:{color:"#e2e8f0"}}},'
-            'scales:{x:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}},'
-            'y:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}}}}});})();</script>'
-        )
-
-        # --- بناء الصفحة ---
+        # HTML
         html = []
         html.append(style)
         html.append('<div class="dash-wrap">')
-        html.append('<h2 style="color:#93c5fd; margin: 0 0 12px 0;">📊 لوحة الحسابات والتحليلات</h2>')
+        html.append('<h2 style="color:#93c5fd;margin:0 0 12px 0;">📊 لوحة الحسابات والتحليلات</h2>')
         html.append(links)
 
-        # KPIs
-        html.append('<div class="kpi-grid">')
-        html.append(f'<div class="card"><h3>إجمالي المستخدمين</h3><div class="num">{total_users}</div><div class="sub">ملفات: {total_profiles}</div></div>')
-        html.append(f'<div class="card"><h3>إجمالي المشتريات</h3><div class="num">{total_purchases}</div><div class="sub">المدى: {range_label}</div></div>')
-        html.append(f'<div class="card"><h3>الإيراد التقديري</h3><div class="num">{total_revenue} ﷼</div><div class="sub">{discounted_count} شراء بخصم ({discount_share}%)</div></div>')
-        html.append(f'<div class="card"><h3>نسبة العملاء العائدين</h3><div class="num">{repeat_rate}%</div><div class="sub">المشترون الفريدون: {buyers_total} / العائدون: {buyers_repeat}</div></div>')
-        html.append('</div>')  # kpi-grid
+        html.append('<div class="kpi-grid">' + "".join(kpi) + '</div>')
+        if recommend:
+            html.append(recommend)
 
-        # الرسم + الجلسات النشطة
         html.append('<div class="grid-2">')
-        html.append('<div class="card"><h3>📈 سرعة الشراء (آخر 14 يومًا)</h3>' + chart_script + '</div>')
-        html.append('<div class="card"><h3>🎮 الجلسات النشطة حسب نوع اللعبة</h3>'
-                    '<table class="tbl"><thead><tr><th>نوع اللعبة</th><th>جلسات نشطة</th></tr></thead>'
-                    f'<tbody>{rows_active_sessions()}</tbody></table></div>')
-        html.append('</div>')  # grid-2
+        html.append('<div class="card"><h3>📈 سرعة الشراء (آخر 14 يومًا)</h3>' + chart + '</div>')
+        html.append('<div class="card"><h3>🎮 الجلسات النشطة حسب نوع اللعبة</h3>')
+        # جلسات نشطة
+        active_sessions = (sessions_qs.filter(is_active=True)
+                           .values("game_type").annotate(cnt=Count("id")).order_by("-cnt"))
+        if active_sessions:
+            html.append('<table class="tbl"><thead><tr><th>نوع اللعبة</th><th>نشطة</th></tr></thead><tbody>')
+            for r in active_sessions:
+                html.append(f"<tr><td>{gt_display.get(r['game_type'], r['game_type'])}</td><td>{r['cnt']}</td></tr>")
+            html.append('</tbody></table>')
+        else:
+            html.append('<div class="muted">لا توجد جلسات نشطة</div>')
+        html.append('</div></div>')
 
-        # أعلى العملاء + أكثر الحزم
+        # جداول رئيسية
         html.append('<div class="grid-2" style="margin-top:12px;">')
-        html.append('<div class="card"><h3>👤 أعلى 10 عملاء شراءً</h3>'
-                    '<table class="tbl"><thead><tr><th>المستخدم</th><th>البريد</th><th>العدد</th><th>المبلغ</th></tr></thead>'
-                    f'<tbody>{rows_top_buyers()}</tbody></table></div>')
-        html.append('<div class="card"><h3>🧺 أكثر الحزم شراءً</h3>'
-                    '<table class="tbl"><thead><tr><th>اللعبة</th><th>الحزمة</th><th>المشتريات</th><th>الإيراد</th></tr></thead>'
-                    f'<tbody>{rows_top_packages()}</tbody></table></div>')
-        html.append('</div>')  # grid-2
+        html.append('<div class="card"><h3>🧺 أكثر الحزم شراءً</h3><table class="tbl"><thead><tr><th>اللعبة</th><th>الحزمة</th><th>المشتريات</th><th>الإيراد</th></tr></thead><tbody>')
+        html.append(rows_top_packages())
+        html.append('</tbody></table></div>')
+        html.append('<div class="card"><h3>👤 أعلى 10 عملاء</h3><table class="tbl"><thead><tr><th>المستخدم</th><th>البريد</th><th>العدد</th><th>المبلغ</th></tr></thead><tbody>')
+        html.append(rows_top_buyers())
+        html.append('</tbody></table></div>')
+        html.append('</div>')
 
         # توزيع حسب نوع اللعبة
-        html.append('<div class="card" style="margin-top:12px;"><h3>🏆 أكثر الألعاب انتشارًا</h3>'
-                    '<table class="tbl"><thead><tr><th>نوع اللعبة</th><th>عدد المشتريات</th><th>الإيراد</th></tr></thead>'
-                    f'<tbody>{rows_by_game()}</tbody></table>'
-                    '<div class="muted" style="margin-top:8px;">تلميح: راقب أثر العروض/الخصومات على الانتشار والإيراد.</div>'
-                    '</div>')
+        html.append('<div class="card" style="margin-top:12px;"><h3>🏆 توزيع حسب نوع اللعبة</h3><table class="tbl"><thead><tr><th>نوع اللعبة</th><th>المشتريات</th><th>الإيراد</th></tr></thead><tbody>')
+        html.append(rows_by_game())
+        html.append('</tbody></table></div>')
 
-        html.append('<div class="muted" style="margin-top:10px;">تم تحسين الاستعلامات عبر التجميعات وحقول التعبير لتقليل الحمل والحفاظ على الأداء.</div>')
+        # طرق الدفع والرسوم
+        html.append('<div class="card" style="margin-top:12px;"><h3>💳 طرق الدفع والرسوم</h3><table class="tbl"><thead><tr><th>الطريقة</th><th>عدد المعاملات</th><th>المبلغ الإجمالي</th><th>الرسوم المُحتسبة</th></tr></thead><tbody>')
+        html.append(rows_methods())
+        html.append('</tbody></table>')
+        html.append(f'<div class="muted" style="margin-top:8px;">* الرسوم = 1 ريال/معاملة + نسبة من الاسم (فيزا 2.7%، مدى 1%) + processing_fee للطريقة إن وُجد.</div>')
+        html.append('</div>')
+
         html.append('</div>')  # dash-wrap
 
-        resp = TemplateResponse(
+        html_content = "".join(html)
+        cache.set(cache_key, html_content, 60)  # نخزّن HTML فقط
+
+        return TemplateResponse(
             request,
             "admin/base_site.html",
-            context={
-                **self.admin_site.each_context(request),
-                "title": "لوحة الحسابات والتحليلات",
-                "content": mark_safe("".join(html)),  # نحقن المحتوى داخل القالب الأساسي للأدمن
-            },
+            context={**self.admin_site.each_context(request), "title": "لوحة الحسابات والتحليلات", "content": mark_safe(html_content)},
         )
-        cache.set(cache_key, resp, 60)
-        return resp
