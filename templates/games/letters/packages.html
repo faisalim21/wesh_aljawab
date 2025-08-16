@@ -7,8 +7,9 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <!-- خط/أيقونة الريال السعودي -->
+  <!-- خط أيقونة الريال السعودي -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -16,8 +17,8 @@
       --cardBorder: rgba(139,92,246,.14);
       --mixBg:#e0e7ff; --mixText:#4338ca; --mixBorder:#a5b4fc;
       --sprBg:#dcfce7; --sprText:#166534; --sprBorder:#86efac;
-      --ok:#22c55e; --warn:#f59e0b; --primary:#8b5cf6; --cyan:#06b6d4;
-      --muted:#64748b; --ink:#2d3748;
+      --ok:#22c55e; --primary:#8b5cf6; --cyan:#06b6d4;
+      --muted:#64748b; --ink:#1f2937;
     }
 
     body{
@@ -33,76 +34,45 @@
       font-size:2.2rem;font-weight:800;
       background:linear-gradient(135deg,var(--primary),var(--cyan));
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-      background-clip:text;
+      margin-bottom:.25rem;
     }
     .section-title p{color:#475569;margin:0}
 
+    /* شبكة مرتبة متجاوبة */
+    .packages-grid{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:16px;
+    }
+    .pkg-col{grid-column:span 12;}
+    @media (min-width:768px){ .pkg-col{grid-column:span 6;} .packages-grid{gap:18px;} }
+    @media (min-width:992px){ .pkg-col{grid-column:span 4;} }
+
+    /* الكارت مرن بارتفاع متساوٍ */
     .package-card{
-      background:#fff;border-radius:18px;padding:1.5rem;margin-bottom:1.5rem;
+      background:#fff;border-radius:18px;padding:1.25rem 1.25rem 1rem;margin:0;
       border:1px solid var(--cardBorder);
       box-shadow:0 18px 38px rgba(0,0,0,.08);transition:.35s;position:relative;
+      display:flex;flex-direction:column;height:100%;
     }
     .package-card:hover{transform:translateY(-6px);box-shadow:0 28px 56px rgba(139,92,246,.18);}
-
-    .package-title{font-size:1.2rem;font-weight:800;margin-bottom:.35rem;text-align:center;}
-    .package-desc{text-align:center;color:var(--muted);margin-bottom:.75rem;}
+    .pkg-head{min-height:52px;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+    .package-title{font-size:1.15rem;font-weight:800;text-align:center;margin:0;}
+    .pkg-meta{min-height:34px;display:flex;justify-content:center;align-items:center;margin-top:.25rem;}
 
     .theme-badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.8rem;font-weight:800}
     .theme-mixed{background:var(--mixBg);color:var(--mixText);border:1px solid var(--mixBorder);}
     .theme-sports{background:var(--sprBg);color:var(--sprText);border:1px solid var(--sprBorder);}
     .theme-tip{cursor:help;border-bottom:1px dotted currentColor}
 
-    /* السعر العصري */
-    .price-wrap{
-      display:flex;align-items:center;justify-content:center;gap:12px;
-      margin:8px 0 6px;
-      flex-wrap:wrap;
+    /* الوصف: يلتقط 3 أسطر ويمكن توسيعه */
+    .pkg-desc-wrap{margin-top:.5rem;}
+    .pkg-desc{
+      color:var(--muted);text-align:center;margin:0;
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;
     }
-    .price-new,.price-old{
-      display:inline-flex;align-items:baseline;gap:6px;
-    }
-    .price-new{
-      font-weight:900;font-size:1.2rem;color:#0ea5e9;
-    }
-    .price-old{
-      color:#94a3b8;text-decoration:line-through;font-weight:700;
-    }
-    .price-new .icon-saudi_riyal,
-    .price-old .icon-saudi_riyal{
-      font-size:1.05em; line-height:1; display:inline-block;
-      position:relative; top:1px;
-    }
-
-    .save-badge{
-      display:inline-flex;align-items:center;gap:6px;
-      background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;
-      font-weight:800;border-radius:999px;padding:3px 10px;font-size:.8rem;
-    }
-    .save-badge i{color:#0284c7}
-
-    .trust-row{
-      display:flex;align-items:center;justify-content:center;gap:12px;
-      color:#0f172a;font-weight:700;font-size:.9rem;margin-top:4px;
-      flex-wrap:wrap;
-    }
-    .trust-row .pill{
-      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-      background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
-    }
-    .trust-row i{color:#16a34a}
-
-    .note-72{ font-size:.82rem;color:#a16207;text-align:center;margin-top:6px; }
-
-    .btn-play{
-      display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
-      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;
-      transition:.3s;text-decoration:none;text-align:center;position:relative;
-    }
-    .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.25);color:#fff;}
-    .btn-play:disabled{background:#e2e8f0 !important;color:#94a3b8 !important;cursor:not-allowed;}
-    .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
-    .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
-    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
+    .pkg-desc.expanded{-webkit-line-clamp:unset;}
+    .toggle-desc{font-weight:800}
 
     /* إبراز بطاقة المجاني */
     .free-card{
@@ -116,9 +86,48 @@
       padding:6px 12px;border-radius:0 10px 10px 0;font-weight:900;font-size:.9rem;
       box-shadow:0 6px 16px rgba(34,197,94,.35);
     }
-    .free-mini{font-size:.9rem;color:#16a34a;font-weight:800;text-align:center;margin:-2px 0 8px 0}
-    .dim{opacity:.85}
-    .note-line{font-size:.85rem;color:#ef4444;text-align:center;margin-top:.5rem}
+
+    /* الأسعار الحديثة + أيقونة الريال */
+    .pkg-pricing{margin-top:.4rem;}
+    .price-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0;}
+    .price-new{
+      font-weight:900;font-size:1.15rem; color:#0ea5e9;
+      display:flex;align-items:center;gap:6px;
+    }
+    .price-old{
+      color:#94a3b8; text-decoration: line-through; font-weight:700;
+      display:flex;align-items:center;gap:6px;
+    }
+    .save-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;
+      font-weight:800;border-radius:999px;padding:3px 10px;font-size:.8rem;
+    }
+    .save-badge i{color:#0284c7}
+
+    .trust-row{
+      display:flex;align-items:center;justify-content:center;gap:12px;
+      color:#0f172a;font-weight:700;font-size:.9rem;margin-top:.35rem;
+    }
+    .trust-row .pill{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+      background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
+    }
+
+    /* زر اللعب/الشراء في أسفل الكارت دومًا */
+    .pkg-actions{margin-top:auto;}
+    .btn-play{
+      display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
+      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;
+      transition:.3s;text-decoration:none;text-align:center;position:relative;
+    }
+    .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.25);color:#fff;}
+    .btn-play:disabled{background:#e2e8f0 !important;color:#94a3b8 !important;cursor:not-allowed;}
+    .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+    .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
+
+    .note-line{font-size:.85rem;color:#9a3412;text-align:center;margin-top:.5rem}
 
     /* شريط سبق الاستخدام */
     .used-before{
@@ -126,14 +135,6 @@
       background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
       padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem;
       display:flex; align-items:center; gap:6px;
-    }
-    .used-before i{ color:#f97316; }
-
-    /* موبايل */
-    @media (max-width: 768px){
-      .package-card{padding:1.25rem}
-      .price-wrap{gap:10px}
-      .price-new{font-size:1.1rem}
     }
   </style>
 </head>
@@ -165,17 +166,20 @@
         <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب خلية الحروف</p>
       </div>
 
-      <div class="row justify-content-center g-3">
+      <div class="packages-grid">
 
         {% if free_package %}
           <!-- بطاقة المجاني -->
-          <div class="col-md-5 col-lg-4">
+          <div class="pkg-col">
             <div class="package-card free-card">
               <div class="free-ribbon">مجانية</div>
-              <div class="package-title">جولة تجريبية</div>
 
-              {% if free_package.question_theme %}
-                <div class="text-center mb-2">
+              <div class="pkg-head">
+                <div class="package-title">جولة تجريبية</div>
+              </div>
+
+              <div class="pkg-meta">
+                {% if free_package.question_theme %}
                   {% if free_package.question_theme == 'sports' %}
                     <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
                       نوع الأسئلة: {{ free_package.get_question_theme_display }}
@@ -185,52 +189,60 @@
                       نوع الأسئلة: {{ free_package.get_question_theme_display }}
                     </span>
                   {% endif %}
+                {% endif %}
+              </div>
+
+              {% if free_package.description %}
+                <div class="pkg-desc-wrap">
+                  <p class="pkg-desc">{{ free_package.description }}</p>
+                  <div class="text-center mt-1">
+                    <button type="button" class="btn btn-sm btn-link p-0 toggle-desc">عرض المزيد</button>
+                  </div>
                 </div>
               {% endif %}
 
-              {% if free_package.description %}
-                <p class="package-desc dim">{{ free_package.description }}</p>
-              {% endif %}
-
-              {% if request.user.is_authenticated %}
-                {% if free_session_eligible %}
-                  <button type="button" class="btn-play" id="freeBtn"
-                          onclick="createFreeSession('{{ free_package.id }}')">
-                    <span class="btn-text">ابدأ الجولة المجانية</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
+              <div class="pkg-actions">
+                {% if request.user.is_authenticated %}
+                  {% if free_session_eligible %}
+                    <button type="button" class="btn-play" id="freeBtn"
+                            onclick="createFreeSession('{{ free_package.id }}')">
+                      <span class="btn-text">ابدأ الجولة المجانية</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                  {% else %}
+                    <button type="button" class="btn-play" id="freeBtn" disabled>
+                      <span class="btn-text">غير متاح</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                    <div class="note-line">
+                      {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
+                    </div>
+                  {% endif %}
                 {% else %}
-                  <button type="button" class="btn-play" id="freeBtn" disabled>
-                    <span class="btn-text">غير متاح</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
-                  <div class="note-line">
-                    {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
-                  </div>
+                  <a class="btn btn-outline-primary w-100 mt-1"
+                    href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                    سجّل الدخول للتجربة
+                  </a>
                 {% endif %}
-              {% else %}
-                <a class="btn btn-outline-primary w-100 mt-1"
-                   href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
-                  سجّل الدخول للتجربة
-                </a>
-              {% endif %}
+              </div>
             </div>
           </div>
         {% endif %}
 
         {% for package in paid_packages %}
-          <div class="col-md-6 col-lg-4">
+          <div class="pkg-col">
             <div class="package-card">
 
-              {# شريط سبق الاستخدام إن متوفر من الفيو (used_before_ids) #}
               {% if used_before_ids and package.id in used_before_ids %}
                 <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
               {% endif %}
 
-              <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+              <div class="pkg-head">
+                <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+              </div>
 
-              {% if package.question_theme %}
-                <div class="text-center mb-2">
+              <div class="pkg-meta">
+                {% if package.question_theme %}
                   {% if package.question_theme == 'sports' %}
                     <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
                       نوع الأسئلة: {{ package.get_question_theme_display }}
@@ -240,67 +252,75 @@
                       نوع الأسئلة: {{ package.get_question_theme_display }}
                     </span>
                   {% endif %}
-                </div>
-              {% endif %}
+                {% endif %}
+              </div>
 
-              {# السعر العصري: خصم إن وُجد وإلّا سعر عادي #}
-              {% if package.has_discount %}
-                <div class="price-wrap">
-                  <div class="price-new">
-                    <span class="val val-new">{{ package.discounted_price }}</span>
-                    <span class="icon-saudi_riyal"></span>
+              <!-- عرض السعر/الخصم مع أيقونة الريال -->
+              <div class="pkg-pricing">
+                {% if package.has_discount %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                    <div class="price-old">
+                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
                   </div>
-                  <div class="price-old">
-                    <span class="val val-old">{{ package.original_price }}</span>
-                    <span class="icon-saudi_riyal"></span>
+                  <div class="text-center">
+                    <span class="save-badge"
+                          data-orig="{{ package.original_price }}"
+                          data-disc="{{ package.discounted_price }}">
+                      <i class="fa-solid fa-tag"></i>
+                      وفّر <b class="save-pct">—</b>
+                    </span>
                   </div>
-                </div>
-                <div class="text-center">
-                  <span class="save-badge"
-                        data-orig="{{ package.original_price }}"
-                        data-disc="{{ package.discounted_price }}">
-                    <i class="fa-solid fa-tag"></i>
-                    وفّر <b class="save-pct">—</b>
-                  </span>
-                </div>
-              {% else %}
-                <div class="price-wrap">
-                  <div class="price-new">
-                    <span class="val">{{ package.price }}</span>
-                    <span class="icon-saudi_riyal"></span>
+                {% else %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if package.description %}
+                <div class="pkg-desc-wrap">
+                  <p class="pkg-desc">{{ package.description }}</p>
+                  <div class="text-center mt-1">
+                    <button type="button" class="btn btn-sm btn-link p-0 toggle-desc">عرض المزيد</button>
                   </div>
                 </div>
               {% endif %}
 
               <div class="trust-row">
+                <span class="pill"><i class="fa-solid fa-lock text-success"></i> دفع آمن</span>
                 <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
               </div>
 
-              {% if package.description %}
-                <p class="package-desc">{{ package.description }}</p>
-              {% endif %}
-
-              {% if package.id in user_purchases %}
-                <!-- مشتراة/نشطة: ابدأ مباشرة -->
-                <button type="button" class="btn-play"
-                        onclick="createLettersSession('{{ package.id }}')">
-                  <span class="btn-text">ابدأ اللعب</span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
-                </button>
-              {% else %}
-                <!-- غير نشطة: الذهاب للدفع، مع تنبيه لو سبق استخدامها -->
-                <a class="btn-play purchase-link"
-                   href="{% url 'payments:purchase' package.id %}"
-                   data-package-id="{{ package.id }}"
-                   data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
-                  اشترِ هذه الحزمة
-                </a>
-                {% if used_before_ids and package.id in used_before_ids %}
-                  <div class="note-line" style="color:#9a3412">
-                    سبق لك استخدام هذه الحزمة — إن أردت اللعب مرة أخرى ستحتاج لشرائها مجددًا.
-                  </div>
+              <div class="pkg-actions">
+                {% if user_purchases and package.id in user_purchases %}
+                  <button type="button" class="btn-play" onclick="createLettersSession('{{ package.id }}')">
+                    <span class="btn-text">ابدأ اللعب</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </button>
+                {% else %}
+                  <a class="btn-play purchase-link"
+                     href="{% url 'payments:purchase' package.id %}"
+                     data-package-id="{{ package.id }}"
+                     data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                    اشترِ هذه الحزمة
+                  </a>
+                  {% if used_before_ids and package.id in used_before_ids %}
+                    <div class="note-line">
+                      سبق لك استخدام هذه الحزمة — إن أردت اللعب مرة أخرى ستحتاج لشرائها مجددًا.
+                    </div>
+                  {% endif %}
                 {% endif %}
-              {% endif %}
+              </div>
+
             </div>
           </div>
         {% endfor %}
@@ -311,12 +331,14 @@
 
   {% include 'footer.html' %}
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
       const LOGIN_URL = "{% url 'accounts:login' %}";
       const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+      const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
+
       let sessionLocked = false;
 
       // حساب نسبة التوفير وإظهارها
@@ -331,7 +353,18 @@
         });
       })();
 
-      // تحذير الشراء إن سبق الاستخدام
+      // زر "عرض المزيد/أقل" للوصف
+      document.querySelectorAll('.toggle-desc').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const wrap = btn.closest('.pkg-desc-wrap');
+          if (!wrap) return;
+          const p = wrap.querySelector('.pkg-desc');
+          p.classList.toggle('expanded');
+          btn.textContent = p.classList.contains('expanded') ? 'عرض أقل' : 'عرض المزيد';
+        });
+      });
+
+      // تنبيه عند محاولة شراء حزمة سبق استخدامها
       document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
         a.addEventListener('click', (ev)=>{
           const ok = confirm('تنبيه: سبق لك لعب هذه الحزمة.\nإذا كنت ترغب باللعب مرة أخرى، أكمل عملية الشراء.');
@@ -339,7 +372,7 @@
         });
       });
 
-      // إنشاء جلسة مدفوعة/مشتراة
+      // إنشاء جلسة مدفوعة/مشتراة (التحقق الحقيقي في الباك-إند)
       window.createLettersSession = function(packageId) {
         if (!IS_AUTH) {
           window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
@@ -375,7 +408,7 @@
         }
       };
 
-      // إنشاء جلسة المجاني مع فحص أهلية لحظي
+      // إنشاء جلسة المجاني مع فحص أهلية لحظي من الـAPI
       window.createFreeSession = async function(packageId) {
         if (!IS_AUTH) {
           window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
@@ -387,9 +420,8 @@
           return;
         }
 
-        // فحص الأهلية عبر API (اختياري — الفيو يتحقق أيضًا)
         try {
-          const r = await fetch(`/games/api/check-free-session-eligibility/?game_type=letters`, { credentials: 'same-origin' });
+          const r = await fetch(API_ELIGIBILITY_URL, { credentials: 'same-origin' });
           const data = await r.json();
           if (!(data && data.success)) {
             alert('تعذر التحقق من الأهلية، حاول لاحقًا');
@@ -429,7 +461,7 @@
       };
 
       function showLoading(packageId, show) {
-        // يوضح اللودر على الزر الموافق لهذا الـpackageId فقط
+        // يوضح اللودر على الزر الموافق لهذا packageId فقط
         const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
         btns.forEach((btn) => {
           const text = btn.querySelector('.btn-text');

@@ -1,8 +1,9 @@
-# games/models.py - النسخة العربية الكاملة (محدّث)
+# games/models.py - النسخة المصححة والكاملة
+
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models import Q, UniqueConstraint, Index
+from django.conf import settings
 import uuid
 from datetime import timedelta
 from decimal import Decimal
@@ -16,51 +17,73 @@ class GamePackage(models.Model):
         ('quiz', 'سؤال وجواب'),
     ]
 
-    # ✅ جديد: أنواع الأسئلة (قابلة للتوسّع لاحقًا)
+    # أنواع الأسئلة (قابلة للتوسّع لاحقًا)
     QUESTION_THEMES = [
         ('mixed', 'متنوعة'),
         ('sports', 'رياضية'),
     ]
 
-    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="السعر الأصلي قبل الخصم")
-    discounted_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="السعر بعد الخصم (اختياري)")
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # نوع اللعبة
     game_type = models.CharField(
         max_length=20,
         choices=GAME_TYPES,
         verbose_name="نوع اللعبة",
         help_text="اختر نوع اللعبة"
     )
+
+    # رقم الحزمة داخل نوع اللعبة
     package_number = models.IntegerField(
         verbose_name="رقم الحزمة",
         help_text="رقم الحزمة (1، 2، 3...)"
     )
+
+    # مجاني/غير مجاني
     is_free = models.BooleanField(
         default=False,
         verbose_name="مجانية؟",
         help_text="هل هذه الحزمة مجانية؟"
     )
+
+    # التسعير
     price = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0.00,
+        default=Decimal('0.00'),
         verbose_name="السعر",
         help_text="سعر الحزمة بالريال السعودي"
     )
+    original_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="السعر الأصلي قبل الخصم"
+    )
+    discounted_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="السعر بعد الخصم (اختياري)"
+    )
+
+    # حالة التفعيل
     is_active = models.BooleanField(
         default=True,
         verbose_name="فعالة؟",
         help_text="هل الحزمة متاحة للشراء؟"
     )
 
-    # ✅ وصف الحزمة
+    # وصف الحزمة
     description = models.TextField(
         blank=True,
         verbose_name="الوصف",
         help_text="وصف قصير للحزمة يظهر للمستخدمين"
     )
 
-    # ✅ نوع الأسئلة
+    # نوع الأسئلة
     question_theme = models.CharField(
         max_length=20,
         choices=QUESTION_THEMES,
@@ -87,21 +110,29 @@ class GamePackage(models.Model):
     def __str__(self):
         return f"{self.get_game_type_display()} - حزمة {self.package_number}"
 
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.discounted_price is not None and self.original_price is not None:
+            if self.discounted_price <= Decimal('0.00') or self.original_price <= Decimal('0.00'):
+                raise ValidationError("الأسعار يجب أن تكون أكبر من صفر.")
+            if self.discounted_price >= self.original_price:
+                raise ValidationError("سعر الخصم يجب أن يكون أقل من السعر الأصلي.")
+
     @property
-    def has_discount(self):
+    def has_discount(self) -> bool:
         try:
-            return (self.original_price is not None and self.discounted_price is not None
-                    and self.discounted_price > Decimal('0.00')
-                    and self.original_price > self.discounted_price)
+            return (
+                self.original_price is not None
+                and self.discounted_price is not None
+                and self.discounted_price > Decimal('0.00')
+                and self.original_price > self.discounted_price
+            )
         except Exception:
             return False
 
     @property
-    def effective_price(self):
-        """
-        السعر المعتمد للشراء/العرض إن أردت لاحقًا:
-        إن وُجد discounted_price صالح نُعيده، وإلا price.
-        """
+    def effective_price(self) -> Decimal:
+        """السعر المعتمد للعرض/الشراء."""
         if self.discounted_price and self.discounted_price > Decimal('0.00'):
             return self.discounted_price
         return self.price
@@ -166,15 +197,15 @@ class LettersGameQuestion(models.Model):
 class UserPurchase(models.Model):
     """
     مشتريات المستخدمين
-    ✅ السياسة: تنتهي صلاحية المشتريات المدفوعة بعد 72 ساعة من وقت الشراء.
+    السياسة: تنتهي صلاحية المشتريات المدفوعة بعد 72 ساعة من وقت الشراء.
     - يُسمح بشراء الحزمة مرة أخرى بعد انتهاء الصلاحية (أو إتمام الاستخدام).
     - قيد فريد (شرطي) يمنع وجود أكثر من "شراء نشط" واحد غير مكتمل لنفس الحزمة لكل مستخدم.
     - "نشط" = is_completed=False. عند مرور 72 ساعة يتم اعتباره منتهيًا.
     """
-    EXPIRY_HOURS = 72  # سياسة الانتهاء بعد الشراء
+    EXPIRY_HOURS = 72  # صلاحية الشراء
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         verbose_name="المستخدم"
     )
@@ -184,7 +215,6 @@ class UserPurchase(models.Model):
         verbose_name="الحزمة"
     )
 
-    # وقت الشراء + نهاية الصلاحية
     purchase_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name="تاريخ الشراء"
@@ -211,7 +241,7 @@ class UserPurchase(models.Model):
         verbose_name = "مشترى حزمة"
         verbose_name_plural = "مشتريات الحزم"
         ordering = ['-purchase_date']
-        # ✅ يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
+        # يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
         constraints = [
             UniqueConstraint(
                 fields=['user', 'package'],
@@ -227,9 +257,9 @@ class UserPurchase(models.Model):
 
     def __str__(self):
         status = "نشط" if not self.is_completed else "مكتمل"
-        return f"{self.user.username} - {self.package} ({status})"
+        return f"{self.user} - {self.package} ({status})"
 
-    # ========= منافع/خصائص للمساعدة في الفيوز والخدمات =========
+    # ======== أدوات مساعدة ========
     @property
     def expiry_duration(self) -> timedelta:
         """مدة صلاحية الشراء (افتراضيًا 72 ساعة)."""
@@ -263,7 +293,6 @@ class UserPurchase(models.Model):
             return True
         return False
 
-    # ========= ضمان ضبط expires_at ومواءمة السياسة =========
     def save(self, *args, **kwargs):
         is_create = self._state.adding
 
@@ -285,12 +314,12 @@ class UserPurchase(models.Model):
 
 
 class GameSession(models.Model):
-    """جلسة لعب"""
+    """جلسة لعب (جلسة واحدة لكل شراء بفضل OneToOneField)"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    # ✅ سمحنا تكون None علشان شرطك "أي شخص معه الرابط يقدر"
+    # المضيف (قد يكون None في نمط "أي شخص معه الرابط")
     host = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True, blank=True,
         verbose_name="المقدم",
@@ -306,6 +335,15 @@ class GameSession(models.Model):
         max_length=20,
         choices=GamePackage.GAME_TYPES,
         verbose_name="نوع اللعبة"
+    )
+
+    # جلسة واحدة فقط لكل شراء
+    purchase = models.OneToOneField(
+        UserPurchase,
+        on_delete=models.PROTECT,
+        related_name="game_session",
+        null=True, blank=True,
+        help_text="الشراء المرتبط بهذه الجلسة (إن وُجد)"
     )
 
     # إعدادات اللعبة
@@ -351,7 +389,7 @@ class GameSession(models.Model):
         verbose_name="الفريق الفائز"
     )
 
-    # روابط اللعبة
+    # روابط العرض
     display_link = models.CharField(
         max_length=100,
         unique=True,
@@ -381,7 +419,19 @@ class GameSession(models.Model):
         indexes = [
             Index(fields=['game_type', 'created_at']),
             Index(fields=['is_active']),
+            Index(fields=['package', 'is_active']),
         ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        # تحقق من التوافق مع الشراء عند الربط
+        if self.purchase:
+            if self.package_id != self.purchase.package_id:
+                raise ValidationError("الحزمة في الجلسة لا تطابق حزمة الشراء.")
+            if self.host and self.purchase.user_id != self.host_id:
+                raise ValidationError("المضيف يجب أن يكون نفس صاحب الشراء.")
+            if self.purchase.is_completed or self.purchase.is_expired:
+                raise ValidationError("لا يمكن إنشاء جلسة لشراء منتهي/مكتمل.")
 
     def save(self, *args, **kwargs):
         if not self.display_link:
@@ -479,3 +529,27 @@ class Contestant(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.get_team_display()}"
+
+
+class FreeTrialUsage(models.Model):
+    """سجل استخدام التجربة المجانية لكل مستخدم/لعبة (مرة واحدة لكل لعبة)."""
+    GAME_TYPES = (('letters', 'Letters'),)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='free_trials'
+    )
+    game_type = models.CharField(max_length=32, choices=GAME_TYPES, default='letters')
+    used_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'game_type'], name='unique_free_trial_per_user_game')
+        ]
+        indexes = [
+            Index(fields=['user', 'game_type'])
+        ]
+
+    def __str__(self):
+        return f"FreeTrial({self.user_id}, {self.game_type})"
