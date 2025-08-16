@@ -29,7 +29,6 @@
     <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-    {# يفضّل استخدام أبعاد 1200x630 #}
     <!-- <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630"> -->
 
@@ -46,14 +45,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-    {# لو عندك manifest حقيقي فعّله #}
-    {# <link rel="manifest" href="{% static 'site.webmanifest' %}"> #}
 
     {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    {# لو بتثبت خط Tajawal عالميًا، حمّله هنا #}
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"> -->
 
     {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
     <script type="application/ld+json">
@@ -74,7 +69,6 @@
     }
     </script>
 
-    {# ——— مساحة لتجاوزات/إضافات خاصة بكل صفحة عند الحاجة ——— #}
     {% block meta_overrides %}{% endblock %}
 
     <!-- CSS & Fonts -->
@@ -119,13 +113,16 @@
         .game-card:hover::before{ transform:scaleX(1); }
 
         .game-icon{
-            width:120px; height:120px; margin:0 auto 1.5rem;
+            width:140px; height:140px; margin:0 auto 1.5rem;
             background:linear-gradient(135deg,#8b5cf6,#06b6d4);
             border-radius:24px; display:flex; align-items:center; justify-content:center;
             font-size:2.4rem; color:#fff; box-shadow:0 10px 20px rgba(139,92,246,.3);
             overflow:hidden;
         }
-        .game-icon img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:20px; }
+        /* دعم الصورة داخل الأيقونة */
+        .game-icon img{
+            width:100%; height:100%; object-fit:cover; display:block; border-radius:20px;
+        }
 
         .game-title{ font-size:1.5rem; font-weight:700; margin-bottom:1rem; color:#2d3748; text-align:center; }
         .game-description{ color:#718096; text-align:center; margin-bottom:1.5rem; line-height:1.6; }
@@ -145,12 +142,8 @@
         .play-button.disabled{ background:#e2e8f0; color:#a0aec0; cursor:not-allowed; }
 
         /* زر واتساب */
-        .play-button.whatsapp{
-            background:linear-gradient(135deg,#25D366,#128C7E); color:#fff;
-        }
-        .play-button.whatsapp:hover{
-            transform:translateY(-2px); box-shadow:0 10px 20px rgba(18,140,126,.25); color:#fff; text-decoration:none;
-        }
+        .play-button.whatsapp{ background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
+        .play-button.whatsapp:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(18,140,126,.25); color:#fff; text-decoration:none; }
 
         .floating-shapes{ position:absolute; width:100%; height:100%; overflow:hidden; z-index:1; }
         .shape{ position:absolute; background:rgba(255,255,255,.1); border-radius:50%; animation:float 6s ease-in-out infinite; }
@@ -163,7 +156,7 @@
         .stat-item{ margin-bottom:2rem; }
         .stat-number{
             font-size:3rem; font-weight:700;
-            background:linear-gradient(135deg,#8b5cf6,#06b6d4);
+            background:linear-gradient(135deg,#8b5cf6,#06b6د4);
             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
         }
         .stat-label{ font-size:1.1rem; color:#a0aec0; }
@@ -172,6 +165,7 @@
             .hero-title{ font-size:2.5rem; }
             .hero-subtitle{ font-size:1.1rem; }
             .game-card{ margin-bottom:1.5rem; }
+            .game-icon{ width:180px; height:180px; } /* تكبير لطيف على الجوال */
         }
     </style>
 </head>
@@ -197,11 +191,14 @@
             </div>
 
             <div class="row justify-content-center">
-                <!-- لعبة خلية الحروف -->
+                <!-- لعبة خلية الحروف (تم استبدال الأيقونة بصورة) -->
                 <div class="col-lg-4 col-md-6">
                     <div class="game-card">
-                        <div class="game-icon">
-                            <i class="fas fa-font" aria-hidden="true"></i>
+                        <div class="game-icon" aria-label="خلية الحروف">
+                            <!-- ملاحظة: استخدمت رابط صورة مباشر من Imgur لضمان العرض -->
+                            <img src="https://i.imgur.com/6cf9Bqf.png"
+                                 alt="خلية الحروف"
+                                 loading="lazy" decoding="async">
                         </div>
                         <h3 class="game-title">خلية الحروف</h3>
                         <p class="game-description">
@@ -279,19 +276,13 @@
                         <p class="game-description">
                             عندك فكرة لعبة خاصة؟ ننفّذها لك بالكامل وتتماشى مع هوية منصتك واحتياجك.
                         </p>
-                        <div class="game-status">
-                            <span class="status-badge status-available">
-                                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                                تواصل الآن
-                            </span>
-                        </div>
                         <a
                             class="play-button whatsapp"
                             href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D9%84%D8%B9%D8%A8%D8%A9%20%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B7%D9%84%D8%A8%20%D9%84%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
                             target="_blank" rel="noopener"
                             aria-label="تواصل عبر واتساب لتصميم لعبة حسب الطلب">
                             <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
-                            تواصل عبر واتساب
+                            تواصل معنا عبر الواتساب
                         </a>
                     </div>
                 </div>
@@ -306,19 +297,13 @@
                         <p class="game-description">
                             عندك فكرة لعبة قوية؟ أرسلها لنا، ولو اعتمدناها لك نسبة من الأرباح.
                         </p>
-                        <div class="game-status">
-                            <span class="status-badge status-available">
-                                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                                تواصل الآن
-                            </span>
-                        </div>
                         <a
                             class="play-button whatsapp"
                             href="https://wa.me/966550799857?text=%D8%B9%D9%86%D8%AF%D9%8A%20%D9%81%D9%83%D8%B1%D8%A9%20%D9%84%D8%B9%D8%A8%D8%A9%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D9%85%D9%86%D8%A7%D9%82%D8%B4%D8%AA%D9%87%D8%A7%D8%8C%20%D9%88%D9%87%D9%84%20%D9%87%D9%86%D8%A7%D9%83%20%D9%86%D8%B8%D8%A7%D9%85%20%D9%86%D8%B3%D8%A8%D8%A9%D8%9F"
                             target="_blank" rel="noopener"
                             aria-label="اقترح لعبة واحصل على نسبة عبر واتساب">
                             <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
-                            تواصل عبر واتساب
+                            تواصل معنا عبر الواتساب
                         </a>
                     </div>
                 </div>
