@@ -1,9 +1,10 @@
-# games/models.py - النسخة المصححة والكاملة
+# games/models.py - النسخة المُحسّنة والنهائية
 
 from django.db import models
 from django.utils import timezone
-from django.db.models import Q, UniqueConstraint, Index
+from django.db.models import Q, F
 from django.conf import settings
+from django.core.exceptions import ValidationError
 import uuid
 from datetime import timedelta
 from decimal import Decimal
@@ -98,20 +99,45 @@ class GamePackage(models.Model):
     )
 
     class Meta:
-        unique_together = ('game_type', 'package_number')
         ordering = ['game_type', 'package_number']
         verbose_name = "حزمة لعبة"
         verbose_name_plural = "حزم الألعاب"
+        constraints = [
+            # فريدة رقم الحزمة داخل نوع اللعبة
+            models.UniqueConstraint(
+                fields=['game_type', 'package_number'],
+                name='uniq_pkg_by_type_number'
+            ),
+            # إذا كانت مجانية يجب أن يكون السعر 0.00
+            models.CheckConstraint(
+                check=Q(is_free=False) | Q(price=Decimal('0.00')),
+                name='free_pkg_price_must_be_zero'
+            ),
+            # علاقة خصم صحيحة: كلاهما None أو (خصم > 0 وأقل من الأصلي وكلاهما > 0)
+            models.CheckConstraint(
+                check=(
+                    (Q(discounted_price__isnull=True) & Q(original_price__isnull=True))
+                    | (Q(discounted_price__isnull=False) & Q(original_price__isnull=False)
+                       & Q(discounted_price__gt=Decimal('0.00')) & Q(original_price__gt=Decimal('0.00'))
+                       & Q(discounted_price__lt=F('original_price')))
+                ),
+                name='valid_discount_relation'
+            ),
+        ]
         indexes = [
-            Index(fields=['game_type', 'is_active']),
-            Index(fields=['is_free']),
+            models.Index(fields=['game_type', 'is_active']),
+            models.Index(fields=['is_free']),
         ]
 
     def __str__(self):
         return f"{self.get_game_type_display()} - حزمة {self.package_number}"
 
     def clean(self):
-        from django.core.exceptions import ValidationError
+        # تحقق إضافي وودّي للأخطاء المفهومة
+        if self.is_free and self.price != Decimal('0.00'):
+            raise ValidationError("الحزم المجانية يجب أن يكون سعرها 0.00.")
+        if (self.discounted_price is None) ^ (self.original_price is None):
+            raise ValidationError("إما تحديد السعر الأصلي وسعر الخصم معًا أو تركهما فارغين.")
         if self.discounted_price is not None and self.original_price is not None:
             if self.discounted_price <= Decimal('0.00') or self.original_price <= Decimal('0.00'):
                 raise ValidationError("الأسعار يجب أن تكون أكبر من صفر.")
@@ -181,17 +207,30 @@ class LettersGameQuestion(models.Model):
     )
 
     class Meta:
-        unique_together = ('package', 'letter', 'question_type')
         verbose_name = "سؤال خلية حروف"
         verbose_name_plural = "أسئلة خلية الحروف"
         ordering = ['letter', 'question_type']
+        constraints = [
+            # سؤال واحد فقط لكل (حزمة، حرف، نوع)
+            models.UniqueConstraint(
+                fields=['package', 'letter', 'question_type'],
+                name='uniq_letter_qtype_per_pkg'
+            ),
+        ]
         indexes = [
-            Index(fields=['package', 'letter']),
-            Index(fields=['package', 'question_type']),
+            models.Index(fields=['package', 'letter']),
+            models.Index(fields=['package', 'question_type']),
         ]
 
     def __str__(self):
         return f"{self.letter} - {self.get_question_type_display()} - {self.question[:30]}..."
+
+    def clean(self):
+        # تحقق مبدئي على الحرف (يُسمح بطول 1-3 لدعم الهمزات والمد)
+        if not (self.letter or "").strip():
+            raise ValidationError("الحرف مطلوب.")
+        if len(self.letter.strip()) > 3:
+            raise ValidationError("الحرف يجب ألا يتجاوز 3 خانات (لدعم الهمزات والمد).")
 
 
 class UserPurchase(models.Model):
@@ -241,18 +280,18 @@ class UserPurchase(models.Model):
         verbose_name = "مشترى حزمة"
         verbose_name_plural = "مشتريات الحزم"
         ordering = ['-purchase_date']
-        # يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
         constraints = [
-            UniqueConstraint(
+            # يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
+            models.UniqueConstraint(
                 fields=['user', 'package'],
                 condition=Q(is_completed=False),
                 name='unique_active_purchase_per_package'
             ),
         ]
         indexes = [
-            Index(fields=['user', 'package']),
-            Index(fields=['is_completed']),
-            Index(fields=['expires_at']),
+            models.Index(fields=['user', 'package']),
+            models.Index(fields=['is_completed']),
+            models.Index(fields=['expires_at']),
         ]
 
     def __str__(self):
@@ -281,6 +320,13 @@ class UserPurchase(models.Model):
         end = self.expires_at or self.computed_expires_at
         return now >= end
 
+    @property
+    def time_left(self) -> timedelta:
+        """الوقت المتبقي قبل الانتهاء (للعرض في الواجهة/API)."""
+        end = self.expires_at or self.computed_expires_at
+        delta = end - timezone.now()
+        return max(timedelta(0), delta)
+
     def mark_expired_if_needed(self, auto_save=True) -> bool:
         """
         يضع is_completed=True تلقائيًا إذا انتهت الصلاحية.
@@ -304,6 +350,7 @@ class UserPurchase(models.Model):
 
         # بعد الحفظ الأول: purchase_date صار متوفر
         if is_create and self.expires_at is None:
+            # تحديد الانتهاء مرة واحدة بناءً على purchase_date
             self.expires_at = self.purchase_date + self.expiry_duration
             super().save(update_fields=['expires_at'])
 
@@ -336,8 +383,6 @@ class GameSession(models.Model):
         choices=GamePackage.GAME_TYPES,
         verbose_name="نوع اللعبة"
     )
-
-
 
     # جلسة واحدة فقط لكل شراء
     purchase = models.OneToOneField(
@@ -419,13 +464,12 @@ class GameSession(models.Model):
         verbose_name_plural = "جلسات اللعب"
         ordering = ['-created_at']
         indexes = [
-            Index(fields=['game_type', 'created_at']),
-            Index(fields=['is_active']),
-            Index(fields=['package', 'is_active']),
+            models.Index(fields=['game_type', 'created_at']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['package', 'is_active']),
         ]
 
     def clean(self):
-        from django.core.exceptions import ValidationError
         # تحقق من التوافق مع الشراء عند الربط
         if self.purchase:
             if self.package_id != self.purchase.package_id:
@@ -435,11 +479,21 @@ class GameSession(models.Model):
             if self.purchase.is_completed or self.purchase.is_expired:
                 raise ValidationError("لا يمكن إنشاء جلسة لشراء منتهي/مكتمل.")
 
+        # لا تسمح بجلسة لحزمة غير مفعّلة
+        if self.package and not self.package.is_active:
+            raise ValidationError("لا يمكن إنشاء جلسة لحزمة غير مفعّلة.")
+
     def save(self, *args, **kwargs):
+        # توليد روابط العرض/المتسابقين عند الإنشاء
         if not self.display_link:
             self.display_link = f"display-{str(self.id)[:8]}"
         if not self.contestants_link:
             self.contestants_link = f"contestants-{str(self.id)[:8]}"
+
+        # مزامنة نوع الجلسة مع نوع الحزمة (حماية من التعارض)
+        if self.package and self.game_type != self.package.game_type:
+            self.game_type = self.package.game_type
+
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -521,12 +575,17 @@ class Contestant(models.Model):
     )
 
     class Meta:
-        unique_together = ('session', 'name')
         verbose_name = "متسابق"
         verbose_name_plural = "المتسابقون"
         ordering = ['team', 'name']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['session', 'name'],
+                name='uniq_contestant_name_per_session'
+            )
+        ]
         indexes = [
-            Index(fields=['session', 'team']),
+            models.Index(fields=['session', 'team']),
         ]
 
     def __str__(self):
@@ -550,7 +609,7 @@ class FreeTrialUsage(models.Model):
             models.UniqueConstraint(fields=['user', 'game_type'], name='unique_free_trial_per_user_game')
         ]
         indexes = [
-            Index(fields=['user', 'game_type'])
+            models.Index(fields=['user', 'game_type'])
         ]
 
     def __str__(self):
