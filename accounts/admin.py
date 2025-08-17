@@ -1,562 +1,386 @@
 # accounts/admin.py
+from __future__ import annotations
 from django.contrib import admin, messages
+from django.contrib.auth import get_user_model
 from django.urls import path, reverse
-from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.utils import timezone
-from django.core.cache import cache
+from django.db.models import Count, Q, F
+from django.db.models.functions import TruncDate
+from django.http import HttpResponse, HttpResponseRedirect
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.db.models import Count, Sum, F, Case, When, DecimalField
-from django.db.models.functions import Coalesce, TruncDate
+from django.utils.translation import gettext_lazy as _
+from django.contrib.admin.views.decorators import staff_member_required
 
-from datetime import timedelta, datetime
-from decimal import Decimal
-import csv
-import json
-
-from django.contrib.auth.models import User
 from .models import UserProfile, UserActivity, UserPreferences
-from games.models import UserPurchase, GameSession, FreeTrialUsage
-from payments.models import Transaction, PaymentMethod
 
+import csv
+from datetime import timedelta, datetime
+import logging
 
-# ============== أدوات المدى الزمني + الفلاتر ==============
-def _parse_range(request):
+logger = logging.getLogger("accounts.admin")
+User = get_user_model()
+
+# ---------------------------------------------
+# أدوات واجهة (داكنة ومتناسقة مع Django Admin)
+# ---------------------------------------------
+def _kpi_card(label: str, value: str, sub: str | None = None, tone: str = "info") -> str:
+    colors = {
+        "ok":   ("#10b981", "#064e3b"),
+        "warn": ("#f59e0b", "#7c2d12"),
+        "bad":  ("#ef4444", "#7f1d1d"),
+        "info": ("#3b82f6", "#1e3a8a"),
+    }
+    base, _ = colors.get(tone, colors["info"])
+    return f"""
+    <div style="flex:1;min-width:220px;margin:8px;padding:16px;border-radius:12px;
+                background:{base}22;border:1px solid {base};box-shadow:0 1px 2px #0002;">
+      <div style="color:#cbd5e1;font-weight:700;font-size:13px;margin-bottom:8px;">{label}</div>
+      <div style="color:#e5e7eb;font-size:22px;font-weight:800;letter-spacing:0.3px;">{value}</div>
+      <div style="color:#94a3b8;font-size:12px;margin-top:6px;">{sub or ''}</div>
+    </div>
     """
-    ?range=7d|30d|90d|365d|all  (افتراضي 30d)
-    أو ?start=YYYY-MM-DD&end=YYYY-MM-DD
-    يعيد: (start_dt, end_dt, label)
-    """
-    now = timezone.now()
-    r = (request.GET.get("range") or "30d").lower()
-    start_str = request.GET.get("start")
-    end_str = request.GET.get("end")
 
-    if start_str and end_str:
-        try:
-            start = timezone.make_aware(datetime.strptime(start_str, "%Y-%m-%d"))
-            end = timezone.make_aware(datetime.strptime(end_str, "%Y-%m-%d")) + timedelta(days=1)
-            return start, end, f"{start_str} → {end_str}"
-        except Exception:
-            pass
-
-    mapping = {"7d": 7, "30d": 30, "90d": 90, "365d": 365}
-    if r in mapping:
-        days = mapping[r]
-        start = now - timedelta(days=days)
-        return start, now, r
-    if r == "all":
-        return None, None, "كل الوقت"
-    start = now - timedelta(days=30)
-    return start, now, "30d"
-
-
-def _game_filter(request):
-    """?game=letters|images|quiz|all"""
-    g = (request.GET.get("game") or "all").lower()
-    return g if g in {"letters", "images", "quiz"} else "all"
-
-
-def _effective_price_expr():
-    """سعر فعلي تقديري: إن كان discounted_price > 0 استخدمه، وإلا price."""
-    return Case(
-        When(
-            package__discounted_price__isnull=False,
-            package__discounted_price__gt=Decimal("0.00"),
-            then=F("package__discounted_price"),
-        ),
-        default=F("package__price"),
-        output_field=DecimalField(max_digits=12, decimal_places=2),
+def _listing_table(headers, rows_html):
+    thead = "".join(
+        f"<th style='padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;'>{h}</th>"
+        for h in headers
     )
+    tbody = "".join(rows_html) or f"<tr><td colspan='{len(headers)}' style='padding:12px;color:#94a3b8;'>لا توجد بيانات</td></tr>"
+    return f"""
+    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+        <thead style="background:#0f172a;color:#cbd5e1;'">{thead}</thead>
+        <tbody style="color:#e2e8f0;">{tbody}</tbody>
+      </table>
+    </div>
+    """
 
+def _progress_bar(label, pct):
+    try:
+        pct = int(max(0, min(100, pct)))
+    except Exception:
+        pct = 0
+    return f"""
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;background:#111827;border-radius:999px;overflow:hidden;height:8px;">
+        <div style="width:{pct}%;height:8px;background:#3b82f6;"></div>
+      </div>
+      <span style="font-size:12px;color:#94a3b8;">{label}</span>
+    </div>
+    """
 
-# ============== مدراء النماذج الأساسية ==============
+# ---------------------------------------------
+# مساعدات الوقت + المقارنة
+# ---------------------------------------------
+def _parse_dt_local(s: str | None) -> datetime | None:
+    if not s:
+        return None
+    # يدعم datetime-local: 2025-08-17T08:00
+    try:
+        return timezone.make_aware(datetime.strptime(s.strip(), "%Y-%m-%dT%H:%M"))
+    except Exception:
+        # يدعم تاريخ فقط (يبدأ اليوم 00:00)
+        try:
+            d = datetime.strptime(s.strip(), "%Y-%m-%d")
+            return timezone.make_aware(datetime(d.year, d.month, d.day, 0, 0))
+        except Exception:
+            return None
+
+def _get_period(request):
+    """يعيد (start, end, compare_enabled). افتراضي: آخر 30 يوم حتى الآن."""
+    end = _parse_dt_local(request.GET.get("end"))
+    start = _parse_dt_local(request.GET.get("start"))
+    if not end:
+        end = timezone.now()
+    if not start:
+        start = end - timedelta(days=30)
+    # تصحيح لو المستخدم عكس:
+    if start > end:
+        messages.error(request, "نطاق التاريخ غير صحيح: البداية بعد النهاية.")
+        start, end = end - timedelta(days=30), end
+    compare = request.GET.get("compare") in ("1", "true", "on", "yes")
+    return start, end, compare
+
+def _prev_period(start, end):
+    delta = end - start
+    prev_end = start
+    prev_start = prev_end - delta
+    return prev_start, prev_end
+
+def _fmt_delta(curr: int, prev: int) -> tuple[str, str]:
+    """يعيد (رمز السهم والنسبة كنص)."""
+    if prev <= 0:
+        return "—", "—"
+    change = ((curr - prev) / prev) * 100.0
+    arrow = "↑" if change > 0 else ("↓" if change < 0 else "→")
+    return arrow, f"{change:.1f}%"
+
+# -------------------------------------------------
+# Admin: UserProfile
+# -------------------------------------------------
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "display_name_col", "account_type", "is_host", "phone_number", "created_at")
-    list_filter = ("account_type", "is_host", "created_at", "updated_at")
-    search_fields = ("user__username", "user__email", "host_name", "phone_number")
-    date_hierarchy = "created_at"
+    list_display = (
+        "user_username", "user_email", "display_name", "is_host",
+        "phone_number", "favorite_game_ar", "account_type", "created_at", "updated_at",
+    )
+    list_filter = ("is_host", "account_type", "favorite_game", "created_at", "updated_at")
+    search_fields = ("user__username", "user__email", "user__first_name", "host_name", "phone_number")
     ordering = ("-created_at",)
-    readonly_fields = ("created_at", "updated_at")
+    list_select_related = ("user",)
 
-    def display_name_col(self, obj):
-        return obj.display_name
-    display_name_col.short_description = "الاسم المعروض"
+    actions = ("open_analytics", "enable_notifications", "disable_notifications",)
 
+    def user_username(self, obj):
+        return obj.user.username
+    user_username.short_description = "اسم المستخدم"
 
-@admin.register(UserActivity)
-class UserActivityAdmin(admin.ModelAdmin):
-    list_display = ("user", "activity_type", "game_type", "session_id", "created_at", "desc_short")
-    list_filter = ("activity_type", "game_type", "created_at")
-    search_fields = ("user__username", "description", "session_id")
-    date_hierarchy = "created_at"
-    ordering = ("-created_at",)
-    list_per_page = 30
-    actions = ["purge_old_activities"]
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = "البريد"
 
-    def desc_short(self, obj):
-        if not obj.description:
-            return "—"
-        return obj.description if len(obj.description) <= 60 else obj.description[:60] + "…"
-    desc_short.short_description = "الوصف المختصر"
+    def favorite_game_ar(self, obj):
+        choices = dict(UserProfile._meta.get_field("favorite_game").choices)
+        return choices.get(obj.favorite_game, "—")
+    favorite_game_ar.short_description = "اللعبة المفضلة"
 
-    def purge_old_activities(self, request, queryset):
-        cutoff = timezone.now() - timedelta(days=180)
-        deleted, _ = UserActivity.objects.filter(created_at__lt=cutoff).delete()
-        messages.success(request, f"تم حذف {deleted} سجل نشاط أقدم من 180 يومًا.")
-    purge_old_activities.short_description = "حذف الأنشطة القديمة (> 180 يوم)"
+    @admin.action(description="📈 فتح تحليلات المستخدمين")
+    def open_analytics(self, request, queryset):
+        return HttpResponseRedirect(reverse("admin:accounts_userprofile_analytics"))
 
+    @admin.action(description="تفعيل الإشعارات للمحدد")
+    def enable_notifications(self, request, queryset):
+        updated = queryset.update(notifications_enabled=True)
+        messages.success(request, f"تم تفعيل الإشعارات لـ {updated} مستخدم.")
 
-@admin.register(UserPreferences)
-class UserPreferencesAdmin(admin.ModelAdmin):
-    list_display = ("user", "theme_preference", "sound_enabled", "volume_level", "quick_mode_enabled", "show_statistics")
-    list_filter = ("theme_preference", "sound_enabled", "quick_mode_enabled", "show_statistics")
-    search_fields = ("user__username", "user__email")
+    @admin.action(description="تعطيل الإشعارات للمحدد")
+    def disable_notifications(self, request, queryset):
+        updated = queryset.update(notifications_enabled=False)
+        messages.info(request, f"تم تعطيل الإشعارات لـ {updated} مستخدم.")
 
-
-# ============== لوحة الحسابات والتحليلات (Proxy) ==============
-class AccountsDashboard(User):
-    class Meta:
-        proxy = True
-        verbose_name = "لوحة الحسابات والتحليلات"
-        verbose_name_plural = "لوحة الحسابات والتحليلات"
-
-
-@admin.register(AccountsDashboard)
-class AccountsDashboardAdmin(admin.ModelAdmin):
-    """
-    لوحة تحليل سلوك العميل + الإيرادات ورسوم الدفع:
-    - تحويل المجاني → المدفوع (مدى الحياة وداخل المدى)
-    - من جرّب مجاني ولم يشترِ
-    - عدد مجرّبي المجاني / مشترِي المدفوع (+ نسب)
-    - زمن التحويل (وسيط/متوسط بالأيام)
-    - ARPPU، تكرار الشراء، توزيع حسب نوع اللعبة
-    - صافي الإيراد بعد الرسوم (1 ريال/معاملة + % حسب اسم الطريقة + processing_fee)
-    - توصية إذا كانت رسوم فيزا تثقل الهامش
-    - فلاتر: المدى الزمني + نوع اللعبة، وتصدير CSV
-    """
-    change_list_template = None
-    list_display = ("username", "email", "last_login")  # غير مستخدمة
-
-    # ---------- روابط ----------
+    # روابط مخصّصة
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="accounts_dashboard"),
-            path("export/top-buyers.csv", self.admin_site.admin_view(self.export_top_buyers), name="accounts_export_top_buyers"),
-            path("export/top-packages.csv", self.admin_site.admin_view(self.export_top_packages), name="accounts_export_top_packages"),
-            path("", self.admin_site.admin_view(self.redirect_to_dashboard), name="accounts_accountsdashboard_changelist"),
+            path("analytics/", self.admin_site.admin_view(self.analytics_view), name="accounts_userprofile_analytics"),
+            path("analytics.csv", self.admin_site.admin_view(self.analytics_csv_view), name="accounts_userprofile_analytics_csv"),
         ]
         return custom + urls
 
-    def redirect_to_dashboard(self, request):
-        return HttpResponseRedirect(reverse("admin:accounts_dashboard"))
+    # -----------------------
+    # شاشة التحليلات
+    # -----------------------
+    def analytics_view(self, request):
+        start, end, compare = _get_period(request)
+        prev_start, prev_end = _prev_period(start, end)
 
-    # ---------- تصدير ----------
-    def export_top_buyers(self, request):
-        start, end, _ = _parse_range(request)
-        game = _game_filter(request)
-
-        purchases = UserPurchase.objects.select_related("user", "package")
-        if start and end:
-            purchases = purchases.filter(purchase_date__gte=start, purchase_date__lt=end)
-        if game != "all":
-            purchases = purchases.filter(package__game_type=game)
-
-        eff = _effective_price_expr()
-        rows = (purchases.values("user", "user__username", "user__email")
-                 .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
-                 .order_by("-total_spent", "-purchases_count")[:500])
-
-        resp = HttpResponse(content_type="text/csv; charset=utf-8")
-        resp["Content-Disposition"] = 'attachment; filename="top_buyers.csv"'
-        w = csv.writer(resp)
-        w.writerow(["user_id", "username", "email", "purchases_count", "total_spent"])
-        for r in rows:
-            w.writerow([r["user"], r["user__username"], r["user__email"], r["purchases_count"], str(r["total_spent"] or 0)])
-        return resp
-
-    def export_top_packages(self, request):
-        start, end, _ = _parse_range(request)
-        game = _game_filter(request)
-
-        purchases = UserPurchase.objects.select_related("user", "package")
-        if start and end:
-            purchases = purchases.filter(purchase_date__gte=start, purchase_date__lt=end)
-        if game != "all":
-            purchases = purchases.filter(package__game_type=game)
-
-        eff = _effective_price_expr()
-        rows = (purchases.values("package", "package__package_number", "package__game_type")
-                 .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
-                 .order_by("-purchases_count", "-total_spent")[:500])
-
-        resp = HttpResponse(content_type="text/csv; charset=utf-8")
-        resp["Content-Disposition"] = 'attachment; filename="top_packages.csv"'
-        w = csv.writer(resp)
-        w.writerow(["package_id", "game_type", "package_number", "purchases_count", "total_spent"])
-        for r in rows:
-            w.writerow([r["package"], r["package__game_type"], r["package__package_number"], r["purchases_count"], str(r["total_spent"] or 0)])
-        return resp
-
-    # ---------- العرض الرئيسي ----------
-    def dashboard_view(self, request):
-        # نخزّن HTML فقط لتفادي ContentNotRenderedError
-        cache_key = f"acc_dash:{request.GET.urlencode()}"
-        cached = cache.get(cache_key)
-        if cached:
-            return TemplateResponse(
-                request,
-                "admin/base_site.html",
-                context={**self.admin_site.each_context(request), "title": "لوحة الحسابات والتحليلات", "content": mark_safe(cached)},
-            )
-
-        start, end, range_label = _parse_range(request)
-        game = _game_filter(request)
-        gt_display = {"letters": "خلية الحروف", "images": "تحدي الصور", "quiz": "سؤال وجواب"}
-
-        # مصادر
-        purchases_qs = UserPurchase.objects.select_related("package", "user")
-        sessions_qs = GameSession.objects.select_related("package", "host")
-        trials_qs = FreeTrialUsage.objects.all()
-
-        if start and end:
-            purchases_qs = purchases_qs.filter(purchase_date__gte=start, purchase_date__lt=end)
-            sessions_qs = sessions_qs.filter(created_at__gte=start, created_at__lt=end)
-            trials_qs = trials_qs.filter(used_at__gte=start, used_at__lt=end)
-
-        if game != "all":
-            purchases_qs = purchases_qs.filter(package__game_type=game)
-            sessions_qs = sessions_qs.filter(game_type=game)
-            trials_qs = trials_qs.filter(game_type=game)
-
-        # المؤشرات العامة
+        # إجمالي المستخدمين (كل الوقت)
         total_users = User.objects.count()
-        active_30d = User.objects.filter(last_login__gte=timezone.now() - timedelta(days=30)).count()
-        new_users_period = 0
-        if start and end:
-            new_users_period = User.objects.filter(date_joined__gte=start, date_joined__lt=end).count()
 
-        # الإيراد الإجمالي التقديري
-        eff = _effective_price_expr()
-        total_revenue = purchases_qs.aggregate(s=Coalesce(Sum(eff), Decimal("0")))["s"]
+        # المستخدمون الجدد
+        new_users = User.objects.filter(date_joined__gte=start, date_joined__lte=end).count()
+        prev_new_users = User.objects.filter(date_joined__gte=prev_start, date_joined__lte=prev_end).count() if compare else 0
+        arrow_new, pct_new = _fmt_delta(new_users, prev_new_users) if compare else ("", "")
 
-        # مجرّبو المجاني (مميزون)
-        trial_user_ids = list(trials_qs.values_list("user_id", flat=True).distinct())
-        trials_count_unique = len(trial_user_ids)
-
-        # مشترُو المدفوع (مميزون) داخل المدى
-        paid_buyers_ids = list(
-            purchases_qs.filter(package__is_free=False).values_list("user_id", flat=True).distinct()
+        # النشطون خلال الفترة (أي نشاط في UserActivity)
+        active_user_ids = set(
+            UserActivity.objects.filter(created_at__gte=start, created_at__lte=end).values_list("user_id", flat=True).distinct()
         )
-        paid_buyers_unique = len(paid_buyers_ids)
+        active_users = len(active_user_ids)
 
-        # تحويل مجاني→مدفوع (مدى الحياة + داخل المدى)
-        # lifetime: كل من جرّب المجاني (game filter إن وُجد) واشترى مدفوع في أي وقت
-        trials_all = FreeTrialUsage.objects.filter(user_id__in=trial_user_ids) if trial_user_ids else FreeTrialUsage.objects.none()
-        if game != "all":
-            trials_all = trials_all.filter(game_type=game)
-        convert_lifetime_ids = set(
-            UserPurchase.objects.filter(
-                user_id__in=trials_all.values_list("user_id", flat=True),
-                package__is_free=False,
-            ).values_list("user_id", flat=True).distinct()
-        )
-        conv_lifetime = len(convert_lifetime_ids)
-        conv_lifetime_rate = (conv_lifetime / trials_count_unique * 100) if trials_count_unique else 0
-
-        # داخل المدى: من جرّب في المدى واشترى مدفوع ضمن نفس المدى
-        convert_period_ids = set(
-            purchases_qs.filter(package__is_free=False, user_id__in=trial_user_ids).values_list("user_id", flat=True).distinct()
-        )
-        conv_period = len(convert_period_ids)
-        conv_period_rate = (conv_period / trials_count_unique * 100) if trials_count_unique else 0
-
-        # مَن جرّب مجاني ولم يشترِ أبدًا (Non-Converters)
-        non_converters_ids = set(trial_user_ids) - convert_lifetime_ids
-        non_conv_count = len(non_converters_ids)
-        non_conv_rate = (non_conv_count / trials_count_unique * 100) if trials_count_unique else 0
-
-        # زمن التحويل (أيام) لمن حوّلوا (من أول تجربة مجانية لأول شراء مدفوع)
-        time_deltas = []
-        if trial_user_ids:
-            # أول تاريخ تجربة لكل مستخدم
-            first_trial = (FreeTrialUsage.objects
-                           .filter(user_id__in=trial_user_ids, game_type=game if game != "all" else F("game_type"))
-                           .values("user_id")
-                           .annotate(t0=Coalesce(TruncDate("used_at"), TruncDate("used_at")))
-                           )
-            trial_map = {r["user_id"]: r["t0"] for r in first_trial}
-            # أول شراء مدفوع لكل مستخدم
-            first_paid = (UserPurchase.objects
-                          .filter(user_id__in=trial_map.keys(), package__is_free=False)
-                          .values("user_id")
-                          .annotate(p0=Coalesce(TruncDate("purchase_date"), TruncDate("purchase_date"))))
-            paid_map = {r["user_id"]: r["p0"] for r in first_paid}
-            for uid, t0 in trial_map.items():
-                if uid in paid_map and t0 and paid_map[uid]:
-                    delta = (paid_map[uid] - t0).days
-                    if delta >= 0:
-                        time_deltas.append(delta)
-        avg_days = sum(time_deltas) / len(time_deltas) if time_deltas else 0
-        med_days = 0
-        if time_deltas:
-            srt = sorted(time_deltas)
-            mid = len(srt) // 2
-            med_days = (srt[mid] if len(srt) % 2 else (srt[mid - 1] + srt[mid]) / 2)
-
-        # ARPPU: الإيراد / عدد المشترين المدفوعين (داخل المدى)
-        ARPPU = (total_revenue / paid_buyers_unique) if paid_buyers_unique else Decimal("0")
-
-        # شراء متكرر داخل المدى
-        repeat_counts = (purchases_qs.filter(package__is_free=False)
-                         .values("user_id").annotate(n=Count("id")).filter(n__gte=2).count())
-        repeat_rate = (repeat_counts / paid_buyers_unique * 100) if paid_buyers_unique else 0
-
-        # توزيع حسب نوع اللعبة داخل المدى
-        by_game = (purchases_qs.values("package__game_type")
-                   .annotate(cnt=Count("id"), revenue=Coalesce(Sum(eff), Decimal("0")))
-                   .order_by("-cnt"))
-        # أفضل الحزم
-        top_packages = (purchases_qs.values("package__game_type", "package__package_number")
-                        .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
-                        .order_by("-purchases_count", "-total_spent")[:10])
-        # أفضل العملاء
-        top_buyers = (purchases_qs.values("user__username", "user__email")
-                      .annotate(purchases_count=Count("id"), total_spent=Coalesce(Sum(eff), Decimal("0")))
-                      .order_by("-total_spent", "-purchases_count")[:10])
-
-        # الرسم (آخر 14 يومًا)
-        now = timezone.now()
-        since_14 = now - timedelta(days=14)
-        chart_qs = purchases_qs if (start and start >= since_14) else purchases_qs.filter(purchase_date__gte=since_14)
-        per_day = (chart_qs.annotate(day=TruncDate("purchase_date"))
-                   .values("day").annotate(cnt=Count("id")).order_by("day"))
-        labels_json = json.dumps([p["day"].strftime("%Y-%m-%d") for p in per_day], ensure_ascii=False)
-        values_json = json.dumps([p["cnt"] for p in per_day], ensure_ascii=False)
-
-        # صافي الإيراد بعد رسوم الدفع (من معاملات الدفع)
-        tx_qs = Transaction.objects.filter(status="completed")
-        if start and end:
-            tx_qs = tx_qs.filter(created_at__gte=start, created_at__lt=end)
-        if game != "all":
-            tx_qs = tx_qs.filter(package__game_type=game)
-
-        FIXED_PER_TXN = Decimal("1.00")  # طلبك: 1 ريال لكل عملية
-        PCT_MAP = {
-            "visa": Decimal("2.7"), "فيزا": Decimal("2.7"),
-            "mada": Decimal("1.0"), "مدى":  Decimal("1.0"),
-        }
-
-        gross_amount = Decimal("0")
-        total_fees = Decimal("0")
-        by_method = {}
-
-        for tx in tx_qs.select_related("payment_method"):
-            amt = tx.amount or Decimal("0")
-            gross_amount += amt
-            pm = tx.payment_method
-            pm_name = (pm.name_ar or pm.name or "").strip().lower() if pm else "غير محدد"
-            pct = PCT_MAP.get(pm_name, Decimal("0"))
-            meth_fixed = pm.processing_fee if (pm and pm.processing_fee) else Decimal("0")
-            fee = FIXED_PER_TXN + meth_fixed + (amt * pct / Decimal("100"))
-            total_fees += fee
-
-            bm = by_method.setdefault(pm_name or "غير محدد", {"count": 0, "amount": Decimal("0"), "fees": Decimal("0")})
-            bm["count"] += 1
-            bm["amount"] += amt
-            bm["fees"] += fee
-
-        net_amount = gross_amount - total_fees
-        visa_pressure = 0
-        if gross_amount > 0 and "فيزا" in by_method:
-            visa_pressure = float((by_method["فيزا"]["fees"] / gross_amount) * 100)
-
-        # ========== واجهة ==========
-        style = """
-<style>
-  .dash-wrap {font-family: Tahoma, Arial; padding: 16px;}
-  .kpi-grid {display: grid; grid-template-columns: repeat(4, minmax(200px,1fr)); gap: 12px; margin-bottom: 16px;}
-  .card {background:#0f172a;color:#e2e8f0;border:1px solid #1f2937;border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.15);}
-  .card h3 {margin:0 0 8px 0;font-size:14px;color:#93c5fd;}
-  .card .num {font-size:22px;font-weight:800;color:#e5e7eb;}
-  .sub {color:#94a3b8;font-size:12px;}
-  .grid-2 {display:grid;grid-template-columns: 2fr 1fr;gap:12px;}
-  .tbl {width:100%;border-collapse:collapse;}
-  .tbl th, .tbl td {border-bottom:1px solid #1f2937;padding:8px;text-align:start;}
-  .tbl th {color:#93c5fd;font-weight:700;background:#0b1220;}
-  .controls {margin:12px 0;}
-  .links .btn {display:inline-block;background:#1d4ed8;color:#fff;padding:6px 10px;border-radius:8px;text-decoration:none;margin-inline-end:6px;}
-  .links .btn.gray {background:#374151;}
-  .muted {color:#94a3b8;font-size:12px;}
-  .hint {font-size:12px;color:#cbd5e1;}
-  .pill {background:#1d4ed8;color:#fff;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;}
-  @media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
-</style>
-"""
-
-        base = reverse("admin:accounts_dashboard")
-        qs = request.GET.copy()
-        def link_range(code, text):
-            qs["range"] = code; return f'<a class="btn" href="{base}?{qs.urlencode()}">{text}</a>'
-        def link_game(code, text):
-            qs2 = request.GET.copy(); qs2["game"]=code
-            return f'<a class="btn{" gray" if game==code else ""}" href="{base}?{qs2.urlencode()}">{text}</a>'
-
-        links = (
-            '<div class="controls"><div class="links">'
-            + link_range("7d", "آخر 7 أيام")
-            + link_range("30d", "آخر 30 يوم")
-            + link_range("90d", "آخر 90 يوم")
-            + link_range("365d", "آخر سنة")
-            + link_range("all", "كل الوقت")
-            + f'<a class="btn" href="{reverse("admin:accounts_export_top_buyers")}?{request.GET.urlencode()}">📤 تصدير أعلى العملاء</a>'
-            + f'<a class="btn" href="{reverse("admin:accounts_export_top_packages")}?{request.GET.urlencode()}">📤 تصدير أكثر الحزم</a>'
-            + '</div>'
-            f'<div class="hint">المدى: <b>{range_label}</b> &nbsp;|&nbsp; النوع: '
-            + link_game("all","الكل") + " "
-            + link_game("letters","خلية الحروف") + " "
-            + link_game("images","تحدي الصور") + " "
-            + link_game("quiz","سؤال وجواب")
-            + "</div></div>"
-        )
-
-        # الرسم البياني
-        chart = (
-            '<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>'
-            '<canvas id="chart1" height="110"></canvas>'
-            '<script>(function(){var c=document.getElementById("chart1").getContext("2d");'
-            'new Chart(c,{type:"line",data:{labels:' + labels_json +
-            ',datasets:[{label:"عدد المشتريات/اليوم",data:' + values_json +
-            ',fill:false}]},options:{responsive:true,plugins:{legend:{labels:{color:"#e2e8f0"}}},'
-            'scales:{x:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}},y:{ticks:{color:"#cbd5e1"},grid:{color:"#1f2937"}}}}});})();</script>'
-        )
-
-        # جداول
-        def rows_top_packages():
-            if not top_packages:
-                return '<tr><td colspan="4" class="muted">لا توجد بيانات</td></tr>'
-            out=[]
-            for r in top_packages:
-                out.append(
-                    f"<tr><td>{gt_display.get(r['package__game_type'], r['package__game_type'])}</td>"
-                    f"<td>حزمة {r['package__package_number']}</td>"
-                    f"<td>{r['purchases_count']}</td>"
-                    f"<td>{r['total_spent']}</td></tr>"
-                )
-            return "".join(out)
-
-        def rows_top_buyers():
-            if not top_buyers:
-                return '<tr><td colspan="4" class="muted">لا توجد بيانات</td></tr>'
-            out=[]
-            for r in top_buyers:
-                out.append(
-                    f"<tr><td>{r.get('user__username') or '-'}</td>"
-                    f"<td>{r.get('user__email') or '-'}</td>"
-                    f"<td>{r['purchases_count']}</td>"
-                    f"<td>{r['total_spent']}</td></tr>"
-                )
-            return "".join(out)
-
-        def rows_by_game():
-            if not by_game:
-                return '<tr><td colspan="3" class="muted">لا توجد بيانات</td></tr>'
-            out=[]
-            for r in by_game:
-                out.append(
-                    f"<tr><td>{gt_display.get(r['package__game_type'], r['package__game_type'])}</td>"
-                    f"<td>{r['cnt']}</td><td>{r['revenue']}</td></tr>"
-                )
-            return "".join(out)
-
-        def rows_methods():
-            if not by_method:
-                return '<tr><td colspan="4" class="muted">لا توجد معاملات دفع</td></tr>'
-            out=[]
-            for name, agg in by_method.items():
-                out.append(
-                    f"<tr><td>{name or 'غير محدد'}</td>"
-                    f"<td>{agg['count']}</td>"
-                    f"<td>{agg['amount']}</td>"
-                    f"<td>{agg['fees']}</td></tr>"
-                )
-            return "".join(out)
-
-        # بطاقات KPI
-        kpi = []
-        kpi.append(f'<div class="card"><h3>المستخدمون</h3><div class="num">{total_users}</div><div class="sub">نشطون 30 يوم: {active_30d} — جدد في المدى: {new_users_period}</div></div>')
-        kpi.append(f'<div class="card"><h3>المجاني → المدفوع</h3><div class="num">{conv_lifetime_rate:.1f}%</div><div class="sub">مدى الحياة: {conv_lifetime}/{trials_count_unique} — داخل المدى: {conv_period_rate:.1f}%</div></div>')
-        kpi.append(f'<div class="card"><h3>من جرّب ولم يشترِ</h3><div class="num">{non_conv_rate:.1f}%</div><div class="sub">عددهم: {non_conv_count}</div></div>')
-        kpi.append(f'<div class="card"><h3>إيراد تقديري</h3><div class="num">{total_revenue} ﷼</div><div class="sub">ARPPU: {ARPPU:.2f} ﷼ — تكرار الشراء: {repeat_rate:.1f}%</div></div>')
-        kpi.append(f'<div class="card"><h3>زمن التحويل</h3><div class="num">{med_days:.1f} يوم</div><div class="sub">متوسط: {avg_days:.1f} يوم</div></div>')
-        kpi.append(f'<div class="card"><h3>صافي بعد الرسوم</h3><div class="num">{net_amount:.2f} ﷼</div><div class="sub">إجمالي: {gross_amount:.2f} ﷼ — الرسوم: {total_fees:.2f} ﷼</div></div>')
-
-        recommend = ""
-        if visa_pressure > 2.0:  # عتبة إرشادية
-            recommend = (
-                '<div class="card" style="border-color:#f59e0b">'
-                '<h3>💡 توصية تسعيرية</h3>'
-                f'<div class="sub">نسبة رسوم فيزا إلى إجمالي الدخل {visa_pressure:.1f}% — إن كانت تؤثر على الهامش جرّب الحد من فيزا أو تشجيع مدى (مثلاً خصم بسيط لمدى).</div>'
-                '</div>'
+        # المقدّمون الفعّالون (أنشؤوا جلسات في الفترة)
+        try:
+            from games.models import GameSession, Contestant
+            # مضيفون فعّالون
+            active_hosts = (
+                GameSession.objects.filter(created_at__gte=start, created_at__lte=end, host__isnull=False)
+                .values("host_id").distinct().count()
             )
 
-        # HTML
-        html = []
-        html.append(style)
-        html.append('<div class="dash-wrap">')
-        html.append('<h2 style="color:#93c5fd;margin:0 0 12px 0;">📊 لوحة الحسابات والتحليلات</h2>')
-        html.append(links)
+            # المشاركون في الجلسات (لإحصائيات المتوسط/الوسيط/الأقصى)
+            sessions_qs = (
+                GameSession.objects.filter(created_at__gte=start, created_at__lte=end)
+                .select_related("host").annotate(contestants_count=Count("contestants"))
+            )
+            session_counts = []
+            for s in sessions_qs:
+                base = 1 if s.host_id else 0
+                session_counts.append(base + (s.contestants_count or 0))
 
-        html.append('<div class="kpi-grid">' + "".join(kpi) + '</div>')
-        if recommend:
-            html.append(recommend)
+            total_sessions = len(session_counts)
+            avg_participants = (sum(session_counts) / total_sessions) if total_sessions else 0
+            max_participants = max(session_counts) if total_sessions else 0
+            # وسيط مبسّط
+            median_participants = 0
+            if total_sessions:
+                sorted_counts = sorted(session_counts)
+                mid = total_sessions // 2
+                median_participants = (sorted_counts[mid] if total_sessions % 2 == 1 else (sorted_counts[mid-1] + sorted_counts[mid]) / 2)
 
-        html.append('<div class="grid-2">')
-        html.append('<div class="card"><h3>📈 سرعة الشراء (آخر 14 يومًا)</h3>' + chart + '</div>')
-        html.append('<div class="card"><h3>🎮 الجلسات النشطة حسب نوع اللعبة</h3>')
-        # جلسات نشطة
-        active_sessions = (sessions_qs.filter(is_active=True)
-                           .values("game_type").annotate(cnt=Count("id")).order_by("-cnt"))
-        if active_sessions:
-            html.append('<table class="tbl"><thead><tr><th>نوع اللعبة</th><th>نشطة</th></tr></thead><tbody>')
-            for r in active_sessions:
-                html.append(f"<tr><td>{gt_display.get(r['game_type'], r['game_type'])}</td><td>{r['cnt']}</td></tr>")
-            html.append('</tbody></table>')
-        else:
-            html.append('<div class="muted">لا توجد جلسات نشطة</div>')
-        html.append('</div></div>')
+            # أعلى 5 جلسات
+            top_sessions = (
+                GameSession.objects.filter(created_at__gte=start, created_at__lte=end)
+                .annotate(cc=Count("contestants"))
+                .values("id", "game_type", "created_at", "host_id", "cc")
+                .order_by("-cc")[:5]
+            )
+            top_rows = []
+            for i, s in enumerate(top_sessions, start=1):
+                cnt = (1 if s["host_id"] else 0) + (s["cc"] or 0)
+                top_rows.append(
+                    f"<tr>"
+                    f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{i}</td>"
+                    f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{s['id']}</td>"
+                    f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{s['game_type']}</td>"
+                    f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{timezone.localtime(s['created_at']).strftime('%Y-%m-%d %H:%M')}</td>"
+                    f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{cnt}</td>"
+                    f"</tr>"
+                )
+            top_block = _listing_table(["#","معرّف الجلسة","اللعبة","التاريخ","عدد المشاركين"], top_rows)
 
-        # جداول رئيسية
-        html.append('<div class="grid-2" style="margin-top:12px;">')
-        html.append('<div class="card"><h3>🧺 أكثر الحزم شراءً</h3><table class="tbl"><thead><tr><th>اللعبة</th><th>الحزمة</th><th>المشتريات</th><th>الإيراد</th></tr></thead><tbody>')
-        html.append(rows_top_packages())
-        html.append('</tbody></table></div>')
-        html.append('<div class="card"><h3>👤 أعلى 10 عملاء</h3><table class="tbl"><thead><tr><th>المستخدم</th><th>البريد</th><th>العدد</th><th>المبلغ</th></tr></thead><tbody>')
-        html.append(rows_top_buyers())
-        html.append('</tbody></table></div>')
-        html.append('</div>')
+        except Exception as e:
+            logger.warning(f"Games data not available: {e}")
+            active_hosts = 0
+            avg_participants = 0
+            median_participants = 0
+            max_participants = 0
+            top_block = _listing_table(["#","معرّف الجلسة","اللعبة","التاريخ","عدد المشاركين"], [])
 
-        # توزيع حسب نوع اللعبة
-        html.append('<div class="card" style="margin-top:12px;"><h3>🏆 توزيع حسب نوع اللعبة</h3><table class="tbl"><thead><tr><th>نوع اللعبة</th><th>المشتريات</th><th>الإيراد</th></tr></thead><tbody>')
-        html.append(rows_by_game())
-        html.append('</tbody></table></div>')
+        # DAU/WAU/MAU (اختيارية)
+        show_activity = request.GET.get("show_activity") in ("1", "true", "on", "yes")
+        dau = wau = mau = None
+        if show_activity:
+            # نأخذ “اليوم/الأسبوع/الشهر” المنتهي عند end
+            end_floor = timezone.make_aware(datetime(end.year, end.month, end.day, 23, 59))
+            day_start = end_floor - timedelta(days=1)
+            week_start = end_floor - timedelta(days=7)
+            month_start = end_floor - timedelta(days=30)
+            try:
+                dau = (
+                    UserActivity.objects.filter(created_at__gt=day_start, created_at__lte=end_floor)
+                    .values("user_id").distinct().count()
+                )
+                wau = (
+                    UserActivity.objects.filter(created_at__gt=week_start, created_at__lte=end_floor)
+                    .values("user_id").distinct().count()
+                )
+                mau = (
+                    UserActivity.objects.filter(created_at__gt=month_start, created_at__lte=end_floor)
+                    .values("user_id").distinct().count()
+                )
+            except Exception as e:
+                logger.error(f"DAU/WAU/MAU error: {e}")
 
-        # طرق الدفع والرسوم
-        html.append('<div class="card" style="margin-top:12px;"><h3>💳 طرق الدفع والرسوم</h3><table class="tbl"><thead><tr><th>الطريقة</th><th>عدد المعاملات</th><th>المبلغ الإجمالي</th><th>الرسوم المُحتسبة</th></tr></thead><tbody>')
-        html.append(rows_methods())
-        html.append('</tbody></table>')
-        html.append(f'<div class="muted" style="margin-top:8px;">* الرسوم = 1 ريال/معاملة + نسبة من الاسم (فيزا 2.7%، مدى 1%) + processing_fee للطريقة إن وُجد.</div>')
-        html.append('</div>')
+        # بطاقات KPIs
+        kpis = [
+            _kpi_card("إجمالي المستخدمين", f"{total_users:,}", "كل الوقت", "info"),
+            _kpi_card("المستخدمون الجدد (الفترة)", f"{new_users:,}",
+                      (f"{arrow_new} {pct_new}" if compare else "—"), "ok" if new_users else "warn"),
+            _kpi_card("المستخدمون النشطون (الفترة)", f"{active_users:,}", "أي نشاط مسجّل", "info"),
+            _kpi_card("المقدّمون الفعّالون", f"{active_hosts:,}", "أنشؤوا جلسات خلال الفترة", "info"),
+            _kpi_card("متوسط المشاركين/جلسة", f"{avg_participants:.1f}",
+                      f"وسيط: {median_participants:.1f} | أقصى: {max_participants}", "info"),
+        ]
+        if show_activity:
+            kpis.extend([
+                _kpi_card("النشطون يوميًا (DAU)", f"{(dau or 0):,}", "آخر 24 ساعة من نهاية الفترة", "info"),
+                _kpi_card("النشطون أسبوعيًا (WAU)", f"{(wau or 0):,}", "آخر 7 أيام من نهاية الفترة", "info"),
+                _kpi_card("النشطون شهريًا (MAU)", f"{(mau or 0):,}", "آخر 30 يومًا من نهاية الفترة", "info"),
+            ])
 
-        html.append('</div>')  # dash-wrap
+        # نموذج التحكم العلوي
+        start_val = timezone.localtime(start).strftime("%Y-%m-%dT%H:%M")
+        end_val = timezone.localtime(end).strftime("%Y-%m-%dT%H:%M")
+        compare_checked = "checked" if compare else ""
+        show_activity_checked = "checked" if show_activity else ""
+        controls_html = f"""
+        <form method="get" style="margin:8px 0;">
+            <div class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;">
+              <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;">
+                <div><label>من</label><input type="datetime-local" name="start" value="{start_val}" style="width:100%"></div>
+                <div><label>إلى</label><input type="datetime-local" name="end" value="{end_val}" style="width:100%"></div>
+                <div style="display:flex;align-items:flex-end;gap:8px;">
+                  <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" name="compare" {compare_checked}> <span>إظهار المقارنة</span>
+                  </label>
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:8px;">
+                  <label style="display:flex;align-items:center;gap:6px;">
+                    <input type="checkbox" name="show_activity" {show_activity_checked}> <span>إظهار DAU/WAU/MAU</span>
+                  </label>
+                </div>
+                <div style="display:flex;align-items:flex-end;"><button class="button" style="width:100%">تطبيق</button></div>
+                <div style="display:flex;align-items:flex-end;">
+                  <a class="button" href="{reverse('admin:accounts_userprofile_analytics_csv')}?start={start_val}&end={end_val}" style="width:100%;text-align:center;">تصدير CSV</a>
+                </div>
+              </div>
+            </div>
+        </form>
+        """
 
-        html_content = "".join(html)
-        cache.set(cache_key, html_content, 60)  # نخزّن HTML فقط
+        html = f"""
+        <div style="padding:16px 20px;">
+          <h2 style="margin:0 0 10px;">👥 تحليلات المستخدمين</h2>
+          {controls_html}
+          <div style="display:flex;flex-wrap:wrap;gap:12px;">{''.join(kpis)}</div>
+          <div style="margin-top:16px;">
+            <h3 style="margin:6px 0;">🏆 أعلى الجلسات حسب عدد المشاركين (خلال الفترة)</h3>
+            {top_block}
+          </div>
+          <div style="margin-top:16px;color:#6b7280;font-size:12px;">
+            * “المشاركون/جلسة” تُحسب من المضيف (إن وجد) + المتسابقين. يلزم وجود تطبيق الألعاب لظهور هذه المقاييس.
+          </div>
+        </div>
+        """
 
-        return TemplateResponse(
-            request,
-            "admin/base_site.html",
-            context={**self.admin_site.each_context(request), "title": "لوحة الحسابات والتحليلات", "content": mark_safe(html_content)},
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "تحليلات المستخدمين",
+            "content": mark_safe(html),
+        }
+        return TemplateResponse(request, "admin/base_site.html", context)
+
+    def analytics_csv_view(self, request):
+        """تصدير بسيط للمستخدمين الجدد والنشطين في الفترة إلى CSV."""
+        start, end, _ = _get_period(request)
+
+        new_users_qs = (
+            User.objects.filter(date_joined__gte=start, date_joined__lte=end)
+            .values("id", "username", "email", "date_joined").order_by("-date_joined")
         )
+        active_user_ids = set(
+            UserActivity.objects.filter(created_at__gte=start, created_at__lte=end)
+            .values_list("user_id", flat=True).distinct()
+        )
+
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="accounts_analytics_{timezone.localtime(start).date()}_{timezone.localtime(end).date()}.csv"'
+        w = csv.writer(response)
+        w.writerow(["user_id", "username", "email", "is_new_in_period", "is_active_in_period", "date_joined"])
+        all_ids = set(list(new_users_qs.values_list("id", flat=True))) | active_user_ids
+        # لتقليل الاستعلامات
+        users_map = {u["id"]: u for u in new_users_qs}
+        # نضيف كل النشطين حتى لو ما كانوا جددًا
+        for uid in sorted(all_ids):
+            uobj = users_map.get(uid)
+            if uobj:
+                row = [uid, uobj["username"], uobj["email"], 1, 1 if uid in active_user_ids else 0, uobj["date_joined"].isoformat()]
+            else:
+                # مستخدم نشط لكنه ليس جديدًا في الفترة
+                user = User.objects.filter(id=uid).values("username", "email", "date_joined").first()
+                row = [uid, user["username"] if user else "", user["email"] if user else "", 0, 1, user["date_joined"].isoformat() if user else ""]
+            w.writerow(row)
+        return response
+
+
+# -------------------------------------------------
+# Admin: UserActivity
+# -------------------------------------------------
+@admin.register(UserActivity)
+class UserActivityAdmin(admin.ModelAdmin):
+    list_display = ("user", "activity_type_badge", "game_type", "desc_preview", "created_at")
+    list_filter = ("activity_type", "game_type", "created_at")
+    search_fields = ("user__username", "activity_type", "game_type")
+
