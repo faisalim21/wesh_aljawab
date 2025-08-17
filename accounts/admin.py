@@ -3,7 +3,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.models import User
 from django.urls import path, reverse
 from django.utils import timezone
-from django.db.models import Count, Q, F
+from django.db.models import Count, Q
 from django.db.models.functions import TruncDate
 from django.http import HttpResponse, HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -12,22 +12,19 @@ from django.utils.safestring import mark_safe
 
 from .models import UserProfile, UserActivity, UserPreferences
 
-# نعتمد على نماذج الألعاب للتحليلات المدمجة
+# نعتمد على نماذج الألعاب لاحتساب التحويل/المشاركين
 try:
     from games.models import GameSession, Contestant, UserPurchase, FreeTrialUsage
 except Exception:
     GameSession = Contestant = UserPurchase = FreeTrialUsage = None
 
-
-# =========================
-# أدوات واجهة (تصميم غامق)
-# =========================
+# ---------- أدوات واجهة (مظهر غامق) ----------
 def _kpi(label, value, sub='', tone="info"):
     colors = {
-        "ok":   ("#10b981", "#064e3b"),
-        "warn": ("#f59e0b", "#7c2d12"),
-        "bad":  ("#ef4444", "#7f1d1d"),
-        "info": ("#3b82f6", "#1e3a8a"),
+        "ok":   ("#10b981",),
+        "warn": ("#f59e0b",),
+        "bad":  ("#ef4444",),
+        "info": ("#3b82f6",),
     }
     bg = colors.get(tone, colors["info"])[0]
     return f"""
@@ -51,23 +48,14 @@ def _table(headers, rows_html):
     </div>
     """
 
-
-# =========================
-# فلاتر بسيطة للوقت
-# =========================
 def _parse_dt(s):
-    if not s:
-        return None
+    if not s: return None
     try:
-        # نتوقع ISO مثل 2025-08-17T08:00
         return timezone.make_aware(timezone.datetime.fromisoformat(s))
     except Exception:
         return None
 
-
-# =========================
-# UserProfile Admin
-# =========================
+# ---------- UserProfile ----------
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ("user_link", "display_name", "is_host", "account_type_badge",
@@ -78,15 +66,9 @@ class UserProfileAdmin(admin.ModelAdmin):
     actions = ("open_analytics",)
 
     fieldsets = (
-        ("المعلومات الأساسية", {
-            "fields": ("user", "host_name", "phone_number", "birth_date", "is_host")
-        }),
-        ("التفضيلات العامة", {
-            "fields": ("favorite_game", "notifications_enabled", "email_notifications")
-        }),
-        ("معلومات الحساب", {
-            "fields": ("account_type", "created_at", "updated_at")
-        }),
+        ("المعلومات الأساسية", {"fields": ("user", "host_name", "phone_number", "birth_date", "is_host")}),
+        ("التفضيلات العامة", {"fields": ("favorite_game", "notifications_enabled", "email_notifications")}),
+        ("معلومات الحساب", {"fields": ("account_type", "created_at", "updated_at")}),
     )
 
     def user_link(self, obj):
@@ -96,13 +78,12 @@ class UserProfileAdmin(admin.ModelAdmin):
     def account_type_badge(self, obj):
         color = "#10b981" if obj.account_type == "premium" else "#3b82f6"
         label = dict(UserProfile._meta.get_field("account_type").choices).get(obj.account_type, obj.account_type)
-        return format_html('<span style="background:{}22;color:{};padding:2px 8px;border-radius:999px;border:1px solid {};">{}</span>',
-                          color, color, color, label)
+        return format_html('<span style="background:{0}22;color:{0};padding:2px 8px;border-radius:999px;border:1px solid {0};font-weight:700;">{1}</span>',
+                          color, label)
     account_type_badge.short_description = "نوع الحساب"
 
     def favorite_game_ar(self, obj):
-        if not obj.favorite_game:
-            return "—"
+        if not obj.favorite_game: return "—"
         return dict(UserProfile._meta.get_field("favorite_game").choices).get(obj.favorite_game, obj.favorite_game)
     favorite_game_ar.short_description = "اللعبة المفضلة"
 
@@ -110,7 +91,6 @@ class UserProfileAdmin(admin.ModelAdmin):
     def open_analytics(self, request, queryset):
         return HttpResponseRedirect(reverse("admin:accounts_users_analytics"))
 
-    # روابط مخصصة
     def get_urls(self):
         urls = super().get_urls()
         custom = [
@@ -120,15 +100,6 @@ class UserProfileAdmin(admin.ModelAdmin):
         return custom + urls
 
     def analytics_view(self, request):
-        """
-        لوحة تحليلات الحسابات:
-        - فلترة فترة: start/end (بتاريخ ووقت)
-        - زر "تطبيق" + خيار "إظهار المقارنة" (فترة مماثلة سابقة)
-        - إجمالي المستخدمين، المستخدمون الجدد، نسبة التغير
-        - DAU/WAU/MAU (اختياري بتبديل)
-        - متوسط/أقصى المشاركين في الجلسة (مضيف + متسابقين)
-        - أفضل المستخدمين نشاطًا
-        """
         # مدخلات
         start = _parse_dt(request.GET.get("start"))
         end = _parse_dt(request.GET.get("end"))
@@ -140,52 +111,76 @@ class UserProfileAdmin(admin.ModelAdmin):
         if not start:
             start = end - timezone.timedelta(days=30)
 
-        # نطاق المقارنة (اختياري)
-        cmp_html = ""
-        prev_metrics = {}
-
         # إجمالي المستخدمين
         total_users = User.objects.count()
 
-        # مستخدمون جدد في الفترة
+        # المستخدمون الجدد + نسبة النمو
         new_users_qs = User.objects.filter(date_joined__gte=start, date_joined__lte=end)
         new_users = new_users_qs.count()
-
-        # نسبة التغيّر = (جدد / إجمالي قبل الفترة) * 100
         users_before = User.objects.filter(date_joined__lt=start).count()
         growth_pct = (new_users / users_before * 100) if users_before else 0
 
         # DAU/WAU/MAU (اختياري)
         dau = wau = mau = 0
         if show_activity:
-            day_start = end - timezone.timedelta(days=1)
-            week_start = end - timezone.timedelta(days=7)
-            month_start = end - timezone.timedelta(days=30)
-            dau = UserActivity.objects.filter(created_at__gte=day_start, created_at__lte=end).values("user_id").distinct().count()
-            wau = UserActivity.objects.filter(created_at__gte=week_start, created_at__lte=end).values("user_id").distinct().count()
-            mau = UserActivity.objects.filter(created_at__gte=month_start, created_at__lte=end).values("user_id").distinct().count()
+            dau = (UserActivity.objects
+                   .filter(created_at__gte=end - timezone.timedelta(days=1), created_at__lte=end)
+                   .values("user_id").distinct().count())
+            wau = (UserActivity.objects
+                   .filter(created_at__gte=end - timezone.timedelta(days=7), created_at__lte=end)
+                   .values("user_id").distinct().count())
+            mau = (UserActivity.objects
+                   .filter(created_at__gte=end - timezone.timedelta(days=30), created_at__lte=end)
+                   .values("user_id").distinct().count())
 
         # متوسط/أقصى المشاركين في الجلسة (مضيف + متسابقين)
         avg_participants = max_participants = 0
         if GameSession and Contestant:
-            sessions_qs = GameSession.objects.filter(created_at__gte=start, created_at__lte=end)
-            # نجمع: 1 (المضيف إذا موجود) + عدد المتسابقين
-            session_sizes = []
-            for s in sessions_qs.only("id", "host_id"):
-                count_contestants = Contestant.objects.filter(session_id=s.id).count()
-                size = (1 if s.host_id else 0) + count_contestants
-                session_sizes.append(size)
-            if session_sizes:
-                avg_participants = round(sum(session_sizes) / len(session_sizes), 2)
-                max_participants = max(session_sizes)
+            sessions_qs = GameSession.objects.filter(created_at__gte=start, created_at__lte=end).only("id", "host_id")
+            sizes = []
+            for s in sessions_qs:
+                c = Contestant.objects.filter(session_id=s.id).count()
+                sizes.append((1 if s.host_id else 0) + c)
+            if sizes:
+                avg_participants = round(sum(sizes) / len(sizes), 2)
+                max_participants = max(sizes)
 
-        # أفضل المستخدمين نشاطًا خلال الفترة
+        # تحويل التجربة المجانية → مدفوع (عام وفترة)
+        trial_conv_rate = recent_trial_conv_rate = 0.0
+        tried_free_and_bought = tried_free_no_buy = bought_without_trial = 0
+        if FreeTrialUsage and UserPurchase:
+            # الكل
+            trial_users = FreeTrialUsage.objects.values_list("user_id", flat=True).distinct()
+            trial_count = len(trial_users)
+            converted = (UserPurchase.objects
+                         .filter(user_id__in=trial_users, package__is_free=False)
+                         .values("user_id").distinct().count())
+            trial_conv_rate = (converted / trial_count * 100) if trial_count else 0.0
+
+            # تفصيل: من جرّب ولم يشترِ، ومن اشترى بدون تجربة
+            tried_free_no_buy = trial_count - converted
+            all_buyers = UserPurchase.objects.values_list("user_id", flat=True).distinct()
+            bought_without_trial = len(set(all_buyers) - set(trial_users))
+            tried_free_and_bought = converted
+
+            # داخل الفترة
+            recent_trials = (FreeTrialUsage.objects
+                             .filter(used_at__gte=start, used_at__lte=end)
+                             .values_list("user_id", flat=True).distinct())
+            rcount = len(recent_trials)
+            rconverted = (UserPurchase.objects
+                          .filter(user_id__in=recent_trials, package__is_free=False, purchase_date__gte=start, purchase_date__lte=end)
+                          .values("user_id").distinct().count())
+            recent_trial_conv_rate = (rconverted / rcount * 100) if rcount else 0.0
+
+        # أفضل المستخدمين نشاطًا
         top_active = (UserActivity.objects
                       .filter(created_at__gte=start, created_at__lte=end)
                       .values("user__username", "user__first_name")
                       .annotate(n=Count("id")).order_by("-n")[:10])
 
-        # مقارنة (فترة سابقة مساوية الطول)
+        # مقارنة (فترة سابقة مساوية)
+        cmp_html = ""
         if compare:
             delta = end - start
             prev_end = start
@@ -193,24 +188,16 @@ class UserProfileAdmin(admin.ModelAdmin):
             prev_new = User.objects.filter(date_joined__gte=prev_start, date_joined__lte=prev_end).count()
             prev_users_before = User.objects.filter(date_joined__lt=prev_start).count()
             prev_growth = (prev_new / prev_users_before * 100) if prev_users_before else 0
-
             prev_avg = prev_max = 0
             if GameSession and Contestant:
-                ps = GameSession.objects.filter(created_at__gte=prev_start, created_at__lte=prev_end)
-                sizes = []
-                for s in ps.only("id", "host_id"):
+                ps = GameSession.objects.filter(created_at__gte=prev_start, created_at__lte=prev_end).only("id", "host_id")
+                sizes2 = []
+                for s in ps:
                     c = Contestant.objects.filter(session_id=s.id).count()
-                    sizes.append((1 if s.host_id else 0) + c)
-                if sizes:
-                    prev_avg = round(sum(sizes) / len(sizes), 2)
-                    prev_max = max(sizes)
-
-            prev_metrics = {
-                "new": prev_new,
-                "growth": prev_growth,
-                "avg": prev_avg,
-                "max": prev_max,
-            }
+                    sizes2.append((1 if s.host_id else 0) + c)
+                if sizes2:
+                    prev_avg = round(sum(sizes2) / len(sizes2), 2)
+                    prev_max = max(sizes2)
             cmp_html = f"""
             <div style="margin-top:8px;color:#94a3b8;font-size:12px">
               مقارنة بالفترة السابقة ({prev_start.strftime('%Y-%m-%d %H:%M')} → {prev_end.strftime('%Y-%m-%d %H:%M')}):
@@ -221,8 +208,9 @@ class UserProfileAdmin(admin.ModelAdmin):
         # كروت KPIs
         kpis = [
             _kpi("إجمالي المستخدمين", f"{total_users:,}", "في المنصّة كلها", "info"),
-            _kpi("مستخدمون جدد (الفترة)", f"{new_users:,}", f"نمو مقابل قاعدة ما قبل الفترة: {growth_pct:.1f}%", "ok" if growth_pct >= 0 else "bad"),
+            _kpi("مستخدمون جدد (الفترة)", f"{new_users:,}", f"نمو مقابل ما قبل الفترة: {growth_pct:.1f}%", "ok" if growth_pct >= 0 else "bad"),
             _kpi("متوسط المشاركين/جلسة", str(avg_participants), f"أقصى مشاركين في جلسة: {max_participants}", "info"),
+            _kpi("تحويل التجربة المجانية → مدفوع (إجمالي)", f"{trial_conv_rate:.1f}%", f"خلال المدة: {recent_trial_conv_rate:.1f}%", "warn" if trial_conv_rate < 20 else "ok"),
         ]
         if show_activity:
             kpis.extend([
@@ -231,18 +219,16 @@ class UserProfileAdmin(admin.ModelAdmin):
                 _kpi("MAU (نشط شهريًا)", f"{mau:,}", "", "info"),
             ])
 
-        # اتجاه يومي للمستخدمين الجدد
-        by_day = (new_users_qs
-                  .annotate(d=TruncDate("date_joined"))
-                  .values("d").annotate(n=Count("id")).order_by("d"))
+        # جداول
         rows_trend = []
+        by_day = (new_users_qs.annotate(d=TruncDate("date_joined"))
+                              .values("d").annotate(n=Count("id")).order_by("d"))
         for r in by_day:
             rows_trend.append(
                 f"<tr><td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>{r['d']}</td>"
                 f"<td style='padding:8px 12px;border-bottom:1px solid #1f2937;'>{r['n']}</td></tr>"
             )
 
-        # أفضل مستخدمين نشاطًا
         rows_top = []
         for i, u in enumerate(top_active, start=1):
             name = u.get("user__first_name") or u.get("user__username") or "—"
@@ -251,6 +237,12 @@ class UserProfileAdmin(admin.ModelAdmin):
                 f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{name}</td>"
                 f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{u['n']}</td></tr>"
             )
+
+        # صندوق ملخّص التحويل من التجربة
+        conv_rows = []
+        conv_rows.append(f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>جرّب مجانية ثم اشترى</td><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{tried_free_and_bought}</td></tr>")
+        conv_rows.append(f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>جرّب مجانية ولم يشترِ</td><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{tried_free_no_buy}</td></tr>")
+        conv_rows.append(f"<tr><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>اشترى بدون تجربة</td><td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{bought_without_trial}</td></tr>")
 
         # نموذج الفلترة
         start_val = start.strftime("%Y-%m-%dT%H:%M")
@@ -295,6 +287,10 @@ class UserProfileAdmin(admin.ModelAdmin):
               {_table(["#","المستخدم","عدد الأنشطة"], rows_top)}
             </div>
           </div>
+          <div style="margin-top:16px;">
+            <h3 style="margin:6px 0;">🔁 مسار التجربة المجانية والشراء (إجمالي)</h3>
+            {_table(["البند","العدد"], conv_rows)}
+          </div>
         </div>
         """
         ctx = {**self.admin_site.each_context(request), "title": "تحليلات الحسابات", "content": mark_safe(html)}
@@ -315,10 +311,7 @@ class UserProfileAdmin(admin.ModelAdmin):
             w.writerow([u["id"], u["username"], u["first_name"], u["email"], u["date_joined"].isoformat()])
         return resp
 
-
-# =========================
-# UserActivity Admin
-# =========================
+# ---------- UserActivity ----------
 @admin.register(UserActivity)
 class UserActivityAdmin(admin.ModelAdmin):
     list_display = ("user", "activity_type_badge", "game_type", "desc_preview", "created_at")
@@ -328,7 +321,6 @@ class UserActivityAdmin(admin.ModelAdmin):
     ordering = ("-created_at",)
     list_select_related = ("user",)
 
-    # حلّ خطأ admin.E108 بتعريف الدوال
     def activity_type_badge(self, obj):
         label = obj.get_activity_type_display() if hasattr(obj, "get_activity_type_display") else (obj.activity_type or "—")
         color = "#3b82f6"
@@ -336,23 +328,16 @@ class UserActivityAdmin(admin.ModelAdmin):
             color = "#10b981"
         elif obj.activity_type in ("profile_updated",):
             color = "#f59e0b"
-        return format_html(
-            '<span style="background:{0}22;color:{0};padding:2px 8px;border-radius:999px;border:1px solid {0};font-weight:700;">{1}</span>',
-            color, label
-        )
+        return format_html('<span style="background:{0}22;color:{0};padding:2px 8px;border-radius:999px;border:1px solid {0};font-weight:700;">{1}</span>', color, label)
     activity_type_badge.short_description = "نوع النشاط"
 
     def desc_preview(self, obj):
-        if not obj.description:
-            return "—"
+        if not obj.description: return "—"
         s = obj.description.strip()
         return (s[:60] + "…") if len(s) > 60 else s
     desc_preview.short_description = "الوصف (مختصر)"
 
-
-# =========================
-# UserPreferences Admin
-# =========================
+# ---------- UserPreferences ----------
 @admin.register(UserPreferences)
 class UserPreferencesAdmin(admin.ModelAdmin):
     list_display = ("user", "theme_preference", "sound_enabled", "volume_level",
@@ -361,14 +346,7 @@ class UserPreferencesAdmin(admin.ModelAdmin):
     search_fields = ("user__username",)
     list_select_related = ("user",)
     fieldsets = (
-        ("أساسية", {
-            "fields": ("user", "theme_preference", "sound_enabled", "volume_level")
-        }),
-        ("اللعب", {
-            "fields": ("default_team1_name", "default_team2_name", "auto_start_timer", "show_answers_immediately")
-        }),
-        ("التحكم والعرض", {
-            "fields": ("quick_mode_enabled", "show_statistics")
-        }),
+        ("أساسية", {"fields": ("user", "theme_preference", "sound_enabled", "volume_level")}),
+        ("اللعب", {"fields": ("default_team1_name", "default_team2_name", "auto_start_timer", "show_answers_immediately")}),
+        ("التحكم والعرض", {"fields": ("quick_mode_enabled", "show_statistics")}),
     )
-

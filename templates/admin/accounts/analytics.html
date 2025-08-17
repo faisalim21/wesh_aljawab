@@ -1,0 +1,178 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+  /* لمسات بسيطة متناسقة مع الثيم الداكن للأدمن */
+  .kpi-grid{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px}
+  .kpi{
+    flex:1;min-width:220px;margin:8px 0;padding:16px;border-radius:12px;
+    background: rgba(59,130,246,.13); border:1px solid #3b82f6; box-shadow:0 1px 2px rgba(0,0,0,.15);
+  }
+  .kpi--ok{ background: rgba(16,185,129,.13); border-color:#10b981;}
+  .kpi--warn{ background: rgba(245,158,11,.13); border-color:#f59e0b;}
+  .kpi--bad{ background: rgba(239,68,68,.13); border-color:#ef4444;}
+  .kpi__label{ color:#cbd5e1; font-weight:700; font-size:13px; margin-bottom:8px}
+  .kpi__value{ color:#e0e7ff; font-size:22px; font-weight:800; letter-spacing:.3px}
+  .kpi__sub{ color:#94a3b8; font-size:12px; margin-top:6px}
+
+  .controls{ margin:8px 0}
+  .controls .module{
+    padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;
+  }
+  .grid-6{
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;
+  }
+  .listing-wrapper{ margin:12px 0;border-radius:12px;overflow:hidden;}
+  table.listing{ width:100%;border-collapse:collapse;background:#0b1220;}
+  table.listing thead{ background:#0f172a; color:#cbd5e1;}
+  table.listing th{ padding:10px 12px; text-align:right; border-bottom:1px solid #1f2937;}
+  table.listing td{ padding:10px 12px; border-bottom:1px solid #1f2937; color:#e2e8f0;}
+  .muted{ color:#94a3b8; font-size:12px }
+  .section-title{ margin:6px 0 }
+  .two-col{ display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px }
+  @media (max-width: 1100px){ .grid-6{grid-template-columns:repeat(2,minmax(0,1fr));} .two-col{grid-template-columns:1fr} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding:16px 20px;">
+  <h2 style="margin:0 0 10px;">👥 {{ title|default:"تحليلات الحسابات" }}</h2>
+  {% if period_text %}<div class="muted">{{ period_text }}</div>{% endif %}
+
+  <!-- أدوات التحكّم (فلترة + مقارنة + DAU/WAU/MAU + CSV) -->
+  <form method="get" class="controls">
+    <div class="module">
+      <div class="grid-6">
+        <div>
+          <label>البداية (تاريخ/وقت)</label>
+          <input type="datetime-local" name="start" value="{{ start_iso }}" style="width:100%">
+        </div>
+        <div>
+          <label>النهاية (تاريخ/وقت)</label>
+          <input type="datetime-local" name="end" value="{{ end_iso }}" style="width:100%">
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" name="compare" {% if compare %}checked{% endif %}> إظهار المقارنة
+          </label>
+        </div>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" name="show_activity" {% if show_activity %}checked{% endif %}> عرض DAU/WAU/MAU
+          </label>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <button class="button" style="width:100%">تطبيق</button>
+        </div>
+        <div style="display:flex;align-items:flex-end;">
+          <a class="button" href="{{ download_csv_url }}" style="width:100%;text-align:center;">تنزيل CSV</a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- KPIs الأساسية -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi__label">إجمالي المستخدمين</div>
+      <div class="kpi__value">{{ total_users|default:"0" }}</div>
+      <div class="kpi__sub">في المنصّة كلها</div>
+    </div>
+
+    <div class="kpi {% if growth_pct >= 0 %}kpi--ok{% else %}kpi--bad{% endif %}">
+      <div class="kpi__label">مستخدمون جدد (الفترة)</div>
+      <div class="kpi__value">{{ new_users|default:"0" }}</div>
+      <div class="kpi__sub">نمو مقابل ما قبل الفترة: {{ growth_pct|default:"0"|floatformat:1 }}%</div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi__label">متوسط المشاركين/جلسة</div>
+      <div class="kpi__value">{{ avg_participants|default:"0" }}</div>
+      <div class="kpi__sub">أقصى مشاركين في جلسة: {{ max_participants|default:"0" }}</div>
+    </div>
+
+    <div class="kpi {% if trial_conv_rate >= 20 %}kpi--ok{% else %}kpi--warn{% endif %}">
+      <div class="kpi__label">تحويل التجربة المجانية → مدفوع (إجمالي)</div>
+      <div class="kpi__value">{{ trial_conv_rate|default:"0"|floatformat:1 }}%</div>
+      <div class="kpi__sub">خلال المدة: {{ recent_trial_conv_rate|default:"0"|floatformat:1 }}%</div>
+    </div>
+
+    {% if show_activity %}
+      <div class="kpi"><div class="kpi__label">DAU (نشط يوميًا)</div><div class="kpi__value">{{ dau|default:"0" }}</div></div>
+      <div class="kpi"><div class="kpi__label">WAU (نشط أسبوعيًا)</div><div class="kpi__value">{{ wau|default:"0" }}</div></div>
+      <div class="kpi"><div class="kpi__label">MAU (نشط شهريًا)</div><div class="kpi__value">{{ mau|default:"0" }}</div></div>
+    {% endif %}
+  </div>
+
+  {% if compare and compare_text %}
+    <div class="muted" style="margin-top:8px;">{{ compare_text }}</div>
+  {% endif %}
+
+  <div class="two-col">
+    <div>
+      <h3 class="section-title">📅 مستخدمون جدد حسب اليوم</h3>
+      <div class="listing-wrapper">
+        <table class="listing">
+          <thead>
+            <tr><th>اليوم</th><th>عدد الجدد</th></tr>
+          </thead>
+          <tbody>
+            {% if new_users_by_day %}
+              {% for row in new_users_by_day %}
+                <tr>
+                  <td>{{ row.date }}</td>
+                  <td>{{ row.count }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="2" class="muted" style="padding:12px;">لا توجد بيانات</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="section-title">🏅 أكثر المستخدمين نشاطًا (الفترة)</h3>
+      <div class="listing-wrapper">
+        <table class="listing">
+          <thead>
+            <tr><th>#</th><th>المستخدم</th><th>عدد الأنشطة</th></tr>
+          </thead>
+          <tbody>
+            {% if top_active_users %}
+              {% for row in top_active_users %}
+                <tr>
+                  <td>{{ row.rank }}</td>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.count }}</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="3" class="muted" style="padding:12px;">لا توجد بيانات</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px;">
+    <h3 class="section-title">🔁 مسار التجربة المجانية والشراء (إجمالي)</h3>
+    <div class="listing-wrapper">
+      <table class="listing">
+        <thead>
+          <tr><th>البند</th><th>العدد</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>جرّب مجانية ثم اشترى</td><td>{{ conversion_summary.tried_free_and_bought|default:"0" }}</td></tr>
+          <tr><td>جرّب مجانية ولم يشترِ</td><td>{{ conversion_summary.tried_free_no_buy|default:"0" }}</td></tr>
+          <tr><td>اشترى بدون تجربة</td><td>{{ conversion_summary.bought_without_trial|default:"0" }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
