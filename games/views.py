@@ -15,6 +15,7 @@ from datetime import timedelta
 import json
 import logging
 import secrets
+from django.http import HttpResponse
 
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
@@ -1571,3 +1572,12 @@ def api_images_prev(request):
 
 
 
+
+def images_session(request, session_id):
+    return HttpResponse("Images Host (placeholder)")
+
+def images_display(request, display_link):
+    return HttpResponse("Images Display (placeholder)")
+
+def images_contestants(request, contestants_link):
+    return HttpResponse("Images Contestants (placeholder)")
