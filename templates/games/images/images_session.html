@@ -1,147 +1,297 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🎛️ تحدّي الصور — المقدم</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+
+  <title>تحدّي الصور — المقدم</title>
+
+  <meta name="description" content="تحدّي الصور — شاشة المقدم" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
   <style>
-    body{font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#111;}
-    .wrap{max-width:1000px;margin:auto;padding:16px}
-    .card{border-radius:16px}
-    .imgframe{background:#000;border-radius:16px;overflow:hidden;text-align:center}
-    .imgframe img{max-width:100%;height:auto;display:block;margin:auto}
-    .badge-soft{border:1px solid #eee;border-radius:999px;padding:6px 10px;font-weight:800}
-    .score{font-size:1.3rem;font-weight:900}
-    .hint{color:#111;background:#fff;border-radius:12px;padding:10px}
-    .ans{color:#16a34a;font-weight:900}
+    :root{
+      --primary:#8b5cf6; --cyan:#06b6d4; --ink:#1f2937;
+      --muted:#64748b; --ok:#22c55e; --warn:#d97706;
+    }
+    *{font-family:'Tajawal',sans-serif}
+    body{
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh; margin:0; padding:10px;
+      color:var(--ink);
+    }
+    .shell{
+      max-width:1000px; margin:0 auto; background:#fff; border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12); padding:16px;
+    }
+    .title{ text-align:center; font-weight:900; margin-bottom:6px }
+    .badges{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px }
+    .badge-soft{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; font-weight:800; font-size:.9rem }
+    .badge-free{ background:#f0fdf4; border-color:#86efac; color:#166534 }
+    .badge-72{ background:#fffbeb; border-color:#fcd34d; color:#92400e }
+
+    .viewer{
+      display:grid; grid-template-columns:56px 1fr 56px; gap:10px; align-items:center;
+      margin:8px 0 14px;
+    }
+    .nav-btn{
+      height:56px; width:56px; border:none; border-radius:14px; background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
+      transition:.2s; user-select:none;
+    }
+    .nav-btn:hover{ transform:translateY(-2px); box-shadow:0 10px 18px rgba(0,0,0,.08) }
+    .nav-btn:disabled{ background:#e5e7eb; color:#94a3b8; transform:none; box-shadow:none }
+
+    .image-wrap{
+      background:linear-gradient(135deg,#f8fafc,#fff); border:1px solid rgba(139,92,246,.14);
+      border-radius:18px; padding:10px; min-height:280px; display:flex; align-items:center; justify-content:center;
+      position:relative;
+    }
+    .image-wrap img{
+      max-width:100%; max-height:70vh; border-radius:14px; display:block;
+      box-shadow:0 12px 28px rgba(0,0,0,.12);
+    }
+
+    .counter{
+      text-align:center; color:#475569; font-weight:800; margin-top:8px
+    }
+
+    .fields{
+      display:grid; grid-template-columns:1fr; gap:10px; margin-top:8px
+    }
+    .field-card{
+      background:#f8fafc; border:1px solid #e5e7eb; border-radius:14px; padding:12px
+    }
+    .field-card h6{ margin:0 0 6px; font-weight:900 }
+    .btn-copy{
+      border:none; border-radius:10px; background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#fff;
+      padding:8px 12px; font-weight:800
+    }
+    .hint-area, .answer-area{ width:100%; border:1px solid #e5e7eb; border-radius:10px; padding:10px; background:#fff }
+    .footer-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px }
+    .link-btn{ border:1px dashed #cbd5e1; background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
+    .time-alert{ text-align:center; font-weight:800 }
+
+    @media (max-width:768px){
+      .viewer{ grid-template-columns:48px 1fr 48px }
+      .nav-btn{ width:48px; height:48px }
+      .image-wrap{ min-height:220px }
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <h2 class="mb-2 text-center">📸 تحدّي الصور — لوحة المقدم</h2>
-  <div class="d-flex gap-2 justify-content-center mb-3">
-    <span class="badge-soft">حزمة {{ session.package.package_number }}</span>
+  {% include 'header.html' %}
+
+  <div class="shell">
+
+    <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
+
+    <!-- شارات الحزمة -->
+    <div class="badges">
+      <span class="badge-soft">حزمة رقم {{ session.package.package_number }}</span>
+      {% if session.package.is_free %}
+        <span class="badge-soft badge-free">تجريبية مجانية</span>
+      {% else %}
+        <span class="badge-soft badge-72">⏳ متاحة 72 ساعة من وقت الإنشاء</span>
+      {% endif %}
+    </div>
+
+    <!-- مؤقّت المجاني -->
     {% if session.package.is_free %}
-      <span class="badge-soft">⏰ مجانية (1 ساعة)</span>
-    {% else %}
-      <span class="badge-soft">⏳ 72 ساعة</span>
+      <div class="alert alert-warning time-alert" id="sessionTimer" style="display:none">
+        <strong>⏰ الوقت المتبقي:</strong>
+        <span id="timeRemaining" class="text-danger"></span>
+      </div>
     {% endif %}
-  </div>
 
-  <!-- روابط -->
-  <div class="card mb-3">
-    <div class="card-body text-center py-2">
-      <button class="btn btn-sm btn-outline-secondary me-1" onclick="copyLink(window.location.origin + '{{ contestants_url }}')">👥 المتسابقون</button>
-      <button class="btn btn-sm btn-outline-secondary me-1" onclick="copyLink(window.location.origin + '{{ display_url }}')">🖥️ شاشة العرض</button>
-      <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">🧑‍🏫 رابط المقدم</button>
-      <small id="copied" class="text-success d-block mt-2" style="display:none">✅ تم النسخ</small>
+    <!-- عارض الصورة + الأسهم -->
+    <div class="viewer">
+      <button id="prevBtn" class="nav-btn" title="السابق" aria-label="السابق">&larr;</button>
+
+      <div class="image-wrap">
+        <img id="riddleImg" src="" alt="صورة اللغز" />
+      </div>
+
+      <button id="nextBtn" class="nav-btn" title="التالي" aria-label="التالي">&rarr;</button>
     </div>
-  </div>
 
-  <!-- الصورة الحالية -->
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="d-flex align-items-center justify-content-between">
-        <div>الصورة <span id="idx">-</span> / <span id="tot">-</span></div>
-        <div class="btn-group">
-          <button class="btn btn-primary btn-sm" onclick="nav('prev')">⬅️ السابق</button>
-          <button class="btn btn-primary btn-sm" onclick="nav('next')">التالي ➡️</button>
+    <div class="counter">
+      صورة <span id="currentIndex">{{ current_index|default:1 }}</span> من <span id="totalCount">{{ riddles_count|default:1 }}</span>
+    </div>
+
+    <!-- التلميح + الإجابة (من الأدمن – للقراءة فقط) -->
+    <div class="fields">
+      <div class="field-card">
+        <h6>💡 التلميح</h6>
+        <textarea id="hintField" class="hint-area" rows="2" placeholder="لا يوجد تلميح" readonly></textarea>
+        <div class="mt-2 d-flex justify-content-end">
+          <button class="btn-copy" type="button" onclick="copyText('hintField')">نسخ التلميح</button>
         </div>
       </div>
-      <div class="imgframe mt-2">
-        <img id="pic" alt="اللّغز الحالي" />
-      </div>
-      <div class="row g-2 mt-2">
-        <div class="col-md-6">
-          <div class="hint"><strong>💡 التلميح:</strong> <span id="hint">—</span></div>
-        </div>
-        <div class="col-md-6">
-          <div class="hint"><strong>✅ الإجابة:</strong> <span id="answer" class="ans">—</span></div>
+
+      <div class="field-card">
+        <h6>✅ الإجابة</h6>
+        <textarea id="answerField" class="answer-area" rows="2" placeholder="لا توجد إجابة" readonly></textarea>
+        <div class="mt-2 d-flex justify-content-end">
+          <button class="btn-copy" type="button" onclick="copyText('answerField')">نسخ الإجابة</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- النقاط -->
-  <div class="row g-2 mb-2">
-    <div class="col-md-6">
-      <div class="card"><div class="card-body text-center">
-        🟢 {{ session.team1_name }}: <span id="t1" class="score">0</span>
-        <div class="mt-2">
-          <button class="btn btn-sm btn-outline-success me-1" onclick="bump('team1',1)">+</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="bump('team1',-1)">-</button>
-        </div>
-      </div></div>
-    </div>
-    <div class="col-md-6">
-      <div class="card"><div class="card-body text-center">
-        🟠 {{ session.team2_name }}: <span id="t2" class="score">0</span>
-        <div class="mt-2">
-          <button class="btn btn-sm btn-outline-success me-1" onclick="bump('team2',1)">+</button>
-          <button class="btn btn-sm btn-outline-secondary" onclick="bump('team2',-1)">-</button>
-        </div>
-      </div></div>
+    <!-- روابط (اختياري مفيد للمقدم) -->
+    <div class="footer-actions mt-3">
+      <a class="link-btn" href="{% url 'games:images_contestants' session.contestants_link %}" target="_blank" rel="noopener">👥 صفحة المتسابقين</a>
+      <a class="link-btn" href="{% url 'games:images_display' session.display_link %}" target="_blank" rel="noopener">🖥️ شاشة العرض</a>
     </div>
   </div>
 
-  <!-- تحكّم البازر -->
-  <div class="text-center">
-    <button class="btn btn-warning" onclick="buzzReset()">🔄 إعادة تعيين البازر</button>
-  </div>
-</div>
+  <script>
+    // ========= بيانات من السيرفر =========
+    const SESSION_ID = "{{ session.id }}";
+    const IS_FREE = {{ session.package.is_free|yesno:"true,false" }};
+    const HOME_URL = "{% url 'games:images_home' %}";
 
-<script>
-  const sessionId = '{{ session.id }}';
-  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${sessionId}/?role=host`;
-  let ws = null, hb=null, delay=1000, maxDelay=5000;
+    const $img   = document.getElementById('riddleImg');
+    const $cur   = document.getElementById('currentIndex');
+    const $count = document.getElementById('totalCount');
+    const $prev  = document.getElementById('prevBtn');
+    const $next  = document.getElementById('nextBtn');
+    const $hint  = document.getElementById('hintField');
+    const $ans   = document.getElementById('answerField');
 
-  function copyLink(t){navigator.clipboard.writeText(t).then(()=>{const e=document.getElementById('copied');e.style.display='block';setTimeout(()=>e.style.display='none',1000);}).catch(()=>alert(t));}
+    // ========= مؤقت المجاني (يعتمد API مضمون) =========
+    async function initFreeTimer(){
+      if(!IS_FREE) return;
+      try{
+        const r = await fetch(`/games/api/session-expiry-info/?session_id=${encodeURIComponent(SESSION_ID)}`);
+        if(!r.ok) return;
+        const data = await r.json();
+        const secs = (data && data.expiry_info && typeof data.expiry_info.time_remaining_seconds === 'number')
+          ? data.expiry_info.time_remaining_seconds : 0;
 
-  function connect(){
-    ws = new WebSocket(WS_URL);
-    ws.onopen = ()=>{ delay=1000; hb && clearInterval(hb); hb=setInterval(()=>{try{ws.readyState===1&&ws.send(JSON.stringify({type:'ping'}))}catch{}},20000); };
-    ws.onmessage = (ev)=>{ let d={}; try{d=JSON.parse(ev.data||'{}')}catch{}; route(d); };
-    ws.onclose = ()=>{ hb&&clearInterval(hb); setTimeout(connect,delay); delay=Math.min(delay*2,maxDelay); };
-    ws.onerror = ()=>{ try{ws.close()}catch{} };
-  }
+        const elBox = document.getElementById('sessionTimer');
+        const el = document.getElementById('timeRemaining');
+        if(!el || !elBox) return;
 
-  function route(d){
-    if(d.type==='puzzle_updated'){ setPic(d); }
-    else if(d.type==='scores_updated'){ setScores(d.team1_score||0,d.team2_score||0); }
-    else if(d.type==='contestant_buzz_accepted'){ /* اختياري: إشعار بسيط */ }
-  }
+        elBox.style.display = 'block';
+        let left = Math.max(0, parseInt(secs,10)||0);
+        const render = () => {
+          const m = Math.floor(left/60), s = left%60;
+          el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+        };
+        render();
+        const t = setInterval(()=>{
+          left = Math.max(0, left-1);
+          render();
+          if(left===0){ clearInterval(t); alert('انتهت صلاحية الجلسة.'); location.href = HOME_URL; }
+        }, 1000);
+      }catch(e){ /* تجاهل */ }
+    }
 
-  function setPic({index,total,image_url,hint,answer}){
-    document.getElementById('idx').textContent=index;
-    document.getElementById('tot').textContent=total;
-    const img=document.getElementById('pic'); img.src=image_url; img.alt=`لغز ${index}`;
-    document.getElementById('hint').textContent = hint || '—';
-    document.getElementById('answer').textContent = answer || '—';
-  }
+    // ========= تحميل الحالة الحالية =========
+    async function loadCurrent(){
+      try{
+        const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
+        if (!r.ok) return;
 
-  function setScores(a,b){
-    document.getElementById('t1').textContent=a;
-    document.getElementById('t2').textContent=b;
-  }
+        const data = await r.json();
+        const idx = data.current_index || 1;
+        const cnt = data.count || 1;
+        const cur = data.current || {};
 
-  function send(j){ if(ws && ws.readyState===1){ ws.send(JSON.stringify(j)); return true; } return false; }
+        $img.src = cur.image_url || '';
+        $img.alt = `صورة اللغز #${idx}`;
+        $cur.textContent = idx;
+        $count.textContent = cnt;
 
-  function nav(dir){ send({type:'puzzle_nav', dir}); }
-  function setIndex(i){ send({type:'puzzle_set_index', index:i}); }
-  function bump(team,delta){
-    const a=parseInt(document.getElementById('t1').textContent||'0',10);
-    const b=parseInt(document.getElementById('t2').textContent||'0',10);
-    const n1 = team==='team1' ? Math.max(0,a+delta) : a;
-    const n2 = team==='team2' ? Math.max(0,b+delta) : b;
-    setScores(n1,n2);
-    send({type:'update_scores', team1_score:n1, team2_score:n2});
-  }
-  function buzzReset(){ send({type:'buzz_reset'}); }
+        // التلميح والإجابة من الأدمن (قراءة فقط)
+        $hint.value = (cur.hint || '').trim();
+        $ans.value  = (cur.answer || '').trim();
 
-  document.addEventListener('DOMContentLoaded', connect);
-  window.nav=nav; window.setIndex=setIndex; window.bump=bump; window.buzzReset=buzzReset;
-</script>
+        $prev.disabled = (idx <= 1);
+        $next.disabled = (idx >= cnt);
+      }catch(e){ console.error(e); }
+    }
+
+    // ========= أزرار السابق/التالي =========
+    async function goPrev(){
+      try{
+        $prev.disabled = true;
+        const r = await fetch('/games/api/images-prev/', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({session_id: SESSION_ID})
+        });
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
+        await loadCurrent();
+      }finally{}
+    }
+    async function goNext(){
+      try{
+        $next.disabled = true;
+        const r = await fetch('/games/api/images-next/', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({session_id: SESSION_ID})
+        });
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
+        await loadCurrent();
+      }finally{}
+    }
+    $prev.addEventListener('click', goPrev);
+    $next.addEventListener('click', goNext);
+
+    // اختصارات لوحة المفاتيح
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+      if (e.key === 'ArrowRight'){ e.preventDefault(); goNext(); }
+    });
+
+    // ========= WebSocket للمزامنة الفورية =========
+    let ws, hb;
+    function setupWS(){
+      const proto = (location.protocol==='https:') ? 'wss' : 'ws';
+      const url = `${proto}://${location.host}/ws/images/${encodeURIComponent(SESSION_ID)}/?role=host`;
+      ws = new WebSocket(url);
+
+      ws.onopen = ()=>{
+        try{ if(hb) clearInterval(hb); }catch{}
+        hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+      };
+
+      ws.onmessage = (ev)=>{
+        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
+        // نقبل عدة صيغ آمنة
+        if (
+          d.type === 'image_index_updated' ||
+          d.type === 'broadcast_image_index' ||
+          typeof d.current_index === 'number'
+        ){
+          loadCurrent();
+        }
+      };
+
+      ws.onclose = ()=>{ try{ if(hb) clearInterval(hb); }catch{}; setTimeout(setupWS, 1000); };
+      ws.onerror = ()=>{ try{ ws.close(); }catch{} };
+    }
+
+    // ========= نسخ التلميح/الإجابة =========
+    async function copyText(id){
+      try{
+        const el = document.getElementById(id);
+        await navigator.clipboard.writeText(el.value||'');
+        el.classList.add('is-valid');
+        setTimeout(()=>el.classList.remove('is-valid'), 500);
+      }catch{ alert('تعذر النسخ — انسخ يدويًا.'); }
+    }
+    window.copyText = copyText;
+
+    // بداية
+    document.addEventListener('DOMContentLoaded', ()=>{
+      initFreeTimer();
+      loadCurrent();
+      setupWS();
+    });
+  </script>
 </body>
 </html>

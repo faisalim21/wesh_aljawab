@@ -1417,8 +1417,13 @@ def api_images_get_current(request):
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
-                   .values('order', 'image_url'))
+    # نرجّع أيضًا hint و answer
+    riddles = list(
+        PictureRiddle.objects
+        .filter(package=session.package)
+        .order_by('order')
+        .values('order', 'image_url', 'hint', 'answer')
+    )
     if not riddles:
         return JsonResponse({'success': False, 'error': 'لا توجد ألغاز في هذه الحزمة'}, status=400)
 
@@ -1430,8 +1435,9 @@ def api_images_get_current(request):
         'success': True,
         'current_index': idx,
         'count': len(riddles),
-        'current': riddles[idx-1],  # فقط image_url + order
+        'current': riddles[idx - 1],  # الآن فيها image_url + hint + answer + order
     })
+
 
 
 
