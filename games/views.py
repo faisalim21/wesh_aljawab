@@ -16,7 +16,7 @@ import json
 import logging
 import secrets
 from django.http import HttpResponse
-
+from .utils_letters import check_free_session_eligibility
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
@@ -558,40 +558,54 @@ def letters_contestants(request, contestants_link):
 # ===============================
 
 def images_game_home(request):
+    # الحزمة المجانية + المدفوعة المتاحة
     free_package = GamePackage.objects.filter(
-        game_type='images',
-        is_free=True,
-        is_active=True
+        game_type='images', is_free=True, is_active=True
     ).first()
 
     paid_packages = GamePackage.objects.filter(
-        game_type='images',
-        is_free=False,
-        is_active=True
+        game_type='images', is_free=False, is_active=True
     ).order_by('package_number')
 
-    user_purchases = []
-    free_session_eligible = True
-    free_session_message = ""
-    user_free_sessions_count = 0
-
+    # تجهيز متغيرات العرض بحسب حالة المستخدم
     if request.user.is_authenticated:
-        user_purchases = UserPurchase.objects.filter(
-            user=request.user,
-            package__game_type='images'
-        ).values_list('package_id', flat=True)
-
-        free_session_eligible, free_session_message, user_free_sessions_count = check_free_session_eligibility(
-            request.user, 'images'
+        # الحزم التي يملكها المستخدم حاليًا (غير منتهية الصلاحية إن وُجد expiry)
+        user_purchases = set(
+            UserPurchase.objects.filter(
+                user=request.user,
+                is_completed=True,
+                package__game_type='images',
+                package__is_active=True
+            )
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+            .values_list('package_id', flat=True)
         )
 
-    return render(request, 'games/images/home.html', {
+        # الحزم التي سبق أن لعبها (لإظهار شارة "سبق لك لعب هذه الحزمة")
+        used_before_ids = set(
+            GameSession.objects.filter(
+                host=request.user, game_type='images'
+            ).values_list('package_id', flat=True).distinct()
+        )
+
+        # أهلية الجولة المجانية للصور
+        free_session_eligible, free_session_message, _count = check_free_session_eligibility(
+            request.user, 'images'
+        )
+    else:
+        user_purchases = set()
+        used_before_ids = set()
+        free_session_eligible = False
+        free_session_message = 'سجّل الدخول لتجربة الجولة المجانية.'
+
+    return render(request, 'games/images/packages.html', {
+        'page_title': 'وش الجواب - تحدي الصور',
         'free_package': free_package,
         'paid_packages': paid_packages,
+        'used_before_ids': used_before_ids,     # ← صار معرّف
         'user_purchases': user_purchases,
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
-        'user_free_sessions_count': user_free_sessions_count,
     })
 
 def quiz_game_home(request):
