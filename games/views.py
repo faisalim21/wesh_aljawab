@@ -16,7 +16,6 @@ import json
 import logging
 import secrets
 from django.http import HttpResponse
-from .utils_letters import check_free_session_eligibility
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
@@ -569,11 +568,11 @@ def images_game_home(request):
 
     # تجهيز متغيرات العرض بحسب حالة المستخدم
     if request.user.is_authenticated:
-        # الحزم التي يملكها المستخدم حاليًا (غير منتهية الصلاحية إن وُجد expiry)
+        # الحزم التي يملكها المستخدم حاليًا (نشطة: is_completed=False + لم تنتهِ)
         user_purchases = set(
             UserPurchase.objects.filter(
                 user=request.user,
-                is_completed=True,
+                is_completed=False,
                 package__game_type='images',
                 package__is_active=True
             )
@@ -602,11 +601,12 @@ def images_game_home(request):
         'page_title': 'وش الجواب - تحدي الصور',
         'free_package': free_package,
         'paid_packages': paid_packages,
-        'used_before_ids': used_before_ids,     # ← صار معرّف
+        'used_before_ids': used_before_ids,
         'user_purchases': user_purchases,
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
     })
+
 
 def quiz_game_home(request):
     free_package = GamePackage.objects.filter(
@@ -1407,31 +1407,6 @@ def images_contestants(request, contestants_link):
         'is_free_session': session.package.is_free,
     })
 
-
-def images_display(request, display_link):
-    """شاشة العرض: تُظهر الصورة الحالية فقط (بدون تلميح/إجابة)."""
-    session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='images')
-    if is_session_expired(session):
-        return render(request, 'games/session_expired.html', {
-            'message': _expired_text(session),
-            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
-            'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
-        })
-
-    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
-                   .values('order', 'image_url'))
-    progress = PictureGameProgress.objects.filter(session=session).first()
-    current_index = progress.current_index if progress else 1
-    current_index = max(1, min(current_index, len(riddles)))
-
-    return render(request, 'games/images/images_display.html', {
-        'session': session,
-        'riddles_count': len(riddles),
-        'current_index': current_index,
-        'time_remaining': get_session_time_remaining(session),
-    })
-
-
 @require_http_methods(["GET"])
 def api_images_get_current(request):
     sid = request.GET.get("session_id")
@@ -1585,13 +1560,30 @@ def api_images_prev(request):
 
 
 
-
-
 def images_session(request, session_id):
-    return HttpResponse("Images Host (placeholder)")
+    """صفحة المضيف لتحدي الصور (التحكم والتنقّل بين الصور)."""
+    session = get_object_or_404(GameSession, id=session_id, is_active=True, game_type='images')
 
-def images_display(request, display_link):
-    return HttpResponse("Images Display (placeholder)")
+    if is_session_expired(session):
+        messages.error(request, _expired_text(session))
+        return redirect('games:images_home')
 
-def images_contestants(request, contestants_link):
-    return HttpResponse("Images Contestants (placeholder)")
+    riddles = list(
+        PictureRiddle.objects.filter(package=session.package)
+        .order_by('order')
+        .values('order', 'image_url', 'answer', 'hint')
+    )
+
+    progress = PictureGameProgress.objects.filter(session=session).first()
+    current_index = progress.current_index if progress else 1
+    current_index = max(1, min(current_index, len(riddles)))
+
+    return render(request, 'games/images/images_host.html', {
+        'session': session,
+        'riddles': riddles,
+        'riddles_count': len(riddles),
+        'current_index': current_index,
+        'time_remaining': get_session_time_remaining(session),
+        'display_url': request.build_absolute_uri(reverse('games:images_display', args=[session.display_link])),
+        'contestants_url': request.build_absolute_uri(reverse('games:images_contestants', args=[session.contestants_link])),
+    })
