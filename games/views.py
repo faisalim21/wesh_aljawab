@@ -1560,30 +1560,39 @@ def api_images_prev(request):
 
 
 
+from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+
 def images_session(request, session_id):
-    """صفحة المضيف لتحدي الصور (التحكم والتنقّل بين الصور)."""
+    """
+    صفحة المضيف لتحدي الصور.
+    تطابق اسم القالب الموجود عندك: games/images/images_session.html
+    وتزوّد القالب بمعلومات الجلسة + الروابط للشاشتين.
+    """
     session = get_object_or_404(GameSession, id=session_id, is_active=True, game_type='images')
 
+    # انتهاء الصلاحية
     if is_session_expired(session):
-        messages.error(request, _expired_text(session))
-        return redirect('games:images_home')
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+            'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
+        })
 
-    riddles = list(
-        PictureRiddle.objects.filter(package=session.package)
-        .order_by('order')
-        .values('order', 'image_url', 'answer', 'hint')
-    )
-
+    # عدد الألغاز + الفهرس الحالي (لو احتاجه القالب)
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
     progress = PictureGameProgress.objects.filter(session=session).first()
     current_index = progress.current_index if progress else 1
-    current_index = max(1, min(current_index, len(riddles)))
+    current_index = max(1, min(current_index, len(riddles) or 1))
 
-    return render(request, 'games/images/images_host.html', {
+    return render(request, 'games/images/images_session.html', {
         'session': session,
-        'riddles': riddles,
         'riddles_count': len(riddles),
         'current_index': current_index,
         'time_remaining': get_session_time_remaining(session),
+
+        # روابط الشاشات (يعتمد أن لديك مسارات بأسماء الآتي)
         'display_url': request.build_absolute_uri(reverse('games:images_display', args=[session.display_link])),
         'contestants_url': request.build_absolute_uri(reverse('games:images_contestants', args=[session.contestants_link])),
     })
