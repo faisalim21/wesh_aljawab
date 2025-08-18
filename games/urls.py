@@ -44,4 +44,6 @@ urlpatterns = [
     path('api/images/set-index/', views.api_images_set_index, name='api_images_set_index'),
     path('api/images/next/', views.api_images_next, name='api_images_next'),
     path('api/images/prev/', views.api_images_prev, name='api_images_prev'),
+    path('images/create/', views.create_images_session, name='create_images_session'),
+
 ]

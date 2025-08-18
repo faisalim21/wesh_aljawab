@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  {# ==== META + SOCIAL PACK ==== #}
+
+  {# ——— الأساسيات ——— #}
+  <title>
+    {% block title %}{{ page_title|default:"وش الجواب - تحدي الصور" }}{% endblock %}
+  </title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="robots" content="index,follow">
+
+  {# ——— Canonical ——— #}
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+
+  {# ——— Open Graph ——— #}
+  <meta property="og:locale" content="ar_SA">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
+
+  {# ——— Twitter Card ——— #}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+
+  {# ——— Favicons / PWA ——— #}
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
+
+  {# ——— تحسينات أداء الخطوط ——— #}
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  {# ——— JSON-LD ——— #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "وش الجواب",
+    "url": "https://wesh-aljawab.onrender.com/",
+    "inLanguage": "ar",
+    "publisher": {
+      "@type": "Organization",
+      "name": "وش الجواب",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+      }
+    }
+  }
+  </script>
+
+  {% block meta_overrides %}{% endblock %}
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#667eea; --bg2:#764ba2;
+      --cardBorder: rgba(139,92,246,.14);
+      --ok:#22c55e; --primary:#8b5cf6; --cyan:#06b6d4;
+      --muted:#64748b; --ink:#1f2937;
+    }
+
+    body{
+      background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
+      font-family:'Tajawal',sans-serif;color:var(--ink);
+      min-height:100vh;margin:0;padding:0;
+    }
+
+    .packages-section{background:rgba(255,255,255,.96);padding:64px 0;}
+
+    .section-title{text-align:center;margin-bottom:36px;}
+    .section-title h2{
+      font-size:2.2rem;font-weight:800;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      margin-bottom:.25rem;
+    }
+    .section-title p{color:#475569;margin:0}
+
+    .packages-grid{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:16px;
+    }
+    .pkg-col{grid-column:span 12;}
+    @media (min-width:768px){ .pkg-col{grid-column:span 6;} .packages-grid{gap:18px;} }
+    @media (min-width:992px){ .pkg-col{grid-column:span 4;} }
+
+    .package-card{
+      background:#fff;border-radius:18px;padding:1.25rem 1.25rem 1rem;margin:0;
+      border:1px solid var(--cardBorder);
+      box-shadow:0 18px 38px rgba(0,0,0,.08);transition:.35s;position:relative;
+      display:flex;flex-direction:column;height:100%;
+    }
+    .package-card:hover{transform:translateY(-6px);box-shadow:0 28px 56px rgba(139,92,246,.18);}
+    .pkg-head{min-height:52px;display:flex;align-items:center;justify-content:center;gap:.5rem;}
+    .package-title{font-size:1.15rem;font-weight:800;text-align:center;margin:0;}
+
+    .pkg-desc-wrap{margin-top:.5rem;}
+    .pkg-desc{
+      color:var(--muted);text-align:center;margin:0;
+      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;
+    }
+    .pkg-desc.expanded{-webkit-line-clamp:unset;}
+    .toggle-desc{font-weight:800}
+
+    .free-card{
+      border:2px dashed var(--ok);
+      background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 60%);
+      box-shadow:0 14px 28px rgba(34,197,94,.14);
+      padding:1.25rem;
+    }
+    .free-ribbon{
+      position:absolute;top:10px;left:-8px;background:var(--ok);color:#fff;
+      padding:6px 12px;border-radius:0 10px 10px 0;font-weight:900;font-size:.9rem;
+      box-shadow:0 6px 16px rgba(34,197,94,.35);
+    }
+
+    .pkg-pricing{margin-top:.4rem;}
+    .price-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0;}
+    .price-new{
+      font-weight:900;font-size:1.15rem; color:#0ea5e9;
+      display:flex;align-items:center;gap:6px;
+    }
+    .price-old{
+      color:#94a3b8; text-decoration: line-through; font-weight:700;
+      display:flex;align-items:center;gap:6px;
+    }
+    .save-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;
+      font-weight:800;border-radius:999px;padding:3px 10px;font-size:.8rem;
+    }
+    .save-badge i{color:#0284c7}
+
+    .trust-row{
+      display:flex;align-items:center;justify-content:center;gap:12px;
+      color:#0f172a;font-weight:700;font-size:.9rem;margin-top:.35rem;
+    }
+    .trust-row .pill{
+      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
+      background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
+    }
+
+    .pkg-actions{margin-top:auto;}
+    .btn-play{
+      display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
+      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;
+      transition:.3s;text-decoration:none;text-align:center;position:relative;
+    }
+    .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.25);color:#fff;}
+    .btn-play:disabled{background:#e2e8f0 !important;color:#94a3b8 !important;cursor:not-allowed;}
+    .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+    .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
+    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
+
+    .note-line{font-size:.85rem;color:#9a3412;text-align:center;margin-top:.5rem}
+
+    .used-before{
+      position:absolute; top:10px; right:10px; z-index:2;
+      background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
+      padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem;
+      display:flex; align-items:center; gap:6px;
+    }
+  </style>
+</head>
+<body>
+
+  {% include 'header.html' %}
+
+  <div class="container pt-4">
+    {% if messages %}
+      <div class="mb-3">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} mb-2">{{ message|safe }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- فورم مخفي لإنشاء جلسة تحدي الصور -->
+  <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}" style="display:none">
+    {% csrf_token %}
+    <input type="hidden" name="package_id" id="imagesPkgId">
+    <button type="submit" id="hiddenSubmitBtnImg" style="display:none">Submit</button>
+  </form>
+
+  <section class="packages-section">
+    <div class="container">
+      <div class="section-title">
+        <h2>اختر الحزمة المناسبة</h2>
+        <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب <b>تحدي الصور</b></p>
+      </div>
+
+      <div class="packages-grid">
+
+        {% if free_package %}
+          <!-- بطاقة المجاني -->
+          <div class="pkg-col">
+            <div class="package-card free-card">
+              <div class="free-ribbon">مجانية</div>
+
+              <div class="pkg-head">
+                <div class="package-title">جولة تجريبية</div>
+              </div>
+
+              {% if free_package.description %}
+                <div class="pkg-desc-wrap">
+                  <p class="pkg-desc">{{ free_package.description }}</p>
+                </div>
+              {% endif %}
+
+              <div class="pkg-actions">
+                {% if request.user.is_authenticated %}
+                  {% if free_session_eligible %}
+                    <button type="button" class="btn-play" id="freeImgBtn"
+                            onclick="createFreeImagesSession('{{ free_package.id }}')">
+                      <span class="btn-text">ابدأ الجولة المجانية</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                  {% else %}
+                    <button type="button" class="btn-play" id="freeImgBtn" disabled>
+                      <span class="btn-text">غير متاح</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                    <div class="note-line">
+                      {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <a class="btn btn-outline-primary w-100 mt-1"
+                    href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                    سجّل الدخول للتجربة
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% for package in paid_packages %}
+          <div class="pkg-col">
+            <div class="package-card">
+
+              {% if used_before_ids and package.id in used_before_ids %}
+                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+              {% endif %}
+
+              <div class="pkg-head">
+                <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+              </div>
+
+              <!-- السعر/الخصم -->
+              <div class="pkg-pricing">
+                {% if package.has_discount %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                    <div class="price-old">
+                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <span class="save-badge"
+                          data-orig="{{ package.original_price }}"
+                          data-disc="{{ package.discounted_price }}">
+                      <i class="fa-solid fa-tag"></i>
+                      وفّر <b class="save-pct">—</b>
+                    </span>
+                  </div>
+                {% else %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if package.description %}
+                <div class="pkg-desc-wrap">
+                  <p class="pkg-desc">{{ package.description }}</p>
+                </div>
+              {% endif %}
+
+              <div class="trust-row">
+                <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
+              </div>
+
+              <div class="pkg-actions">
+                {% if user_purchases and package.id in user_purchases %}
+                  <button type="button" class="btn-play" onclick="createImagesSession('{{ package.id }}')">
+                    <span class="btn-text">ابدأ اللعب</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </button>
+                {% else %}
+                  <a class="btn-play purchase-link"
+                     href="{% url 'payments:purchase' package.id %}"
+                     data-package-id="{{ package.id }}"
+                     data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                    شراء
+                  </a>
+                  {% if used_before_ids and package.id in used_before_ids %}
+                    <div class="note-line">
+                      سبق لك استخدام هذه الحزمة — إن أردت اللعب مرة أخرى ستحتاج لشرائها مجددًا.
+                    </div>
+                  {% endif %}
+                {% endif %}
+              </div>
+
+            </div>
+          </div>
+        {% endfor %}
+
+      </div>
+    </div>
+  </section>
+
+  {% include 'footer.html' %}
+
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+      const LOGIN_URL = "{% url 'accounts:login' %}";
+      const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+      const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
+
+      let sessionLocked = false;
+
+      // حساب نسبة التوفير
+      (function computeSavings(){
+        document.querySelectorAll('.save-badge').forEach(el=>{
+          const o = parseFloat(el.getAttribute('data-orig') || '0');
+          const d = parseFloat(el.getAttribute('data-disc') || '0');
+          const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
+          const txt = pct>0 ? pct + '%' : 'خصم';
+          const tgt = el.querySelector('.save-pct');
+          if (tgt) tgt.textContent = txt;
+        });
+      })();
+
+      // تنبيه إعادة الشراء
+      document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
+        a.addEventListener('click', (ev)=>{
+          const ok = confirm('تنبيه: سبق لك لعب هذه الحزمة.\nإذا كنت ترغب باللعب مرة أخرى، أكمل عملية الشراء.');
+          if (!ok){ ev.preventDefault(); }
+        });
+      });
+
+      // إنشاء جلسة مدفوعة/مشتراة (التحقق النهائي في الباك-إند)
+      window.createImagesSession = function(packageId) {
+        if (!IS_AUTH) {
+          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+          return;
+        }
+        if (!packageId) return;
+        if (sessionLocked) {
+          alert('انتظر قليلاً... جاري إنشاء الجلسة');
+          return;
+        }
+        sessionLocked = true;
+
+        const form = document.getElementById('imagesCreateForm');
+        const input = document.getElementById('imagesPkgId');
+        const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+
+        input.value = packageId;
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }, 10000);
+
+        try {
+          submitBtn ? submitBtn.click() : form.submit();
+          clearTimeout(timeoutId);
+        } catch (e) {
+          alert('خطأ أثناء الإرسال: ' + e.message);
+          clearTimeout(timeoutId);
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }
+      };
+
+      // إنشاء جلسة المجاني مع فحص أهلية لحظي
+      window.createFreeImagesSession = async function(packageId) {
+        if (!IS_AUTH) {
+          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+          return;
+        }
+        if (!packageId) return;
+        if (sessionLocked) {
+          alert('انتظر قليلاً... جاري إنشاء الجلسة');
+          return;
+        }
+
+        try {
+          const r = await fetch(API_ELIGIBILITY_URL, { credentials: 'same-origin' });
+          const data = await r.json();
+          if (!(data && data.success)) {
+            alert('تعذر التحقق من الأهلية، حاول لاحقًا');
+            return;
+          }
+          if (!data.eligible) {
+            alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
+            return;
+          }
+        } catch {
+          // لو فشل التحقق الشبكي، نخلي الباك-إند يفصل لاحقًا
+        }
+
+        sessionLocked = true;
+
+        const form = document.getElementById('imagesCreateForm');
+        const input = document.getElementById('imagesPkgId');
+        const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+
+        input.value = packageId;
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }, 10000);
+
+        try {
+          submitBtn ? submitBtn.click() : form.submit();
+          clearTimeout(timeoutId);
+        } catch (e) {
+          alert('خطأ أثناء الإرسال: ' + e.message);
+          clearTimeout(timeoutId);
+          sessionLocked = false;
+          showLoading(packageId, false);
+        }
+      };
+
+      function showLoading(packageId, show) {
+        // يوضح اللودر على الزر الموافق لهذا packageId فقط
+        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+        btns.forEach((btn) => {
+          const text = btn.querySelector('.btn-text');
+          const spinner = btn.querySelector('.loading-spinner');
+          if (text && spinner) {
+            text.style.display = show ? 'none' : 'block';
+            spinner.style.display = show ? 'block' : 'none';
+            btn.disabled = show;
+          }
+        });
+      }
+
+      // في حال الرجوع من bf-cache
+      window.addEventListener('pageshow', (e) => {
+        if (e.persisted) sessionLocked = false;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -221,26 +221,27 @@
                 <!-- لعبة تحدي الصور -->
                 <div class="col-lg-4 col-md-6">
                     <div class="game-card">
-                        <div class="game-icon">
-                            <i class="fas fa-images" aria-hidden="true"></i>
+                        <div class="game-icon" aria-label="تحدي الصور">
+                        <i class="fas fa-images" aria-hidden="true"></i>
                         </div>
                         <h3 class="game-title">تحدي الصور</h3>
                         <p class="game-description">
-                            اختبر قدرتك على فهم وتفسير الصور! صورتان تكونان كلمة أو جملة. 
-                            سرعة البديهة والذكاء هما مفتاح الفوز في هذا التحدي المصور.
+                        اختبر قدرتك على فهم وتفسير الصور! صورتان تكونان كلمة أو جملة. 
+                        سرعة البديهة والذكاء هما مفتاح الفوز في هذا التحدي المصوّر.
                         </p>
                         <div class="game-status">
-                            <span class="status-badge status-coming-soon">
-                                <i class="fas fa-clock me-1" aria-hidden="true"></i>
-                                قريباً
-                            </span>
+                        <span class="status-badge status-available">
+                            <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+                            متاح الآن
+                        </span>
                         </div>
-                        <button class="play-button disabled" disabled aria-disabled="true">
-                            <i class="fas fa-lock me-2" aria-hidden="true"></i>
-                            غير متاح حالياً
-                        </button>
+                        <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور">
+                        <i class="fas fa-play me-2" aria-hidden="true"></i>
+                        ابدأ اللعب
+                        </a>
                     </div>
-                </div>
+                    </div>
+
 
                 <!-- لعبة سؤال وجواب -->
                 <div class="col-lg-4 col-md-6">
