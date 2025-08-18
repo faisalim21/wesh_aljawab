@@ -1,858 +1,245 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 
-  {# ——— الأساسيات ——— #}
-  <title>
-    {% block title %}{{ page_title|default:"وش الجواب - منصة الألعاب الذكية" }}{% endblock %}
-  </title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تحدّي الصور — المقدم</title>
 
-  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta name="robots" content="index,follow">
-
-  {# ——— Canonical ——— #}
-  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-
-  {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
-  <meta property="og:locale" content="ar_SA">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="وش الجواب">
-  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-  {# غيّر الصورة لكل صفحة عبر المتغير page_og_image إن وُجد #}
-  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-  {# يفضّل استخدام أبعاد 1200x630 #}
-  <!-- <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630"> -->
-
-  {# ——— Twitter Card ——— #}
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-
-  {# ——— Favicons / PWA ——— #}
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-  {# لو عندك manifest حقيقي فعّله #}
-  {# <link rel="manifest" href="{% static 'site.webmanifest' %}"> #}
-
-  {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  {# لو بتثبت خط Tajawal عالميًا، حمّله هنا #}
-  <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"> -->
-
-  {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "وش الجواب",
-    "url": "https://wesh-aljawab.onrender.com/",
-    "inLanguage": "ar",
-    "publisher": {
-      "@type": "Organization",
-      "name": "وش الجواب",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-      }
-    }
-  }
-  </script>
-
-  {# ——— مساحة لتجاوزات/إضافات خاصة بكل صفحة عند الحاجة ——— #}
-  {% block meta_overrides %}{% endblock %}
+  <!-- نفس حزمة الميتا/الأيقونات التي تستعملها عادة (اختياري) -->
+  <meta name="description" content="تحدّي الصور — شاشة المقدم" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      font-family: 'Tajawal', sans-serif;
-      min-height: 100vh;
-      padding: 10px;
-      margin: 0;
+    :root{
+      --primary:#8b5cf6; --cyan:#06b6d4; --ink:#1f2937;
+      --muted:#64748b; --ok:#22c55e; --warn:#d97706;
     }
-    .btn-warning {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #fff; border: none; border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(245,158,11,.3);
+    *{font-family:'Tajawal',sans-serif}
+    body{
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh; margin:0; padding:10px;
+      color:var(--ink);
     }
-    .btn-warning:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,158,11,.4); }
-
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 20px;
-      padding: 15px;
-      max-width: 100%;
-      margin: 0 auto;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    .shell{
+      max-width:1000px; margin:0 auto; background:#fff; border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12); padding:16px;
     }
+    .title{ text-align:center; font-weight:900; margin-bottom:6px }
+    .badges{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px }
+    .badge-soft{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; font-weight:800; font-size:.9rem }
+    .badge-free{ background:#f0fdf4; border-color:#86efac; color:#166534 }
+    .badge-72{ background:#fffbeb; border-color:#fcd34d; color:#92400e }
 
-    /* شارات أعلى الصفحة */
-    .header-badges { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-    .badge-soft {
-      display:inline-block; border:1px solid rgba(0,0,0,.08); padding:6px 10px;
-      border-radius:999px; font-weight:800; font-size:.9rem; background:#fff;
+    .viewer{
+      display:grid; grid-template-columns:56px 1fr 56px; gap:10px; align-items:center;
+      margin:8px 0 14px;
     }
-    .badge-pkg { color:#1d4ed8; border-color:#93c5fd; background:#eff6ff; }
-    .badge-72 { color:#92400e; border-color:#fcd34d; background:#fffbeb; }
-    .badge-free { color:#166534; border-color:#86efac; background:#f0fdf4; }
-
-    /* إشعار ضغط الزر */
-    #buzzNotification {
-      position: fixed; top: 20px; right: 20px;
-      background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
-      padding: 20px 25px; border-radius: 15px; font-weight: bold; display: none;
-      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4); z-index: 9999; font-size: 18px; max-width: 320px;
-      animation: buzzPulse 0.6s ease-in-out infinite alternate; border: 3px solid rgba(255, 255, 255, 0.3);
+    .nav-btn{
+      height:56px; width:56px; border:none; border-radius:14px; background:#f1f5f9;
+      display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:900;
+      transition:.2s; user-select:none;
     }
-    @keyframes buzzPulse { from{transform:scale(1)} to{transform:scale(1.05)} }
+    .nav-btn:hover{ transform:translateY(-2px); box-shadow:0 10px 18px rgba(0,0,0,.08) }
+    .nav-btn:disabled{ background:#e5e7eb; color:#94a3b8; transform:none; box-shadow:none }
 
-    .buzz-controls { margin: 15px 0; text-align: center; }
-    .buzz-reset-btn {
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: white; border: none; border-radius: 12px; padding: 12px 20px;
-      font-weight: bold; font-size: 16px; cursor: pointer; transition: all 0.3s ease;
-      box-shadow: 0 6px 20px rgba(245, 158, 11, 0.3);
+    .image-wrap{
+      background:linear-gradient(135deg,#f8fafc,#fff); border:1px solid rgba(139,92,246,.14);
+      border-radius:18px; padding:10px; min-height:280px; display:flex; align-items:center; justify-content:center;
+      position:relative;
     }
-    .buzz-reset-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
-
-    .honeycomb-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 10px; }
-    .honeycomb-svg { width: 100%; max-width: 100vw; height: auto; display: block; margin: 0 auto; }
-
-    .hex-cell { cursor: pointer; transition: all 0.3s ease; }
-    .hex-cell:hover .hex-shape { fill: #f0f9ff; stroke-width: 4; transform: scale(1.05); }
-    .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
-    .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
-    .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
-    .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
-    .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
-    .hex-text { fill: #6b46c1; font-family: 'Tajawal', sans-serif; font-size: 130px; font-weight: 900; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
-
-    .info-panel { background: white; border-radius: 15px; padding: 12px; margin: 10px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
-    /* لوحة الأسئلة */
-    .question-panel { background: #f8fafc; border: 2px solid #4c51bf; border-radius: 15px; padding: 15px; margin: 15px 0; display: none; animation: slideIn 0.3s ease-out; }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-    .round-card, .alt-card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:12px; height:100%; }
-    .round-title { font-weight:900; margin-bottom:6px; font-size:1.05rem; }
-    .answer { color:#16a34a; font-weight:900; }
-    .alt-card { background:#fef3c7; }
-    .alt-title { font-weight:800; color:#92400e; }
-
-    .btn-primary { background: linear-gradient(135deg, #4c51bf, #667eea); border: none; border-radius: 10px; padding: 8px 12px; font-weight: bold; font-size: 14px; }
-
-    .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
-    .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
-    .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
-
-    .timer-display { font-size: 2rem; font-weight: bold; color: #dc2626; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
-
-    /* موبايل: تحسين مظهر كروت النقاط */
-    @media (max-width: 768px) {
-      body { padding: 5px; }
-      .container { padding: 10px; border-radius: 15px; }
-
-      .honeycomb-container .position-absolute img { max-height: 35px !important; right: 10px !important; }
-      .honeycomb-container { margin: 10px 0; padding: 5px; }
-      .honeycomb-svg { max-width: 95vw; width: 100%; transform: scale(1.0); transform-origin: center; }
-      .hex-text { font-size: 150px; font-weight: 900; }
-
-      .scores-mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
-      .scores-mobile .score-display { 
-        font-size: 0.95rem; padding: 10px 8px; 
-        display:flex; flex-direction:column; justify-content:center; align-items:center;
-        min-height: 112px;
-      }
-      .scores-mobile .score-display > .mt-1 { margin-top: auto; }
-      .scores-mobile .btn { font-size: 12px; padding: 4px 10px; margin: 0 2px; }
-
-      .timer-display { font-size: 1.8rem; }
-      .question-panel { padding: 12px; margin: 10px 0; }
-      .info-panel { padding: 8px; margin: 8px 0; }
-      .btn-primary { font-size: 12px; padding: 6px 10px; }
-      h2 { font-size: 1.3rem; margin-bottom: 10px; }
-      #buzzNotification { top: 10px; right: 10px; font-size: 16px; padding: 15px 20px; max-width: 90%; }
+    .image-wrap img{
+      max-width:100%; max-height:70vh; border-radius:14px; display:block;
+      box-shadow:0 12px 28px rgba(0,0,0,.12);
     }
 
-    /* دِسك توب */
-    @media (min-width: 769px) {
-      .container { max-width: 1000px; padding: 20px; }
-      .honeycomb-svg { max-width: 650px; transform: scale(0.85); transform-origin: center; }
-      .hex-text { font-size: 110px; }
-      .score-display { font-size: 1.3rem; padding: 12px; }
-      .timer-display { font-size: 2.5rem; }
-      .question-panel { padding: 20px; margin: 20px 0; }
+    .counter{
+      text-align:center; color:#475569; font-weight:800; margin-top:8px
+    }
+
+    .fields{
+      display:grid; grid-template-columns:1fr; gap:10px; margin-top:8px
+    }
+    .field-card{
+      background:#f8fafc; border:1px solid #e5e7eb; border-radius:14px; padding:12px
+    }
+    .field-card h6{ margin:0 0 6px; font-weight:900 }
+    .btn-copy{
+      border:none; border-radius:10px; background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#fff;
+      padding:8px 12px; font-weight:800
+    }
+    .hint-area, .answer-area{ width:100%; border:1px solid #e5e7eb; border-radius:10px; padding:10px; background:#fff }
+    .footer-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px }
+    .link-btn{ border:1px dashed #cbd5e1; background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
+    .time-alert{ text-align:center; font-weight:800 }
+
+    @media (max-width:768px){
+      .viewer{ grid-template-columns:48px 1fr 48px }
+      .nav-btn{ width:48px; height:48px }
+      .image-wrap{ min-height:220px }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
 
-    <!-- شارات أعلى الصفحة فقط -->
-    <div class="header-badges mb-3">
-      <span class="badge-soft badge-pkg">حزمة رقم {{ session.package.package_number }}</span>
+  <div class="shell">
+
+    <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
+
+    <!-- شارات الحزمة -->
+    <div class="badges">
+      <span class="badge-soft">حزمة رقم {{ session.package.package_number }}</span>
       {% if session.package.is_free %}
         <span class="badge-soft badge-free">تجريبية مجانية</span>
       {% else %}
-        <span class="badge-soft badge-72">⏳ متاحة لمدة 72 ساعة من وقت الإنشاء</span>
+        <span class="badge-soft badge-72">⏳ متاحة 72 ساعة من وقت الإنشاء</span>
       {% endif %}
     </div>
-    
-    <!-- مؤقت الجلسة المجانية -->
+
+    <!-- مؤقّت المجاني -->
     {% if session.package.is_free and time_remaining %}
-    <div class="alert alert-warning text-center mb-3" id="sessionTimer">
-      <strong>⏰ الجلسة المجانية - الوقت المتبقي:</strong> 
-      <span id="timeRemaining" class="fw-bold text-danger"></span>
-    </div>
+      <div class="alert alert-warning time-alert" id="sessionTimer">
+        <strong>⏰ الوقت المتبقي:</strong>
+        <span id="timeRemaining" class="text-danger"></span>
+      </div>
     {% endif %}
-    
-    <!-- روابط الجلسة -->
-    <div class="row justify-content-center mb-3">
-      <div class="col-12">
-        <div class="card shadow-sm border-0" style="background: #f9fafb;">
-          <div class="card-body text-center p-2">
-            <p class="mb-2 fw-bold fs-6">🔗 روابط الجلسة:</p>
-            <div class="d-flex flex-wrap justify-content-center gap-1">
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.contestantsUrl)">👥 المتسابقين</button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + window.sessionData.displayUrl)">🖥️ شاشة العرض</button>
-              <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">🧑‍🏫 المقدم</button>
-            </div>
-            <small id="copySuccess" style="display: none; opacity: 0; transition: opacity 0.3s ease;" class="text-success mt-2 d-block">✅ تم النسخ بنجاح!</small>
-          </div>
+
+    <!-- عارض الصورة + الأسهم -->
+    <div class="viewer">
+      <button id="prevBtn" class="nav-btn" title="السابق" aria-label="السابق">&larr;</button>
+
+      <div class="image-wrap">
+        <img id="riddleImg" src="" alt="صورة اللغز" />
+      </div>
+
+      <button id="nextBtn" class="nav-btn" title="التالي" aria-label="التالي">&rarr;</button>
+    </div>
+
+    <div class="counter">
+      صورة <span id="currentIndex">{{ current_index|default:1 }}</span> من <span id="totalCount">{{ riddles_count|default:1 }}</span>
+    </div>
+
+    <!-- التلميح + الإجابة (كتابة للمقدم فقط) -->
+    <div class="fields">
+      <div class="field-card">
+        <h6>💡 التلميح</h6>
+        <textarea id="hintField" class="hint-area" rows="2" placeholder="اكتب تلميحك هنا (اختياري)"></textarea>
+        <div class="mt-2 d-flex justify-content-end">
+          <button class="btn-copy" type="button" onclick="copyText('hintField')">نسخ التلميح</button>
+        </div>
+      </div>
+
+      <div class="field-card">
+        <h6>✅ الإجابة</h6>
+        <textarea id="answerField" class="answer-area" rows="2" placeholder="اكتب الإجابة هنا (لن تُعرض للجمهور)"></textarea>
+        <div class="mt-2 d-flex justify-content-end">
+          <button class="btn-copy" type="button" onclick="copyText('answerField')">نسخ الإجابة</button>
         </div>
       </div>
     </div>
 
-    <!-- تحكم الجولة الجديدة -->
-    <div class="text-center mb-3">
-      <button id="newRoundBtn" class="btn btn-primary"
-              {% if session.package.is_free %}disabled aria-disabled="true" title="الميزة متاحة في الحزم المدفوعة"{% endif %}>
-        🔁 جولة جديدة
-      </button>
-      {% if session.package.is_free %}
-        <small class="text-muted d-block mt-1">الميزة متاحة في الحزم المدفوعة</small>
-      {% endif %}
+    <!-- روابط (اختياري مفيد للمقدم) -->
+    <div class="footer-actions mt-3">
+      <a class="link-btn" href="{% url 'games:images_contestants' session.contestants_link %}" target="_blank" rel="noopener">👥 صفحة المتسابقين</a>
+      <a class="link-btn" href="{% url 'games:images_display' session.display_link %}" target="_blank" rel="noopener">🖥️ شاشة العرض</a>
     </div>
-
-
-    <!-- تلميح -->
-    <div id="questionDisplay" class="alert alert-light text-dark mt-3 text-center fs-5 fw-bold">
-      اضغط على أي حرف لعرض السؤال
-    </div>
-
-    <!-- خلية الحروف SVG مع اللوجو -->
-    <div class="honeycomb-container position-relative">
-      <div class="position-absolute" style="top: 5px; right: 20px; z-index: 10;">
-        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
-             alt="وش الجواب" 
-             style="max-height: 45px; width: auto; opacity: 0.9;" 
-             class="img-fluid">
-      </div>
-      
-      <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
-        <defs>
-          <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
-          <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
-          <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
-          <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
-        </defs>
-        <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
-        <use href="#orangeLeft" fill="#fb923c"/>
-        <use href="#orangeRight" fill="#fb923c"/>
-        <use href="#greenTop" fill="#4ade80"/>
-        <use href="#greenBottom" fill="#4ade80"/>
-      </svg>
-    </div>
-
-    <!-- لوحة الأسئلة -->
-    <div class="question-panel" id="questionPanel">
-      <h4 class="mb-3">❓ حرف <span id="currentLetter">أ</span></h4>
-
-      <!-- الحزمة المدفوعة: 3 جولات -->
-      <div id="paidRounds" class="row g-2 d-none">
-        <div class="col-md-4">
-          <div class="round-card h-100">
-            <div class="round-title">🎯 الجولة 1</div>
-            <div><strong>السؤال:</strong> <span id="r1Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r1Answer" class="answer">—</span></div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="round-card h-100">
-            <div class="round-title">🎯 الجولة 2</div>
-            <div><strong>السؤال:</strong> <span id="r2Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r2Answer" class="answer">—</span></div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="round-card h-100">
-            <div class="round-title">🎯 الجولة 3</div>
-            <div><strong>السؤال:</strong> <span id="r3Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r3Answer" class="answer">—</span></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- الحزمة المجانية: سؤال الجولة الأولى + بديلين -->
-      <div id="freeMainBlock" class="mb-3 d-none">
-        <div class="round-card">
-          <div class="round-title">🎯 سؤال الجولة الأولى (1)</div>
-          <div><strong>السؤال:</strong> <span id="mainQuestion">—</span></div>
-          <div class="mt-1"><strong>الإجابة:</strong> <span id="mainAnswer" class="answer">—</span></div>
-        </div>
-      </div>
-
-      <!-- بدائل للمجاني فقط: بديل 1 + بديل 2 -->
-      <div id="freeAlt12" class="row g-2 d-none">
-        <div class="col-md-6">
-          <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
-            <div><span id="alt1Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt1Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
-            <div><span id="alt2Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt2Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- بدائل للمدفوعة فقط: بديل 3 + بديل 4 -->
-      <div id="paidAlt34" class="row g-2 d-none">
-        <div class="col-md-6 d-none" id="alt3Col">
-          <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 1</div>
-            <div><span id="alt3Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt3Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-        <div class="col-md-6 d-none" id="alt4Col">
-          <div class="alt-card h-100" style="cursor:pointer">
-            <div class="alt-title mb-1">💡 سؤال بديل 2</div>
-            <div><span id="alt4Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt4Answer" class="answer">—</span></small></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- النقاط للجوال -->
-    <div class="scores-mobile d-md-none">
-      <div class="score-display team1-score">
-        🟢 {{ session.team1_name }}: <span id="team1Score">0</span>
-        <div class="mt-1">
-          <button class="btn btn-sm btn-light" onclick="updateScore('team1', 1)">+</button>
-          <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
-        </div>
-      </div>
-      <div class="score-display team2-score">
-        🟠 {{ session.team2_name }}: <span id="team2Score">0</span>
-        <div class="mt-1">
-          <button class="btn btn-sm btn-light" onclick="updateScore('team2', 1)">+</button>
-          <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- النقاط للشاشات الكبيرة -->
-    <div class="row d-none d-md-flex mb-3">
-      <div class="col-md-6">
-        <div class="score-display team1-score">
-          {{ session.team1_name }}: <span id="team1ScoreDesktop">0</span>
-          <div class="mt-2">
-            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team1', 1)">+</button>
-            <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="score-display team2-score">
-          {{ session.team2_name }}: <span id="team2ScoreDesktop">0</span>
-          <div class="mt-2">
-            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team2', 1)">+</button>
-            <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- إشعار ضغط الزر -->
-    <div id="buzzNotification">🚨 المتسابق ضغط الزر!</div>
   </div>
 
-<script>
-  // ========= تهيئة بيانات الجلسة (آمنة للـ JS) =========
-  window.sessionData = {
-    sessionId: '{{ session.id|escapejs }}',
-    csrfToken: '{{ csrf_token|escapejs }}',
-    team1Name: '{{ session.team1_name|escapejs }}',
-    team2Name: '{{ session.team2_name|escapejs }}',
-    displayUrl: '{% url "games:letters_display" session.display_link %}',
-    contestantsUrl: '{% url "games:letters_contestants" session.contestants_link %}',
-    packageName: '{{ session.package.get_game_type_display|escapejs }} - حزمة {{ session.package.package_number|escapejs }}',
-    arabicLetters: {{ arabic_letters_json|safe }},
-    isFree: {{ session.package.is_free|yesno:"true,false" }},
-    packageNumber: '{{ session.package.package_number|escapejs }}'
-  };
-  const HOME_URL = "{% url 'games:letters_home' %}";
+  <script>
+    // ========= بيانات من السيرفر =========
+    const SESSION_ID = "{{ session.id }}";
+    const IS_FREE = {{ session.package.is_free|yesno:"true,false" }};
+    const INIT_INDEX = parseInt("{{ current_index|default:1 }}", 10) || 1;
+    const INIT_COUNT = parseInt("{{ riddles_count|default:1 }}", 10) || 1;
 
-  // ========= متغيرات عامة =========
-  const sessionId     = window.sessionData?.sessionId || '{{ session.id|escapejs }}';
-  const team1Name     = window.sessionData?.team1Name || '{{ session.team1_name|escapejs }}';
-  const team2Name     = window.sessionData?.team2Name || '{{ session.team2_name|escapejs }}';
-  const isFreeSession = !!window.sessionData?.isFree;
+    const $img   = document.getElementById('riddleImg');
+    const $cur   = document.getElementById('currentIndex');
+    const $count = document.getElementById('totalCount');
+    const $prev  = document.getElementById('prevBtn');
+    const $next  = document.getElementById('nextBtn');
 
-  let socket = null;
-  let reconnectDelay = 1000;
-  const maxDelay = 5000;
-  let heartbeatTimer = null;
+    // ========= مؤقت المجاني =========
+    {% if session.package.is_free and time_remaining %}
+      (function(){
+        const el = document.getElementById('timeRemaining');
+        if(!el) return;
+        let left = Math.max(0, Math.floor({{ time_remaining.total_seconds|default:0 }}));
+        const render = () => {
+          const m = Math.floor(left/60), s = left%60;
+          el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+        };
+        render();
+        const t = setInterval(()=>{
+          left = Math.max(0, left-1);
+          render();
+          if(left===0) { clearInterval(t); alert('انتهت صلاحية الجلسة.'); location.href = "{% url 'games:images_home' %}"; }
+        }, 1000);
+      })();
+    {% endif %}
 
-  const cellStates = {};
-  let lastClickedLetter = null;
+    // ========= تحميل الحالة الحالية =========
+    async function loadCurrent(){
+      try{
+        const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = "{% url 'games:images_home' %}"; }
+        if (!r.ok) return;
 
-  function getLetters(){
-    return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
-      ? window.sessionData.arabicLetters
-      : [];
-  }
+        const data = await r.json();
+        const idx = data.current_index || 1;
+        const cnt = data.count || 1;
+        const url = (data.current && data.current.image_url) || '';
 
-  // ---------- نسخ الروابط ----------
-  async function copyLink(text){
-    try{
-      await navigator.clipboard.writeText(text);
-      const el = document.getElementById('copySuccess');
-      el.style.display = 'block';
-      requestAnimationFrame(()=>el.style.opacity='1');
-      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none', 300); }, 1400);
-    }catch{ alert('تعذّر النسخ، انسخ الرابط يدويًا:\n' + text); }
-  }
-  window.copyLink = copyLink;
+        $img.src = url || '';
+        $cur.textContent = idx;
+        $count.textContent = cnt;
 
-  // ---------- صوتيات موثوقة ----------
-  let audioCtx = null;
-  function ensureAudio() {
-    try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-    } catch {}
-  }
-  document.addEventListener('touchstart', ensureAudio, { once: true, passive: true });
-  document.addEventListener('click',      ensureAudio, { once: true });
-  document.addEventListener('visibilitychange', () => {
-    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-  });
-  function tone(freq=800, dur=300, gain=0.5){
-    try{
-      ensureAudio();
-      if (!audioCtx) return;
-      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
-      o.frequency.value=freq;
-      const now = audioCtx.currentTime;
-      g.gain.setValueAtTime(gain, now);
-      o.start(now);
-      o.stop(now + dur/1000);
-    }catch{}
-  }
-  function playBuzzSound(){ tone(880,320,0.55); }
-  function playUnlockSound(){ tone(520,160,0.35); }
-
-  // ========= رسم خلية الحروف =========
-  function createHoneycombCells(){
-    const svg = document.getElementById('honeycombSvg');
-    const lettersArr = getLetters();
-    const P = [
-      {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
-      {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
-      {x:880,y:260,points:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
-      {x:1130,y:260,points:"1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-      {x:1380,y:260,points:"1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-      {x:505,y:440,points:"375,380 505,320 635,380 635,500 505,560 375,500"},
-      {x:755,y:440,points:"625,380 755,320 885,380 885,500 755,560 625,500"},
-      {x:1005,y:440,points:"875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-      {x:1255,y:440,points:"1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-      {x:1505,y:440,points:"1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-      {x:380,y:620,points:"250,560 380,500 510,560 510,680 380,740 250,680"},
-      {x:630,y:620,points:"500,560 630,500 760,560 760,680 630,740 500,680"},
-      {x:880,y:620,points:"750,560 880,500 1010,560 1010,680 880,740 750,680"},
-      {x:1130,y:620,points:"1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-      {x:1380,y:620,points:"1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-      {x:505,y:800,points:"375,740 505,680 635,740 635,860 505,920 375,860"},
-      {x:755,y:800,points:"625,740 755,680 885,740 885,860 755,920 625,860"},
-      {x:1005,y:800,points:"875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-      {x:1255,y:800,points:"1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-      {x:1505,y:800,points:"1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-      {x:380,y:980,points:"250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-      {x:630,y:980,points:"500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-      {x:880,y:980,points:"750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-      {x:1130,y:980,points:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-      {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
-    ];
-
-    for(let i=0;i<Math.min(25, lettersArr.length);i++){
-      const letter = lettersArr[i], pos = P[i];
-      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter', letter);
-
-      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      poly.setAttribute('class','hex-shape'); poly.setAttribute('points', pos.points);
-
-      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('class','hex-text'); txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y); txt.textContent = letter;
-
-      g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
-
-      g.addEventListener('click', () => onCellClick(g, letter));
-    }
-  }
-
-  function rebuildHoneycomb(letters, resetProgress=false){
-    const svg = document.getElementById('honeycombSvg');
-    [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
-
-    window.sessionData = window.sessionData || {};
-    window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
-
-    if (resetProgress) {
-      Object.keys(cellStates).forEach(k => delete cellStates[k]);
-      lastClickedLetter = null;
-      const qp = document.getElementById('questionPanel'); if (qp) qp.style.display = 'none';
-      const qd = document.getElementById('questionDisplay'); if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
+        $prev.disabled = (idx <= 1);
+        $next.disabled = (idx >= cnt);
+      }catch(e){ console.error(e); }
     }
 
-    createHoneycombCells();
-  }
-
-  let lastClickAt = 0;
-  function onCellClick(g, letter){
-    const now = Date.now();
-    if (now - lastClickAt < 150) return; // منع الاهتزاز السريع
-    lastClickAt = now;
-
-    showQuestion(letter);
-
-    if (lastClickedLetter === letter){
-      // تدوير اللون
-      let newState = 'team1';
-      if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
-      else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
-      else { g.classList.add('team1'); newState = 'team1'; }
-      cellStates[letter] = newState;
-
-      sendWS({type:'update_cell_state', letter, state:newState})
-        .catch(()=> updateCellStateAPI(letter, newState));
-    }
-    lastClickedLetter = letter;
-  }
-
-  function applyCellState(letter, state){
-    const el = document.querySelector(`[data-letter="${letter}"]`);
-    if (!el) return;
-    el.classList.remove('team1','team2');
-    if (state && state!=='normal') el.classList.add(state);
-    cellStates[letter] = state || 'normal';
-  }
-
-  function toggleAltCard(idPrefix, exists, questionText, answerText){
-    const col = document.getElementById(idPrefix+'Col');
-    const qEl = document.getElementById(`${idPrefix}Question`);
-    const aEl = document.getElementById(`${idPrefix}Answer`);
-    if (!qEl || !aEl || !col) return;
-    qEl.textContent = exists ? (questionText || '—') : '—';
-    aEl.textContent = exists ? (answerText   || '—') : '—';
-    col.classList.toggle('d-none', !exists);
-  }
-
-  // ========= الأسئلة =========
-  async function showQuestion(letter){
-    try{
-      const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
-      if (!r.ok) return;
-      const data = await r.json(), q = data.questions || {};
-
-      document.getElementById('questionPanel').style.display = 'block';
-      document.getElementById('currentLetter').textContent = data.letter || letter;
-
-      if (isFreeSession) {
-        // مجانية: سؤال الجولة الأولى (main) + بديل1 + بديل2
-        document.getElementById('paidRounds').classList.add('d-none');
-        document.getElementById('paidAlt34').classList.add('d-none');
-
-        document.getElementById('freeMainBlock').classList.remove('d-none');
-        document.getElementById('freeAlt12').classList.remove('d-none');
-
-        document.getElementById('mainQuestion').textContent = (q.main && q.main.question) || '—';
-        document.getElementById('mainAnswer').textContent   = (q.main && q.main.answer)   || '—';
-
-        document.getElementById('alt1Question').textContent = (q.alt1 && q.alt1.question) || '—';
-        document.getElementById('alt1Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
-
-        document.getElementById('alt2Question').textContent = (q.alt2 && q.alt2.question) || '—';
-        document.getElementById('alt2Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
-      } else {
-        // مدفوعة: 3 جولات (main, alt1, alt2) + بديل3 + بديل4
-        document.getElementById('freeMainBlock').classList.add('d-none');
-        document.getElementById('freeAlt12').classList.add('d-none');
-
-        document.getElementById('paidRounds').classList.remove('d-none');
-        document.getElementById('paidAlt34').classList.remove('d-none');
-
-        document.getElementById('r1Question').textContent = (q.main && q.main.question) || '—';
-        document.getElementById('r1Answer').textContent   = (q.main && q.main.answer)   || '—';
-
-        document.getElementById('r2Question').textContent = (q.alt1 && q.alt1.question) || '—';
-        document.getElementById('r2Answer').textContent   = (q.alt1 && q.alt1.answer)   || '—';
-
-        document.getElementById('r3Question').textContent = (q.alt2 && q.alt2.question) || '—';
-        document.getElementById('r3Answer').textContent   = (q.alt2 && q.alt2.answer)   || '—';
-
-        toggleAltCard('alt3', !!q.alt3, q.alt3?.question, q.alt3?.answer);
-        toggleAltCard('alt4', !!q.alt4, q.alt4?.question, q.alt4?.answer);
-      }
-
-      document.getElementById('questionDisplay').textContent = `حرف ${letter}`;
-    }catch{}
-  }
-
-  // ========= النقاط =========
-  function reflectScores(t1,t2){
-    const m1 = document.getElementById('team1Score');
-    const m2 = document.getElementById('team2Score');
-    const d1 = document.getElementById('team1ScoreDesktop');
-    const d2 = document.getElementById('team2ScoreDesktop');
-    if (m1) m1.textContent = t1; if (m2) m2.textContent = t2;
-    if (d1) d1.textContent = t1; if (d2) d2.textContent = t2;
-  }
-
-  async function updateScore(team, delta){
-    const cur1 = parseInt(document.getElementById('team1ScoreDesktop')?.textContent || '0',10);
-    const cur2 = parseInt(document.getElementById('team2ScoreDesktop')?.textContent || '0',10);
-    let t1 = cur1, t2 = cur2;
-    if (team==='team1') t1 = Math.max(0, cur1 + delta); else t2 = Math.max(0, cur2 + delta);
-    reflectScores(t1,t2);
-    sendWS({type:'update_scores', team1_score:t1, team2_score:t2}).catch(()=> updateScoresAPI(t1,t2));
-  }
-  window.updateScore = updateScore;
-
-  async function updateCellStateAPI(letter,state){
-    try{
-      const r = await fetch('/games/api/update-cell-state/',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({session_id:sessionId, letter, state})
-      });
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
-    }catch{}
-  }
-
-  async function updateScoresAPI(team1,team2){
-    try{
-      const r = await fetch('/games/api/update-scores/',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({session_id:sessionId, team1_score:team1, team2_score:team2})
-      });
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
-    }catch{}
-  }
-
-  // ========= إشعار الطنطيط (XSS-safe) =========
-  function showBuzzNotification(contestantName, team){
-    const n = document.getElementById('buzzNotification');
-    if (!n) return;
-    n.textContent = '';
-    n.append('🚨 ');
-    const strong = document.createElement('strong');
-    strong.textContent = contestantName || 'متسابق';
-    n.appendChild(strong);
-    n.appendChild(document.createElement('br'));
-    n.append('من ' + (team==='team1' ? (team1Name||'الفريق 1') : (team2Name||'الفريق 2')) + ' ضغط الزر!');
-    n.style.display = 'block';
-    playBuzzSound();
-    setTimeout(()=>{ n.style.display='none'; }, 4000);
-  }
-
-  // ========= حالة الجلسة =========
-  async function loadSessionState(){
-    try{
-      const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
-      if (!r.ok) return;
-      const data = await r.json();
-
-      if (Array.isArray(data.arabic_letters)) {
-        const cur = getLetters();
-        const changed = (cur.length !== data.arabic_letters.length) || (cur.join('|') !== data.arabic_letters.join('|'));
-        if (changed) rebuildHoneycomb(data.arabic_letters, false);
-      }
-
-      reflectScores(data.team1_score||0, data.team2_score||0);
-      if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
-      if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
-    }catch{}
-  }
-
-  // ========= مؤقّت الجلسة (للمجاني فقط) =========
-  let sessionTimerInterval = null;
-  function startSessionTimer(seconds){
-    const el = document.getElementById('timeRemaining'), box = document.getElementById('sessionTimer');
-    if (!el || !box) return;
-    if (sessionTimerInterval) clearInterval(sessionTimerInterval);
-    let left = Math.max(0, parseInt(seconds,10)||0);
-    const render = ()=>{ const m=Math.floor(left/60), s=left%60; el.textContent = `${m}:${String(s).padStart(2,'0')}`; };
-    render();
-    sessionTimerInterval = setInterval(()=>{ left = Math.max(0,left-1); render(); }, 1000);
-  }
-
-  // ========= WebSocket + Heartbeat =========
-  function clearHeartbeat(){ if (heartbeatTimer){ clearInterval(heartbeatTimer); heartbeatTimer=null; } }
-
-  function setupWebSocket(){
-    const proto = (location.protocol==='https:') ? 'wss' : 'ws';
-    const url = `${proto}://${location.host}/ws/letters/${encodeURIComponent(sessionId)}/?role=host`;
-
-    socket = new WebSocket(url);
-
-    socket.onopen = ()=>{
-      console.log('🟢 WS connected (host)');
-      reconnectDelay = 1000;
-      clearHeartbeat();
-      heartbeatTimer = setInterval(()=>{
-        try{ socket.readyState===1 && socket.send(JSON.stringify({type:'ping'})); }catch{}
-      }, 20000);
-    };
-
-    socket.onmessage = (ev)=>{
-      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
-      switch(d.type){
-        case 'contestant_buzz_accepted':
-          showBuzzNotification(d.contestant_name, d.team);
-          break;
-        case 'cell_state_updated':
-          applyCellState(d.letter, d.state);
-          break;
-        case 'scores_updated':
-          reflectScores(d.team1_score, d.team2_score);
-          break;
-        case 'letters_updated':
-          rebuildHoneycomb(d.letters || [], !!d.reset_progress);
-          setTimeout(loadSessionState, 50);
-          break;
-        case 'buzz_unlocked':
-        case 'buzz_reset_by_host':
-          playUnlockSound();
-          break;
-        case 'pong':
-          break;
-        default:
-          break;
-      }
-    };
-
-    socket.onclose = ()=>{
-      console.warn('🔴 WS closed (host) – reconnecting...');
-      clearHeartbeat();
-      setTimeout(setupWebSocket, reconnectDelay);
-      reconnectDelay = Math.min(reconnectDelay*2, maxDelay);
-    };
-
-    socket.onerror = ()=>{ try{ socket.close(); }catch{} };
-  }
-
-  function sendWS(payload){
-    return new Promise((res,rej)=>{
-      if (socket && socket.readyState===1){ try{ socket.send(JSON.stringify(payload)); res(); }catch(e){ rej(e); } }
-      else rej(new Error('ws not open'));
-    });
-  }
-
-  // ========= جولة جديدة =========
-  let newRoundBusy = false;
-  async function startNewRound(){
-    if (isFreeSession) return; // الـAPI سيمنع أيضًا
-    if (newRoundBusy) return;
-    newRoundBusy = true;
-
-    const btn = document.getElementById('newRoundBtn');
-    if (btn) btn.disabled = true;
-
-    try{
-      const r = await fetch('/games/api/letters-new-round/', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ session_id: sessionId })
-      });
-      if (r.status === 410){
-        alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.');
-        return (window.location.href = HOME_URL);
-      }
-      if (r.status === 403){
-        alert('هذه الميزة متاحة للحزم المدفوعة فقط');
-        return;
-      }
-      const data = await r.json().catch(()=> ({}));
-      if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
-        rebuildHoneycomb(data.letters, !!data.reset_progress);
-        setTimeout(loadSessionState, 50);
-      }
-    }catch(e){
-      console.error(e);
-      alert('تعذّر بدء جولة جديدة، حاول مرة أخرى.');
-    }finally{
-      newRoundBusy = false;
-      if (btn && !isFreeSession) btn.disabled = false;
-    }
-  }
-
-  // ========= تهيئة =========
-  window.addEventListener('beforeunload', ()=>{
-    try{ if (socket && socket.readyState===1) socket.close(1000,'page unload'); }catch{};
-    clearHeartbeat();
-  });
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    createHoneycombCells();
-    loadSessionState();
-    setupWebSocket();
-    setInterval(loadSessionState, 30000);
-
-    const newRoundBtn = document.getElementById('newRoundBtn');
-    if (newRoundBtn) {
-      if (isFreeSession) {
-        newRoundBtn.disabled = true;
-        newRoundBtn.classList.add('disabled');
-        if (!newRoundBtn.title) newRoundBtn.title = 'الميزة متاحة في الحزم المدفوعة';
-      } else {
-        newRoundBtn.disabled = false;
-        newRoundBtn.addEventListener('click', startNewRound);
+    // ========= أزرار السابق/التالي =========
+    async function goPrev(){
+      try{
+        $prev.disabled = true;
+        const r = await fetch('/games/api/images-prev/', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({session_id: SESSION_ID})
+        });
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = "{% url 'games:images_home' %}"; }
+        await loadCurrent();
+      }finally{
+        // إعادة التفعيل حسب الوضع الجديد داخل loadCurrent
       }
     }
-  });
-</script>
+    async function goNext(){
+      try{
+        $next.disabled = true;
+        const r = await fetch('/games/api/images-next/', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({session_id: SESSION_ID})
+        });
+        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = "{% url 'games:images_home' %}"; }
+        await loadCurrent();
+      }finally{}
+    }
+    $prev.addEventListener('click', goPrev);
+    $next.addEventListener('click', goNext);
 
+    // ========= نسخ التلميح/الإجابة =========
+    async function copyText(id){
+      try{
+        const el = document.getElementById(id);
+        await navigator.clipboard.writeText(el.value||'');
+        el.classList.add('is-valid');
+        setTimeout(()=>el.classList.remove('is-valid'), 500);
+      }catch{ alert('تعذر النسخ — انسخ يدويًا.'); }
+    }
+    window.copyText = copyText;
 
-
+    // بداية
+    document.addEventListener('DOMContentLoaded', loadCurrent);
+  </script>
 </body>
 </html>
