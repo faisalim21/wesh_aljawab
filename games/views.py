@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.core.cache import cache
-
+from .models import PictureRiddle, PictureGameProgress
 from datetime import timedelta
 import json
 import logging
@@ -1217,3 +1217,357 @@ def letters_new_round(request):
         logger.error(f"WS broadcast error (new round): {e}")
 
     return JsonResponse({'success': True, 'letters': new_letters, 'reset_progress': True})
+
+
+
+# تحدي الصور
+
+
+@require_http_methods(["POST"])
+def create_images_session(request):
+    """
+    إنشاء جلسة تحدي الصور:
+    - المجانية: تسجيل FreeTrialUsage('images') + جلسة صالحة ساعة.
+    - المدفوعة: التحقق من شراء نشط وربط الجلسة به، صالحة 72 ساعة.
+    - يهيّئ PictureGameProgress(current_index=1).
+    """
+    if request.method != 'POST':
+        return redirect('games:images_home')
+
+    package_id = request.POST.get('package_id')
+    package = get_object_or_404(GamePackage, id=package_id, game_type='images')
+
+    # قفل خفيف ضد الدبل-ضغط
+    lock_owner = request.user.id if request.user.is_authenticated else request.META.get('REMOTE_ADDR', 'anon')
+    lock_key = f"images_create_lock:{lock_owner}"
+    if cache.get(lock_key):
+        messages.info(request, '⏳ يتم إنشاء الجلسة الآن...')
+        return redirect('games:images_home')
+    cache.set(lock_key, 1, timeout=3)
+
+    try:
+        # لازم يكون فيه ألغاز
+        riddles_qs = PictureRiddle.objects.filter(package=package).order_by('order')
+        if not riddles_qs.exists():
+            messages.error(request, 'هذه الحزمة لا تحتوي ألغاز صور بعد.')
+            return redirect('games:images_home')
+
+        # ========= مجاني =========
+        if package.is_free:
+            if not request.user.is_authenticated:
+                messages.error(request, 'يرجى تسجيل الدخول للاستفادة من الجلسة المجانية')
+                return redirect(f'/accounts/login/?next={request.path}')
+            try:
+                with transaction.atomic():
+                    FreeTrialUsage.objects.create(user=request.user, game_type='images')
+            except IntegrityError:
+                messages.error(request, 'لقد استخدمت الجلسة المجانية لتحدي الصور.')
+                return redirect('games:images_home')
+
+            # لو عنده جلسة مجانية نشطة لنفس الحزمة رجّعه لها
+            existing = (GameSession.objects
+                        .filter(host=request.user, package=package, is_active=True)
+                        .order_by('-created_at').first())
+            if existing and not is_session_expired(existing):
+                messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
+                return redirect('games:images_session', session_id=existing.id)
+
+            session = GameSession.objects.create(
+                host=request.user,
+                package=package,
+                game_type='images',
+                purchase=None,
+            )
+            PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+            messages.success(request, '🎉 تم إنشاء الجلسة المجانية! صالحة لمدة ساعة.')
+            return redirect('games:images_session', session_id=session.id)
+
+        # ========= مدفوع =========
+        if not request.user.is_authenticated:
+            messages.error(request, 'يرجى تسجيل الدخول للحزم المدفوعة')
+            return redirect(f'/accounts/login/?next={request.path}')
+
+        with transaction.atomic():
+            now = timezone.now()
+            purchase = (UserPurchase.objects
+                        .select_for_update()
+                        .filter(user=request.user, package=package, is_completed=False, expires_at__gt=now)
+                        .order_by('-purchase_date').first())
+
+            if not purchase:
+                # حدّث أي شراء قديم
+                stale = (UserPurchase.objects.select_for_update()
+                         .filter(user=request.user, package=package, is_completed=False)
+                         .order_by('-purchase_date').first())
+                if stale:
+                    stale.mark_expired_if_needed(auto_save=True)
+                messages.error(request, 'يجب شراء هذه الحزمة أولًا أو أن شراءك السابق انتهت صلاحيته.')
+                return redirect('games:images_home')
+
+            if purchase.mark_expired_if_needed(auto_save=True):
+                messages.error(request, 'انتهت صلاحية الشراء السابق. تحتاج شراء جديد.')
+                return redirect('games:images_home')
+
+            # جلسة مرتبطة بنفس الشراء؟
+            existing = GameSession.objects.filter(purchase=purchase, is_active=True).first()
+            if existing and not is_session_expired(existing):
+                messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
+                return redirect('games:images_session', session_id=existing.id)
+
+            # أو جلسة نشطة لنفس الحزمة بعد وقت الشراء
+            existing2 = (GameSession.objects
+                         .filter(host=request.user, package=package, is_active=True,
+                                 created_at__gte=purchase.purchase_date)
+                         .order_by('-created_at').first())
+            if existing2 and not is_session_expired(existing2):
+                if existing2.purchase_id is None:
+                    existing2.purchase = purchase
+                    existing2.full_clean()
+                    existing2.save(update_fields=['purchase'])
+                messages.info(request, 'تم ربط جلستك الحالية بالشراء وإعادتك لها.')
+                return redirect('games:images_session', session_id=existing2.id)
+
+            # إنشاء جديدة
+            try:
+                session = GameSession.objects.create(
+                    host=request.user,
+                    package=package,
+                    game_type='images',
+                    purchase=purchase,
+                )
+            except IntegrityError:
+                session = GameSession.objects.get(purchase=purchase)
+
+            PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+
+        messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! 🎉')
+        return redirect('games:images_session', session_id=session.id)
+
+    except Exception as e:
+        logger.error(f'Error creating images session: {e}')
+        messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، جرّب مرة أخرى.')
+        return redirect('games:images_home')
+    finally:
+        try: cache.delete(lock_key)
+        except Exception: pass
+
+
+
+
+def images_display(request, display_link):
+    session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+            'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
+        })
+
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
+    progress = PictureGameProgress.objects.filter(session=session).first()
+    current_index = progress.current_index if progress else 1
+    current_index = max(1, min(current_index, len(riddles)))
+
+    return render(request, 'games/images/images_display.html', {
+        'session': session,
+        'riddles_count': len(riddles),
+        'current_index': current_index,
+        'time_remaining': get_session_time_remaining(session),
+    })
+
+
+def images_contestants(request, contestants_link):
+    """صفحة المتسابقين (نفس زر الطنطيط والفرق)؛ العرض الفعلي للصورة على شاشة العرض."""
+    session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+        })
+
+    return render(request, 'games/images/images_contestants.html', {
+        'session': session,
+        'time_remaining': get_session_time_remaining(session),
+        'is_free_session': session.package.is_free,
+    })
+
+
+def images_display(request, display_link):
+    """شاشة العرض: تُظهر الصورة الحالية فقط (بدون تلميح/إجابة)."""
+    session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+            'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
+        })
+
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
+    progress = PictureGameProgress.objects.filter(session=session).first()
+    current_index = progress.current_index if progress else 1
+    current_index = max(1, min(current_index, len(riddles)))
+
+    return render(request, 'games/images/images_display.html', {
+        'session': session,
+        'riddles_count': len(riddles),
+        'current_index': current_index,
+        'time_remaining': get_session_time_remaining(session),
+    })
+
+
+@require_http_methods(["GET"])
+def api_images_get_current(request):
+    sid = request.GET.get("session_id")
+    if not sid:
+        return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
+
+    session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
+    if not riddles:
+        return JsonResponse({'success': False, 'error': 'لا توجد ألغاز في هذه الحزمة'}, status=400)
+
+    progress = PictureGameProgress.objects.filter(session=session).first()
+    idx = progress.current_index if progress else 1
+    idx = max(1, min(idx, len(riddles)))
+
+    return JsonResponse({
+        'success': True,
+        'current_index': idx,
+        'count': len(riddles),
+        'current': riddles[idx-1],  # فقط image_url + order
+    })
+
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_images_set_index(request):
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON غير صحيح'}, status=400)
+
+    sid = payload.get("session_id")
+    idx = payload.get("index")
+    if not sid or idx is None:
+        return JsonResponse({'success': False, 'error': 'session_id و index مطلوبة'}, status=400)
+
+    session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    count = PictureRiddle.objects.filter(package=session.package).count()
+    if count == 0:
+        return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
+
+    try:
+        idx = int(idx)
+    except Exception:
+        return JsonResponse({'success': False, 'error': 'index غير صحيح'}, status=400)
+
+    idx = max(1, min(idx, count))
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    progress.current_index = idx
+    progress.save(update_fields=['current_index'])
+
+    try:
+        layer = get_channel_layer()
+        if layer:
+            async_to_sync(layer.group_send)(
+                f"images_session_{session.id}",
+                {"type": "broadcast_image_index", "current_index": idx, "count": count}
+            )
+    except Exception as e:
+        logger.error(f'WS broadcast (images set_index) error: {e}')
+
+    return JsonResponse({'success': True, 'current_index': idx, 'count': count})
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_images_next(request):
+    try:
+        payload = json.loads(request.body or "{}")
+        sid = payload.get("session_id")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON غير صحيح'}, status=400)
+
+    if not sid:
+        return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
+
+    session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    count = PictureRiddle.objects.filter(package=session.package).count()
+    if count == 0:
+        return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
+
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    new_idx = min(progress.current_index + 1, count)
+    progress.current_index = new_idx
+    progress.save(update_fields=['current_index'])
+
+    try:
+        layer = get_channel_layer()
+        if layer:
+            async_to_sync(layer.group_send)(
+                f"images_session_{session.id}",
+                {"type": "broadcast_image_index", "current_index": new_idx, "count": count}
+            )
+    except Exception as e:
+        logger.error(f'WS broadcast (images next) error: {e}')
+
+    return JsonResponse({'success': True, 'current_index': new_idx, 'count': count})
+
+
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_images_prev(request):
+    try:
+        payload = json.loads(request.body or "{}")
+        sid = payload.get("session_id")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'JSON غير صحيح'}, status=400)
+
+    if not sid:
+        return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
+
+    session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    count = PictureRiddle.objects.filter(package=session.package).count()
+    if count == 0:
+        return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
+
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    new_idx = max(progress.current_index - 1, 1)
+    progress.current_index = new_idx
+    progress.save(update_fields=['current_index'])
+
+    try:
+        layer = get_channel_layer()
+        if layer:
+            async_to_sync(layer.group_send)(
+                f"images_session_{session.id}",
+                {"type": "broadcast_image_index", "current_index": new_idx, "count": count}
+            )
+    except Exception as e:
+        logger.error(f'WS broadcast (images prev) error: {e}')
+
+    return JsonResponse({'success': True, 'current_index': new_idx, 'count': count})
+
+
+
+

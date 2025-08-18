@@ -8,6 +8,7 @@ from django.db.models import (
     Count, Max, Sum, F, Q, Case, When, DecimalField, IntegerField
 )
 from django.db.models.functions import TruncDate, Coalesce
+from django.forms.models import BaseInlineFormSet
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -17,7 +18,8 @@ from django.template.response import TemplateResponse
 from django import forms
 from django.db import IntegrityError
 from django.utils import timezone
-
+from django.utils.html import escape
+from .models import PictureRiddle, PictureGameProgress
 import csv
 import io
 from datetime import timedelta
@@ -667,14 +669,92 @@ class LettersPackageAdmin(admin.ModelAdmin):
 #  Admin: حِزم الصور
 # ===========================
 
+@admin.register(PictureRiddle)
+class PictureRiddleAdmin(admin.ModelAdmin):
+    list_display  = ('package', 'order', 'answer', 'hint_short', 'thumb')
+    list_editable = ('order',)
+    list_filter   = ('package',)
+    search_fields = ('answer', 'hint')
+    ordering      = ('package', 'order')
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        if 'package' in request.GET:
+            initial['package'] = request.GET.get('package')
+        return initial
+
+    def hint_short(self, obj):
+        return (obj.hint or '')[:40]
+    hint_short.short_description = "تلميح"
+
+    def thumb(self, obj):
+        if not obj.image_url:
+            return "—"
+        return format_html(
+            '<img src="{}" style="height:48px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>',
+            escape(obj.image_url)
+        )
+    thumb.short_description = "معاينة"
+
+
+# ===== يجب أن تكون الـ Inline قبل ImagesPackageAdmin =====
+class PictureRiddleInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        # عدد النماذج غير المحذوفة فعليًا
+        alive = 0
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE'):
+                continue
+            # تجاهل سطر فاضي مضاف زيادة
+            empty_extra = (not form.cleaned_data and not form.instance.pk)
+            if empty_extra:
+                continue
+            alive += 1
+
+        pkg = self.instance  # الحزمة الحالية
+        limit = 9 if getattr(pkg, 'is_free', False) else 21
+        if alive > limit:
+            raise forms.ValidationError(f"الحدّ الأقصى لهذه الحزمة هو {limit} لغز بالصور.")
+
+
+class PictureRiddleInline(admin.TabularInline):
+    model = PictureRiddle
+    extra = 0
+    formset = PictureRiddleInlineFormSet
+    fields = ('order', 'image_url', 'answer', 'hint', 'thumb_tag')
+    readonly_fields = ('thumb_tag',)
+    ordering = ('order',)
+
+    def thumb_tag(self, obj):
+        if not obj or not obj.image_url:
+            return "—"
+        return format_html(
+            '<img src="{}" style="height:56px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>',
+            escape(obj.image_url)
+        )
+    thumb_tag.short_description = "معاينة"
+
+
 @admin.register(ImagesPackage)
 class ImagesPackageAdmin(admin.ModelAdmin):
-    list_display = ('package_info', 'price_info', 'is_free_icon', 'status_badge', 'created_at', 'generic_actions')
+    list_display = (
+        'package_info',
+        'riddles_count_badge',
+        'price_info',
+        'is_free_icon',
+        'status_badge',
+        'created_at',
+        'generic_actions',
+    )
     list_filter = ('is_free', 'is_active', 'created_at')
     search_fields = ('package_number', 'description')
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
     list_select_related = ()
+    inlines = [PictureRiddleInline]
 
     fieldsets = (
         ('المعلومات الأساسية', {
@@ -688,11 +768,33 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(game_type='images')
+        # نجمع عدد الألغاز لعرضه وشارة الحدّ
+        return (
+            super().get_queryset(request)
+            .filter(game_type='images')
+            .annotate(_rcount=Count('picture_riddles'))
+        )
 
     def package_info(self, obj):
         return f"حزمة {obj.package_number}"
     package_info.short_description = "الرقم"
+
+    def riddles_count_badge(self, obj):
+        cnt = getattr(obj, '_rcount', 0)
+        limit = 9 if obj.is_free else 21
+        if cnt == 0:
+            color, icon = '#94a3b8', '—'
+        elif cnt > limit:
+            color, icon = '#ef4444', '⚠️'
+        elif cnt == limit:
+            color, icon = '#10b981', '✅'
+        else:
+            color, icon = '#f59e0b', '🧩'
+        return format_html(
+            '<span style="color:{};font-weight:700;">{} {}/{} </span>',
+            color, icon, cnt, limit
+        )
+    riddles_count_badge.short_description = "ألغاز الحزمة"
 
     def price_info(self, obj):
         if obj.is_free:
@@ -711,11 +813,20 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     is_free_icon.short_description = "مجانية"
 
     def status_badge(self, obj):
-        return format_html('<b style="color:{};">{}</b>', 'green' if obj.is_active else 'red', 'فعّالة' if obj.is_active else 'غير فعّالة')
+        return format_html(
+            '<b style="color:{};">{}</b>',
+            'green' if obj.is_active else 'red',
+            'فعّالة' if obj.is_active else 'غير فعّالة'
+        )
     status_badge.short_description = "الحالة"
 
     def generic_actions(self, obj):
-        return "—"
+        list_url = reverse('admin:games_pictureriddle_changelist') + f'?package__id__exact={obj.id}'
+        add_url  = reverse('admin:games_pictureriddle_add') + f'?package={obj.id}'
+        return mark_safe(
+            f'<a class="button" href="{list_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
+            f'<a class="button" href="{add_url}"  style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">➕ إضافة لغز</a>'
+        )
     generic_actions.short_description = "إجراءات"
 
     def save_model(self, request, obj, form, change):
@@ -725,9 +836,15 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)
         if not obj:
-            next_num = (GamePackage.objects.filter(game_type='images')
-                        .aggregate(Max('package_number'))['package_number__max'] or 0) + 1
+            next_num = (
+                GamePackage.objects.filter(game_type='images')
+                .aggregate(Max('package_number'))['package_number__max'] or 0
+            ) + 1
             form.base_fields['package_number'].initial = next_num
+        # تلميح: حدّ الصور حسب نوع الحزمة
+        form.base_fields['description'].help_text = (
+            "المجانية: 9 صور كحد أقصى — المدفوعة: 21 صورة كحد أقصى."
+        )
         return form
 
 # ===========================
@@ -1341,3 +1458,4 @@ class ContestantAdmin(admin.ModelAdmin):
 admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
 admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
+

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🖥️ تحدّي الصور — شاشة العرض</title>
+  <style>
+    body{margin:0;background:linear-gradient(135deg,#1e3a8a,#3730a3,#581c87);font-family:'Tajawal',sans-serif;color:#fff;overflow:hidden}
+    .scores{position:fixed;top:18px;left:18px;display:flex;flex-direction:column;gap:10px;z-index:10}
+    .card{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);border-radius:12px;padding:10px 14px;min-width:160px;border:2px solid rgba(255,255,255,.35)}
+    .nm{font-weight:800;font-size:1rem;margin-bottom:4px}
+    .sc{font-weight:900;font-size:2rem}
+    .stage{position:fixed;inset:0;display:grid;place-items:center}
+    .frame{width:min(92vw,1200px);height:min(80vh,760px);background:#000;border-radius:16px;overflow:hidden;display:grid;place-items:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+    .frame img{max-width:100%;max-height:100%;display:block}
+    .logo{position:fixed;top:16px;right:16px;background:#fff;border-radius:12px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+    .logo img{height:70px}
+    .buzz{position:fixed;inset:0;background:rgba(220,38,38,.96);display:none;z-index:20;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+    .buzz.show{display:flex}
+    .bzname{font-size:4rem;font-weight:900;text-shadow:3px 3px 0 rgba(0,0,0,.3)}
+    .bzteam{margin-top:10px;padding:10px 18px;border-radius:999px;border:4px solid rgba(255,255,255,.8);font-size:1.4rem;font-weight:900}
+    .cd{font-size:8rem;font-weight:900;margin-top:18px}
+    @media (max-width:768px){.logo,.scores{display:none}.bzname{font-size:2.6rem}.cd{font-size:5rem}}
+  </style>
+</head>
+<body>
+  <div class="scores">
+    <div class="card"><div class="nm">{{ session.team1_name }}</div><div class="sc" id="t1">0</div></div>
+    <div class="card"><div class="nm">{{ session.team2_name }}</div><div class="sc" id="t2">0</div></div>
+  </div>
+  <div class="logo"><img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب"></div>
+
+  <div class="stage">
+    <div class="frame"><img id="pic" alt="الصورة الحالية" /></div>
+  </div>
+
+  <div id="buzz" class="buzz">
+    <div id="bzname" class="bzname">اسم المتسابق</div>
+    <div id="bzteam" class="bzteam">الفريق</div>
+    <div id="cd" class="cd">3</div>
+  </div>
+
+<script>
+  const sessionId='{{ session.id }}';
+  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${sessionId}/?role=display`;
+  let ws=null, hb=null, delay=1000, maxDelay=5000, cd=null;
+
+  function connect(){
+    ws=new WebSocket(WS_URL);
+    ws.onopen=()=>{delay=1000; hb&&clearInterval(hb); hb=setInterval(()=>{try{ws.readyState===1&&ws.send(JSON.stringify({type:'ping'}))}catch{}},20000)}
+    ws.onmessage=(ev)=>{let d={};try{d=JSON.parse(ev.data||'{}')}catch{}; route(d) }
+    ws.onclose=()=>{hb&&clearInterval(hb); setTimeout(connect,delay); delay=Math.min(delay*2,maxDelay)}
+    ws.onerror=()=>{try{ws.close()}catch{}}
+  }
+
+  function route(d){
+    if(d.type==='puzzle_updated'){ setPic(d.image_url) }
+    else if(d.type==='scores_updated'){ document.getElementById('t1').textContent=d.team1_score||0; document.getElementById('t2').textContent=d.team2_score||0; }
+    else if(d.type==='contestant_buzz_accepted'){ showBuzz(d.contestant_name, d.team) }
+    else if(d.type==='buzz_unlocked' || d.type==='buzz_reset_by_host'){ hideBuzz() }
+  }
+
+  function setPic(url){ const img=document.getElementById('pic'); img.src=url; img.alt='الصورة الحالية'; }
+
+  function showBuzz(name, team){
+    const b=document.getElementById('buzz'); b.classList.add('show');
+    document.getElementById('bzname').textContent = name || 'متسابق';
+    const label = team==='team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
+    document.getElementById('bzteam').textContent = label;
+    countdown();
+  }
+  function hideBuzz(){ const b=document.getElementById('buzz'); b.classList.remove('show'); clearInterval(cd); }
+
+  function countdown(){
+    clearInterval(cd); let n=3; const el=document.getElementById('cd'); el.textContent=n;
+    cd=setInterval(()=>{ n--; el.textContent=n; if(n<=0){ clearInterval(cd); hideBuzz(); } },1000);
+  }
+
+  document.addEventListener('DOMContentLoaded', connect);
+</script>
+</body>
+</html>

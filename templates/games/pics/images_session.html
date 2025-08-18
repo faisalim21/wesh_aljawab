@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🎛️ تحدّي الصور — المقدم</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+  <style>
+    body{font-family:'Tajawal',sans-serif;background:linear-gradient(135deg,#667eea,#764ba2);min-height:100vh;color:#111;}
+    .wrap{max-width:1000px;margin:auto;padding:16px}
+    .card{border-radius:16px}
+    .imgframe{background:#000;border-radius:16px;overflow:hidden;text-align:center}
+    .imgframe img{max-width:100%;height:auto;display:block;margin:auto}
+    .badge-soft{border:1px solid #eee;border-radius:999px;padding:6px 10px;font-weight:800}
+    .score{font-size:1.3rem;font-weight:900}
+    .hint{color:#111;background:#fff;border-radius:12px;padding:10px}
+    .ans{color:#16a34a;font-weight:900}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="mb-2 text-center">📸 تحدّي الصور — لوحة المقدم</h2>
+  <div class="d-flex gap-2 justify-content-center mb-3">
+    <span class="badge-soft">حزمة {{ session.package.package_number }}</span>
+    {% if session.package.is_free %}
+      <span class="badge-soft">⏰ مجانية (1 ساعة)</span>
+    {% else %}
+      <span class="badge-soft">⏳ 72 ساعة</span>
+    {% endif %}
+  </div>
+
+  <!-- روابط -->
+  <div class="card mb-3">
+    <div class="card-body text-center py-2">
+      <button class="btn btn-sm btn-outline-secondary me-1" onclick="copyLink(window.location.origin + '{{ contestants_url }}')">👥 المتسابقون</button>
+      <button class="btn btn-sm btn-outline-secondary me-1" onclick="copyLink(window.location.origin + '{{ display_url }}')">🖥️ شاشة العرض</button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">🧑‍🏫 رابط المقدم</button>
+      <small id="copied" class="text-success d-block mt-2" style="display:none">✅ تم النسخ</small>
+    </div>
+  </div>
+
+  <!-- الصورة الحالية -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>الصورة <span id="idx">-</span> / <span id="tot">-</span></div>
+        <div class="btn-group">
+          <button class="btn btn-primary btn-sm" onclick="nav('prev')">⬅️ السابق</button>
+          <button class="btn btn-primary btn-sm" onclick="nav('next')">التالي ➡️</button>
+        </div>
+      </div>
+      <div class="imgframe mt-2">
+        <img id="pic" alt="اللّغز الحالي" />
+      </div>
+      <div class="row g-2 mt-2">
+        <div class="col-md-6">
+          <div class="hint"><strong>💡 التلميح:</strong> <span id="hint">—</span></div>
+        </div>
+        <div class="col-md-6">
+          <div class="hint"><strong>✅ الإجابة:</strong> <span id="answer" class="ans">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- النقاط -->
+  <div class="row g-2 mb-2">
+    <div class="col-md-6">
+      <div class="card"><div class="card-body text-center">
+        🟢 {{ session.team1_name }}: <span id="t1" class="score">0</span>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-outline-success me-1" onclick="bump('team1',1)">+</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="bump('team1',-1)">-</button>
+        </div>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card"><div class="card-body text-center">
+        🟠 {{ session.team2_name }}: <span id="t2" class="score">0</span>
+        <div class="mt-2">
+          <button class="btn btn-sm btn-outline-success me-1" onclick="bump('team2',1)">+</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="bump('team2',-1)">-</button>
+        </div>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- تحكّم البازر -->
+  <div class="text-center">
+    <button class="btn btn-warning" onclick="buzzReset()">🔄 إعادة تعيين البازر</button>
+  </div>
+</div>
+
+<script>
+  const sessionId = '{{ session.id }}';
+  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${sessionId}/?role=host`;
+  let ws = null, hb=null, delay=1000, maxDelay=5000;
+
+  function copyLink(t){navigator.clipboard.writeText(t).then(()=>{const e=document.getElementById('copied');e.style.display='block';setTimeout(()=>e.style.display='none',1000);}).catch(()=>alert(t));}
+
+  function connect(){
+    ws = new WebSocket(WS_URL);
+    ws.onopen = ()=>{ delay=1000; hb && clearInterval(hb); hb=setInterval(()=>{try{ws.readyState===1&&ws.send(JSON.stringify({type:'ping'}))}catch{}},20000); };
+    ws.onmessage = (ev)=>{ let d={}; try{d=JSON.parse(ev.data||'{}')}catch{}; route(d); };
+    ws.onclose = ()=>{ hb&&clearInterval(hb); setTimeout(connect,delay); delay=Math.min(delay*2,maxDelay); };
+    ws.onerror = ()=>{ try{ws.close()}catch{} };
+  }
+
+  function route(d){
+    if(d.type==='puzzle_updated'){ setPic(d); }
+    else if(d.type==='scores_updated'){ setScores(d.team1_score||0,d.team2_score||0); }
+    else if(d.type==='contestant_buzz_accepted'){ /* اختياري: إشعار بسيط */ }
+  }
+
+  function setPic({index,total,image_url,hint,answer}){
+    document.getElementById('idx').textContent=index;
+    document.getElementById('tot').textContent=total;
+    const img=document.getElementById('pic'); img.src=image_url; img.alt=`لغز ${index}`;
+    document.getElementById('hint').textContent = hint || '—';
+    document.getElementById('answer').textContent = answer || '—';
+  }
+
+  function setScores(a,b){
+    document.getElementById('t1').textContent=a;
+    document.getElementById('t2').textContent=b;
+  }
+
+  function send(j){ if(ws && ws.readyState===1){ ws.send(JSON.stringify(j)); return true; } return false; }
+
+  function nav(dir){ send({type:'puzzle_nav', dir}); }
+  function setIndex(i){ send({type:'puzzle_set_index', index:i}); }
+  function bump(team,delta){
+    const a=parseInt(document.getElementById('t1').textContent||'0',10);
+    const b=parseInt(document.getElementById('t2').textContent||'0',10);
+    const n1 = team==='team1' ? Math.max(0,a+delta) : a;
+    const n2 = team==='team2' ? Math.max(0,b+delta) : b;
+    setScores(n1,n2);
+    send({type:'update_scores', team1_score:n1, team2_score:n2});
+  }
+  function buzzReset(){ send({type:'buzz_reset'}); }
+
+  document.addEventListener('DOMContentLoaded', connect);
+  window.nav=nav; window.setIndex=setIndex; window.bump=bump; window.buzzReset=buzzReset;
+</script>
+</body>
+</html>

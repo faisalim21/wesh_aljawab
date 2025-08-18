@@ -9,7 +9,6 @@ import uuid
 from datetime import timedelta
 from decimal import Decimal
 
-
 class GamePackage(models.Model):
     """حزم الألعاب"""
     GAME_TYPES = [
@@ -162,6 +161,11 @@ class GamePackage(models.Model):
         if self.discounted_price and self.discounted_price > Decimal('0.00'):
             return self.discounted_price
         return self.price
+    
+    @property
+    def picture_limit(self) -> int:
+        """حدّ ألغاز الصور: المجاني 9، المدفوع 21."""
+        return 9 if self.is_free else 21
 
 
 class LettersGameQuestion(models.Model):
@@ -226,11 +230,13 @@ class LettersGameQuestion(models.Model):
         return f"{self.letter} - {self.get_question_type_display()} - {self.question[:30]}..."
 
     def clean(self):
-        # تحقق مبدئي على الحرف (يُسمح بطول 1-3 لدعم الهمزات والمد)
+        super().clean()
         if not (self.letter or "").strip():
             raise ValidationError("الحرف مطلوب.")
         if len(self.letter.strip()) > 3:
-            raise ValidationError("الحرف يجب ألا يتجاوز 3 خانات (لدعم الهمزات والمد).")
+            raise ValidationError("الحرف يجب ألا يتجاوز 3 خانات.")
+        if self.package and self.package.game_type != 'letters':
+            raise ValidationError("هذه الحزمة ليست من نوع خلية الحروف.")
 
 
 class UserPurchase(models.Model):
@@ -363,7 +369,7 @@ class UserPurchase(models.Model):
 class GameSession(models.Model):
     """جلسة لعب (جلسة واحدة لكل شراء بفضل OneToOneField)"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
+    IMAGES_FREE_TTL_MINUTES = 60
     # المضيف (قد يكون None في نمط "أي شخص معه الرابط")
     host = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -499,6 +505,42 @@ class GameSession(models.Model):
     def __str__(self):
         host_txt = self.host.username if self.host else "بدون مُضيف"
         return f"جلسة {self.get_game_type_display()} - {host_txt}"
+    
+
+      
+    @property
+    def images_free_expires_at(self):
+        """
+        وقت انتهاء الجلسة إذا كانت الحزمة المجانيّة لتحدّي الصور.
+        (لو فيه purchase نستعمل صلاحية الشراء بدلًا من هذا)
+        """
+        if self.package and self.package.game_type == 'images' and self.package.is_free and not self.purchase_id:
+            base = self.created_at or timezone.now()
+            return base + timedelta(minutes=self.IMAGES_FREE_TTL_MINUTES)
+        return None
+
+    @property
+    def is_time_expired(self) -> bool:
+        """
+        منتهية بالتوقيت؟ (شراء منتهي أو جلسة صور مجانية مضت مدّتها)
+        """
+        if self.purchase_id:
+            return self.purchase.is_expired
+        exp = self.images_free_expires_at
+        return exp is not None and timezone.now() >= exp
+
+    def mark_session_expired_if_needed(self, auto_save=True) -> bool:
+        """
+        يقفل الجلسة (is_active=False, is_completed=True) إذا انتهت تلقائيًا.
+        استدعِها من الـ view/consumer بشكل دوري.
+        """
+        if not self.is_completed and self.is_time_expired:
+            self.is_active = False
+            self.is_completed = True
+            if auto_save:
+                self.save(update_fields=['is_active', 'is_completed'])
+            return True
+        return False
 
 
 class LettersGameProgress(models.Model):
@@ -594,7 +636,7 @@ class Contestant(models.Model):
 
 class FreeTrialUsage(models.Model):
     """سجل استخدام التجربة المجانية لكل مستخدم/لعبة (مرة واحدة لكل لعبة)."""
-    GAME_TYPES = (('letters', 'Letters'),)
+    GAME_TYPES = (('letters', 'Letters'), ('images', 'Images'))
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -614,3 +656,61 @@ class FreeTrialUsage(models.Model):
 
     def __str__(self):
         return f"FreeTrial({self.user_id}, {self.game_type})"
+
+
+
+
+
+
+
+class PictureRiddle(models.Model):
+    package   = models.ForeignKey('GamePackage', on_delete=models.CASCADE, related_name='picture_riddles')
+    order     = models.PositiveIntegerField(default=1, db_index=True, help_text="ترتيب اللغز داخل الحزمة")
+    image_url = models.URLField(max_length=500, help_text="رابط الصورة (Cloudinary/سحابة)")  # ← زوّدنا الطول
+    hint      = models.CharField(max_length=255, blank=True, default='', help_text="تلميح يظهر للمقدم فقط")
+    answer    = models.CharField(max_length=255, help_text="الإجابة الصحيحة")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('package', 'order')
+        unique_together = (('package', 'order'),)
+
+    def clean(self):
+        super().clean()
+        if self.package and self.package.game_type != 'images':
+            raise ValidationError("هذه الحزمة ليست من نوع تحدّي الصور.")
+        if self.order < 1:
+            raise ValidationError("الترتيب يبدأ من 1.")
+
+        # الحدّ: استخدم خاصية الحزمة
+        limit = self.package.picture_limit if self.package else 21
+        count = PictureRiddle.objects.filter(package=self.package).exclude(pk=self.pk).count()
+        if count >= limit:
+            raise ValidationError(f"تجاوزت الحدّ الأقصى ({limit}) لهذه الحزمة.")
+
+            
+
+class PictureGameProgress(models.Model):
+    session = models.OneToOneField('GameSession', on_delete=models.CASCADE, related_name='picture_progress')
+    current_index = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        indexes = [models.Index(fields=['session'])]
+
+    def clean(self):
+        super().clean()
+        if self.session and self.session.game_type != 'images':
+            raise ValidationError("هذه الجلسة ليست لتحدّي الصور.")
+        total = 0
+        if self.session and self.session.package_id:
+            total = PictureRiddle.objects.filter(package=self.session.package).count()
+        if total and not (1 <= self.current_index <= total):
+            raise ValidationError(f"current_index يجب أن يكون بين 1 و {total}.")
+
+    @property
+    def total_riddles(self) -> int:
+        return PictureRiddle.objects.filter(package=self.session.package).count() if self.session else 0
+
+
+
+

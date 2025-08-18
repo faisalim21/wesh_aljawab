@@ -31,4 +31,17 @@ urlpatterns = [
     path('api/user-session-stats/', views.api_user_session_stats, name='api_user_session_stats'),
     path('api/contestant-buzz/', views.api_contestant_buzz_http, name='api_contestant_buzz_http'),
     path('api/letters-new-round/', views.letters_new_round, name='api_letters_new_round'),
+
+    # الألعاب الأخرى
+    path('images/', views.images_game_home, name='images_home'),
+    path('images/create/', views.create_images_session, name='create_images_session'),
+    path('images/session/<uuid:session_id>/', views.images_session, name='images_session'),
+    path('images/display/<str:display_link>/', views.images_display, name='images_display'),
+    path('images/contestants/<str:contestants_link>/', views.images_contestants, name='images_contestants'),
+
+    # APIs لتحدّي الصور
+    path('api/images/get-current/', views.api_images_get_current, name='api_images_get_current'),
+    path('api/images/set-index/', views.api_images_set_index, name='api_images_set_index'),
+    path('api/images/next/', views.api_images_next, name='api_images_next'),
+    path('api/images/prev/', views.api_images_prev, name='api_images_prev'),
 ]

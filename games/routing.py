@@ -1,11 +1,8 @@
 # games/routing.py
 from django.urls import re_path
-from .consumers import LettersGameConsumer
+from .consumers import LettersGameConsumer, PicturesGameConsumer
 
-# WebSocket: /ws/letters/<session_id>/?role=host|display|contestant
 websocket_urlpatterns = [
-    re_path(
-        r"^ws/letters/(?P<session_id>[^/]+)/?$",
-        LettersGameConsumer.as_asgi(),
-    ),
+    re_path(r'^ws/letters/(?P<session_id>[0-9a-f-]+)/$', LettersGameConsumer.as_asgi()),
+    re_path(r'^ws/pictures/(?P<session_id>[0-9a-f-]+)/$', PicturesGameConsumer.as_asgi()),
 ]
