@@ -1,69 +1,478 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🎤 تحدّي الصور — صفحة المتسابق</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#7c3aed" />
+
+  <title>{% block title %}{{ page_title|default:"وش الجواب - صفحة المتسابق (تحدّي الصور)" }}{% endblock %}</title>
+
+  <!-- Social + SEO (مختصر) -->
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'صفحة المتسابق لتحدّي الصور من وش الجواب.' }}{% endblock %}">
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - صفحة المتسابق (تحدّي الصور)' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'صفحة المتسابق لتحدّي الصور من وش الجواب.' }}{% endblock %}">
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta name="twitter:card" content="summary_large_image">
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+
   <style>
-    body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#c084fc,#7c3aed,#5b21b6);font-family:'Tajawal',sans-serif;color:#fff}
-    .card{background:rgba(255,255,255,.12);backdrop-filter:blur(16px);padding:24px;border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.3);width:min(520px,94vw);text-align:center}
-    input, .team{border-radius:12px;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.95);color:#111;font-weight:800}
-    .team{padding:10px}
-    .buzz{width:180px;height:180px;border-radius:999px;border:0;background:linear-gradient(165deg,#ef4444,#dc2626,#b91c1c);color:#fff;font-weight:900;font-size:1.6rem;box-shadow:0 20px 40px rgba(239,68,68,.4);transition:.12s}
-    .buzz:active{transform:scale(.97)}
-    .ok{background:rgba(34,197,94,.2);border:2px solid #22c55e;color:#22c55e;border-radius:12px;padding:10px;margin-top:12px;display:none}
-    .err{background:rgba(239,68,68,.2);border:2px solid #ef4444;color:#ef4444;border-radius:12px;padding:10px;margin-top:12px;display:none}
+    :root{
+      --bg1:#c084fc;--bg2:#7c3aed;--bg3:#5b21b6;
+      --white:#fff; --glass:rgba(255,255,255,.1); --glass-b:rgba(255,255,255,.2);
+      --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --gray:#94a3b8;
+      --btn1:#ef4444; --btn2:#dc2626; --btn3:#b91c1c;
+    }
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0; padding:0;
+      font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      color:var(--white);
+      background:
+        radial-gradient(1200px 600px at 70% -20%, rgba(255,255,255,.08), transparent 60%),
+        linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
+      overflow-x:hidden;
+    }
+
+    /* شِعار */
+    .logo{
+      position: fixed; top: env(safe-area-inset-top, 12px); right: 12px;
+      background: rgba(255,255,255,.95);
+      padding: 8px 12px; border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10;
+    }
+    .logo img{ max-height: 46px; display:block }
+
+    /* لمبة الاتصال */
+    .conn{
+      position: fixed; top: calc(env(safe-area-inset-top, 12px) + 8px); left: 12px; z-index: 10;
+      padding: 8px 12px; border-radius: 999px; font-weight:800; font-size:.85rem;
+    }
+    .conn.connected{ background: rgba(34,197,94,.92) }    /* كلا القناتين متصل */
+    .conn.partial{ background: rgba(245,158,11,.92) }     /* قناة واحدة متصلة */
+    .conn.disconnected{ background: rgba(239,68,68,.92); animation: blink 1s infinite }
+    @keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:.6} }
+
+    .main{
+      min-height:100dvh; display:flex; align-items:center; justify-content:center;
+      padding: clamp(12px, 3vw, 28px);
+    }
+    .card-ct{
+      width: min(720px, 96vw);
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: 24px;
+      padding: clamp(18px, 3.2vw, 34px);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      text-align:center;
+    }
+    .title h1{
+      font-size: clamp(1.6rem, 5.5vw, 2.2rem);
+      margin:0; font-weight:900; letter-spacing:.3px;
+      background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .subtitle{ color:#e2e8f0; margin-top: 6px; font-size:.95rem }
+
+    /* إطار الصورة */
+    .frame{
+      margin: 14px 0 10px;
+      background: rgba(0,0,0,.65);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 18px;
+      width: 100%; min-height: clamp(180px, 38vh, 420px);
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
+      box-shadow: 0 14px 34px rgba(0,0,0,.3);
+    }
+    .frame img{ max-width:100%; max-height:70vh; display:block }
+
+    /* نقاط مختصرة */
+    .scores{
+      display:flex; gap:8px; justify-content:center; margin-bottom: 6px; flex-wrap:wrap;
+    }
+    .score{
+      background: rgba(255,255,255,.14);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 12px;
+      padding: 6px 10px; font-weight:900;
+    }
+    .score .nm{ opacity:.9; font-size:.9rem }
+    .score .val{ font-size:1.3rem }
+
+    /* الحقول */
+    .name-input{
+      width:100%; margin: 10px 0 12px;
+      background: rgba(255,255,255,.96); color:#1f2937;
+      border: 2px solid rgba(255,255,255,.45); border-radius: 14px;
+      padding: 12px 14px; font-weight:800; font-size:1.05rem; text-align:center;
+      transition:.2s ease;
+    }
+    .name-input:focus{
+      outline:none; border-color:#8b5cf6; box-shadow:0 0 0 4px rgba(139,92,246,.22);
+      transform: scale(1.01);
+    }
+    .teams{ margin: 6px 0 12px }
+    .teams label.h{ display:block; font-weight:800; margin-bottom:8px; color:#e2e8f0 }
+    .team-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
+    .topt{ position:relative }
+    .topt input{ position:absolute; inset:0; opacity:0 }
+    .tbtn{
+      display:flex; align-items:center; justify-content:center;
+      min-height:52px; padding: 10px 8px;
+      border-radius: 14px; font-weight:800; font-size:1rem;
+      border:2px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.1);
+      transition:.2s ease; user-select:none;
+    }
+    .topt input:checked + .tbtn.team1{
+      border-color:#22c55e; color:#22c55e;
+      background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(34,197,94,.08));
+      box-shadow: 0 10px 25px rgba(34,197,94,.25);
+    }
+    .topt input:checked + .tbtn.team2{
+      border-color:#f97316; color:#f97316;
+      background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
+      box-shadow: 0 10px 25px rgba(249,115,22,.25);
+    }
+
+    /* زر الطنطيط */
+    .buzz-wrap{ margin-top: 8px }
+    .buzz-btn{
+      --size: clamp(120px, 34vw, 170px);
+      width: var(--size); height: var(--size);
+      margin-inline:auto; border-radius: 999px; position: relative; border: 0; cursor: pointer;
+      display: grid; place-items:center; font-weight: 900; letter-spacing:.4px;
+      font-size: clamp(1.15rem, 4.2vw, 1.6rem); color:#fff; outline: none;
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      background:
+        radial-gradient(140% 60% at 50% 8%, rgba(255,255,255,.35), transparent 40%),
+        linear-gradient(165deg, var(--btn1) 0%, var(--btn2) 45%, var(--btn3) 100%);
+      box-shadow: 0 18px 35px rgba(239,68,68,.45), inset 0 -10px 18px rgba(0,0,0,.25), inset 0 8px 12px rgba(255,255,255,.08);
+      isolation:isolate;
+    }
+    .buzz-btn::before{
+      content:""; position:absolute; inset:0; border-radius:inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.45), transparent 35% 90%, rgba(0,0,0,.25));
+      mix-blend-mode: soft-light; pointer-events:none;
+    }
+    .buzz-btn::after{
+      content:""; position:absolute; top:6%; left:16%; width:68%; height:18%;
+      border-radius:999px; background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.15));
+      filter: blur(1px); transform: rotate(-6deg); pointer-events:none;
+    }
+    .buzz-btn.wave > i{
+      content:""; position:absolute; inset:0; border-radius:inherit;
+      animation: wave .6s ease-out forwards;
+      background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 60%);
+      mix-blend-mode: screen; pointer-events:none;
+    }
+    @keyframes wave{ from{ transform: scale(.1); opacity:1 } to{ transform: scale(2.2); opacity:0 } }
+    .buzz-btn:hover{ transform: translateY(-2px) scale(1.03) }
+    .buzz-btn:active:not(:disabled){ transform: translateY(1px) scale(.97); filter: saturate(1.1) }
+    .buzz-btn:disabled{
+      background: linear-gradient(165deg, #6b7280, #4b5563);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 -10px 18px rgba(0,0,0,.2);
+      cursor:not-allowed;
+    }
+    .buzz-label{ position:relative; z-index:2; text-shadow: 0 2px 0 rgba(0,0,0,.2) }
+
+    /* رسائل الحالة */
+    .status{
+      margin-top: 14px; display:none;
+      border-radius: 14px; padding: 12px 14px; font-weight:800; text-align:center;
+    }
+    .status.show{ display:block }
+    .status.ok{ background: rgba(34,197,94,.2); border:1px solid var(--ok); color: var(--ok); animation: pulse .4s ease }
+    .status.err{ background: rgba(239,68,68,.2); border:1px solid var(--err); color: var(--err); animation: shake .38s ease }
+    .status.info{ background: rgba(59,130,246,.2); border:1px solid #3b82f6; color:#3b82f6 }
+    @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+    @keyframes shake{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) } }
+
+    @media (max-width: 768px){
+      .card-ct{ padding: 20px 16px; border-radius: 20px }
+      .logo{ right:10px; top:10px }
+      .frame{ min-height: 200px }
+    }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h3 class="mb-2">🎤 تحدّي الصور — المتسابق</h3>
-    <div class="mb-2">{{ session.team1_name }} 🟢 — {{ session.team2_name }} 🟠</div>
-    <input id="name" class="form-control text-center fw-bold" placeholder="🏷️ اكتب اسمك" maxlength="20" />
-    <div class="d-grid gap-2 mt-2">
-      <div class="row g-2">
-        <div class="col-6"><label class="team w-100 p-2"><input type="radio" name="team" value="team1"> 🟢 {{ session.team1_name }}</label></div>
-        <div class="col-6"><label class="team w-100 p-2"><input type="radio" name="team" value="team2"> 🟠 {{ session.team2_name }}</label></div>
-      </div>
-    </div>
-    <div class="mt-3"><button id="buzz" class="buzz">جاوِب!</button></div>
-    <div id="ok" class="ok">✅ تم تسجيل إجابتك!</div>
-    <div id="err" class="err">⚠️ الزر محجوز الآن</div>
+
+  <!-- لمبة الاتصال -->
+  <div id="conn" class="conn disconnected">🔴 منقطع</div>
+
+  <!-- الشعار -->
+  <div class="logo">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" />
   </div>
 
-<script>
-  const sessionId='{{ session.id }}';
-  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${sessionId}/?role=contestant`;
-  let ws=null, delay=1000, maxDelay=5000, hb=null, busy=false;
+  <!-- المحتوى -->
+  <main class="main">
+    <section class="card-ct" aria-labelledby="title">
+      <div class="title" id="title">
+        <h1>🎤 صفحة المتسابق — تحدّي الصور</h1>
+        <div class="subtitle">
+          {{ session.package.get_game_type_display }} — حزمة {{ session.package.package_number }}
+        </div>
+      </div>
 
-  function connect(){
-    ws = new WebSocket(WS_URL);
-    ws.onopen=()=>{delay=1000; hb&&clearInterval(hb); hb=setInterval(()=>{try{ws.readyState===1&&ws.send(JSON.stringify({type:'ping'}))}catch{}},20000)}
-    ws.onmessage=(ev)=>{let d={};try{d=JSON.parse(ev.data||'{}')}catch{}; if(d.type==='buzz_confirmed'){show('ok');busy=false;btn(true)} else if(d.type==='buzz_rejected'){show('err', d.message);busy=false;btn(true)} }
-    ws.onclose=()=>{hb&&clearInterval(hb); setTimeout(connect,delay); delay=Math.min(delay*2,maxDelay)}
-    ws.onerror=()=>{try{ws.close()}catch{}}
-  }
+      <!-- الصورة الحالية (متزامنة مع المقدم) -->
+      <div class="frame">
+        <img id="puzzleImg" src="" alt="الصورة الحالية للغز" />
+      </div>
 
-  function btn(enable){ document.getElementById('buzz').disabled=!enable; document.getElementById('buzz').textContent = enable?'جاوِب!':'جارٍ...'; }
-  function show(id, msg){ const ok=document.getElementById('ok'), er=document.getElementById('err'); ok.style.display='none'; er.style.display='none'; const el=document.getElementById(id); if(msg) el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',2500); }
+      <!-- نقاط (اختياري للعرض) -->
+      <div class="scores">
+        <div class="score">
+          <div class="nm">🟢 {{ session.team1_name }}</div>
+          <div class="val" id="t1">0</div>
+        </div>
+        <div class="score">
+          <div class="nm">🟠 {{ session.team2_name }}</div>
+          <div class="val" id="t2">0</div>
+        </div>
+      </div>
 
-  function sendBuzz(){
-    if(busy) return; busy=true; btn(false);
-    const name=(document.getElementById('name').value||'').trim();
-    const team=document.querySelector('input[name="team"]:checked')?.value;
-    if(!name){show('err','اكتب اسمك أولاً'); busy=false; btn(true); return;}
-    if(!team){show('err','اختر فريقك'); busy=false; btn(true); return;}
-    ws && ws.readyState===1 && ws.send(JSON.stringify({
-      type:'contestant_buzz', contestant_name:name, team, timestamp:new Date().toISOString()
-    }));
-    setTimeout(()=>{ if(busy){ busy=false; btn(true);} },1200);
-  }
+      <!-- الاسم والفريق -->
+      <input id="name" class="name-input" type="text" inputmode="text" maxlength="20"
+             placeholder="🏷️ اكتب اسمك هنا" autocomplete="off" aria-label="اسم المتسابق" />
 
-  document.addEventListener('DOMContentLoaded', ()=>{
-    document.getElementById('buzz').addEventListener('click', sendBuzz);
-    connect();
-  });
-</script>
+      <div class="teams">
+        <label class="h">اختر فريقك:</label>
+        <div class="team-grid">
+          <label class="topt">
+            <input id="t1r" type="radio" name="team" value="team1" />
+            <div class="tbtn team1">🟢 {{ session.team1_name }}</div>
+          </label>
+          <label class="topt">
+            <input id="t2r" type="radio" name="team" value="team2" />
+            <div class="tbtn team2">🟠 {{ session.team2_name }}</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- زر الطنطيط -->
+      <div class="buzz-wrap">
+        <button id="buzz" class="buzz-btn" type="button" aria-live="polite" aria-label="اضغط للإجابة">
+          <span class="buzz-label" id="buzzText">جاوِب!</span>
+        </button>
+      </div>
+
+      <!-- رسائل الحالة -->
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    // ======== ثوابت عامة ========
+    const sessionId = '{{ session.id }}';
+    const LS_NAME_KEY = `wjg_img_name_${sessionId}`;
+    const LS_TEAM_KEY = `wjg_img_team_${sessionId}`;
+
+    // قناتان: (1) قناة المتسابق للإرسال، (2) قناة عرض/استقبال لتحديث الصورة والنقاط
+    let wsContest = null;   // role=contestant
+    let wsFeed = null;      // role=display (قراءة فقط)
+    let d1 = 1000, d2 = 1000;          // backoff
+    const MAX_DELAY = 5000;
+    let hb1 = null, hb2 = null;
+
+    // ======== عناصر ========
+    const el = {
+      conn: document.getElementById('conn'),
+      img:  document.getElementById('puzzleImg'),
+      name: document.getElementById('name'),
+      t1r:  document.getElementById('t1r'),
+      t2r:  document.getElementById('t2r'),
+      buzz: document.getElementById('buzz'),
+      status: document.getElementById('status'),
+      buzzText: document.getElementById('buzzText'),
+      s1: document.getElementById('t1'),
+      s2: document.getElementById('t2'),
+    };
+
+    // ======== أدوات واجهة ========
+    function setConn(){
+      const c1 = wsContest && wsContest.readyState === 1;
+      const c2 = wsFeed && wsFeed.readyState === 1;
+      el.conn.className = 'conn ' + (c1 && c2 ? 'connected' : (c1 || c2 ? 'partial' : 'disconnected'));
+      el.conn.textContent = c1 && c2 ? '🟢 متصل' : (c1 || c2 ? '🟡 اتصال جزئي' : '🔴 منقطع');
+    }
+    function showMsg(kind, text, autoHideMs){
+      el.status.className = 'status show ' + (kind||'info');
+      el.status.textContent = text || '';
+      if (autoHideMs){ setTimeout(()=>{ el.status.classList.remove('show'); }, autoHideMs); }
+    }
+    function waveButton(){
+      el.buzz.classList.add('wave'); const i = document.createElement('i');
+      el.buzz.appendChild(i); setTimeout(()=>{ i.remove(); el.buzz.classList.remove('wave'); }, 600);
+    }
+    function haptic(ms=35){ try{ navigator.vibrate && navigator.vibrate(ms); }catch{} }
+    function tone(freq=740, dur=160, gain=.35){
+      try{
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.connect(g); g.connect(actx.destination);
+        o.frequency.value = freq; g.gain.value = gain;
+        o.start(); o.stop(actx.currentTime + dur/1000);
+      }catch{}
+    }
+
+    // ======== LocalStorage ========
+    function loadPrefs(){
+      const n = localStorage.getItem(LS_NAME_KEY) || '';
+      if (n){ el.name.value = n; }
+      const t = localStorage.getItem(LS_TEAM_KEY);
+      if (t === 'team1') el.t1r.checked = true;
+      if (t === 'team2') el.t2r.checked = true;
+    }
+    function savePrefs(){
+      const n = (el.name.value || '').trim();
+      if (n) localStorage.setItem(LS_NAME_KEY, n);
+      const t = document.querySelector('input[name="team"]:checked')?.value;
+      if (t) localStorage.setItem(LS_TEAM_KEY, t);
+    }
+
+    // ======== تحميل الحالة الحالية عبر HTTP (Fallback/بدء) ========
+    async function loadCurrentOnce(){
+      try{
+        const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(sessionId)}`);
+        if (!r.ok) return;
+        const data = await r.json();
+        const cur = data.current || {};
+        setImage(cur.image_url || '');
+        setScores(data.team1_score || 0, data.team2_score || 0);
+      }catch{}
+    }
+    function setImage(url){
+      if (!url) return;
+      el.img.src = url;
+      el.img.alt = 'الصورة الحالية للغز';
+    }
+    function setScores(a,b){
+      if (el.s1) el.s1.textContent = a;
+      if (el.s2) el.s2.textContent = b;
+    }
+
+    // ======== WS: قناة المتسابق ========
+    function connectContestantWS(){
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const url = `${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=contestant`;
+      try{ wsContest = new WebSocket(url); }catch{ setConn(); return; }
+
+      wsContest.onopen = ()=>{
+        d1 = 1000; setConn();
+        clearInterval(hb1);
+        hb1 = setInterval(()=>{ try{ wsContest.readyState===1 && wsContest.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+      };
+      wsContest.onmessage = (ev)=>{
+        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
+        if (d.type === 'buzz_confirmed'){
+          showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
+          tone(840, 220, .4); haptic(30);
+          setTimeout(enableBuzz, 900);
+        } else if (d.type === 'buzz_rejected'){
+          showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
+          tone(360, 180, .25); haptic(40);
+          setTimeout(enableBuzz, 400);
+        } else if (d.type === 'error'){
+          showMsg('err', d.message || 'حدث خطأ.', 3200);
+          setTimeout(enableBuzz, 600);
+        }
+      };
+      wsContest.onclose = (e)=>{
+        clearInterval(hb1); setConn();
+        if (e && (e.code===4401 || e.code===4404)){ showMsg('err','انتهت صلاحية الجلسة أو الرابط غير صحيح.'); disableBuzz(true); return; }
+        setTimeout(connectContestantWS, d1); d1 = Math.min(d1*2, MAX_DELAY);
+      };
+      wsContest.onerror = ()=>{ try{ wsContest.close(); }catch{} };
+    }
+
+    // ======== WS: قناة العرض/التغذية (لاستقبال الصورة والنقاط) ========
+    function connectFeedWS(){
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const url = `${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=display`;
+      try{ wsFeed = new WebSocket(url); }catch{ setConn(); return; }
+
+      wsFeed.onopen = ()=>{
+        d2 = 1000; setConn();
+        clearInterval(hb2);
+        hb2 = setInterval(()=>{ try{ wsFeed.readyState===1 && wsFeed.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+      };
+      wsFeed.onmessage = (ev)=>{
+        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
+        if (d.type === 'puzzle_updated'){
+          setImage(d.image_url || '');
+        } else if (d.type === 'scores_updated'){
+          setScores(d.team1_score||0, d.team2_score||0);
+        }
+        // نتجاهل أحداث البازر/العدّ التنازلي هنا
+      };
+      wsFeed.onclose = ()=>{
+        clearInterval(hb2); setConn();
+        setTimeout(connectFeedWS, d2); d2 = Math.min(d2*2, MAX_DELAY);
+      };
+      wsFeed.onerror = ()=>{ try{ wsFeed.close(); }catch{} };
+    }
+
+    // ======== إرسال الطنطيط ========
+    let busy = false;
+    function disableBuzz(permanent=false){
+      busy = true; el.buzz.disabled = true; el.buzzText.textContent = permanent ? 'غير متاح' : 'جارٍ...';
+    }
+    function enableBuzz(){ busy = false; el.buzz.disabled = false; el.buzzText.textContent = 'جاوِب!' }
+    function sendBuzz(){
+      const name = (el.name.value || '').trim();
+      const team = document.querySelector('input[name="team"]:checked')?.value;
+
+      if (!name){ showMsg('err','اكتب اسمك أولاً', 2200); el.name.focus(); haptic(30); return; }
+      if (!team){ showMsg('err','اختر فريقك', 2200); haptic(30); return; }
+      if (!wsContest || wsContest.readyState !== 1){ showMsg('err','الاتصال غير جاهز', 2200); haptic(30); return; }
+      if (busy) return;
+
+      waveButton(); haptic(50); tone(760, 130, .35);
+      disableBuzz();
+      savePrefs();
+
+      try{
+        wsContest.send(JSON.stringify({
+          type:'contestant_buzz',
+          contestant_name:name,
+          team,
+          timestamp:new Date().toISOString()
+        }));
+        // fallback فتح الزر لو ما وصل رد سريع
+        setTimeout(()=>{ if (busy) enableBuzz(); }, 1200);
+        showMsg('info','⏳ تم الإرسال...', 1200);
+      }catch{
+        showMsg('err','تعذّر الإرسال، حاول مجددًا', 2500);
+        enableBuzz();
+      }
+    }
+
+    // ======== تهيئة ========
+    document.addEventListener('DOMContentLoaded', ()=>{
+      loadPrefs();
+      loadCurrentOnce();     // مبدئيًا قبل استقبال WS
+      connectContestantWS(); // للإرسال
+      connectFeedWS();       // لاستقبال الصورة/النقاط
+
+      el.buzz.addEventListener('click', sendBuzz);
+      el.name.addEventListener('keypress', (e)=>{ if (e.key === 'Enter') sendBuzz(); });
+
+      // تحسينات صوت على الموبايل (فتح AudioContext)
+      document.addEventListener('touchstart', ()=>tone(1,1,.0001), { once:true, passive:true });
+
+      // حالة أونلاين/أوفلاين
+      window.addEventListener('online',  setConn);
+      window.addEventListener('offline', setConn);
+    });
+
+    window.buzzAnswer = sendBuzz; // لو احتجت تناديها من HTML
+  </script>
 </body>
 </html>

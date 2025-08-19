@@ -1,38 +1,115 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🖥️ تحدّي الصور — شاشة العرض</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  {# ==== META + SOCIAL PACK (مطابق لقالب خلية الحروف) ==== #}
+  <title>{% block title %}{{ page_title|default:"وش الجواب - شاشة العرض (تحدّي الصور)" }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:locale" content="ar_SA">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - شاشة العرض (تحدّي الصور)' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
+  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - شاشة العرض (تحدّي الصور)' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
+  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  {% block meta_overrides %}{% endblock %}
+
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
+
   <style>
-    body{margin:0;background:linear-gradient(135deg,#1e3a8a,#3730a3,#581c87);font-family:'Tajawal',sans-serif;color:#fff;overflow:hidden}
-    .scores{position:fixed;top:18px;left:18px;display:flex;flex-direction:column;gap:10px;z-index:10}
-    .card{background:rgba(255,255,255,.15);backdrop-filter:blur(12px);border-radius:12px;padding:10px 14px;min-width:160px;border:2px solid rgba(255,255,255,.35)}
-    .nm{font-weight:800;font-size:1rem;margin-bottom:4px}
-    .sc{font-weight:900;font-size:2rem}
+    body{
+      margin:0; padding:0; overflow:hidden;
+      min-height:100vh;
+      background:linear-gradient(135deg,#1e3a8a,#3730a3,#581c87);
+      font-family:'Tajawal',sans-serif; color:#fff;
+    }
+    /* بطاقات النقاط (أعلى اليسار) */
+    .scores{position:fixed;top:18px;left:18px;z-index:10;display:flex;flex-direction:column;gap:12px}
+    .card{
+      background:rgba(255,255,255,.18);
+      border:3px solid rgba(255,255,255,.35);
+      backdrop-filter:blur(14px);
+      padding:12px 16px; border-radius:16px; min-width:170px; text-align:center;
+      box-shadow:0 10px 26px rgba(0,0,0,.28)
+    }
+    .nm{font-weight:900;font-size:1rem;margin-bottom:6px;letter-spacing:.3px}
+    .sc{font-weight:900;font-size:2.2rem;line-height:1}
+
+    /* الإطار الأوسط للصورة */
     .stage{position:fixed;inset:0;display:grid;place-items:center}
-    .frame{width:min(92vw,1200px);height:min(80vh,760px);background:#000;border-radius:16px;overflow:hidden;display:grid;place-items:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+    .frame{
+      width:min(92vw,1200px);height:min(80vh,760px);
+      background:#000;border-radius:18px;overflow:hidden;
+      display:grid;place-items:center;
+      box-shadow:0 22px 60px rgba(0,0,0,.4)
+    }
     .frame img{max-width:100%;max-height:100%;display:block}
-    .logo{position:fixed;top:16px;right:16px;background:#fff;border-radius:12px;padding:8px 12px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
-    .logo img{height:70px}
-    .buzz{position:fixed;inset:0;background:rgba(220,38,38,.96);display:none;z-index:20;align-items:center;justify-content:center;flex-direction:column;text-align:center}
+
+    /* الشعار أعلى اليمين */
+    .logo{position:fixed;top:16px;right:16px;z-index:10;background:#fff;border-radius:14px;padding:10px 14px;border:1px solid rgba(0,0,0,.06);box-shadow:0 12px 30px rgba(0,0,0,.25)}
+    .logo img{height:80px;display:block}
+
+    /* طبقة البازر */
+    .buzz{
+      position:fixed;inset:0;display:none;z-index:20;
+      align-items:center;justify-content:center;flex-direction:column;text-align:center;
+      background:linear-gradient(135deg,rgba(239,68,68,.98),rgba(220,38,38,.98));
+      animation:bzPulse .6s ease-in-out infinite alternate;
+    }
     .buzz.show{display:flex}
-    .bzname{font-size:4rem;font-weight:900;text-shadow:3px 3px 0 rgba(0,0,0,.3)}
-    .bzteam{margin-top:10px;padding:10px 18px;border-radius:999px;border:4px solid rgba(255,255,255,.8);font-size:1.4rem;font-weight:900}
-    .cd{font-size:8rem;font-weight:900;margin-top:18px}
-    @media (max-width:768px){.logo,.scores{display:none}.bzname{font-size:2.6rem}.cd{font-size:5rem}}
+    @keyframes bzPulse{from{filter:brightness(1)}to{filter:brightness(1.05)}}
+    .bzname{font-size:4.4rem;font-weight:900;text-shadow:3px 3px 0 rgba(0,0,0,.35)}
+    .bzteam{margin-top:10px;padding:10px 18px;border-radius:999px;border:4px solid rgba(255,255,255,.85);font-size:1.4rem;font-weight:900}
+    .cd{font-size:8rem;font-weight:900;margin-top:18px;text-shadow:4px 4px 0 rgba(0,0,0,.35)}
+
+    @media (max-width:768px){
+      .scores,.logo{display:none}
+      .bzname{font-size:2.6rem}
+      .cd{font-size:5rem}
+    }
   </style>
 </head>
 <body>
+  <!-- بطاقات النقاط -->
   <div class="scores">
-    <div class="card"><div class="nm">{{ session.team1_name }}</div><div class="sc" id="t1">0</div></div>
-    <div class="card"><div class="nm">{{ session.team2_name }}</div><div class="sc" id="t2">0</div></div>
+    <div class="card">
+      <div class="nm">{{ session.team1_name }}</div>
+      <div class="sc" id="t1">0</div>
+    </div>
+    <div class="card">
+      <div class="nm">{{ session.team2_name }}</div>
+      <div class="sc" id="t2">0</div>
+    </div>
   </div>
-  <div class="logo"><img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب"></div>
 
+  <!-- الشعار -->
+  <div class="logo">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+  </div>
+
+  <!-- الإطار الأوسط للصورة -->
   <div class="stage">
-    <div class="frame"><img id="pic" alt="الصورة الحالية" /></div>
+    <div class="frame">
+      <img id="pic" alt="الصورة الحالية" />
+    </div>
   </div>
 
+  <!-- طبقة البازر -->
   <div id="buzz" class="buzz">
     <div id="bzname" class="bzname">اسم المتسابق</div>
     <div id="bzteam" class="bzteam">الفريق</div>
@@ -40,42 +117,125 @@
   </div>
 
 <script>
-  const sessionId='{{ session.id }}';
-  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${sessionId}/?role=display`;
-  let ws=null, hb=null, delay=1000, maxDelay=5000, cd=null;
+  // ====== إعدادات أساسية ======
+  const SESSION_ID = '{{ session.id }}';
+  const TEAM1 = '{{ session.team1_name|escapejs }}';
+  const TEAM2 = '{{ session.team2_name|escapejs }}';
+  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${SESSION_ID}/?role=display`;
 
-  function connect(){
-    ws=new WebSocket(WS_URL);
-    ws.onopen=()=>{delay=1000; hb&&clearInterval(hb); hb=setInterval(()=>{try{ws.readyState===1&&ws.send(JSON.stringify({type:'ping'}))}catch{}},20000)}
-    ws.onmessage=(ev)=>{let d={};try{d=JSON.parse(ev.data||'{}')}catch{}; route(d) }
-    ws.onclose=()=>{hb&&clearInterval(hb); setTimeout(connect,delay); delay=Math.min(delay*2,maxDelay)}
-    ws.onerror=()=>{try{ws.close()}catch{}}
+  // عناصر DOM
+  const $img = document.getElementById('pic');
+  const $t1  = document.getElementById('t1');
+  const $t2  = document.getElementById('t2');
+  const $buzz= document.getElementById('buzz');
+  const $bzN = document.getElementById('bzname');
+  const $bzT = document.getElementById('bzteam');
+  const $cd  = document.getElementById('cd');
+
+  // ====== صوتيات خفيفة ======
+  let audioCtx;
+  function ensureAudio(){ try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch{} }
+  function tone(f=800,ms=300,gain=0.55){
+    try{
+      ensureAudio(); if(!audioCtx) return;
+      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.frequency.value=f; g.gain.value=gain;
+      const t=audioCtx.currentTime; o.start(t); o.stop(t+ms/1000);
+    }catch{}
   }
+  function playBuzz(){ tone(880,320,0.6); }
+  function playEnd(){ tone(520,200,0.4); }
 
-  function route(d){
-    if(d.type==='puzzle_updated'){ setPic(d.image_url) }
-    else if(d.type==='scores_updated'){ document.getElementById('t1').textContent=d.team1_score||0; document.getElementById('t2').textContent=d.team2_score||0; }
-    else if(d.type==='contestant_buzz_accepted'){ showBuzz(d.contestant_name, d.team) }
-    else if(d.type==='buzz_unlocked' || d.type==='buzz_reset_by_host'){ hideBuzz() }
-  }
-
-  function setPic(url){ const img=document.getElementById('pic'); img.src=url; img.alt='الصورة الحالية'; }
-
+  // ====== عرض البازر + العد التنازلي ======
+  let cdTimer=null;
   function showBuzz(name, team){
-    const b=document.getElementById('buzz'); b.classList.add('show');
-    document.getElementById('bzname').textContent = name || 'متسابق';
-    const label = team==='team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
-    document.getElementById('bzteam').textContent = label;
-    countdown();
+    playBuzz();
+    $bzN.textContent = name || 'متسابق';
+    $bzT.textContent = team==='team1'? TEAM1 : TEAM2;
+    $buzz.classList.add('show');
+    startCountdown();
   }
-  function hideBuzz(){ const b=document.getElementById('buzz'); b.classList.remove('show'); clearInterval(cd); }
-
-  function countdown(){
-    clearInterval(cd); let n=3; const el=document.getElementById('cd'); el.textContent=n;
-    cd=setInterval(()=>{ n--; el.textContent=n; if(n<=0){ clearInterval(cd); hideBuzz(); } },1000);
+  function hideBuzz(){ $buzz.classList.remove('show'); clearInterval(cdTimer); }
+  function startCountdown(){
+    clearInterval(cdTimer);
+    let n=3; $cd.textContent = n;
+    cdTimer = setInterval(()=>{
+      n--; $cd.textContent=n;
+      if(n<=0){ clearInterval(cdTimer); playEnd(); setTimeout(hideBuzz, 200); }
+    },1000);
   }
 
-  document.addEventListener('DOMContentLoaded', connect);
+  // ====== تحديثات الواجهة ======
+  function setPic(url){ $img.src = url || ''; $img.alt = 'الصورة الحالية'; }
+  function setScores(a,b){ $t1.textContent = a||0; $t2.textContent = b||0; }
+
+  // ====== جلب الحالة الأولية للصورة ======
+  async function loadCurrent(){
+    try{
+      const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if(r.status===410){ alert('انتهت صلاحية الجلسة'); return; }
+      if(!r.ok) return;
+      const data = await r.json();
+      const cur = (data && data.current) || {};
+      setPic(cur.image_url || '');
+      // مبدئيًا النقاط 0 — ستتحدّث عبر WS عند أي تغيير
+    }catch(e){}
+  }
+
+  // ====== WebSocket (استقبال أحداث: التالي/السابق/النقاط/البازر) ======
+  let ws=null, hb=null, delay=1000, maxDelay=5000;
+  function connect(){
+    ws = new WebSocket(WS_URL);
+
+    ws.onopen = ()=>{
+      delay=1000;
+      hb && clearInterval(hb);
+      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+    };
+
+    ws.onmessage = (ev)=>{
+      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
+      switch(d.type){
+        case 'puzzle_updated':   // يأتي من صور: next/prev/set_index
+          setPic(d.image_url);
+          break;
+        case 'scores_updated':   // تحديث النقاط
+          setScores(d.team1_score, d.team2_score);
+          break;
+        case 'contestant_buzz_accepted': // البازر
+          showBuzz(d.contestant_name, d.team);
+          break;
+        case 'buzz_unlocked':
+        case 'buzz_reset_by_host':
+          hideBuzz();
+          break;
+        case 'pong': break;
+        default: break;
+      }
+    };
+
+    ws.onclose = ()=>{
+      hb && clearInterval(hb);
+      setTimeout(connect, delay);
+      delay = Math.min(delay*2, maxDelay);
+    };
+    ws.onerror = ()=>{ try{ ws.close(); }catch{} };
+  }
+
+  // ====== تهيئة ======
+  document.addEventListener('DOMContentLoaded', ()=>{
+    // تفعيل الصوت على أول تفاعل (لهواتف iOS)
+    document.addEventListener('touchstart', ensureAudio, {once:true, passive:true});
+    document.addEventListener('click', ensureAudio, {once:true});
+
+    loadCurrent();
+    connect();
+  });
+
+  window.addEventListener('beforeunload', ()=>{
+    try{ hb && clearInterval(hb); cdTimer && clearInterval(cdTimer); ws && ws.close(1000,'page unload'); }catch{}
+  });
 </script>
 </body>
 </html>

@@ -1,3 +1,6 @@
+
+
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -31,6 +34,19 @@
     .badge-free{ background:#f0fdf4; border-color:#86efac; color:#166534 }
     .badge-72{ background:#fffbeb; border-color:#fcd34d; color:#92400e }
 
+    /* الشعار أعلى اليمين */
+    .logo-wrap{
+      position:relative;
+      min-height:1px;
+    }
+    .logo{
+      position:absolute; top:5px; right:20px; z-index:10;
+      background:#fff; border-radius:12px; padding:6px 10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+    .logo img{ height:45px; width:auto; display:block; }
+
+    /* العارض + الأسهم */
     .viewer{
       display:grid; grid-template-columns:56px 1fr 56px; gap:10px; align-items:center;
       margin:8px 0 14px;
@@ -52,39 +68,46 @@
       max-width:100%; max-height:70vh; border-radius:14px; display:block;
       box-shadow:0 12px 28px rgba(0,0,0,.12);
     }
+    .counter{ text-align:center; color:#475569; font-weight:800; margin-top:8px }
 
-    .counter{
-      text-align:center; color:#475569; font-weight:800; margin-top:8px
-    }
-
-    .fields{
-      display:grid; grid-template-columns:1fr; gap:10px; margin-top:8px
-    }
-    .field-card{
-      background:#f8fafc; border:1px solid #e5e7eb; border-radius:14px; padding:12px
-    }
+    /* بطاقات التلميح/الإجابة */
+    .fields{ display:grid; grid-template-columns:1fr; gap:10px; margin-top:8px }
+    .field-card{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:14px; padding:12px }
     .field-card h6{ margin:0 0 6px; font-weight:900 }
     .btn-copy{
       border:none; border-radius:10px; background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#fff;
       padding:8px 12px; font-weight:800
     }
     .hint-area, .answer-area{ width:100%; border:1px solid #e5e7eb; border-radius:10px; padding:10px; background:#fff }
+
     .footer-actions{ display:flex; gap:8px; justify-content:center; margin-top:10px }
     .link-btn{ border:1px dashed #cbd5e1; background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
     .time-alert{ text-align:center; font-weight:800 }
+
+    /* النقاط */
+    .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
+    .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
+    .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
+
+    /* إشعار البازر */
+    #buzzNotification {
+      position: fixed; top: 20px; right: 20px;
+      background: linear-gradient(135deg, #ef4444, #dc2626); color: white;
+      padding: 18px 22px; border-radius: 14px; font-weight: 900; display: none;
+      box-shadow: 0 15px 35px rgba(239, 68, 68, 0.35); z-index: 9999; font-size: 16px;
+      border: 3px solid rgba(255,255,255,.25);
+    }
 
     @media (max-width:768px){
       .viewer{ grid-template-columns:48px 1fr 48px }
       .nav-btn{ width:48px; height:48px }
       .image-wrap{ min-height:220px }
+      .logo{ display:none }
     }
   </style>
 </head>
 <body>
-  {% include 'header.html' %}
-
   <div class="shell">
-
     <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
 
     <!-- شارات الحزمة -->
@@ -105,22 +128,37 @@
       </div>
     {% endif %}
 
-    <!-- عارض الصورة + الأسهم -->
+    <!-- روابط مفيدة للمقدّم -->
+    <div class="text-center mb-2">
+      <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + '{% url 'games:images_contestants' session.contestants_link %}')">👥 المتسابقون</button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.origin + '{% url 'games:images_display' session.display_link %}')">🖥️ شاشة العرض</button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="copyLink(window.location.href)">🧑‍🏫 المقدم</button>
+      <small id="copySuccess" style="display:none;opacity:0;transition:opacity .25s" class="text-success ms-2">✅ تم النسخ</small>
+    </div>
+
+    <!-- الشعار أعلى اليمين -->
+    <div class="logo-wrap">
+      <div class="logo">
+        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+      </div>
+    </div>
+
+    <!-- عارض الصورة + أسهم -->
     <div class="viewer">
       <button id="prevBtn" class="nav-btn" title="السابق" aria-label="السابق">&larr;</button>
 
       <div class="image-wrap">
-        <img id="riddleImg" src="" alt="صورة اللغز" />
+        <img id="riddleImg" src="" alt="صورة اللغز">
       </div>
 
       <button id="nextBtn" class="nav-btn" title="التالي" aria-label="التالي">&rarr;</button>
     </div>
 
     <div class="counter">
-      صورة <span id="currentIndex">{{ current_index|default:1 }}</span> من <span id="totalCount">{{ riddles_count|default:1 }}</span>
+      صورة <span id="currentIndex">1</span> من <span id="totalCount">1</span>
     </div>
 
-    <!-- التلميح + الإجابة (من الأدمن – للقراءة فقط) -->
+    <!-- التلميح + الإجابة (قراءة فقط) -->
     <div class="fields">
       <div class="field-card">
         <h6>💡 التلميح</h6>
@@ -139,159 +177,251 @@
       </div>
     </div>
 
-    <!-- روابط (اختياري مفيد للمقدم) -->
-    <div class="footer-actions mt-3">
-      <a class="link-btn" href="{% url 'games:images_contestants' session.contestants_link %}" target="_blank" rel="noopener">👥 صفحة المتسابقين</a>
-      <a class="link-btn" href="{% url 'games:images_display' session.display_link %}" target="_blank" rel="noopener">🖥️ شاشة العرض</a>
+    <!-- النقاط للجوال -->
+    <div class="row d-md-none mt-3">
+      <div class="col-6">
+        <div class="score-display team1-score">
+          🟢 {{ session.team1_name }}: <span id="team1Score">0</span>
+          <div class="mt-1">
+            <button class="btn btn-sm btn-light" onclick="updateScore('team1', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="score-display team2-score">
+          🟠 {{ session.team2_name }}: <span id="team2Score">0</span>
+          <div class="mt-1">
+            <button class="btn btn-sm btn-light" onclick="updateScore('team2', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- النقاط لدِسكتوب -->
+    <div class="row d-none d-md-flex mt-2">
+      <div class="col-md-6">
+        <div class="score-display team1-score">
+          {{ session.team1_name }}: <span id="team1ScoreDesktop">0</span>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team1', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team1', -1)">-</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="score-display team2-score">
+          {{ session.team2_name }}: <span id="team2ScoreDesktop">0</span>
+          <div class="mt-2">
+            <button class="btn btn-sm btn-light me-2" onclick="updateScore('team2', 1)">+</button>
+            <button class="btn btn-sm btn-light" onclick="updateScore('team2', -1)">-</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- إشعار البازر -->
+    <div id="buzzNotification">🚨 متسابق ضغط الزر!</div>
   </div>
 
-  <script>
-    // ========= بيانات من السيرفر =========
-    const SESSION_ID = "{{ session.id }}";
-    const IS_FREE = {{ session.package.is_free|yesno:"true,false" }};
-    const HOME_URL = "{% url 'games:images_home' %}";
+<script>
+  // ====== ثابتات من السيرفر ======
+  const SESSION_ID = "{{ session.id }}";
+  const IS_FREE = {{ session.package.is_free|yesno:"true,false" }};
+  const HOME_URL = "{% url 'games:images_home' %}";
 
-    const $img   = document.getElementById('riddleImg');
-    const $cur   = document.getElementById('currentIndex');
-    const $count = document.getElementById('totalCount');
-    const $prev  = document.getElementById('prevBtn');
-    const $next  = document.getElementById('nextBtn');
-    const $hint  = document.getElementById('hintField');
-    const $ans   = document.getElementById('answerField');
+  // عناصر DOM
+  const $img   = document.getElementById('riddleImg');
+  const $cur   = document.getElementById('currentIndex');
+  const $count = document.getElementById('totalCount');
+  const $prev  = document.getElementById('prevBtn');
+  const $next  = document.getElementById('nextBtn');
+  const $hint  = document.getElementById('hintField');
+  const $ans   = document.getElementById('answerField');
 
-    // ========= مؤقت المجاني (يعتمد API مضمون) =========
-    async function initFreeTimer(){
-      if(!IS_FREE) return;
-      try{
-        const r = await fetch(`/games/api/session-expiry-info/?session_id=${encodeURIComponent(SESSION_ID)}`);
-        if(!r.ok) return;
-        const data = await r.json();
-        const secs = (data && data.expiry_info && typeof data.expiry_info.time_remaining_seconds === 'number')
-          ? data.expiry_info.time_remaining_seconds : 0;
+  // ====== نسخ روابط/نصوص ======
+  async function copyLink(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      const el = document.getElementById('copySuccess');
+      el.style.display='inline';
+      requestAnimationFrame(()=>el.style.opacity='1');
+      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none',250)}, 1200);
+    }catch{ alert('تعذّر النسخ، انسخ يدويًا:\n'+text); }
+  }
+  async function copyText(id){
+    try{ await navigator.clipboard.writeText(document.getElementById(id).value||''); }
+    catch{ alert('تعذّر النسخ — انسخ يدويًا.'); }
+  }
+  window.copyText = copyText;
 
-        const elBox = document.getElementById('sessionTimer');
-        const el = document.getElementById('timeRemaining');
-        if(!el || !elBox) return;
+  // ====== تحميل اللغز الحالي (HTTP) ======
+  async function loadCurrent(){
+    try{
+      const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
+      if (!r.ok) return;
 
-        elBox.style.display = 'block';
-        let left = Math.max(0, parseInt(secs,10)||0);
-        const render = () => {
-          const m = Math.floor(left/60), s = left%60;
-          el.textContent = `${m}:${String(s).padStart(2,'0')}`;
-        };
+      const data = await r.json();
+      const idx = data.current_index || 1;
+      const cnt = data.count || 1;
+      const cur = data.current || {};
+
+      $img.src = cur.image_url || '';
+      $img.alt = `صورة اللغز #${idx}`;
+      $cur.textContent = idx;
+      $count.textContent = cnt;
+
+      $hint.value = (cur.hint || '').trim();
+      $ans.value  = (cur.answer || '').trim();
+
+      $prev.disabled = (idx <= 1);
+      $next.disabled = (idx >= cnt);
+    }catch(e){ console.error(e); }
+  }
+
+  // ====== مؤقّت الجلسة المجانية ======
+  async function initFreeTimer(){
+    if(!IS_FREE) return;
+    try{
+      const r = await fetch(`/games/api/session-expiry-info/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if(!r.ok) return;
+      const data = await r.json();
+      const secs = (data && data.expiry_info && typeof data.expiry_info.time_remaining_seconds === 'number')
+        ? data.expiry_info.time_remaining_seconds : 0;
+
+      const elBox = document.getElementById('sessionTimer');
+      const el = document.getElementById('timeRemaining');
+      if(!el || !elBox) return;
+
+      elBox.style.display = 'block';
+      let left = Math.max(0, parseInt(secs,10)||0);
+      const render = () => {
+        const m = Math.floor(left/60), s = left%60;
+        el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+      };
+      render();
+      const t = setInterval(()=>{
+        left = Math.max(0, left-1);
         render();
-        const t = setInterval(()=>{
-          left = Math.max(0, left-1);
-          render();
-          if(left===0){ clearInterval(t); alert('انتهت صلاحية الجلسة.'); location.href = HOME_URL; }
-        }, 1000);
-      }catch(e){ /* تجاهل */ }
+        if(left===0){ clearInterval(t); alert('انتهت صلاحية الجلسة.'); location.href = HOME_URL; }
+      }, 1000);
+    }catch(e){}
+  }
+
+  // ====== أزرار السابق/التالي ======
+  function goPrev(){
+    $prev.disabled = true;
+    // WS أولاً، HTTP احتياطي
+    if (ws && ws.readyState===1){
+      ws.send(JSON.stringify({type:'puzzle_nav', dir:'prev'}));
+    }else{
+      fetch('/games/api/images-prev/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:SESSION_ID})})
+        .then(()=>loadCurrent());
     }
-
-    // ========= تحميل الحالة الحالية =========
-    async function loadCurrent(){
-      try{
-        const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
-        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
-        if (!r.ok) return;
-
-        const data = await r.json();
-        const idx = data.current_index || 1;
-        const cnt = data.count || 1;
-        const cur = data.current || {};
-
-        $img.src = cur.image_url || '';
-        $img.alt = `صورة اللغز #${idx}`;
-        $cur.textContent = idx;
-        $count.textContent = cnt;
-
-        // التلميح والإجابة من الأدمن (قراءة فقط)
-        $hint.value = (cur.hint || '').trim();
-        $ans.value  = (cur.answer || '').trim();
-
-        $prev.disabled = (idx <= 1);
-        $next.disabled = (idx >= cnt);
-      }catch(e){ console.error(e); }
+    setTimeout(()=>{$prev.disabled=false}, 400);
+  }
+  function goNext(){
+    $next.disabled = true;
+    if (ws && ws.readyState===1){
+      ws.send(JSON.stringify({type:'puzzle_nav', dir:'next'}));
+    }else{
+      fetch('/games/api/images-next/', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:SESSION_ID})})
+        .then(()=>loadCurrent());
     }
+    setTimeout(()=>{$next.disabled=false}, 400);
+  }
+  $prev.addEventListener('click', goPrev);
+  $next.addEventListener('click', goNext);
 
-    // ========= أزرار السابق/التالي =========
-    async function goPrev(){
-      try{
-        $prev.disabled = true;
-        const r = await fetch('/games/api/images-prev/', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({session_id: SESSION_ID})
-        });
-        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
-        await loadCurrent();
-      }finally{}
+  // اختصارات لوحة المفاتيح
+  document.addEventListener('keydown', (e)=>{
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); goNext(); }
+  });
+
+  // ====== النقاط ======
+  function reflectScores(t1,t2){
+    const m1 = document.getElementById('team1Score');
+    const m2 = document.getElementById('team2Score');
+    const d1 = document.getElementById('team1ScoreDesktop');
+    const d2 = document.getElementById('team2ScoreDesktop');
+    if (m1) m1.textContent = t1; if (m2) m2.textContent = t2;
+    if (d1) d1.textContent = t1; if (d2) d2.textContent = t2;
+  }
+  function updateScore(team, delta){
+    const cur1 = parseInt(document.getElementById('team1ScoreDesktop')?.textContent || '0',10);
+    const cur2 = parseInt(document.getElementById('team2ScoreDesktop')?.textContent || '0',10);
+    let t1 = cur1, t2 = cur2;
+    if (team==='team1') t1 = Math.max(0, cur1 + delta); else t2 = Math.max(0, cur2 + delta);
+    reflectScores(t1,t2);
+
+    // WS أساسي، HTTP احتياطي (API عام للتحديث)
+    if (ws && ws.readyState===1){
+      ws.send(JSON.stringify({type:'update_scores', team1_score:t1, team2_score:t2}));
+    }else{
+      fetch('/games/api/update-scores/', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({session_id:SESSION_ID, team1_score:t1, team2_score:t2})
+      });
     }
-    async function goNext(){
-      try{
-        $next.disabled = true;
-        const r = await fetch('/games/api/images-next/', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({session_id: SESSION_ID})
-        });
-        if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
-        await loadCurrent();
-      }finally{}
-    }
-    $prev.addEventListener('click', goPrev);
-    $next.addEventListener('click', goNext);
+  }
+  window.updateScore = updateScore;
 
-    // اختصارات لوحة المفاتيح
-    document.addEventListener('keydown', (e)=>{
-      if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
-      if (e.key === 'ArrowRight'){ e.preventDefault(); goNext(); }
-    });
+  // ====== إشعار البازر ======
+  function showBuzzNotification(name, team){
+    const n = document.getElementById('buzzNotification');
+    if (!n) return;
+    n.textContent = `🚨 ${name || 'متسابق'} من ${team==='team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}'} ضغط الزر!`;
+    n.style.display = 'block';
+    setTimeout(()=>{ n.style.display='none'; }, 3500);
+  }
 
-    // ========= WebSocket للمزامنة الفورية =========
-    let ws, hb;
-    function setupWS(){
-      const proto = (location.protocol==='https:') ? 'wss' : 'ws';
-      const url = `${proto}://${location.host}/ws/images/${encodeURIComponent(SESSION_ID)}/?role=host`;
-      ws = new WebSocket(url);
+  // ====== WebSocket ======
+  let ws=null, hb=null;
+  function connectWS(){
+    const proto = (location.protocol==='https:') ? 'wss' : 'ws';
+    const url = `${proto}://${location.host}/ws/pictures/${encodeURIComponent(SESSION_ID)}/?role=host`;
+    ws = new WebSocket(url);
 
-      ws.onopen = ()=>{
-        try{ if(hb) clearInterval(hb); }catch{}
-        hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
-      };
+    ws.onopen = ()=>{
+      if(hb) clearInterval(hb);
+      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+    };
 
-      ws.onmessage = (ev)=>{
-        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
-        // نقبل عدة صيغ آمنة
-        if (
-          d.type === 'image_index_updated' ||
-          d.type === 'broadcast_image_index' ||
-          typeof d.current_index === 'number'
-        ){
-          loadCurrent();
-        }
-      };
+    ws.onmessage = (ev)=>{
+      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
+      if (d.type === 'puzzle_updated'){
+        // استلمنا الحالة مباشرة من الـWS
+        $img.src = d.image_url || '';
+        $img.alt = `صورة اللغز #${d.index||1}`;
+        $cur.textContent = d.index || 1;
+        $count.textContent = d.total || 1;
+        $hint.value = (d.hint || '').trim();
+        $ans.value  = (d.answer || '').trim();
+        $prev.disabled = (d.index<=1);
+        $next.disabled = (d.index>=(d.total||1));
+      }else if (d.type === 'scores_updated'){
+        reflectScores(d.team1_score||0, d.team2_score||0);
+      }else if (d.type === 'contestant_buzz_accepted'){
+        showBuzzNotification(d.contestant_name, d.team);
+      }else if (d.type === 'broadcast_image_index' || d.type === 'image_index_updated'){
+        // في حال البث من HTTP APIs
+        loadCurrent();
+      }
+    };
 
-      ws.onclose = ()=>{ try{ if(hb) clearInterval(hb); }catch{}; setTimeout(setupWS, 1000); };
-      ws.onerror = ()=>{ try{ ws.close(); }catch{} };
-    }
+    ws.onclose = ()=>{ if(hb) clearInterval(hb); setTimeout(connectWS, 1000); };
+    ws.onerror = ()=>{ try{ ws.close(); }catch{} };
+  }
 
-    // ========= نسخ التلميح/الإجابة =========
-    async function copyText(id){
-      try{
-        const el = document.getElementById(id);
-        await navigator.clipboard.writeText(el.value||'');
-        el.classList.add('is-valid');
-        setTimeout(()=>el.classList.remove('is-valid'), 500);
-      }catch{ alert('تعذر النسخ — انسخ يدويًا.'); }
-    }
-    window.copyText = copyText;
-
-    // بداية
-    document.addEventListener('DOMContentLoaded', ()=>{
-      initFreeTimer();
-      loadCurrent();
-      setupWS();
-    });
-  </script>
+  // ====== بداية ======
+  document.addEventListener('DOMContentLoaded', ()=>{
+    initFreeTimer();
+    loadCurrent();
+    connectWS();
+  });
+</script>
 </body>
 </html>
