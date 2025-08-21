@@ -407,7 +407,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
 
 
-# games/consumers.py (استبدل PicturesGameConsumer بهذا)
+# games/consumers.py — استبدال كامل لـ PicturesGameConsumer
 
 import json
 import asyncio
@@ -417,8 +417,8 @@ from datetime import timedelta
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.cache import cache
-from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
 
 from games.models import GameSession, Contestant, PictureRiddle, PictureGameProgress
 
@@ -427,61 +427,58 @@ logger = logging.getLogger('games')
 
 class PicturesGameConsumer(AsyncWebsocketConsumer):
     """
-    WS لتحدّي الصور:
-    - المتسابق: buzz فوري مع قفل 3 ثوانٍ.
-    - المقدم/العرض/أي viewer: يستقبل الحالة فور الاتصال + أي تنقّل/نقاط.
-    - تكامل كامل مع بثّ الـHTTP APIs (broadcast_image_index).
+    WebSocket لتحدّي الصور:
+    - المتسابق: buzz فوري بقفل 3 ثواني.
+    - المقدم: تنقّل/تعيين/تحديث نقاط/Reset للبازر.
+    - العرض: يستقبل الصورة الحالية + إشعارات البازر + النقاط.
+    - نقبل الاتصال أولاً ثم نجلب البيانات لتفادي فشل الـhandshake.
     """
 
-    # ============ lifecycle ============
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"images_session_{self.session_id}"
 
-        qs = self._parse_qs()
-        self.role = qs.get('role', ['viewer'])[0]
+        # استخرج الدور
+        self.role = self._parse_qs().get('role', ['viewer'])[0]
 
-        # تحقّق وجود الجلسة وصلاحيتها
+        # جرّب الحصول على الجلسة
         try:
-            self.session = await self.get_session()
+            self.session = await self._get_session()
         except ObjectDoesNotExist:
-            return await self.close(code=4404)
+            await self.close(code=4404)
+            return
 
+        # لو منتهية لا نقبل
         if await self._is_session_expired(self.session) or not self.session.is_active:
-            return await self.close(code=4401)
+            await self.close(code=4401)
+            return
 
-        # حمّل قائمة الألغاز مسبقًا
-        self.riddles = await sync_to_async(
-            lambda: list(
+        # *** اقبل الاتصال أولًا ثم أكمل التهيئة ***
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        logger.info(f"WS connected (images): session={self.session_id}, role={self.role}")
+
+        # حمّل قائمة الألغاز بشكل آمن
+        self.riddles = []
+        try:
+            self.riddles = await sync_to_async(lambda: list(
                 PictureRiddle.objects.filter(package=self.session.package)
                 .order_by('order')
                 .values('order', 'image_url', 'hint', 'answer')
-            )
-        )()
-        if not self.riddles:
-            return await self.close(code=4404)
+            ))()
+        except Exception as e:
+            logger.error(f'Pics: failed to load riddles for {self.session_id}: {e}')
 
-        # تأكد من progress داخل نطاق صحيح
-        async def _ensure_progress():
-            obj, _ = PictureGameProgress.objects.get_or_create(
-                session=self.session, defaults={'current_index': 1}
-            )
-            total = len(self.riddles)
-            if obj.current_index < 1 or obj.current_index > total:
-                obj.current_index = 1
-                obj.save(update_fields=['current_index'])
-            return obj.current_index, total
+        # تأكد من progress
+        self.current_index, self.total = 1, max(1, len(self.riddles) or 1)
+        try:
+            self.current_index, self.total = await self._ensure_progress_bounds()
+        except Exception as e:
+            logger.error(f'Pics: ensure progress failed for {self.session_id}: {e}')
 
-        self.current_index, self.total = await sync_to_async(_ensure_progress)()
-
-        await self.channel_layer.group_add(self.group_name, self.channel_name)
-        await self.accept()
-
-        # أرسل الحالة الأوّلية لكل الأدوار ما عدا المتسابق
-        if self.role != 'contestant':
+        # بثّ الحالة الأولية للمقدم/العرض
+        if self.role in ('host', 'display'):
             await self._send_puzzle_state()
-
-        logger.info(f"Pics WS connected s={self.session_id} role={self.role}")
 
     async def disconnect(self, code):
         try:
@@ -489,14 +486,14 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         except Exception:
             pass
 
-    # ============ receive ============
     async def receive(self, text_data: str):
-        # انتهاء أنيق
+        # إنهاء أنيق لو انتهت الجلسة
         if await self._is_session_expired(self.session) or not self.session.is_active:
             try:
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'انتهت صلاحية الجلسة'}))
             finally:
-                return await self.close(code=4401)
+                await self.close(code=4401)
+            return
 
         try:
             data = json.loads(text_data or '{}')
@@ -507,35 +504,41 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
 
         # keep-alive
         if t == 'ping':
-            return await self.send(text_data=json.dumps({'type': 'pong'}))
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+            return
 
-        # المتسابق: buzz
+        # المتسابق
         if t == 'contestant_buzz' and self.role == 'contestant':
-            return await self._handle_buzz(data)
+            await self._handle_buzz(data)
+            return
 
-        # المقدم فقط: تنقّل/تعيين/نقاط/ريسِت البازر
+        # المقدم
         if self.role == 'host':
             if t == 'puzzle_nav':
-                return await self._handle_nav(dir_=data.get('dir'))
+                await self._handle_nav(data.get('dir'))
+                return
             if t == 'puzzle_set_index':
-                return await self._handle_set_index(data.get('index'))
+                await self._handle_set_index(data.get('index'))
+                return
             if t == 'update_scores':
                 try:
                     t1 = int(data.get('team1_score', 0))
                     t2 = int(data.get('team2_score', 0))
                 except (TypeError, ValueError):
                     return
-                return await self._handle_update_scores(t1, t2)
+                await self._handle_update_scores(t1, t2)
+                return
             if t == 'buzz_reset':
-                return await self._handle_buzz_reset()
+                await self._handle_buzz_reset()
+                return
 
-    # ============ handlers: puzzle ============
+    # --------------------- handlers: puzzle ---------------------
     async def _handle_nav(self, dir_):
         if dir_ not in ('next', 'prev'):
             return
-        total = len(self.riddles)
+        total = max(1, len(self.riddles) or 1)
 
-        def _update():
+        def _upd():
             prog = PictureGameProgress.objects.select_for_update().get(session=self.session)
             if dir_ == 'next':
                 prog.current_index = min(prog.current_index + 1, total)
@@ -544,7 +547,7 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             prog.save(update_fields=['current_index'])
             return prog.current_index
 
-        self.current_index = await sync_to_async(_update)()
+        self.current_index = await sync_to_async(_upd)()
         await self._broadcast_puzzle_state()
 
     async def _handle_set_index(self, index):
@@ -552,18 +555,18 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             idx = int(index)
         except (TypeError, ValueError):
             return
-        total = len(self.riddles)
+        total = max(1, len(self.riddles) or 1)
 
-        def _update():
+        def _upd():
             prog = PictureGameProgress.objects.select_for_update().get(session=self.session)
             prog.current_index = max(1, min(idx, total))
             prog.save(update_fields=['current_index'])
             return prog.current_index
 
-        self.current_index = await sync_to_async(_update)()
+        self.current_index = await sync_to_async(_upd)()
         await self._broadcast_puzzle_state()
 
-    # ============ handlers: scores ============
+    # --------------------- handlers: scores ---------------------
     async def _handle_update_scores(self, t1, t2):
         try:
             def _upd():
@@ -572,30 +575,32 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
                     s = GameSession.objects.select_for_update().get(id=self.session_id)
                     s.team1_score = max(0, int(t1))
                     s.team2_score = max(0, int(t2))
-                    winning = 10
-                    if s.team1_score >= winning and s.team1_score > s.team2_score:
+                    winning_score = 10
+                    if s.team1_score >= winning_score and s.team1_score > s.team2_score:
                         s.winner_team = 'team1'; s.is_completed = True
-                    elif s.team2_score >= winning and s.team2_score > s.team1_score:
+                    elif s.team2_score >= winning_score and s.team2_score > s.team1_score:
                         s.winner_team = 'team2'; s.is_completed = True
                     s.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
                     return s.team1_score, s.team2_score
-            a, b = await sync_to_async(_upd)()
+            t1f, t2f = await sync_to_async(_upd)()
         except Exception as e:
             logger.error(f'Pics scores DB error: {e}')
             return
 
         await self.channel_layer.group_send(self.group_name, {
-            'type': 'broadcast_score_update', 'team1_score': a, 'team2_score': b
+            'type': 'broadcast_score_update',
+            'team1_score': t1f, 'team2_score': t2f
         })
 
-    # ============ handlers: buzzer ============
+    # --------------------- handlers: buzzer ---------------------
     async def _handle_buzz(self, data):
         name = (data.get('contestant_name') or '').strip()
         team = data.get('team')
         timestamp = data.get('timestamp')
 
         if not name or team not in ('team1', 'team2'):
-            return await self._reply_contestant(error='اسم المتسابق والفريق مطلوبان')
+            await self._reply_contestant(error='اسم المتسابق والفريق مطلوبان')
+            return
 
         key = f'buzz_lock_{self.session_id}'
         payload = {'name': name, 'team': team, 'timestamp': timestamp, 'session_id': self.session_id, 'method': 'WS'}
@@ -606,7 +611,8 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
 
         if not added:
             cur = await sync_to_async(cache.get)(key) or {}
-            return await self._reply_contestant(rejected=f'الزر محجوز من {cur.get("name","مشارك")}')
+            await self._reply_contestant(rejected=f'الزر محجوز من {cur.get("name","مشارك")}')
+            return
 
         await self._ensure_contestant(name, team)
         await self._reply_contestant(confirmed=True, name=name, team=team)
@@ -614,8 +620,9 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         team_display = self.session.team1_name if team == 'team1' else self.session.team2_name
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_buzz_event',
-            'contestant_name': name, 'team': team, 'team_display': team_display,
-            'timestamp': timestamp, 'action': 'buzz_accepted'
+            'contestant_name': name, 'team': team,
+            'team_display': team_display, 'timestamp': timestamp,
+            'action': 'buzz_accepted'
         })
 
         asyncio.create_task(self._auto_unlock_3s())
@@ -627,14 +634,14 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
                 'type': 'broadcast_buzz_event', 'action': 'buzz_reset'
             })
         except Exception as e:
-            logger.error(f'buzz reset error: {e}')
+            logger.error(f'Pics buzz reset error: {e}')
 
-    # ============ group handlers ============
+    # --------------------- group handlers ---------------------
     async def broadcast_buzz_event(self, event):
         action = event.get('action')
+        if self.role == 'contestant':
+            return
         if action == 'buzz_accepted':
-            if self.role == 'contestant':
-                return
             await self.send(text_data=json.dumps({
                 'type': 'contestant_buzz_accepted',
                 'contestant_name': event.get('contestant_name'),
@@ -644,12 +651,8 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
                 'start_countdown': True
             }))
         elif action == 'buzz_unlock':
-            if self.role == 'contestant':
-                return
             await self.send(text_data=json.dumps({'type': 'buzz_unlocked'}))
         elif action == 'buzz_reset':
-            if self.role == 'contestant':
-                return
             await self.send(text_data=json.dumps({'type': 'buzz_reset_by_host'}))
 
     async def broadcast_score_update(self, event):
@@ -660,6 +663,9 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             'team1_score': event.get('team1_score'),
             'team2_score': event.get('team2_score'),
         }))
+
+    async def broadcast_scores(self, event):
+        await self.broadcast_score_update(event)
 
     async def broadcast_puzzle_state(self, event):
         if self.role == 'contestant':
@@ -674,55 +680,48 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def broadcast_image_index(self, event):
-        """
-        استلام بثّ الـAPIs:
-          {type:'broadcast_image_index', current_index: idx, count: count}
-        نحوله لرسالة puzzle_updated + نرسل alias احتياطي image_index_updated.
-        """
         if self.role == 'contestant':
             return
-
         try:
             idx = int(event.get('current_index') or 1)
         except (TypeError, ValueError):
             idx = 1
 
-        total = len(self.riddles) or int(event.get('count') or 1)
-        total = max(total, 1)
+        total = max(1, len(self.riddles) or int(event.get('count') or 1))
         idx = max(1, min(idx, total))
         r = self.riddles[idx - 1] if 1 <= idx <= len(self.riddles) else {'image_url': '', 'hint': '', 'answer': ''}
 
-        payload = {
+        await self.send(text_data=json.dumps({
             'type': 'puzzle_updated',
             'index': idx,
             'total': len(self.riddles) or total,
             'image_url': r.get('image_url') or '',
             'hint': r.get('hint') or '',
             'answer': r.get('answer') or '',
-        }
-        await self.send(text_data=json.dumps(payload))
-        # alias احتياطي لبعض الواجهات
-        await self.send(text_data=json.dumps({'type': 'image_index_updated', 'index': idx, 'total': total}))
+        }))
 
-    # ============ helpers ============
+    # --------------------- helpers ---------------------
     async def _send_puzzle_state(self):
         idx = await self._get_current_index()
-        p = self._state_payload(idx)
-        await self.send(text_data=json.dumps({'type': 'puzzle_updated', **p}))
+        payload = self._state_payload(idx)
+        await self.send(text_data=json.dumps({'type': 'puzzle_updated', **payload}))
 
     async def _broadcast_puzzle_state(self):
         idx = await self._get_current_index()
-        p = self._state_payload(idx)
-        await self.channel_layer.group_send(self.group_name, {'type': 'broadcast_puzzle_state', **p})
+        payload = self._state_payload(idx)
+        await self.channel_layer.group_send(self.group_name, {'type': 'broadcast_puzzle_state', **payload})
 
     def _state_payload(self, idx: int):
-        r = self.riddles[idx - 1]
+        if 1 <= idx <= len(self.riddles):
+            r = self.riddles[idx - 1]
+        else:
+            r = {'image_url': '', 'hint': '', 'answer': ''}
         return {
-            'index': idx,
-            'total': len(self.riddles),
+            'index': max(1, idx),
+            'total': max(1, len(self.riddles) or 1),
             'image_url': r.get('image_url') or '',
-            'hint': r.get('hint') or '',
-            'answer': r.get('answer') or '',
+            'hint': (r.get('hint') or ''),
+            'answer': (r.get('answer') or ''),
         }
 
     async def _get_current_index(self) -> int:
@@ -731,7 +730,19 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
                    .values_list('current_index', flat=True).first() or 1
         return await sync_to_async(_read)()
 
-    async def get_session(self):
+    async def _ensure_progress_bounds(self):
+        def _ensure():
+            obj, _ = PictureGameProgress.objects.get_or_create(
+                session=self.session, defaults={'current_index': 1}
+            )
+            total = max(1, len(self.riddles) or 1)
+            if obj.current_index < 1 or obj.current_index > total:
+                obj.current_index = 1
+                obj.save(update_fields=['current_index'])
+            return obj.current_index, total
+        return await sync_to_async(_ensure)()
+
+    async def _get_session(self):
         return await sync_to_async(
             lambda: GameSession.objects.select_related('package').get(id=self.session_id)
         )()
@@ -770,11 +781,13 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
 
     async def _reply_contestant(self, confirmed=False, name="", team="", rejected="", error=""):
         if confirmed:
-            return await self.send(text_data=json.dumps({
+            await self.send(text_data=json.dumps({
                 'type': 'buzz_confirmed', 'contestant_name': name, 'team': team,
                 'message': f'تم تسجيل إجابتك يا {name}!'
             }))
+            return
         if rejected:
-            return await self.send(text_data=json.dumps({'type': 'buzz_rejected', 'message': rejected}))
+            await self.send(text_data=json.dumps({'type': 'buzz_rejected', 'message': rejected}))
+            return
         if error:
-            return await self.send(text_data=json.dumps({'type': 'error', 'message': error}))
+            await self.send(text_data=json.dumps({'type': 'error', 'message': error}))
