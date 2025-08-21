@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-
   <title>تحدّي الصور — المقدم</title>
 
   <meta name="description" content="تحدّي الصور — شاشة المقدم" />
@@ -20,8 +19,7 @@
     body{
       /* نفس الخلفية البنفسجية المُمَرْجة */
       background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
-      min-height:100vh; margin:0; padding:10px;
-      color:var(--ink);
+      min-height:100vh; margin:0; padding:10px; color:var(--ink);
     }
     .shell{
       max-width:1000px; margin:0 auto; background:#fff; border-radius:18px;
@@ -36,37 +34,52 @@
 
     /* العارض + الأسهم */
     .viewer{
-      display:grid; grid-template-columns:48px 1fr 48px; gap:10px; align-items:center;
+      display:grid; grid-template-columns:44px 1fr 44px; gap:10px; align-items:center;
       margin:8px 0 12px;
     }
-    .nav-btn{
-      height:48px; width:48px; border:none; border-radius:999px; background:#eef2ff;
-      display:flex; align-items:center; justify-content:center; cursor:pointer;
-      transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
-      box-shadow:0 8px 18px rgba(109,40,217,.18);
-      border:1px solid #e9d5ff;
+    @media (max-width:480px){
+      .viewer{ grid-template-columns:40px 1fr 40px; gap:8px; }
     }
-    .nav-btn:hover{ transform:translateY(-1px); box-shadow:0 12px 22px rgba(109,40,217,.22) }
-    .nav-btn:active{ transform:translateY(0) scale(.98) }
-    .nav-btn svg{ width:22px; height:22px }
+    .nav-btn{
+      height:44px; width:44px; border:none; border-radius:999px; background:#eef2ff;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
+      transition:transform .08s ease, box-shadow .08s ease, background .08s ease;
+      box-shadow:0 6px 14px rgba(109,40,217,.16);
+      border:1px solid #e9d5ff; user-select:none;
+      touch-action:manipulation;
+    }
+    @media (max-width:480px){
+      .nav-btn{ height:40px; width:40px; }
+    }
+    .nav-btn:active{ transform:scale(.98) }
+    .nav-btn svg{ width:20px; height:20px }
 
     .image-wrap{
       position:relative;
       background:linear-gradient(180deg,#fafafa,#fff); border:1px solid rgba(139,92,246,.14);
       border-radius:16px; padding:8px; min-height:260px; display:flex; align-items:center; justify-content:center;
     }
+    @media (max-width:480px){
+      .image-wrap{ padding:4px; min-height:220px; }
+    }
     .image-wrap img{
-      max-width:100%; max-height:70vh; border-radius:12px; display:block;
+      max-width:100%; max-height:72vh; border-radius:12px; display:block;
       box-shadow:0 10px 24px rgba(0,0,0,.12);
+      transition:opacity .12s linear;
     }
 
-    /* الشعار فوق يمين الصور (مرئي على الجوال) */
+    /* الشعار فوق يمين الصور — لا يضغط الصورة على الجوال */
     .logo-on-image{
-      position:absolute; top:8px; right:8px; z-index:5;
-      background:#fff; border:1px solid var(--ring); border-radius:12px; padding:6px 10px;
-      box-shadow:0 10px 24px rgba(0,0,0,.18);
+      position:absolute; top:6px; right:6px; z-index:5;
+      background:#fff; border:1px solid var(--ring); border-radius:12px; padding:6px 8px;
+      box-shadow:0 8px 20px rgba(0,0,0,.16);
+      pointer-events:none; /* حتى لا يحجب اللمس */
     }
-    .logo-on-image img{ height:40px; width:auto; display:block; }
+    .logo-on-image img{ height:38px; width:auto; display:block; }
+    @media (max-width:480px){
+      .logo-on-image{ top:6px; right:6px; padding:4px 6px; }
+      .logo-on-image img{ height:30px; }
+    }
 
     .counter{ text-align:center; color:#475569; font-weight:800; margin-top:6px; font-size:.95rem }
 
@@ -81,7 +94,6 @@
       white-space:pre-wrap; word-break:break-word;
     }
 
-    /* روابط مفيدة */
     .links-row{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:8px 0 2px }
     .link-btn{ border:1px dashed #cbd5e1; background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
 
@@ -106,7 +118,6 @@
   <div class="shell">
     <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
 
-    <!-- شارات الحزمة -->
     <div class="badges">
       <span class="badge-soft">حزمة رقم {{ session.package.package_number }}</span>
       {% if session.package.is_free %}
@@ -116,7 +127,6 @@
       {% endif %}
     </div>
 
-    <!-- مؤقّت المجاني -->
     {% if session.package.is_free %}
       <div class="alert alert-warning time-alert" id="sessionTimer" style="display:none">
         <strong>⏰ الوقت المتبقي:</strong>
@@ -124,7 +134,6 @@
       </div>
     {% endif %}
 
-    <!-- روابط -->
     <div class="links-row">
       <button class="link-btn btn btn-sm" onclick="copyLink(window.location.origin + '{% url 'games:images_contestants' session.contestants_link %}')">👥 المتسابقون</button>
       <button class="link-btn btn btn-sm" onclick="copyLink(window.location.origin + '{% url 'games:images_display' session.display_link %}')">🖥️ شاشة العرض</button>
@@ -132,24 +141,22 @@
       <small id="copySuccess" style="display:none;opacity:0;transition:opacity .25s" class="text-success ms-2">✅ تم النسخ</small>
     </div>
 
-    <!-- عارض الصورة + أسهم -->
     <div class="viewer">
-      <!-- ملاحظة: عكسنا شكل الأيقونة فقط، والزر اليسار ما زال ينفّذ السابق -->
+      <!-- يسار = السابق (شكل السهم يمين) -->
       <button id="prevBtn" class="nav-btn" title="السابق" aria-label="السابق">
-        <!-- سهم يشير لليمين (شكل معكوس) -->
         <svg viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
 
       <div class="image-wrap">
-        <!-- الشعار فوق يمين الصور — ظاهر على الجوال والكمبيوتر -->
+        <!-- الشعار ثابت فوق يمين الصور، لا يأخذ مساحة -->
         <div class="logo-on-image">
           <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
         </div>
         <img id="riddleImg" src="" alt="صورة اللغز" loading="eager">
       </div>
 
+      <!-- يمين = التالي (شكل السهم يسار) -->
       <button id="nextBtn" class="nav-btn" title="التالي" aria-label="التالي">
-        <!-- سهم يشير لليسار (شكل معكوس) -->
         <svg viewBox="0 0 24 24" fill="none"><path d="M14 17l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -158,7 +165,6 @@
       صورة <span id="currentIndex">1</span> من <span id="totalCount">1</span>
     </div>
 
-    <!-- التلميح + الإجابة (عرض فقط) -->
     <div class="fields">
       <div class="field-card">
         <h6>💡 التلميح</h6>
@@ -214,7 +220,6 @@
       </div>
     </div>
 
-    <!-- إشعار البازر -->
     <div id="buzzNotification">🚨 متسابق ضغط الزر!</div>
   </div>
 
@@ -233,6 +238,11 @@
   const $hint  = document.getElementById('hintField');
   const $ans   = document.getElementById('answerField');
 
+  // حالة محلية لتسريع التفاعل
+  let currentIdx = 1, totalCnt = 1;
+  let navInFlight = false;        // يمنع الطمر لصفحتين
+  let inFlightTimer = null;       // فاصل قصير لإعادة تمكين النقر
+
   // ====== نسخ روابط فقط ======
   async function copyLink(text){
     try{
@@ -240,7 +250,7 @@
       const el = document.getElementById('copySuccess');
       el.style.display='inline';
       requestAnimationFrame(()=>el.style.opacity='1');
-      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none',220)}, 900);
+      setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.style.display='none',180)}, 700);
     }catch{ alert('تعذّر النسخ، انسخ يدويًا:\n'+text); }
   }
 
@@ -252,22 +262,24 @@
       if (!r.ok) return;
 
       const data = await r.json();
-      const idx = data.current_index || 1;
-      const cnt = data.count || 1;
-      const cur = data.current || {};
+      currentIdx = data.current_index || 1;
+      totalCnt   = data.count || 1;
+      const cur  = data.current || {};
 
       // عرض فوري
+      $img.style.opacity = .6;
       $img.src = cur.image_url || '';
-      $img.alt = `صورة اللغز #${idx}`;
-      $cur.textContent = idx;
-      $count.textContent = cnt;
-
+      $img.alt = `صورة اللغز #${currentIdx}`;
+      $cur.textContent = currentIdx;
+      $count.textContent = totalCnt;
       $hint.textContent = (cur.hint || '—').trim();
       $ans.textContent  = (cur.answer || '—').trim();
 
-      // لا تعطيل للأزرار — سرعة أعلى
-      $prev.disabled = (idx <= 1);
-      $next.disabled = (idx >= cnt);
+      $prev.disabled = (currentIdx <= 1);
+      $next.disabled = (currentIdx >= totalCnt);
+
+      $img.onload = ()=>{ $img.style.opacity = 1; };
+      setTimeout(()=>{ $img.style.opacity = 1; }, 100); // احتياطي
     }catch(e){ console.error(e); }
   }
 
@@ -300,45 +312,56 @@
     }catch(e){}
   }
 
-  // ====== مُجدول بسيط لتخفيف كثرة التحميل ======
-  let refreshLock = false;
-  function refreshSoon(delay=120){
-    if (refreshLock) return;
-    refreshLock = true;
-    setTimeout(()=>{ loadCurrent().finally(()=>{ refreshLock=false; }); }, delay);
+  // ====== مُجدول خفيف لإعادة التحميل ======
+  function refreshSoon(delay=50){
+    setTimeout(()=>{ loadCurrent(); }, delay);
   }
 
-  // ====== أزرار السابق/التالي — فوري وسلس ======
-  function goPrev(){
-    // لا تعطيل ولا انتظار — WS + احتياطي HTTP + إعادة تحميل فورية
+  // ====== تنقّل لحظي + حماية من النقر المزدوج ======
+  function nav(dir){ // 'prev' or 'next'
+    if (navInFlight) return;         // امنع الطمر
+    if (dir === 'prev' && currentIdx <= 1) return;
+    if (dir === 'next' && currentIdx >= totalCnt) return;
+
+    navInFlight = true;
+    clearTimeout(inFlightTimer);
+    // تحديث متفائل للعداد (إحساس لحظي)
+    currentIdx = (dir === 'prev') ? (currentIdx - 1) : (currentIdx + 1);
+    $cur.textContent = currentIdx;
+    $prev.disabled = (currentIdx <= 1);
+    $next.disabled = (currentIdx >= totalCnt);
+
+    // أرسل عبر WS، واحتياطيًا HTTP
+    let sent = false;
     if (ws && ws.readyState===1){
-      try{ ws.send(JSON.stringify({type:'puzzle_nav', dir:'prev'})); }catch{}
-      refreshSoon(50);
-    }else{
-      fetch('/games/api/images-prev/', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({session_id:SESSION_ID})
-      }).then(()=>loadCurrent());
+      try{ ws.send(JSON.stringify({type:'puzzle_nav', dir})); sent = true; }catch{}
     }
-  }
-  function goNext(){
-    if (ws && ws.readyState===1){
-      try{ ws.send(JSON.stringify({type:'puzzle_nav', dir:'next'})); }catch{}
-      refreshSoon(50);
+    if (!sent){
+      const ep = (dir==='prev') ? '/games/api/images-prev/' : '/games/api/images-next/';
+      fetch(ep, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({session_id:SESSION_ID})})
+        .then(()=>refreshSoon(10));
     }else{
-      fetch('/games/api/images-next/', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({session_id:SESSION_ID})
-      }).then(()=>loadCurrent());
+      // لو WS شغّال، نتوقع بثّ فوري — لكن نعمل إعادة تحميل خفيفة كاحتياطي
+      refreshSoon(60);
     }
+
+    // إعادة تمكين النقر بسرعة (بدون تأخير ملحوظ)
+    inFlightTimer = setTimeout(()=>{ navInFlight = false; }, 140);
   }
-  $prev.addEventListener('click', goPrev);
-  $next.addEventListener('click', goNext);
+
+  // أحداث الأسهم (نقر ولمس)
+  function onPrev(){ nav('prev'); }
+  function onNext(){ nav('next'); }
+
+  ['click','touchstart'].forEach(evt=>{
+    $prev.addEventListener(evt, (e)=>{ e.preventDefault(); onPrev(); }, {passive:false});
+    $next.addEventListener(evt, (e)=>{ e.preventDefault(); onNext(); }, {passive:false});
+  });
 
   // اختصارات لوحة المفاتيح
   document.addEventListener('keydown', (e)=>{
-    if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
-    if (e.key === 'ArrowRight'){ e.preventDefault(); goNext(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); onPrev(); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); onNext(); }
   });
 
   // ====== النقاط ======
@@ -374,7 +397,7 @@
     if (!n) return;
     n.textContent = `🚨 ${name || 'متسابق'} من ${team==='team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}'} ضغط الزر!`;
     n.style.display = 'block';
-    setTimeout(()=>{ n.style.display='none'; }, 2200);
+    setTimeout(()=>{ n.style.display='none'; }, 2000);
   }
 
   // ====== WebSocket ======
@@ -392,20 +415,27 @@
     ws.onmessage = (ev)=>{
       let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{}
       if (d.type === 'puzzle_updated'){
+        // مزامنة نهائية من السيرفر (تتغلب على التحديث المتفائل)
+        currentIdx = d.index || currentIdx;
+        totalCnt   = d.total || totalCnt;
+        $img.style.opacity = .6;
         $img.src = d.image_url || '';
-        $img.alt = `صورة اللغز #${d.index||1}`;
-        $cur.textContent = d.index || 1;
-        $count.textContent = d.total || 1;
+        $img.alt = `صورة اللغز #${currentIdx}`;
+        $cur.textContent = currentIdx;
+        $count.textContent = totalCnt;
         $hint.textContent = (d.hint || '—').trim();
         $ans.textContent  = (d.answer || '—').trim();
-        $prev.disabled = (d.index<=1);
-        $next.disabled = (d.index>=(d.total||1));
+        $prev.disabled = (currentIdx<=1);
+        $next.disabled = (currentIdx>=(totalCnt||1));
+        $img.onload = ()=>{ $img.style.opacity = 1; };
+        setTimeout(()=>{ $img.style.opacity = 1; }, 100);
+        navInFlight = false;
       }else if (d.type === 'scores_updated'){
         reflectScores(d.team1_score||0, d.team2_score||0);
       }else if (d.type === 'contestant_buzz_accepted'){
         showBuzzNotification(d.contestant_name, d.team);
       }else if (d.type === 'broadcast_image_index' || d.type === 'image_index_updated'){
-        loadCurrent();
+        loadCurrent(); navInFlight = false;
       }
     };
 
@@ -413,7 +443,6 @@
     ws.onerror = ()=>{ try{ ws.close(); }catch{} };
   }
 
-  // ====== بداية ======
   document.addEventListener('DOMContentLoaded', ()=>{
     initFreeTimer();
     loadCurrent();
