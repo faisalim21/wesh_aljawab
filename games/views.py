@@ -1241,52 +1241,58 @@ def letters_new_round(request):
 
 # تحدي الصور
 
-# ==== أدوات مساعدة سريعة (كاش للألغاز) ====
-from django.core.cache import cache
+# تحدي الصور
 
-_RIDDLES_CACHE_TTL = 300  # 5 دقائق تكفي، وتنعش تلقائيًا مع الضغط
+from threading import Thread
 
-def _riddles_cache_key(package_id):
-    return f"pkg_riddles_v1:{package_id}"
-
-def _get_riddles_cached(package):
+def _broadcast_images_index_async(session_id, idx, count):
     """
-    يعيد قائمة مرتبة من ألغاز الحزمة:
-    [{'order':1, 'image_url':'...', 'hint':'...', 'answer':'...'}, ...]
-    مع كاش لتحسين السرعة في ضغطات التالي/السابق.
+    بثّ WebSocket في خيط منفصل حتى لا يعلّق استجابة الـ HTTP.
     """
-    ck = _riddles_cache_key(package.id)
-    data = cache.get(ck)
-    if data is not None:
-        return data
-    data = list(
-        PictureRiddle.objects
-        .filter(package=package)
-        .order_by('order')
-        .values('order', 'image_url', 'hint', 'answer')
-    )
-    cache.set(ck, data, _RIDDLES_CACHE_TTL)
-    return data
+    try:
+        layer = get_channel_layer()
+        if not layer:
+            return
+        async_to_sync(layer.group_send)(
+            f"images_session_{session_id}",
+            {"type": "broadcast_image_index", "current_index": idx, "count": count}
+        )
+    except Exception as e:
+        logger.error(f'WS broadcast async (images) error: {e}')
 
-def _get_progress(session):
-    """جلب/إنشاء تقدّم الصور بسرعة."""
-    prog, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
-    return prog
 
-def _clamp_index(idx, count):
-    return max(1, min(int(idx), count if count > 0 else 1))
+def _clamp_index(idx, total):
+    try:
+        i = int(idx)
+    except Exception:
+        i = 1
+    if total <= 0:
+        return 1
+    return max(1, min(i, total))
+
+
+def _get_riddles_qs(session):
+    return PictureRiddle.objects.filter(package=session.package).order_by('order') \
+            .values('order', 'image_url', 'hint', 'answer')
+
 
 def _json_current_payload(session, riddles, idx):
     """
-    حمولة JSON موحّدة للردود: الفهرس الحالي + العدد + اللغز الحالي.
+    يبني حمولة موحّدة: الحالي + عدد الألغاز + روابط الجيران (للتحميل المُسبق).
     """
-    idx = _clamp_index(idx, len(riddles))
-    current = riddles[idx - 1] if riddles else {'order': 1, 'image_url': '', 'hint': '', 'answer': ''}
+    total = len(riddles)
+    idx = _clamp_index(idx, total)
+    empty = {'order': 1, 'image_url': '', 'hint': '', 'answer': ''}
+    cur = riddles[idx - 1] if total else empty
+    prev_url = riddles[idx - 2]['image_url'] if (idx - 2) >= 0 and total else None
+    next_url = riddles[idx]['image_url'] if (idx) < total and total else None
     return {
         'success': True,
         'current_index': idx,
-        'count': len(riddles),
-        'current': current,
+        'count': total,
+        'current': cur,
+        'prev_image_url': prev_url,
+        'next_image_url': next_url,
     }
 
 
@@ -1314,7 +1320,7 @@ def create_images_session(request):
 
     try:
         # لازم يكون فيه ألغاز
-        riddles_qs = PictureRiddle.objects.filter(package=package).only('id').order_by('order')
+        riddles_qs = PictureRiddle.objects.filter(package=package).order_by('order')
         if not riddles_qs.exists():
             messages.error(request, 'هذه الحزمة لا تحتوي ألغاز صور بعد.')
             return redirect('games:images_home')
@@ -1334,7 +1340,6 @@ def create_images_session(request):
             # لو عنده جلسة مجانية نشطة لنفس الحزمة رجّعه لها
             existing = (GameSession.objects
                         .filter(host=request.user, package=package, is_active=True)
-                        .only('id', 'created_at')
                         .order_by('-created_at').first())
             if existing and not is_session_expired(existing):
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
@@ -1377,7 +1382,7 @@ def create_images_session(request):
                 return redirect('games:images_home')
 
             # جلسة مرتبطة بنفس الشراء؟
-            existing = GameSession.objects.filter(purchase=purchase, is_active=True).only('id').first()
+            existing = GameSession.objects.filter(purchase=purchase, is_active=True).first()
             if existing and not is_session_expired(existing):
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
                 return redirect('games:images_session', session_id=existing.id)
@@ -1386,7 +1391,7 @@ def create_images_session(request):
             existing2 = (GameSession.objects
                          .filter(host=request.user, package=package, is_active=True,
                                  created_at__gte=purchase.purchase_date)
-                         .order_by('-created_at').only('id', 'purchase').first())
+                         .order_by('-created_at').first())
             if existing2 and not is_session_expired(existing2):
                 if existing2.purchase_id is None:
                     existing2.purchase = purchase
@@ -1416,10 +1421,8 @@ def create_images_session(request):
         messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، جرّب مرة أخرى.')
         return redirect('games:images_home')
     finally:
-        try:
-            cache.delete(lock_key)
-        except Exception:
-            pass
+        try: cache.delete(lock_key)
+        except Exception: pass
 
 
 def images_display(request, display_link):
@@ -1431,10 +1434,11 @@ def images_display(request, display_link):
             'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
         })
 
-    riddles = _get_riddles_cached(session.package)
-    progress = PictureGameProgress.objects.filter(session=session).only('current_index').first()
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
+    progress = PictureGameProgress.objects.filter(session=session).first()
     current_index = progress.current_index if progress else 1
-    current_index = _clamp_index(current_index, len(riddles))
+    current_index = max(1, min(current_index, len(riddles)))
 
     return render(request, 'games/images/images_display.html', {
         'session': session,
@@ -1470,15 +1474,14 @@ def api_images_get_current(request):
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-    riddles = _get_riddles_cached(session.package)
+    riddles = list(_get_riddles_qs(session))
     if not riddles:
         return JsonResponse({'success': False, 'error': 'لا توجد ألغاز في هذه الحزمة'}, status=400)
 
-    progress = PictureGameProgress.objects.filter(session=session).only('current_index').first()
+    progress = PictureGameProgress.objects.filter(session=session).first()
     idx = progress.current_index if progress else 1
-    idx = _clamp_index(idx, len(riddles))
-
-    return JsonResponse(_json_current_payload(session, riddles, idx))
+    payload = _json_current_payload(session, riddles, idx)
+    return JsonResponse(payload)
 
 
 @csrf_exempt
@@ -1498,33 +1501,25 @@ def api_images_set_index(request):
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-    riddles = _get_riddles_cached(session.package)
-    if not riddles:
+    riddles = list(_get_riddles_qs(session))
+    total = len(riddles)
+    if total == 0:
         return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
 
+    idx = _clamp_index(idx, total)
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    progress.current_index = idx
+    progress.save(update_fields=['current_index'])
+
+    payload = _json_current_payload(session, riddles, idx)
+
+    # بثّ غير حاجب
     try:
-        idx = int(idx)
+        Thread(target=_broadcast_images_index_async, args=(session.id, payload['current_index'], payload['count']), daemon=True).start()
     except Exception:
-        return JsonResponse({'success': False, 'error': 'index غير صحيح'}, status=400)
+        pass
 
-    idx = _clamp_index(idx, len(riddles))
-    prog = _get_progress(session)
-    if prog.current_index != idx:
-        prog.current_index = idx
-        prog.save(update_fields=['current_index'])
-
-    # بثّ الفهرس الجديد
-    try:
-        layer = get_channel_layer()
-        if layer:
-            async_to_sync(layer.group_send)(
-                f"images_session_{session.id}",
-                {"type": "broadcast_image_index", "current_index": idx, "count": len(riddles)}
-            )
-    except Exception as e:
-        logger.error(f'WS broadcast (images set_index) error: {e}')
-
-    return JsonResponse(_json_current_payload(session, riddles, idx))
+    return JsonResponse(payload)
 
 
 @csrf_exempt
@@ -1543,28 +1538,25 @@ def api_images_next(request):
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-    riddles = _get_riddles_cached(session.package)
-    if not riddles:
+    riddles = list(_get_riddles_qs(session))
+    total = len(riddles)
+    if total == 0:
         return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
 
-    prog = _get_progress(session)
-    new_idx = _clamp_index(prog.current_index + 1, len(riddles))
-    if new_idx != prog.current_index:
-        prog.current_index = new_idx
-        prog.save(update_fields=['current_index'])
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    new_idx = _clamp_index(progress.current_index + 1, total)
+    progress.current_index = new_idx
+    progress.save(update_fields=['current_index'])
 
-    # بثّ التغيير
+    payload = _json_current_payload(session, riddles, new_idx)
+
+    # بثّ غير حاجب
     try:
-        layer = get_channel_layer()
-        if layer:
-            async_to_sync(layer.group_send)(
-                f"images_session_{session.id}",
-                {"type": "broadcast_image_index", "current_index": new_idx, "count": len(riddles)}
-            )
-    except Exception as e:
-        logger.error(f'WS broadcast (images next) error: {e}')
+        Thread(target=_broadcast_images_index_async, args=(session.id, payload['current_index'], payload['count']), daemon=True).start()
+    except Exception:
+        pass
 
-    return JsonResponse(_json_current_payload(session, riddles, new_idx))
+    return JsonResponse(payload)
 
 
 @csrf_exempt
@@ -1583,28 +1575,25 @@ def api_images_prev(request):
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
-    riddles = _get_riddles_cached(session.package)
-    if not riddles:
+    riddles = list(_get_riddles_qs(session))
+    total = len(riddles)
+    if total == 0:
         return JsonResponse({'success': False, 'error': 'لا ألغاز'}, status=400)
 
-    prog = _get_progress(session)
-    new_idx = _clamp_index(prog.current_index - 1, len(riddles))
-    if new_idx != prog.current_index:
-        prog.current_index = new_idx
-        prog.save(update_fields=['current_index'])
+    progress, _ = PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
+    new_idx = _clamp_index(progress.current_index - 1, total)
+    progress.current_index = new_idx
+    progress.save(update_fields=['current_index'])
 
-    # بثّ التغيير
+    payload = _json_current_payload(session, riddles, new_idx)
+
+    # بثّ غير حاجب
     try:
-        layer = get_channel_layer()
-        if layer:
-            async_to_sync(layer.group_send)(
-                f"images_session_{session.id}",
-                {"type": "broadcast_image_index", "current_index": new_idx, "count": len(riddles)}
-            )
-    except Exception as e:
-        logger.error(f'WS broadcast (images prev) error: {e}')
+        Thread(target=_broadcast_images_index_async, args=(session.id, payload['current_index'], payload['count']), daemon=True).start()
+    except Exception:
+        pass
 
-    return JsonResponse(_json_current_payload(session, riddles, new_idx))
+    return JsonResponse(payload)
 
 
 from django.shortcuts import get_object_or_404, render
@@ -1626,10 +1615,12 @@ def images_session(request, session_id):
             'upgrade_message': 'للاستمتاع بجلسات أطول، تصفح الحزم المدفوعة.'
         })
 
-    riddles = _get_riddles_cached(session.package)
-    progress = PictureGameProgress.objects.filter(session=session).only('current_index').first()
+    # عدد الألغاز + الفهرس الحالي (لو احتاجه القالب)
+    riddles = list(PictureRiddle.objects.filter(package=session.package).order_by('order')
+                   .values('order', 'image_url'))
+    progress = PictureGameProgress.objects.filter(session=session).first()
     current_index = progress.current_index if progress else 1
-    current_index = _clamp_index(current_index, len(riddles))
+    current_index = max(1, min(current_index, len(riddles) or 1))
 
     return render(request, 'games/images/images_session.html', {
         'session': session,
