@@ -850,6 +850,7 @@ def update_cell_state(request):
         logger.error(f'Error updating cell state: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
+# games/views.py
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_scores(request):
@@ -878,6 +879,7 @@ def update_scores(request):
                 'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
             }, status=410)
 
+        # تحديث النقاط وتحديد الفائز عند الحاجة
         session.team1_score = team1_score
         session.team2_score = team2_score
 
@@ -891,13 +893,14 @@ def update_scores(request):
 
         session.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
 
+        # ✅ الاسم صار ديناميكيًا حسب نوع اللعبة (letters / images / quiz مستقبلًا)
         try:
             channel_layer = get_channel_layer()
             if channel_layer:
                 async_to_sync(channel_layer.group_send)(
-                    f"letters_session_{session_id}",
+                    f"{session.game_type}_session_{session_id}",
                     {
-                        "type": "broadcast_scores",
+                        "type": "broadcast_scores",  # مدعوم في المستهلكين (PicturesGameConsumer لديه alias)
                         "team1_score": session.team1_score,
                         "team2_score": session.team2_score,
                         "winner": session.winner_team,
@@ -924,6 +927,7 @@ def update_scores(request):
     except Exception as e:
         logger.error(f'Error updating scores: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
 
 def session_state(request):
     sid = request.GET.get("session_id")
