@@ -12,66 +12,66 @@
 
   <style>
     :root{
-      --primary:#6d28d9; --ink:#0f172a; --muted:#64748b;
-      --ok:#16a34a; --warn:#d97706; --card:#ffffff; --card2:#f8fafc;
-      --ring:#e2e8f0;
+      --primary:#8b5cf6; --cyan:#06b6d4; --ink:#1f2937;
+      --muted:#64748b; --ok:#22c55e; --warn:#d97706;
+      --ring:#e5e7eb; --card:#ffffff; --card2:#f8fafc;
     }
     *{font-family:'Tajawal',sans-serif}
     body{
-      background:linear-gradient(135deg,#e2e8f0 0%,#f1f5f9 100%);
-      min-height:100vh; margin:0; padding:12px; color:var(--ink);
+      /* نفس الخلفية البنفسجية المُمَرْجة */
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh; margin:0; padding:10px;
+      color:var(--ink);
     }
     .shell{
-      max-width:980px; margin:0 auto; background:var(--card); border-radius:18px;
-      box-shadow:0 18px 40px rgba(2,6,23,.08); padding:16px;
-      border:1px solid var(--ring);
+      max-width:1000px; margin:0 auto; background:#fff; border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12); padding:16px; border:1px solid var(--ring);
     }
-    .title{ text-align:center; font-weight:900; margin-bottom:6px; letter-spacing:.2px }
+    .title{ text-align:center; font-weight:900; margin-bottom:6px }
+
     .badges{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px }
     .badge-soft{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; font-weight:800; font-size:.9rem }
     .badge-free{ background:#f0fdf4; border-color:#86efac; color:#166534 }
     .badge-72{ background:#fffbeb; border-color:#fcd34d; color:#92400e }
 
-    /* الشعار أعلى اليمين */
-    .logo{
-      position:absolute; top:10px; right:16px; z-index:10;
-      background:#fff; border-radius:12px; padding:6px 10px;
-      box-shadow:0 10px 24px rgba(0,0,0,.08); border:1px solid var(--ring);
-    }
-    .logo img{ height:40px; width:auto; display:block; }
-    @media (max-width:768px){ .logo{ display:none } }
-
     /* العارض + الأسهم */
     .viewer{
       display:grid; grid-template-columns:48px 1fr 48px; gap:10px; align-items:center;
-      margin:10px 0 14px;
+      margin:8px 0 12px;
     }
     .nav-btn{
       height:48px; width:48px; border:none; border-radius:999px; background:#eef2ff;
-      display:flex; align-items:center; justify-content:center;
+      display:flex; align-items:center; justify-content:center; cursor:pointer;
       transition:transform .12s ease, box-shadow .12s ease, background .12s ease;
-      box-shadow:0 6px 16px rgba(109,40,217,.15);
+      box-shadow:0 8px 18px rgba(109,40,217,.18);
       border:1px solid #e9d5ff;
-      cursor:pointer;
     }
-    .nav-btn:hover{ transform:translateY(-2px); box-shadow:0 10px 22px rgba(109,40,217,.22) }
+    .nav-btn:hover{ transform:translateY(-1px); box-shadow:0 12px 22px rgba(109,40,217,.22) }
     .nav-btn:active{ transform:translateY(0) scale(.98) }
     .nav-btn svg{ width:22px; height:22px }
-    .nav-btn[disabled]{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none }
 
     .image-wrap{
-      background:linear-gradient(180deg,#fafafa,#fff); border:1px solid rgba(2,6,23,.06);
-      border-radius:16px; padding:8px; min-height:260px; display:flex; align-items:center; justify-content:center;
       position:relative;
+      background:linear-gradient(180deg,#fafafa,#fff); border:1px solid rgba(139,92,246,.14);
+      border-radius:16px; padding:8px; min-height:260px; display:flex; align-items:center; justify-content:center;
     }
     .image-wrap img{
       max-width:100%; max-height:70vh; border-radius:12px; display:block;
-      box-shadow:0 8px 20px rgba(2,6,23,.12);
+      box-shadow:0 10px 24px rgba(0,0,0,.12);
     }
-    .counter{ text-align:center; color:#334155; font-weight:800; margin-top:6px; font-size:.95rem }
 
-    /* بطاقات التلميح/الإجابة (عرض فقط) */
-    .fields{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px }
+    /* الشعار فوق يمين الصور (مرئي على الجوال) */
+    .logo-on-image{
+      position:absolute; top:8px; right:8px; z-index:5;
+      background:#fff; border:1px solid var(--ring); border-radius:12px; padding:6px 10px;
+      box-shadow:0 10px 24px rgba(0,0,0,.18);
+    }
+    .logo-on-image img{ height:40px; width:auto; display:block; }
+
+    .counter{ text-align:center; color:#475569; font-weight:800; margin-top:6px; font-size:.95rem }
+
+    /* التلميح/الإجابة (عرض فقط) */
+    .fields{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px }
     @media (max-width:768px){ .fields{ grid-template-columns:1fr } }
     .field-card{ background:var(--card2); border:1px solid var(--ring); border-radius:12px; padding:10px }
     .field-card h6{ margin:0 0 6px; font-weight:900; font-size:.95rem; color:#0f172a }
@@ -81,9 +81,10 @@
       white-space:pre-wrap; word-break:break-word;
     }
 
-    /* روابط النسخ/المشاركة */
+    /* روابط مفيدة */
     .links-row{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin:8px 0 2px }
-    .link-btn{ border:1px solid var(--ring); background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
+    .link-btn{ border:1px dashed #cbd5e1; background:#fff; border-radius:10px; padding:6px 10px; font-weight:800 }
+
     .time-alert{ text-align:center; font-weight:800 }
 
     /* النقاط */
@@ -102,11 +103,7 @@
   </style>
 </head>
 <body>
-  <div class="shell position-relative">
-    <div class="logo">
-      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
-    </div>
-
+  <div class="shell">
     <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
 
     <!-- شارات الحزمة -->
@@ -127,7 +124,7 @@
       </div>
     {% endif %}
 
-    <!-- روابط للمقدّم -->
+    <!-- روابط -->
     <div class="links-row">
       <button class="link-btn btn btn-sm" onclick="copyLink(window.location.origin + '{% url 'games:images_contestants' session.contestants_link %}')">👥 المتسابقون</button>
       <button class="link-btn btn btn-sm" onclick="copyLink(window.location.origin + '{% url 'games:images_display' session.display_link %}')">🖥️ شاشة العرض</button>
@@ -137,18 +134,23 @@
 
     <!-- عارض الصورة + أسهم -->
     <div class="viewer">
+      <!-- ملاحظة: عكسنا شكل الأيقونة فقط، والزر اليسار ما زال ينفّذ السابق -->
       <button id="prevBtn" class="nav-btn" title="السابق" aria-label="السابق">
-        <!-- chevron right لأن RTL -->
-        <svg viewBox="0 0 24 24" fill="none"><path d="M14 7l-5 5 5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <!-- سهم يشير لليمين (شكل معكوس) -->
+        <svg viewBox="0 0 24 24" fill="none"><path d="M10 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
 
       <div class="image-wrap">
+        <!-- الشعار فوق يمين الصور — ظاهر على الجوال والكمبيوتر -->
+        <div class="logo-on-image">
+          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+        </div>
         <img id="riddleImg" src="" alt="صورة اللغز" loading="eager">
       </div>
 
       <button id="nextBtn" class="nav-btn" title="التالي" aria-label="التالي">
-        <!-- chevron left لأن RTL -->
-        <svg viewBox="0 0 24 24" fill="none"><path d="M10 17l5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <!-- سهم يشير لليسار (شكل معكوس) -->
+        <svg viewBox="0 0 24 24" fill="none"><path d="M14 17l-5-5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
 
@@ -248,6 +250,7 @@
       const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`, {cache:'no-store'});
       if (r.status === 410) { alert('انتهت صلاحية الجلسة'); return location.href = HOME_URL; }
       if (!r.ok) return;
+
       const data = await r.json();
       const idx = data.current_index || 1;
       const cnt = data.count || 1;
@@ -262,6 +265,7 @@
       $hint.textContent = (cur.hint || '—').trim();
       $ans.textContent  = (cur.answer || '—').trim();
 
+      // لا تعطيل للأزرار — سرعة أعلى
       $prev.disabled = (idx <= 1);
       $next.disabled = (idx >= cnt);
     }catch(e){ console.error(e); }
@@ -296,27 +300,36 @@
     }catch(e){}
   }
 
-  // ====== أزرار السابق/التالي — سريع وسلس ======
+  // ====== مُجدول بسيط لتخفيف كثرة التحميل ======
+  let refreshLock = false;
+  function refreshSoon(delay=120){
+    if (refreshLock) return;
+    refreshLock = true;
+    setTimeout(()=>{ loadCurrent().finally(()=>{ refreshLock=false; }); }, delay);
+  }
+
+  // ====== أزرار السابق/التالي — فوري وسلس ======
   function goPrev(){
-    if ($prev.disabled) return;
+    // لا تعطيل ولا انتظار — WS + احتياطي HTTP + إعادة تحميل فورية
     if (ws && ws.readyState===1){
-      ws.send(JSON.stringify({type:'puzzle_nav', dir:'prev'}));
+      try{ ws.send(JSON.stringify({type:'puzzle_nav', dir:'prev'})); }catch{}
+      refreshSoon(50);
     }else{
       fetch('/games/api/images-prev/', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({session_id:SESSION_ID})
-      }).then(loadCurrent);
+      }).then(()=>loadCurrent());
     }
   }
   function goNext(){
-    if ($next.disabled) return;
     if (ws && ws.readyState===1){
-      ws.send(JSON.stringify({type:'puzzle_nav', dir:'next'}));
+      try{ ws.send(JSON.stringify({type:'puzzle_nav', dir:'next'})); }catch{}
+      refreshSoon(50);
     }else{
       fetch('/games/api/images-next/', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body:JSON.stringify({session_id:SESSION_ID})
-      }).then(loadCurrent);
+      }).then(()=>loadCurrent());
     }
   }
   $prev.addEventListener('click', goPrev);
@@ -361,7 +374,7 @@
     if (!n) return;
     n.textContent = `🚨 ${name || 'متسابق'} من ${team==='team1' ? '{{ session.team1_name }}' : '{{ session.team2_name }}'} ضغط الزر!`;
     n.style.display = 'block';
-    setTimeout(()=>{ n.style.display='none'; }, 2500);
+    setTimeout(()=>{ n.style.display='none'; }, 2200);
   }
 
   // ====== WebSocket ======
