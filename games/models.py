@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 import uuid
 from datetime import timedelta
+from django.db.models import Max
 from decimal import Decimal
 
 class GamePackage(models.Model):
@@ -165,7 +166,7 @@ class GamePackage(models.Model):
     @property
     def picture_limit(self) -> int:
         """حدّ ألغاز الصور: المجاني 9، المدفوع 21."""
-        return 9 if self.is_free else 21
+        return 10 if self.is_free else 22
 
 
 class LettersGameQuestion(models.Model):
@@ -663,10 +664,13 @@ class FreeTrialUsage(models.Model):
 
 
 
+from django.db.models import Max
+from django.core.exceptions import ValidationError
+
 class PictureRiddle(models.Model):
     package   = models.ForeignKey('GamePackage', on_delete=models.CASCADE, related_name='picture_riddles')
     order     = models.PositiveIntegerField(default=1, db_index=True, help_text="ترتيب اللغز داخل الحزمة")
-    image_url = models.URLField(max_length=500, help_text="رابط الصورة (Cloudinary/سحابة)")  # ← زوّدنا الطول
+    image_url = models.URLField(max_length=500, help_text="رابط الصورة (Cloudinary/سحابة)")
     hint      = models.CharField(max_length=255, blank=True, default='', help_text="تلميح يظهر للمقدم فقط")
     answer    = models.CharField(max_length=255, help_text="الإجابة الصحيحة")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -682,11 +686,30 @@ class PictureRiddle(models.Model):
         if self.order < 1:
             raise ValidationError("الترتيب يبدأ من 1.")
 
-        # الحدّ: استخدم خاصية الحزمة
-        limit = self.package.picture_limit if self.package else 21
+        # الحدّ باستخدام خاصية الحزمة (مجاني 10، مدفوع 22)
+        limit = self.package.picture_limit if self.package else 22
         count = PictureRiddle.objects.filter(package=self.package).exclude(pk=self.pk).count()
-        if count >= limit:
+        if self._state.adding and count >= limit:
             raise ValidationError(f"تجاوزت الحدّ الأقصى ({limit}) لهذه الحزمة.")
+
+    def save(self, *args, **kwargs):
+        """
+        عند الإنشاء:
+        - إن لم يُحدَّد order (أو كان مكررًا)، نضعه تلقائيًا = (أكبر order موجود لنفس الحزمة) + 1
+        - نحترم الحدّ (clean() سيتحقق)
+        """
+        if self._state.adding:
+            if not self.order:
+                self.order = 1
+            # لو مكرر أو 1 افتراضية من الفورم؛ نحرّكها تلقائيًا إلى آخر ترتيب + 1
+            exists_same = PictureRiddle.objects.filter(package=self.package, order=self.order).exists()
+            if exists_same:
+                last = PictureRiddle.objects.filter(package=self.package).aggregate(m=Max('order'))['m'] or 0
+                self.order = last + 1
+
+        self.full_clean()  # يتأكد من الحد والترتيب
+        return super().save(*args, **kwargs)
+
 
             
 

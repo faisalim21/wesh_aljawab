@@ -703,21 +703,23 @@ class PictureRiddleInlineFormSet(BaseInlineFormSet):
         super().clean()
         if any(self.errors):
             return
+
         # عدد النماذج غير المحذوفة فعليًا
         alive = 0
         for form in self.forms:
             if form.cleaned_data.get('DELETE'):
                 continue
-            # تجاهل سطر فاضي مضاف زيادة
             empty_extra = (not form.cleaned_data and not form.instance.pk)
             if empty_extra:
                 continue
             alive += 1
 
         pkg = self.instance  # الحزمة الحالية
-        limit = 9 if getattr(pkg, 'is_free', False) else 21
+        # ✅ استخدم حد الحزمة ديناميكيًا بدل 9/21
+        limit = getattr(pkg, 'picture_limit', (10 if getattr(pkg, 'is_free', False) else 22))
         if alive > limit:
             raise forms.ValidationError(f"الحدّ الأقصى لهذه الحزمة هو {limit} لغز بالصور.")
+
 
 
 class PictureRiddleInline(admin.TabularInline):
@@ -768,7 +770,6 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     )
 
     def get_queryset(self, request):
-        # نجمع عدد الألغاز لعرضه وشارة الحدّ
         return (
             super().get_queryset(request)
             .filter(game_type='images')
@@ -781,7 +782,8 @@ class ImagesPackageAdmin(admin.ModelAdmin):
 
     def riddles_count_badge(self, obj):
         cnt = getattr(obj, '_rcount', 0)
-        limit = 9 if obj.is_free else 21
+        # ✅ حد ديناميكي من الموديل
+        limit = getattr(obj, 'picture_limit', (10 if obj.is_free else 22))
         if cnt == 0:
             color, icon = '#94a3b8', '—'
         elif cnt > limit:
@@ -841,11 +843,12 @@ class ImagesPackageAdmin(admin.ModelAdmin):
                 .aggregate(Max('package_number'))['package_number__max'] or 0
             ) + 1
             form.base_fields['package_number'].initial = next_num
-        # تلميح: حدّ الصور حسب نوع الحزمة
+        # ✅ حدّث نص التلميح (10/22)
         form.base_fields['description'].help_text = (
-            "المجانية: 9 صور كحد أقصى — المدفوعة: 21 صورة كحد أقصى."
+            "المجانية: 10 صور كحد أقصى — المدفوعة: 22 صورة كحد أقصى."
         )
         return form
+
 
 # ===========================
 #  Admin: حِزم سؤال وجواب
