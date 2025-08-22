@@ -8,11 +8,6 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#6d28d9">
 
-  <!-- رابط خطوط جوجل للعربية -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  
   <!-- رابط أيقونات Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
@@ -40,10 +35,6 @@
       
       --border-radius: 16px;
       --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    }
-
-    * {
-      font-family: 'Tajawal', sans-serif;
     }
 
     html, body{ 
@@ -306,6 +297,13 @@
       background: rgba(255,255,255,.12); 
       border-radius:10px; 
       transition: var(--transition);
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
     
     .custom-toggler:hover {
@@ -321,7 +319,7 @@
       width:25px; 
       height:3px; 
       background:#fff; 
-      margin:5px 0; 
+      margin:3px 0; 
       transition: var(--transition); 
       border-radius:2px; 
     }
@@ -338,6 +336,28 @@
       transform: rotate(-45deg) translate(6px, -6px); 
     }
 
+    /* زر الإغلاق (X) */
+    .close-navbar {
+      display: none;
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: rgba(139,92,246,.15);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: #8b5cf6;
+      font-size: 1.2rem;
+      z-index: 1001;
+      transition: var(--transition);
+    }
+    
+    .close-navbar:hover {
+      background: rgba(139,92,246,.25);
+      transform: rotate(90deg);
+    }
+
     /* Responsive */
     @media (max-width: 991px){
       .navbar-collapse{
@@ -347,6 +367,11 @@
         margin-top: 1rem;
         backdrop-filter: blur(10px);
         box-shadow: 0 10px 25px rgba(0,0,0,.1);
+        position: relative;
+      }
+      
+      .close-navbar {
+        display: block;
       }
       
       .nav-link{ 
@@ -487,6 +512,11 @@
           <span class="toggler-icon"></span>
           <span class="toggler-icon"></span>
           <span class="toggler-icon"></span>
+        </button>
+
+        <!-- زر الإغلاق (X) للجوال -->
+        <button class="close-navbar" aria-label="إغلاق القائمة">
+          <i class="fas fa-times"></i>
         </button>
 
         <!-- Navigation Menu -->
@@ -637,6 +667,7 @@
     const spacer = document.getElementById('header-spacer');
     const navCollapse = document.getElementById('navbarNav');
     const dropdowns = document.querySelectorAll('.dropdown');
+    const closeNavbarBtn = document.querySelector('.close-navbar');
 
     // 1) حلّ التداخل: اجعل الـ spacer يساوي ارتفاع الهيدر دائماً
     function setSpacerHeight() {
@@ -706,7 +737,9 @@
         // إغلاق القائمة المنسدلة عند النقر على عنصر
         const dropdownElement = this.closest('.dropdown');
         const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownElement.querySelector('.dropdown-toggle'));
-        dropdownInstance.hide();
+        if (dropdownInstance) {
+          dropdownInstance.hide();
+        }
         
         // إغلاق القائمة على الجوال
         if (window.innerWidth <= 991) {
@@ -726,6 +759,34 @@
         });
       }
     }, { passive: true });
+
+    // 9) إضافة وظيفة زر الإغلاق (X) للجوال
+    if (closeNavbarBtn && navCollapse) {
+      closeNavbarBtn.addEventListener('click', () => {
+        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+        bsCollapse.hide();
+      });
+    }
+
+    // 10) إخفاء زر الإغلاق عند إغلاق القائمة وإظهاره عند فتحها
+    if (navCollapse) {
+      navCollapse.addEventListener('show.bs.collapse', () => {
+        if (closeNavbarBtn && window.innerWidth <= 991) {
+          closeNavbarBtn.style.display = 'block';
+        }
+      });
+      
+      navCollapse.addEventListener('hide.bs.collapse', () => {
+        if (closeNavbarBtn) {
+          closeNavbarBtn.style.display = 'none';
+        }
+      });
+    }
+
+    // إخفاء زر الإغلاق افتراضيًا
+    if (closeNavbarBtn) {
+      closeNavbarBtn.style.display = 'none';
+    }
   });
 </script>
 
