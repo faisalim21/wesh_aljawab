@@ -4,14 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- منع تغييرات الألوان التلقائية من بعض المتصفحات وتثبيت الثيم -->
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#6d28d9" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
+  <!-- تثبيت الثيم على الفاتح ومنع تبديل الألوان التلقائي -->
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#6d28d9">
 
   <style>
     :root{
-      /* لوحة ألوان ثابتة */
+      /* لوحة ألوان ثابتة (فاتح) */
       --primary-start: #8b5cf6; /* بنفسجي */
       --primary-end:   #06b6d4; /* سماوي */
       --brand-bg: #ffffff;
@@ -30,19 +29,6 @@
       --navbar-grad-scrolled: linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
       --btn-grad: linear-gradient(135deg,#f59e0b,#f97316);
       --btn-grad-hover: linear-gradient(135deg,#f97316,#ea580c);
-
-      color-scheme: light dark; /* يُبلغ المتصفح أننا نملك ثيمين مدعومين */
-    }
-    @media (prefers-color-scheme: dark){
-      :root{
-        --brand-bg: #0b1020;
-        --brand-bg-soft: #0f172a;
-        --text-strong: #e5e7eb;
-        --text:        #e5e7eb;
-        --muted:       #94a3b8;
-        --navbar-grad: linear-gradient(135deg, rgba(139,92,246,.92), rgba(6,182,212,.92));
-        --navbar-grad-scrolled: linear-gradient(135deg, rgba(139,92,246,.96), rgba(6,182,212,.96));
-      }
     }
 
     html, body{ background: var(--brand-bg); color: var(--text); }
@@ -60,7 +46,7 @@
       box-shadow: 0 4px 20px rgba(0,0,0,.15);
     }
 
-    /* الشعار */
+    /* الشعار (الكرت الأبيض يبقى كما هو) */
     .logo-container {
       position: relative;
       background: linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
@@ -69,13 +55,6 @@
       transition: transform .2s ease, box-shadow .3s ease, filter .3s ease;
       box-shadow: 0 8px 25px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.8);
       border: 1px solid rgba(255,255,255,.3);
-    }
-    @media (prefers-color-scheme: dark){
-      .logo-container{
-        background: linear-gradient(145deg, rgba(255,255,255,.15), rgba(255,255,255,.08));
-        border: 1px solid rgba(255,255,255,.12);
-        box-shadow: 0 8px 25px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.08);
-      }
     }
     .logo-container:hover { transform: translateY(-3px) scale(1.02); }
     .logo-img { height: 60px !important; width: auto !important; filter: brightness(1.05) contrast(1.1); }
@@ -104,18 +83,12 @@
       box-shadow: 0 10px 30px rgba(0,0,0,.15);
       padding: .5rem 0; margin-top: .5rem; min-width: 260px;
     }
-    @media (prefers-color-scheme: dark){
-      .custom-dropdown{ background: #0b1220; box-shadow: 0 10px 30px rgba(0,0,0,.6); }
-    }
     .dropdown-item{
       padding: .75rem 1.5rem;
       color: #2d3748;
       font-weight: 500;
       transition: transform .12s ease, background .12s ease, color .12s ease;
       display: flex; align-items: center; justify-content: space-between;
-    }
-    @media (prefers-color-scheme: dark){
-      .dropdown-item{ color: var(--text); }
     }
     .dropdown-item:hover,
     .dropdown-item:focus-visible{
@@ -134,10 +107,6 @@
     .user-avatar{
       width: 35px; height: 35px; background: #fff; border-radius: 50%;
       display:flex; align-items:center; justify-content:center; color:#8b5cf6; margin-left:.5rem;
-    }
-    @media (prefers-color-scheme: dark){
-      .user-menu{ background: rgba(255,255,255,.08); }
-      .user-avatar{ background:#8b5cf6; color:#fff; }
     }
     .user-name{ font-weight:600; }
     .user-dropdown{ min-width: 280px; }
@@ -198,11 +167,6 @@
     .nav-link:focus-visible, .dropdown-item:focus-visible, .btn-primary:focus-visible, .btn-outline-light:focus-visible{
       outline: 3px solid rgba(255,255,255,.6);
       outline-offset: 2px;
-    }
-    @media (prefers-color-scheme: dark){
-      .nav-link:focus-visible, .dropdown-item:focus-visible, .btn-primary:focus-visible, .btn-outline-light:focus-visible{
-        outline: 3px solid rgba(139,92,246,.7);
-      }
     }
   </style>
 </head>
@@ -274,6 +238,7 @@
                   </a>
                 </li>
                 <li role="none">
+                  <!-- المسار الصحيح حسب urls.py لديك -->
                   <a class="dropdown-item" href="{% url 'games:images_home' %}" role="menuitem">
                     <span class="d-flex align-items-center">
                       <i class="fas fa-images me-2" aria-hidden="true"></i>
@@ -417,7 +382,7 @@
         }
       });
 
-      // 4) القوائم المنسدلة بالهوفر على الديسكتوب فقط
+      // 4) القوائم المنسدلة بالهوفر على الديسكتوب فقط (نفس سلوكك السابق)
       dropdowns.forEach(dd => {
         dd.addEventListener('mouseenter', () => {
           if (window.innerWidth > 991) {
@@ -442,9 +407,9 @@
       // 6) إغلاق طيّة الجوال عند الضغط على أي رابط (يشمل عناصر القوائم المنسدلة)
       document.querySelectorAll('#navbarNav a.nav-link, #navbarNav .dropdown-item').forEach(a => {
         a.addEventListener('click', () => {
-          const bsCollapse = window.bootstrap?.Collapse ? window.bootstrap.Collapse.getInstance(navCollapse) : null;
-          if (window.innerWidth <= 991 && navCollapse?.classList.contains('show') && bsCollapse) {
-            bsCollapse.hide();
+          const bsCollapse = window.bootstrap?.Collapse?.getOrCreateInstance(navCollapse);
+          if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
+            bsCollapse?.hide();
           }
         });
       });
@@ -452,9 +417,21 @@
       // 7) إغلاق القائمة المنسدلة عند الضغط على عنصر داخلها (على كل المقاسات)
       document.querySelectorAll('.dropdown .dropdown-item').forEach(item => {
         item.addEventListener('click', () => {
-          const parent = item.closest('.dropdown');
-          parent?.classList.remove('show');
-          parent?.querySelector('.dropdown-menu')?.classList.remove('show');
+          const dd = item.closest('.dropdown');
+          const toggle = dd?.querySelector('[data-bs-toggle="dropdown"]');
+          const bsDropdown = window.bootstrap?.Dropdown?.getOrCreateInstance(toggle);
+          bsDropdown?.hide();
+        });
+      });
+
+      // 7.1) إغلاق/فتح القائمة عند الضغط على زر "الألعاب" في الديسكتوب (إضافة بسيطة بدون تغيير سلوك الهوفر)
+      document.querySelectorAll('.dropdown > .nav-link.dropdown-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          if (window.innerWidth > 991) {
+            e.preventDefault(); // لا ننتقل؛ فقط نغلق/نفتح
+            const inst = window.bootstrap?.Dropdown?.getOrCreateInstance(btn);
+            if (btn.getAttribute('aria-expanded') === 'true') inst?.hide(); else inst?.show();
+          }
         });
       });
 
