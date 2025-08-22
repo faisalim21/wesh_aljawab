@@ -343,107 +343,113 @@
   <!-- Spacer يمنع تداخل الهيدر الثابت مع المحتوى -->
   <div id="header-spacer" aria-hidden="true"></div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const navbar = document.querySelector('.navbar');
-      const spacer = document.getElementById('header-spacer');
-      const navCollapse = document.getElementById('navbarNav');
-      const dropdowns = document.querySelectorAll('.dropdown');
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const navbar = document.querySelector('.navbar');
+    const spacer = document.getElementById('header-spacer');
+    const navCollapse = document.getElementById('navbarNav');
+    const dropdowns = document.querySelectorAll('.dropdown');
 
-      // 1) حلّ التداخل: اجعل الـ spacer يساوي ارتفاع الهيدر دائماً
-      function setSpacerHeight() {
-        const h = navbar.getBoundingClientRect().height;
-        spacer.style.height = h + 'px';
+    // 1) حلّ التداخل: اجعل الـ spacer يساوي ارتفاع الهيدر دائماً
+    function setSpacerHeight() {
+      const h = navbar.getBoundingClientRect().height;
+      spacer.style.height = h + 'px';
+    }
+    setSpacerHeight();
+    window.addEventListener('resize', setSpacerHeight);
+
+    // 2) تغيير نمط الهيدر عند التمرير
+    function onScroll() {
+      if (window.scrollY > 50) {
+        navbar.classList.add('navbar-scrolled');
+      } else {
+        navbar.classList.remove('navbar-scrolled');
       }
-      setSpacerHeight();
-      window.addEventListener('resize', setSpacerHeight);
+    }
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
 
-      // 2) تغيير نمط الهيدر عند التمرير
-      function onScroll() {
-        if (window.scrollY > 50) {
-          navbar.classList.add('navbar-scrolled');
-        } else {
-          navbar.classList.remove('navbar-scrolled');
-        }
+    // 3) إبراز الرابط النشط (يدعم المسارات الفرعية)
+    const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
+    document.querySelectorAll('.nav-link[href]').forEach(link => {
+      const href = link.getAttribute('href') || '';
+      if (href.startsWith('#')) return; // تجاهل روابط المقاطع
+      const normalized = (href.replace(/\/+$/, '') || '/');
+      if (currentPath === normalized || (normalized !== '/' && currentPath.startsWith(normalized))) {
+        link.classList.add('active');
       }
-      onScroll();
-      window.addEventListener('scroll', onScroll, { passive: true });
-
-      // 3) إبراز الرابط النشط (يدعم المسارات الفرعية)
-      const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
-      document.querySelectorAll('.nav-link[href]').forEach(link => {
-        const href = link.getAttribute('href') || '';
-        if (href.startsWith('#')) return; // تجاهل روابط المقاطع
-        const normalized = (href.replace(/\/+$/, '') || '/');
-        if (currentPath === normalized || (normalized !== '/' && currentPath.startsWith(normalized))) {
-          link.classList.add('active');
-        }
-      });
-
-      // 4) القوائم المنسدلة بالهوفر على الديسكتوب فقط (نفس سلوكك السابق)
-      dropdowns.forEach(dd => {
-        dd.addEventListener('mouseenter', () => {
-          if (window.innerWidth > 991) {
-            dd.classList.add('show');
-            dd.querySelector('.dropdown-menu')?.classList.add('show');
-          }
-        });
-        dd.addEventListener('mouseleave', () => {
-          if (window.innerWidth > 991) {
-            dd.classList.remove('show');
-            dd.querySelector('.dropdown-menu')?.classList.remove('show');
-          }
-        });
-      });
-
-      // 5) عند فتح/غلق التوجل في الجوال، أعِد حساب ارتفاع الـ spacer
-      if (navCollapse) {
-        navCollapse.addEventListener('shown.bs.collapse', setSpacerHeight);
-        navCollapse.addEventListener('hidden.bs.collapse', setSpacerHeight);
-      }
-
-      // 6) إغلاق طيّة الجوال عند الضغط على "روابط حقيقية" فقط (استثناء dropdown-toggle)
-      document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(a => {
-        a.addEventListener('click', () => {
-          const bsCollapse = window.bootstrap?.Collapse?.getOrCreateInstance(navCollapse);
-          if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
-            bsCollapse?.hide();
-          }
-        });
-      });
-
-      // 7) إغلاق القائمة المنسدلة عند الضغط على عنصر داخلها (على كل المقاسات)
-      document.querySelectorAll('.dropdown .dropdown-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const dd = item.closest('.dropdown');
-          const toggle = dd?.querySelector('[data-bs-toggle="dropdown"]');
-          const bsDropdown = window.bootstrap?.Dropdown?.getOrCreateInstance(toggle);
-          bsDropdown?.hide();
-        });
-      });
-
-      // 7.1) على الديسكتوب: الضغط على زر "الألعاب" أو "الملف الشخصي" يفتح/يقفل القائمة فقط (بدون إغلاق الهيدر)
-      document.querySelectorAll('.dropdown > .nav-link.dropdown-toggle').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          if (window.innerWidth > 991) {
-            e.preventDefault(); // لا ننتقل؛ فقط نغلق/نفتح القائمة
-            const inst = window.bootstrap?.Dropdown?.getOrCreateInstance(btn);
-            if (btn.getAttribute('aria-expanded') === 'true') inst?.hide(); else inst?.show();
-          }
-        });
-      });
-
-      // 8) إغلاق أي قائمة مفتوحة عند الضغط خارج الهيدر (سلوك نظيف)
-      document.addEventListener('click', (e) => {
-        const insideNav = e.target.closest('.navbar');
-        if (!insideNav) {
-          dropdowns.forEach(dd => {
-            dd.classList.remove('show');
-            dd.querySelector('.dropdown-menu')?.classList.remove('show');
-          });
-        }
-      }, { passive: true });
     });
-  </script>
+
+    // 4) القوائم المنسدلة بالهوفر على الديسكتوب فقط (نفس سلوكك السابق)
+    dropdowns.forEach(dd => {
+      dd.addEventListener('mouseenter', () => {
+        if (window.innerWidth > 991) {
+          dd.classList.add('show');
+          dd.querySelector('.dropdown-menu')?.classList.add('show');
+        }
+      });
+      dd.addEventListener('mouseleave', () => {
+        if (window.innerWidth > 991) {
+          dd.classList.remove('show');
+          dd.querySelector('.dropdown-menu')?.classList.remove('show');
+        }
+      });
+    });
+
+    // 5) عند فتح/غلق التوجل في الجوال، أعِد حساب ارتفاع الـ spacer
+    if (navCollapse) {
+      navCollapse.addEventListener('shown.bs.collapse', setSpacerHeight);
+      navCollapse.addEventListener('hidden.bs.collapse', setSpacerHeight);
+    }
+
+    // 6) إغلاق طيّة الجوال عند الضغط على "روابط حقيقية" فقط (استثناء الـ dropdown-toggle)
+    document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(a => {
+      a.addEventListener('click', () => {
+        const bsCollapse = window.bootstrap?.Collapse?.getOrCreateInstance(navCollapse);
+        if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
+          bsCollapse?.hide();
+        }
+      });
+    });
+
+    // 7) اجعل الضغط على أسهم القوائم (الألعاب / الملف الشخصي) يفتح/يقفل القائمة فقط
+    document.querySelectorAll('.dropdown > .nav-link.dropdown-toggle').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        // مهم: منع الإغلاق العام للطيّة
+        e.preventDefault();
+        e.stopPropagation();
+
+        // ابقِ الطيّة مفتوحة على الجوال، وافتح/أغلق القائمة فقط
+        const inst = window.bootstrap?.Dropdown?.getOrCreateInstance(btn);
+        inst?.toggle();
+
+        // لا تغلق الطيّة على الجوال هنا إطلاقاً
+      });
+    });
+
+    // 8) إغلاق القائمة المنسدلة عند اختيار عنصر داخلها (دون إغلاق الطيّة)
+    document.querySelectorAll('.dropdown .dropdown-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        // لا نمنع الانتشار هنا حتى تعمل بقية المعالجات (مثل إغلاق الطيّة بعد الاختيار لو أردت)
+        const dd = item.closest('.dropdown');
+        const toggle = dd?.querySelector('[data-bs-toggle="dropdown"]');
+        const bsDropdown = window.bootstrap?.Dropdown?.getOrCreateInstance(toggle);
+        bsDropdown?.hide();
+      });
+    });
+
+    // 9) إغلاق أي قائمة مفتوحة عند الضغط خارج الهيدر (لا علاقة له بالطيّة)
+    document.addEventListener('click', (e) => {
+      const insideNav = e.target.closest('.navbar');
+      if (!insideNav) {
+        dropdowns.forEach(dd => {
+          dd.classList.remove('show');
+          dd.querySelector('.dropdown-menu')?.classList.remove('show');
+        });
+      }
+    }, { passive: true });
+  });
+</script>
+
 </body>
 </html>
