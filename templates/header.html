@@ -290,11 +290,9 @@
                 <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
               </a>
               <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-label="قائمة المستخدم">
-                <li class="dropdown-header">
-                  <div class="user-info text-center">
-                    <strong>{{ user.profile.display_name|default:user.username }}</strong>
-                    <small class="text-muted d-block">{{ user.email }}</small>
-                  </div>
+                <!-- تم إزالة تكرار الاسم؛ نعرض البريد فقط كمرجع صغير -->
+                <li class="px-3 py-2">
+                  <small class="text-muted d-block">{{ user.email }}</small>
                 </li>
                 <li><hr class="dropdown-divider" /></li>
                 <li role="none">
@@ -404,8 +402,8 @@
         navCollapse.addEventListener('hidden.bs.collapse', setSpacerHeight);
       }
 
-      // 6) إغلاق طيّة الجوال عند الضغط على أي رابط (يشمل عناصر القوائم المنسدلة)
-      document.querySelectorAll('#navbarNav a.nav-link, #navbarNav .dropdown-item').forEach(a => {
+      // 6) إغلاق طيّة الجوال عند الضغط على "روابط حقيقية" فقط (استثناء dropdown-toggle)
+      document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(a => {
         a.addEventListener('click', () => {
           const bsCollapse = window.bootstrap?.Collapse?.getOrCreateInstance(navCollapse);
           if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
@@ -424,11 +422,11 @@
         });
       });
 
-      // 7.1) إغلاق/فتح القائمة عند الضغط على زر "الألعاب" في الديسكتوب (إضافة بسيطة بدون تغيير سلوك الهوفر)
+      // 7.1) على الديسكتوب: الضغط على زر "الألعاب" أو "الملف الشخصي" يفتح/يقفل القائمة فقط (بدون إغلاق الهيدر)
       document.querySelectorAll('.dropdown > .nav-link.dropdown-toggle').forEach(btn => {
         btn.addEventListener('click', (e) => {
           if (window.innerWidth > 991) {
-            e.preventDefault(); // لا ننتقل؛ فقط نغلق/نفتح
+            e.preventDefault(); // لا ننتقل؛ فقط نغلق/نفتح القائمة
             const inst = window.bootstrap?.Dropdown?.getOrCreateInstance(btn);
             if (btn.getAttribute('aria-expanded') === 'true') inst?.hide(); else inst?.show();
           }
