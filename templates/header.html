@@ -8,6 +8,14 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#6d28d9">
 
+  <!-- رابط خطوط جوجل للعربية -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- رابط أيقونات Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
     :root{
       /* لوحة ألوان ثابتة (فاتح) */
@@ -29,36 +37,66 @@
       --navbar-grad-scrolled: linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
       --btn-grad: linear-gradient(135deg,#f59e0b,#f97316);
       --btn-grad-hover: linear-gradient(135deg,#f97316,#ea580c);
+      
+      --border-radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
-    html, body{ background: var(--brand-bg); color: var(--text); }
-    .main-header { position: relative; z-index: 1000; }
+    * {
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    html, body{ 
+      background: var(--brand-bg); 
+      color: var(--text);
+      scroll-behavior: smooth;
+    }
+    
+    .main-header { 
+      position: relative; 
+      z-index: 1000; 
+    }
 
     .navbar {
       background: var(--navbar-grad);
       backdrop-filter: blur(10px);
       padding: 0.75rem 0;
-      transition: background .3s ease, box-shadow .3s ease, transform .2s ease;
+      transition: var(--transition);
       box-shadow: 0 2px 20px rgba(0,0,0,.1);
     }
+    
     .navbar-scrolled {
       background: var(--navbar-grad-scrolled);
       box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      padding: 0.5rem 0;
     }
 
     /* الشعار (الكرت الأبيض يبقى كما هو) */
     .logo-container {
       position: relative;
       background: linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
-      border-radius: 18px;
+      border-radius: var(--border-radius);
       padding: 12px 16px;
-      transition: transform .2s ease, box-shadow .3s ease, filter .3s ease;
+      transition: var(--transition);
       box-shadow: 0 8px 25px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.8);
       border: 1px solid rgba(255,255,255,.3);
     }
-    .logo-container:hover { transform: translateY(-3px) scale(1.02); }
-    .logo-img { height: 60px !important; width: auto !important; filter: brightness(1.05) contrast(1.1); }
-    .logo-container:hover .logo-img { filter: brightness(1.1) contrast(1.15); }
+    
+    .logo-container:hover { 
+      transform: translateY(-3px) scale(1.02); 
+      box-shadow: 0 12px 30px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.9);
+    }
+    
+    .logo-img { 
+      height: 60px !important; 
+      width: auto !important; 
+      filter: brightness(1.05) contrast(1.1); 
+      transition: var(--transition);
+    }
+    
+    .logo-container:hover .logo-img { 
+      filter: brightness(1.1) contrast(1.15); 
+    }
 
     /* الروابط */
     .nav-link {
@@ -66,107 +104,352 @@
       font-weight: 500;
       padding: 0.75rem 1rem !important;
       border-radius: 10px;
-      transition: transform .15s ease, background .2s ease, color .2s ease;
+      transition: var(--transition);
       margin: 0 .25rem;
       position: relative;
       outline: none;
     }
+    
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 50%;
+      width: 0;
+      height: 2px;
+      background: white;
+      transition: var(--transition);
+      transform: translateX(50%);
+    }
+    
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 70%;
+    }
+    
     .nav-link:hover,
-    .nav-link:focus-visible { color: #fff !important; background: rgba(255,255,255,.12); transform: translateY(-2px); }
-    .nav-link.active{ background: rgba(255,255,255,.2); color: #fff !important; }
+    .nav-link:focus-visible { 
+      color: #fff !important; 
+      background: rgba(255,255,255,.12); 
+      transform: translateY(-2px); 
+    }
+    
+    .nav-link.active{ 
+      background: rgba(255,255,255,.2); 
+      color: #fff !important; 
+    }
 
     /* القوائم المنسدلة */
     .custom-dropdown{
       background: #fff;
       border: none;
-      border-radius: 15px;
+      border-radius: var(--border-radius);
       box-shadow: 0 10px 30px rgba(0,0,0,.15);
-      padding: .5rem 0; margin-top: .5rem; min-width: 260px;
+      padding: .5rem 0; 
+      margin-top: .5rem; 
+      min-width: 260px;
+      overflow: hidden;
     }
+    
     .dropdown-item{
       padding: .75rem 1.5rem;
       color: #2d3748;
       font-weight: 500;
-      transition: transform .12s ease, background .12s ease, color .12s ease;
-      display: flex; align-items: center; justify-content: space-between;
+      transition: var(--transition);
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      position: relative;
     }
+    
+    .dropdown-item::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08));
+      transition: var(--transition);
+      z-index: -1;
+    }
+    
+    .dropdown-item:hover::before,
+    .dropdown-item:focus-visible::before{
+      width: 100%;
+    }
+    
     .dropdown-item:hover,
     .dropdown-item:focus-visible{
-      background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08));
       color: #8b5cf6;
       transform: translateX(-3px);
     }
-    .dropdown-item.disabled{ color: #a0aec0; pointer-events: none; }
+    
+    .dropdown-item.disabled{ 
+      color: #a0aec0; 
+      pointer-events: none; 
+    }
 
-    .game-status-badge{ font-size: .7rem; padding: .25rem .5rem; border-radius: 15px; font-weight: 600; }
-    .game-status-badge.available{ background: var(--success-bg); color: var(--success-tx); }
-    .game-status-badge.coming-soon{ background: var(--warn-bg); color: var(--warn-tx); }
+    .game-status-badge{ 
+      font-size: .7rem; 
+      padding: .25rem .5rem; 
+      border-radius: 15px; 
+      font-weight: 600; 
+    }
+    
+    .game-status-badge.available{ 
+      background: var(--success-bg); 
+      color: var(--success-tx); 
+    }
+    
+    .game-status-badge.coming-soon{ 
+      background: var(--warn-bg); 
+      color: var(--warn-tx); 
+    }
 
     /* المستخدم */
-    .user-menu{ display:flex; align-items:center; background: rgba(255,255,255,.1); border-radius: 25px; padding:.5rem 1rem !important; }
-    .user-avatar{
-      width: 35px; height: 35px; background: #fff; border-radius: 50%;
-      display:flex; align-items:center; justify-content:center; color:#8b5cf6; margin-left:.5rem;
+    .user-menu{ 
+      display:flex; 
+      align-items:center; 
+      background: rgba(255,255,255,.1); 
+      border-radius: 25px; 
+      padding:.5rem 1rem !important; 
+      transition: var(--transition);
     }
-    .user-name{ font-weight:600; }
-    .user-dropdown{ min-width: 280px; }
+    
+    .user-menu:hover {
+      background: rgba(255,255,255,.15);
+    }
+    
+    .user-avatar{
+      width: 35px; 
+      height: 35px; 
+      background: #fff; 
+      border-radius: 50%;
+      display:flex; 
+      align-items:center; 
+      justify-content:center; 
+      color:#8b5cf6; 
+      margin-left:.5rem;
+      transition: var(--transition);
+    }
+    
+    .user-name{ 
+      font-weight:600; 
+    }
+    
+    .user-dropdown{ 
+      min-width: 280px; 
+    }
 
     /* أزرار الدخول */
-    .auth-buttons{ display:flex; gap:.5rem; }
+    .auth-buttons{ 
+      display:flex; 
+      gap:.5rem; 
+    }
+    
     .btn-outline-light{
-      border: 2px solid rgba(255,255,255,.35); color:#fff; font-weight:600;
-      padding:.5rem 1.5rem; border-radius:25px; transition: transform .12s ease, background .12s ease, color .12s ease, border-color .12s ease;
+      border: 2px solid rgba(255,255,255,.35); 
+      color:#fff; 
+      font-weight:600;
+      padding:.5rem 1.5rem; 
+      border-radius:25px; 
+      transition: var(--transition);
     }
-    .btn-outline-light:hover{ background:#fff; color:#8b5cf6; border-color:#fff; transform: translateY(-2px); }
+    
+    .btn-outline-light:hover{ 
+      background:#fff; 
+      color:#8b5cf6; 
+      border-color:#fff; 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(255,255,255,.25);
+    }
+    
     .btn-primary{
-      background: var(--btn-grad); border:none; font-weight:600;
-      padding:.5rem 1.5rem; border-radius:25px; transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+      background: var(--btn-grad); 
+      border:none; 
+      font-weight:600;
+      padding:.5rem 1.5rem; 
+      border-radius:25px; 
+      transition: var(--transition);
       color:#fff;
+      position: relative;
+      overflow: hidden;
     }
-    .btn-primary:hover{ background: var(--btn-grad-hover); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(245,158,11,.35); }
+    
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1));
+      transform: translateX(-100%);
+      transition: transform 0.6s;
+    }
+    
+    .btn-primary:hover::before {
+      transform: translateX(100%);
+    }
+    
+    .btn-primary:hover{ 
+      background: var(--btn-grad-hover); 
+      transform: translateY(-2px); 
+      box-shadow: 0 5px 15px rgba(245,158,11,.35); 
+    }
 
     /* زر الجوال */
-    .custom-toggler{ border:none; padding:.5rem; background: rgba(255,255,255,.12); border-radius:10px; }
-    .custom-toggler:focus{ box-shadow:none; }
-    .toggler-icon{ display:block; width:25px; height:3px; background:#fff; margin:5px 0; transition: transform .2s ease, opacity .2s ease; border-radius:2px; }
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(1){ transform: rotate(45deg) translate(6px, 6px); }
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){ opacity:0; }
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){ transform: rotate(-45deg) translate(6px, -6px); }
+    .custom-toggler{ 
+      border:none; 
+      padding:.5rem; 
+      background: rgba(255,255,255,.12); 
+      border-radius:10px; 
+      transition: var(--transition);
+    }
+    
+    .custom-toggler:hover {
+      background: rgba(255,255,255,.2);
+    }
+    
+    .custom-toggler:focus{ 
+      box-shadow:none; 
+    }
+    
+    .toggler-icon{ 
+      display:block; 
+      width:25px; 
+      height:3px; 
+      background:#fff; 
+      margin:5px 0; 
+      transition: var(--transition); 
+      border-radius:2px; 
+    }
+    
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(1){ 
+      transform: rotate(45deg) translate(6px, 6px); 
+    }
+    
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){ 
+      opacity:0; 
+    }
+    
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){ 
+      transform: rotate(-45deg) translate(6px, -6px); 
+    }
 
     /* Responsive */
     @media (max-width: 991px){
       .navbar-collapse{
         background: rgba(255,255,255,.97);
-        border-radius: 15px;
+        border-radius: var(--border-radius);
         padding: 1rem;
         margin-top: 1rem;
         backdrop-filter: blur(10px);
+        box-shadow: 0 10px 25px rgba(0,0,0,.1);
       }
-      .nav-link{ color:#2d3748 !important; margin:.25rem 0; }
-      .nav-link:hover{ background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(6,182,212,.1)); color:#8b5cf6 !important; }
-      .auth-buttons{ margin-top:.5rem; flex-direction:column; gap:.75rem; }
-      .user-menu{ background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748 !important; }
-      .logo-img{ height:50px !important; }
-      .logo-container{ padding: 8px 12px; }
+      
+      .nav-link{ 
+        color:#2d3748 !important; 
+        margin:.25rem 0; 
+      }
+      
+      .nav-link:hover{ 
+        background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(6,182,212,.1)); 
+        color:#8b5cf6 !important; 
+      }
+      
+      .auth-buttons{ 
+        margin-top:.5rem; 
+        flex-direction:column; 
+        gap:.75rem; 
+      }
+      
+      .user-menu{ 
+        background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); 
+        color:#2d3748 !important; 
+      }
+      
+      .logo-img{ 
+        height:50px !important; 
+      }
+      
+      .logo-container{ 
+        padding: 8px 12px; 
+      }
+      
+      .dropdown-menu {
+        border: none;
+        box-shadow: none;
+        margin: 0.5rem 0;
+        padding-right: 1rem;
+      }
     }
+    
     @media (max-width: 576px){
-      .navbar{ padding:.5rem 0; }
-      .logo-img{ height:45px !important; }
-      .logo-container{ padding: 6px 10px; }
+      .navbar{ 
+        padding:.5rem 0; 
+      }
+      
+      .logo-img{ 
+        height:45px !important; 
+      }
+      
+      .logo-container{ 
+        padding: 6px 10px; 
+      }
     }
 
     /* حركة القوائم على الديسكتوب فقط */
-    .dropdown-menu{ opacity:0; transform: translateY(-8px); transition: opacity .15s ease, transform .15s ease; display:block; visibility:hidden; }
+    .dropdown-menu{ 
+      opacity:0; 
+      transform: translateY(-8px); 
+      transition: var(--transition); 
+      display:block; 
+      visibility:hidden; 
+    }
+    
     .dropdown:hover .dropdown-menu,
-    .dropdown.show .dropdown-menu{ opacity:1; transform: translateY(0); visibility:visible; }
+    .dropdown.show .dropdown-menu{ 
+      opacity:1; 
+      transform: translateY(0); 
+      visibility:visible; 
+    }
+    
     @media (max-width: 991px){
-      .dropdown-menu{ opacity:1; transform:none; visibility:visible; }
+      .dropdown-menu{ 
+        opacity:1; 
+        transform:none; 
+        visibility:visible; 
+      }
     }
 
     /* تحسين تركيز لوحة المفاتيح */
-    .nav-link:focus-visible, .dropdown-item:focus-visible, .btn-primary:focus-visible, .btn-outline-light:focus-visible{
+    .nav-link:focus-visible, 
+    .dropdown-item:focus-visible, 
+    .btn-primary:focus-visible, 
+    .btn-outline-light:focus-visible{
       outline: 3px solid rgba(255,255,255,.6);
       outline-offset: 2px;
+    }
+    
+    /* تأثيرات إضافية للأناقة */
+    .dropdown-item i {
+      transition: var(--transition);
+    }
+    
+    .dropdown-item:hover i {
+      transform: scale(1.2);
+    }
+    
+    /* تحسينات للرسوم المتحركة */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .dropdown-menu.show {
+      animation: fadeIn 0.3s ease forwards;
     }
   </style>
 </head>
@@ -223,11 +506,12 @@
                 role="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                id="gamesDropdown"
               >
                 <i class="fas fa-gamepad me-1" aria-hidden="true"></i>
                 الألعاب
               </a>
-              <ul class="dropdown-menu custom-dropdown" role="menu" aria-label="قائمة الألعاب">
+              <ul class="dropdown-menu custom-dropdown" role="menu" aria-labelledby="gamesDropdown">
                 <li role="none">
                   <a class="dropdown-item" href="{% url 'games:letters_home' %}" role="menuitem">
                     <span class="d-flex align-items-center">
@@ -283,13 +567,14 @@
                 role="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                id="userDropdown"
               >
                 <div class="user-avatar" aria-hidden="true">
                   <i class="fas fa-user"></i>
                 </div>
                 <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
               </a>
-              <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-label="قائمة المستخدم">
+              <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
                 <!-- تم إزالة تكرار الاسم؛ نعرض البريد فقط كمرجع صغير -->
                 <li class="px-3 py-2">
                   <small class="text-muted d-block">{{ user.email }}</small>
@@ -342,6 +627,9 @@
 
   <!-- Spacer يمنع تداخل الهيدر الثابت مع المحتوى -->
   <div id="header-spacer" aria-hidden="true"></div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
@@ -405,40 +693,30 @@
     // 6) إغلاق طيّة الجوال عند الضغط على "روابط حقيقية" فقط (استثناء الـ dropdown-toggle)
     document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(a => {
       a.addEventListener('click', () => {
-        const bsCollapse = window.bootstrap?.Collapse?.getOrCreateInstance(navCollapse);
+        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
         if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
-          bsCollapse?.hide();
+          bsCollapse.hide();
         }
       });
     });
 
-    // 7) اجعل الضغط على أسهم القوائم (الألعاب / الملف الشخصي) يفتح/يقفل القائمة فقط
-    document.querySelectorAll('.dropdown > .nav-link.dropdown-toggle').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        // مهم: منع الإغلاق العام للطيّة
-        e.preventDefault();
-        e.stopPropagation();
-
-        // ابقِ الطيّة مفتوحة على الجوال، وافتح/أغلق القائمة فقط
-        const inst = window.bootstrap?.Dropdown?.getOrCreateInstance(btn);
-        inst?.toggle();
-
-        // لا تغلق الطيّة على الجوال هنا إطلاقاً
+    // 7) إصلاح مشكلة القوائم المنسدلة - إغلاقها عند النقر على عنصر
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+      item.addEventListener('click', function() {
+        // إغلاق القائمة المنسدلة عند النقر على عنصر
+        const dropdownElement = this.closest('.dropdown');
+        const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownElement.querySelector('.dropdown-toggle'));
+        dropdownInstance.hide();
+        
+        // إغلاق القائمة على الجوال
+        if (window.innerWidth <= 991) {
+          const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+          bsCollapse.hide();
+        }
       });
     });
 
-    // 8) إغلاق القائمة المنسدلة عند اختيار عنصر داخلها (دون إغلاق الطيّة)
-    document.querySelectorAll('.dropdown .dropdown-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        // لا نمنع الانتشار هنا حتى تعمل بقية المعالجات (مثل إغلاق الطيّة بعد الاختيار لو أردت)
-        const dd = item.closest('.dropdown');
-        const toggle = dd?.querySelector('[data-bs-toggle="dropdown"]');
-        const bsDropdown = window.bootstrap?.Dropdown?.getOrCreateInstance(toggle);
-        bsDropdown?.hide();
-      });
-    });
-
-    // 9) إغلاق أي قائمة مفتوحة عند الضغط خارج الهيدر (لا علاقة له بالطيّة)
+    // 8) إغلاق أي قائمة مفتوحة عند الضغط خارج الهيدر
     document.addEventListener('click', (e) => {
       const insideNav = e.target.closest('.navbar');
       if (!insideNav) {
