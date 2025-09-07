@@ -17,6 +17,7 @@ logger = logging.getLogger('games')
 
 
 class LettersGameConsumer(AsyncWebsocketConsumer):
+    
     """
     Consumer محسّن مع ربط فوري بين الصفحات:
     - المتسابق يضغط → فوري لشاشة العرض + المقدم

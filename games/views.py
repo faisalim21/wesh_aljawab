@@ -1130,7 +1130,8 @@ def api_contestant_buzz_http(request):
         }
 
         try:
-            added = cache.add(buzz_lock_key, lock_payload, timeout=3)
+            added = cache.add(buzz_lock_key, lock_payload, timeout=4)
+
         except Exception:
             added = False
 
