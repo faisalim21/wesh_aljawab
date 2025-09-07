@@ -1221,11 +1221,12 @@ def api_contestant_buzz_http(request):
 @require_http_methods(["POST"])
 def letters_new_round(request):
     """
-    بدء جولة جديدة للحزم المدفوعة فقط، بدون أي توكن.
-    - أي شخص يملك رابط المقدم يقدر يشغّلها.
-    - إذا الجلسة مجانية → 403
-    - إذا منتهية الصلاحية → 410
-    - تبث التغيير عبر WebSocket وتفرّغ تقدم الخلايا.
+    بدء جولة جديدة للحزم المدفوعة فقط.
+
+    ✅ لا نغيّر النقاط (team1_score / team2_score) ولا حالة الفائز.
+    ✅ نعيد فقط ترتيب الحروف.
+    ✅ نفرّغ تقدم الخلايا (cell_states) + قائمة الأحرف المستخدمة (used_letters).
+    ✅ نبثّ عبر WebSocket حدث letters_updated ليُعاد بناء الخلايا في الواجهات.
     """
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
@@ -1238,34 +1239,47 @@ def letters_new_round(request):
 
     session = get_object_or_404(GameSession, id=sid, is_active=True)
 
+    # انتهاء الصلاحية
     if is_session_expired(session):
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
+    # الميزة للمدفوع فقط
     if session.package.is_free:
         return JsonResponse({'success': False, 'error': 'الميزة متاحة للحزم المدفوعة فقط'}, status=403)
 
+    # 1) أعِد ترتيب الحروف عشوائيًا (للمدفوع)
     new_letters = get_paid_order_fresh()
     set_session_order(session.id, new_letters, is_free=False)
 
+    # 2) صفّر تقدم الخلايا فقط (بدون أي تعديل على النقاط)
     try:
         progress = LettersGameProgress.objects.filter(session=session).first()
         if progress:
             progress.cell_states = {}
             progress.used_letters = []
             progress.save(update_fields=['cell_states', 'used_letters'])
+        else:
+            LettersGameProgress.objects.create(session=session, cell_states={}, used_letters=[])
     except Exception:
+        # نحافظ على استمرارية الاستجابة حتى لو فشل التحديث (لن نعيد النقاط بأي حال)
         pass
 
+    # 3) بثّ التغيير لكل العملاء
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
             async_to_sync(channel_layer.group_send)(
                 f"letters_session_{session.id}",
-                {"type": "broadcast_letters_replace", "letters": new_letters, "reset_progress": True}
+                {
+                    "type": "broadcast_letters_replace",
+                    "letters": new_letters,
+                    "reset_progress": True,  # واجهة العرض/المقدم تعتمد عليها لإعادة الرسم فقط
+                }
             )
     except Exception as e:
         logger.error(f"WS broadcast error (new round): {e}")
 
+    # لا نرجّع النقاط في الاستجابة (حتى لا يُساء استخدامها لإعادة ضبطها من الواجهة)
     return JsonResponse({'success': True, 'letters': new_letters, 'reset_progress': True})
 
 
