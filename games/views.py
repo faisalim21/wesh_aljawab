@@ -261,6 +261,7 @@ def letters_game_home(request):
         * "ابدأ اللعب" للحزم المشتراة النشطة
         * شارة "سبق الاستخدام" للحزم التي انتهت/اكتملت سابقًا
     - تُحدِّث أهلية المجاني بناءً على FreeTrialUsage.
+    - NEW: إن وُجدت جلسة مجانية سارية للمستخدم → نمرر free_active_session للقالب.
     """
     packages_qs = GamePackage.objects.filter(
         game_type='letters', is_active=True
@@ -292,6 +293,8 @@ def letters_game_home(request):
                 continue
             if p.is_completed or p.is_expired:
                 used_before_ids.add(p.package_id)
+    else:
+        purchases = None  # للوضوح فقط
 
     # أهلية المجاني
     free_session_eligible = False
@@ -301,6 +304,16 @@ def letters_game_home(request):
         free_session_eligible = ok
         free_session_message = msg
 
+    # ✅ جلسة مجانية سارية للمستخدم (لنفس الحزمة المجانية)، لعرض "ارجع إلى جلستك"
+    free_active_session = None
+    if request.user.is_authenticated and free_package:
+        candidate = (GameSession.objects
+                     .filter(host=request.user, package=free_package, is_active=True)
+                     .order_by('-created_at')
+                     .first())
+        if candidate and not is_session_expired(candidate):
+            free_active_session = candidate
+
     context = {
         'free_package': free_package,
         'paid_packages': paid_packages,
@@ -308,8 +321,10 @@ def letters_game_home(request):
         'used_before_ids': used_before_ids,
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
+        'free_active_session': free_active_session,  # 👈 الجديد
     }
     return render(request, 'games/letters/packages.html', context)
+
 
 @require_http_methods(["POST"])
 def create_letters_session(request):
@@ -568,6 +583,8 @@ def images_game_home(request):
 
     # تجهيز متغيرات العرض بحسب حالة المستخدم
     if request.user.is_authenticated:
+        now = timezone.now()
+
         # الحزم التي يملكها المستخدم حاليًا (نشطة: is_completed=False + لم تنتهِ)
         user_purchases = set(
             UserPurchase.objects.filter(
@@ -576,7 +593,7 @@ def images_game_home(request):
                 package__game_type='images',
                 package__is_active=True
             )
-            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=timezone.now()))
+            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
             .values_list('package_id', flat=True)
         )
 
@@ -591,11 +608,23 @@ def images_game_home(request):
         free_session_eligible, free_session_message, _count = check_free_session_eligibility(
             request.user, 'images'
         )
+
+        # ✅ جلسة مجانية سارية (images) للمستخدم لهذه الحزمة
+        free_active_session = None
+        if free_package:
+            candidate = (GameSession.objects
+                         .filter(host=request.user, package=free_package, is_active=True, game_type='images')
+                         .order_by('-created_at')
+                         .first())
+            if candidate and not is_session_expired(candidate):
+                free_active_session = candidate
+
     else:
         user_purchases = set()
         used_before_ids = set()
         free_session_eligible = False
         free_session_message = 'سجّل الدخول لتجربة الجولة المجانية.'
+        free_active_session = None
 
     return render(request, 'games/images/packages.html', {
         'page_title': 'وش الجواب - تحدي الصور',
@@ -605,6 +634,7 @@ def images_game_home(request):
         'user_purchases': user_purchases,
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
+        'free_active_session': free_active_session,  # 👈 مهم عشان زر "ارجع إلى جلستك المجانية"
     })
 
 

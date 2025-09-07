@@ -233,12 +233,23 @@
 
               <div class="pkg-actions">
                 {% if request.user.is_authenticated %}
-                  {% if free_session_eligible %}
+
+                  {# ✅ لو عنده جلسة مجانية سارية لنفس الحزمة #}
+                  {% if free_active_session %}
+                    <a href="{% url 'games:images_session' free_active_session.id %}" class="btn-play" id="freeImgBtn">
+                      <span class="btn-text">ارجع إلى جلستك المجانية</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </a>
+
+                  {# مؤهل لبدء جلسة مجانية جديدة #}
+                  {% elif free_session_eligible %}
                     <button type="button" class="btn-play" id="freeImgBtn"
                             onclick="createFreeImagesSession('{{ free_package.id }}')">
                       <span class="btn-text">ابدأ الجولة المجانية</span>
                       <div class="loading-spinner"><div class="spinner"></div></div>
                     </button>
+
+                  {# غير مؤهل ولا توجد جلسة سارية #}
                   {% else %}
                     <button type="button" class="btn-play" id="freeImgBtn" disabled>
                       <span class="btn-text">غير متاح</span>
@@ -248,6 +259,7 @@
                       {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
                     </div>
                   {% endif %}
+
                 {% else %}
                   <a class="btn btn-outline-primary w-100 mt-1"
                     href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
@@ -258,6 +270,7 @@
             </div>
           </div>
         {% endif %}
+
 
         {% for package in paid_packages %}
           <div class="pkg-col">
