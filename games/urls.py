@@ -29,6 +29,8 @@ urlpatterns = [
     path('api/user-session-stats/', views.api_user_session_stats, name='api_user_session_stats'),
     path('api/contestant-buzz/', views.api_contestant_buzz_http, name='api_contestant_buzz_http'),
     path('api/letters-new-round/', views.letters_new_round, name='api_letters_new_round'),
+    path('api/letters-select-letter/', views.api_letters_select_letter, name='api_letters_select_letter'),
+
 
     # =========================
     # تحدّي الصور (Images)

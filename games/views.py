@@ -1284,6 +1284,56 @@ def letters_new_round(request):
 
 
 
+# --- NEW: بثّ حرف مختار من المقدم إلى شاشة العرض ---
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_letters_select_letter(request):
+    """
+    يستقبل session_id + letter من المقدم، ويتحقق أن الحرف ضمن ترتيب الجلسة،
+    ثم يبثّ حدث letter_selected عبر WebSocket لشاشة العرض/الجميع.
+    لا يغيّر أي حالة (نقاط/تلوين)، فقط إشعار بصري.
+    """
+    try:
+        payload = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
+
+    sid   = payload.get("session_id")
+    letter = payload.get("letter")
+    if not sid or not letter:
+        return JsonResponse({'success': False, 'error': 'session_id و letter مطلوبة'}, status=400)
+
+    try:
+        session = GameSession.objects.get(id=sid, is_active=True, game_type='letters')
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
+
+    if is_session_expired(session):
+        return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+    # تأكد أن الحرف موجود في ترتيب هذه الجلسة
+    letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
+    if letter not in letters:
+        return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+
+    # بثّ إلى المجموعة
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"letters_session_{session.id}",
+                {
+                    "type": "broadcast_letter_selected",  # سيحوّلها الـ consumer إلى payload لعملاء WS
+                    "letter": letter,
+                }
+            )
+    except Exception as e:
+        logger.error(f'WS broadcast error (letter_selected): {e}')
+
+    return JsonResponse({'success': True, 'message': 'تم بثّ الحرف', 'letter': letter})
+
+
+
 # تحدي الصور
 
 # تحدي الصور

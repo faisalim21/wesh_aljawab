@@ -400,7 +400,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             }))
 
 
-
+    async def broadcast_letter_selected(self, event):
+        # يرسل للواجهة رسالة JSON قياسية
+        await self.send(text_data=json.dumps({
+            "type": "letter_selected",
+            "letter": event.get("letter")
+        }))
 
 
 

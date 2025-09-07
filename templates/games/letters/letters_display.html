@@ -89,6 +89,19 @@
     </script>
 
     <style>
+
+        /* إبراز أنيق للحرف المختار */
+        .hex-cell.selected .hex-shape {
+          stroke: #f59e0b;            /* برتقالي جذاب */
+          stroke-width: 8;
+          filter: drop-shadow(0 0 14px rgba(245,158,11,.55));
+          transition: stroke .15s ease, stroke-width .15s ease;
+        }
+        .hex-cell.selected .hex-text {
+          transform: scale(1.12);
+          transition: transform .15s ease;
+        }
+
         body {
             background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%);
             font-family: 'Tajawal', sans-serif;
@@ -243,6 +256,29 @@
   let countdownInterval = null;
   let heartbeatTimer = null;
 
+  // إبراز الحرف المختار (يبقى إلى أن يحدث حدث آخر مثل اختيار حرف جديد أو جولة جديدة)
+  let selectedLetter = null;
+
+  // حقن CSS للإبراز (في حال ما كان موجود)
+  (function injectSelectedCSS(){
+    const id = 'wjg-selected-css';
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent = `
+      .hex-cell.selected .hex-shape{
+        stroke:#f59e0b; stroke-width:8;
+        filter: drop-shadow(0 0 14px rgba(245,158,11,.55));
+        transition: stroke .15s ease, stroke-width .15s ease;
+      }
+      .hex-cell.selected .hex-text{
+        transform: scale(1.12);
+        transition: transform .15s ease;
+      }
+    `;
+    document.head.appendChild(style);
+  })();
+
   // ===================== بناء خلايا العسل =====================
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
@@ -297,6 +333,11 @@
       g.appendChild(t);
       svg.appendChild(g);
     }
+
+    // لو كان عندنا حرف مختار مسبقًا وموجود في هذه الشبكة — أعد إبرازَه
+    if (selectedLetter && letters.includes(selectedLetter)) {
+      applyLetterHighlight(selectedLetter);
+    }
   }
 
   function rebuildHoneycomb(letters, resetProgress = false) {
@@ -308,9 +349,35 @@
 
     createHoneycombCells();
 
-    // لو resetProgress = true نخلي الألوان ترجع افتراضيًا
+    // في حالة جولة جديدة أو إعادة ترتيب إجبارية: نلغي الإبراز إذا resetProgress=true
+    // غير ذلك سنحاول إعادة الإبراز في createHoneycombCells أعلاه لو الحرف لا يزال موجودًا.
     if (resetProgress) {
-      // ما نسوي شيء إضافي هنا — بنعتمد على API الحالة لإعادة الرسم
+      clearLetterHighlight();
+    }
+  }
+
+  // ===================== إبراز الحرف المختار =====================
+  function clearLetterHighlight(){
+    if (!selectedLetter) return;
+    const prev = document.querySelector(`[data-letter="${selectedLetter}"]`);
+    if (prev) prev.classList.remove('selected');
+    selectedLetter = null;
+  }
+
+  function applyLetterHighlight(letter){
+    // أزل الإبراز السابق
+    if (selectedLetter && selectedLetter !== letter) {
+      const prev = document.querySelector(`[data-letter="${selectedLetter}"]`);
+      if (prev) prev.classList.remove('selected');
+    }
+    // عيّن الجديد
+    const el = document.querySelector(`[data-letter="${letter}"]`);
+    if (el) {
+      el.classList.add('selected');
+      selectedLetter = letter;
+    } else {
+      // لو الخلية غير موجودة (مثلاً بعد جولة جديدة)، لا نخزّن قيمة معلّقة
+      selectedLetter = null;
     }
   }
 
@@ -366,6 +433,7 @@
     if (!el) return;
     el.classList.remove('team1', 'team2');
     if (state && state !== 'normal') el.classList.add(state);
+    // ملاحظة: لا نزيل إبراز "selected" هنا — يبقى حتى يختار المقدم حرفًا جديدًا أو تحدث جولة جديدة
   }
 
   // ===================== مزامنة أوليّة من الخادم =====================
@@ -394,6 +462,7 @@
           updateCell(ltr, st);
         }
       }
+      // لا يوجد حرف مختار من السيرفر — نترك selectedLetter كما هو (إن وُجد سابقًا)
     } catch {}
   }
 
@@ -433,9 +502,14 @@
             updateScores(d.team1_score, d.team2_score);
             break;
           case 'letters_updated':
-            // جولة جديدة: أعِد بناء الخلايا ثم اطلب الحالة لتلوينها وتحديث النقاط
+            // جولة جديدة: أعِد بناء الخلايا، ثم اطلب الحالة لتلوينها وتحديث النقاط
             rebuildHoneycomb(d.letters || [], !!d.reset_progress);
             setTimeout(loadSessionState, 50);
+            // لو reset_progress=true سنكون قد أزلنا الإبراز. بخلاف ذلك سيُعاد تلقائيًا إن كان الحرف لا يزال موجودًا.
+            break;
+          case 'letter_selected':
+            // إبراز الحرف المختار من المقدم — يبقى حتى اختيار حرف آخر أو جولة جديدة
+            if (d.letter) applyLetterHighlight(d.letter);
             break;
           case 'pong':
             break;

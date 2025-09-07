@@ -551,7 +551,7 @@
     if (now - lastClickAt < 150) return; // منع الاهتزاز السريع
     lastClickAt = now;
 
-    showQuestion(letter);
+    showQuestion(letter); // ← سيبث الحرف للعرض
 
     if (lastClickedLetter === letter){
       // تدوير اللون
@@ -634,6 +634,18 @@
       }
 
       document.getElementById('questionDisplay').textContent = `حرف ${letter}`;
+
+      // --- NEW: بثّ اختيار الحرف لشاشة العرض (API موحّد) ---
+      try{
+        await fetch('/games/api/letters-select-letter/', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ session_id: sessionId, letter })
+        });
+      }catch(e){
+        // نطنّش فشل البث، ليس حرجًا
+      }
+
     }catch{}
   }
 
@@ -852,6 +864,7 @@
     }
   });
 </script>
+
 
 
 
