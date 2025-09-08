@@ -369,45 +369,37 @@
     const g = document.querySelector(`[data-letter="${letter}"]`);
     if (!g) return;
     const poly = g.querySelector('polygon');
-    const txt  = g.querySelector('text');
     if (poly) {
       poly.removeAttribute('stroke');
       poly.removeAttribute('stroke-width');
+      poly.removeAttribute('stroke-linejoin');
       poly.removeAttribute('filter');
       poly.style.filter = '';
     }
-    if (txt) {
-      txt.style.fill = '';
-      txt.style.fontWeight = '';
-    }
+    // لا نغيّر text إطلاقًا
   }
 
-  function applySelectedHighlight(letter, silent=false) {
-    // نظّف السابق
-    if (selectedLetter && selectedLetter !== letter) {
-      clearInlineHighlight(selectedLetter);
+  function applySelectedHighlight(letter, silent = false) {
+    // نظّف أي تظليل سابق
+    if (window.selectedLetter && window.selectedLetter !== letter) {
+      clearInlineHighlight(window.selectedLetter);
     }
-    selectedLetter = letter || null;
+    window.selectedLetter = letter || null;
 
     if (letter) {
       const g = document.querySelector(`[data-letter="${letter}"]`);
       if (g) {
         const poly = g.querySelector('polygon');
-        const txt  = g.querySelector('text');
         if (poly) {
-          // حد أبيض سميك + فلتر توهج قوي — بدون أي transform أو حركة
+          // حد أبيض عريض + توهج قوي — بدون أي transform أو تغيير للنص
           poly.setAttribute('stroke', '#ffffff');
-          poly.setAttribute('stroke-width', '18');
+          poly.setAttribute('stroke-width', '22');       // ممكن ترفعها لـ 24 لو تبغى أقوى
+          poly.setAttribute('stroke-linejoin', 'round'); // حواف أنعم
           poly.setAttribute('filter', 'url(#strongGlow)');
-        }
-        if (txt) {
-          // نرفع التباين فقط (لا نحرك النص)
-          txt.style.fill = '#ffffff';
-          txt.style.fontWeight = '900';
         }
       }
     }
-    if (!silent) { /* بدون مؤثرات إضافية */ }
+    // ما نلمس لون/حجم نص الحرف نهائيًا
   }
 
   // ===================== أصوات + عدّ تنازلي =====================
