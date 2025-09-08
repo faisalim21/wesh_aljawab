@@ -250,17 +250,50 @@
   // ===================== متغيرات عامة =====================
   const sessionId = '{{ session.id }}';
   let socket = null;
-  let reconnectDelay = 1000; // يبدأ من 1s
-  const maxDelay = 5000;     // حد أقصى 5s
+  let reconnectDelay = 1000;
+  const maxDelay = 5000;
   let countdownInterval = null;
   let heartbeatTimer = null;
 
-  // نحفظ آخر حرف مُمَيّز علشان نرجّع تظليله بعد إعادة بناء الخلايا
+  // نحفظ آخر حرف مميّز
   let selectedLetter = null;
 
   // ===================== بناء خلايا العسل =====================
+  function ensureGlowFilter(svg){
+    // أضف <defs> لفلتر التوهج (مرة واحدة)
+    if (svg.querySelector('#strongGlow')) return;
+    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    const filter = document.createElementNS('http://www.w3.org/2000/svg','filter');
+    filter.setAttribute('id','strongGlow');
+    filter.setAttribute('x','-60%');
+    filter.setAttribute('y','-60%');
+    filter.setAttribute('width','220%');
+    filter.setAttribute('height','220%');
+
+    const ds1 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
+    ds1.setAttribute('dx','0'); ds1.setAttribute('dy','0');
+    ds1.setAttribute('stdDeviation','6');
+    ds1.setAttribute('flood-color','#ffffff'); ds1.setAttribute('flood-opacity','0.95');
+
+    const ds2 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
+    ds2.setAttribute('dx','0'); ds2.setAttribute('dy','0');
+    ds2.setAttribute('stdDeviation','14');
+    ds2.setAttribute('flood-color','#7c3aed'); ds2.setAttribute('flood-opacity','0.65');
+
+    const ds3 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
+    ds3.setAttribute('dx','0'); ds3.setAttribute('dy','0');
+    ds3.setAttribute('stdDeviation','28');
+    ds3.setAttribute('flood-color','#7c3aed'); ds3.setAttribute('flood-opacity','0.45');
+
+    filter.appendChild(ds1); filter.appendChild(ds2); filter.appendChild(ds3);
+    defs.appendChild(filter);
+    svg.insertBefore(defs, svg.firstChild);
+  }
+
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
+    ensureGlowFilter(svg);
+
     const letters = (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
       ? window.sessionData.arabicLetters
       : [];
@@ -313,7 +346,7 @@
       svg.appendChild(g);
     }
 
-    // بعد البناء، لو فيه حرف مختار سابقًا وما زال ضمن الحروف الحالية، أعد إبرازُه
+    // لو فيه حرف مختار سابقًا وما زال ضمن الحروف الحالية، أعد إبرازُه
     if (selectedLetter && letters.includes(selectedLetter)) {
       applySelectedHighlight(selectedLetter, /*silent*/true);
     }
@@ -326,13 +359,11 @@
     window.sessionData = window.sessionData || {};
     window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
 
-    // لو resetProgress = true نمسح التحديد السابق
     if (resetProgress) selectedLetter = null;
-
     createHoneycombCells();
   }
 
-  // ===================== إبراز الحرف بدون تحريك =====================
+  // ===================== إبراز الحرف (قوي/بدون حركة) =====================
   function clearInlineHighlight(letter) {
     if (!letter) return;
     const g = document.querySelector(`[data-letter="${letter}"]`);
@@ -342,45 +373,41 @@
     if (poly) {
       poly.removeAttribute('stroke');
       poly.removeAttribute('stroke-width');
+      poly.removeAttribute('filter');
       poly.style.filter = '';
-      poly.style.outline = '';
     }
     if (txt) {
-      txt.style.fill = ''; // يرجع للون الافتراضي
+      txt.style.fill = '';
       txt.style.fontWeight = '';
     }
   }
 
   function applySelectedHighlight(letter, silent=false) {
-    // شِيل أي تظليل قديم
+    // نظّف السابق
     if (selectedLetter && selectedLetter !== letter) {
       clearInlineHighlight(selectedLetter);
     }
     selectedLetter = letter || null;
 
-    // طبّق تظليل قوي بدون أي transform
     if (letter) {
       const g = document.querySelector(`[data-letter="${letter}"]`);
       if (g) {
         const poly = g.querySelector('polygon');
         const txt  = g.querySelector('text');
         if (poly) {
-          // حدّ أبيض سميك + توهج — لا يحرّك الخلية
+          // حد أبيض سميك + فلتر توهج قوي — بدون أي transform أو حركة
           poly.setAttribute('stroke', '#ffffff');
-          poly.setAttribute('stroke-width', '14');
-          poly.style.filter = 'drop-shadow(0 0 14px rgba(255,255,255,.55)) drop-shadow(0 0 26px rgba(124,58,237,.45))';
+          poly.setAttribute('stroke-width', '18');
+          poly.setAttribute('filter', 'url(#strongGlow)');
         }
         if (txt) {
+          // نرفع التباين فقط (لا نحرك النص)
           txt.style.fill = '#ffffff';
           txt.style.fontWeight = '900';
         }
       }
     }
-
-    // ما في أي scale/translate إطلاقًا
-    if (!silent) {
-      // ممكن مستقبلاً نضيف صوت/إيماءة خفيفة هنا لو حبيت
-    }
+    if (!silent) { /* بدون مؤثرات إضافية */ }
   }
 
   // ===================== أصوات + عدّ تنازلي =====================
@@ -435,7 +462,7 @@
     if (!el) return;
     el.classList.remove('team1', 'team2');
     if (state && state !== 'normal') el.classList.add(state);
-    // ملاحظة: لا نلمس التظليل المختار هنا — يبقى كما هو
+    // لا نلمس تظليل الحرف المختار هنا — يبقى كما هو
   }
 
   // ===================== مزامنة أوليّة من الخادم =====================
@@ -449,7 +476,6 @@
       if (!r.ok) return;
       const data = await r.json();
 
-      // لو ترتيب الحروف تغيّر من جهة السيرفر نعيد البناء
       if (Array.isArray(data.arabic_letters)) {
         const cur = (window.sessionData && window.sessionData.arabicLetters) || [];
         const changed = (cur.length !== data.arabic_letters.length) ||
@@ -465,7 +491,6 @@
         }
       }
 
-      // بعد المزامنة، لو كان فيه selectedLetter مبدئيًا، نعيد إبرازُه
       if (selectedLetter) applySelectedHighlight(selectedLetter, true);
     } catch {}
   }
@@ -506,23 +531,16 @@
             updateScores(d.team1_score, d.team2_score);
             break;
           case 'letters_updated':
-            // جولة جديدة: أعِد بناء الخلايا
             rebuildHoneycomb(d.letters || [], !!d.reset_progress);
-            // لو reset_progress = true نمسح التحديد
             if (d.reset_progress) {
-              if (selectedLetter) { clearInlineHighlight(selectedLetter); }
+              if (selectedLetter) clearInlineHighlight(selectedLetter);
               selectedLetter = null;
-            } else {
-              // أعد إبراز الحرف السابق لو ما زال موجودًا
-              if (selectedLetter && (window.sessionData.arabicLetters || []).includes(selectedLetter)) {
-                applySelectedHighlight(selectedLetter, true);
-              }
+            } else if (selectedLetter && (window.sessionData.arabicLetters || []).includes(selectedLetter)) {
+              applySelectedHighlight(selectedLetter, true);
             }
-            // ثم اطلب الحالة لتلوين الخلايا وتحديث النقاط
             setTimeout(loadSessionState, 50);
             break;
           case 'letter_selected':
-            // إبراز الحرف المختار بدون أي حركة
             if (d.letter) applySelectedHighlight(d.letter);
             break;
           case 'pong':
@@ -552,10 +570,9 @@
 
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
-    console.log('🎬 شاشة العرض – WebSocket + مزامنة أولية للحالة');
-    createHoneycombCells();   // رسم أولي
-    loadSessionState();       // مزامنة أوليّة (نقاط + تلوين الخلايا)
-    setupWebSocket();         // بثّ حي
+    createHoneycombCells();
+    loadSessionState();
+    setupWebSocket();
 
     window.addEventListener('beforeunload', () => {
       try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
@@ -564,6 +581,7 @@
     });
   });
 </script>
+
 
 
 
