@@ -364,43 +364,48 @@
   }
 
   // ===================== إبراز الحرف (قوي/بدون حركة) =====================
-  function clearInlineHighlight(letter) {
+  function clearInlineHighlight(letter){
     if (!letter) return;
     const g = document.querySelector(`[data-letter="${letter}"]`);
     if (!g) return;
     const poly = g.querySelector('polygon');
-    if (poly) {
+    if (poly){
       poly.removeAttribute('stroke');
       poly.removeAttribute('stroke-width');
       poly.removeAttribute('stroke-linejoin');
-      poly.removeAttribute('filter');
-      poly.style.filter = '';
+      poly.style.filter = '';           // مهم: لا نلمس text إطلاقًا
     }
-    // لا نغيّر text إطلاقًا
   }
 
-  function applySelectedHighlight(letter, silent = false) {
-    // نظّف أي تظليل سابق
-    if (window.selectedLetter && window.selectedLetter !== letter) {
+  // تظليل قوي وعصري: حد عريض + توهّج متدرّج بالنيو-سيان/بنفسجي
+  function applySelectedHighlight(letter){
+    // نظّف القديم
+    if (window.selectedLetter && window.selectedLetter !== letter){
       clearInlineHighlight(window.selectedLetter);
     }
     window.selectedLetter = letter || null;
+    if (!letter) return;
 
-    if (letter) {
-      const g = document.querySelector(`[data-letter="${letter}"]`);
-      if (g) {
-        const poly = g.querySelector('polygon');
-        if (poly) {
-          // حد أبيض عريض + توهج قوي — بدون أي transform أو تغيير للنص
-          poly.setAttribute('stroke', '#ffffff');
-          poly.setAttribute('stroke-width', '22');       // ممكن ترفعها لـ 24 لو تبغى أقوى
-          poly.setAttribute('stroke-linejoin', 'round'); // حواف أنعم
-          poly.setAttribute('filter', 'url(#strongGlow)');
-        }
-      }
-    }
-    // ما نلمس لون/حجم نص الحرف نهائيًا
+    const g = document.querySelector(`[data-letter="${letter}"]`);
+    if (!g) return;
+    const poly = g.querySelector('polygon');
+    if (!poly) return;
+
+    // حدّ عريض جدًّا (بدون أي تحريك)
+    poly.setAttribute('stroke', '#22d3ee');       // cyan حديث
+    poly.setAttribute('stroke-width', '26');      // قوّيها لو حبيت (28/30)
+    poly.setAttribute('stroke-linejoin', 'round');
+
+    // توهّج قوي من دون تغيير لون الخلية ولا النص
+    // ثلاث طبقات drop-shadow تعطي إحساس نيو-جلوي
+    poly.style.filter =
+      'drop-shadow(0 0 8px rgba(34,211,238,.95))' +    // وهج داخلي قريب
+      ' drop-shadow(0 0 22px rgba(168,85,247,.55))' +  // هالة بنفسجية أوسع
+      ' drop-shadow(0 0 34px rgba(56,189,248,.45))';   // توسعة ناعمة
+
+    // مهم: لا تغيّر fill ولا text إطلاقًا → يبقى الحرف واضح وثابت مكانه
   }
+
 
   // ===================== أصوات + عدّ تنازلي =====================
   function tone(freq, durMs) {
