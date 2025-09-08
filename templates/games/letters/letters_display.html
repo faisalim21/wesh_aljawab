@@ -110,7 +110,9 @@
             overflow: hidden;
             color: white;
         }
-
+        .hex-cell .hex-text{ transition: none; }
+        /* لا هوامش/تحريك */
+        .hex-cell{ transform: none; }
         /* طبقة عرض ضغطة المتسابق - محسّنة */
         .buzzed-overlay {
             position: fixed; top: 0; left: 0;
@@ -352,6 +354,8 @@
     }
   }
 
+  ensureInnerGlowFilter();
+
   function rebuildHoneycomb(letters, resetProgress = false) {
     const svg = document.getElementById('honeycombSvg');
     [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
@@ -364,47 +368,117 @@
   }
 
   // ===================== إبراز الحرف (قوي/بدون حركة) =====================
+  function ensureInnerGlowFilter(){
+    const svg = document.getElementById('honeycombSvg');
+    if (!svg) return;
+
+    let defs = svg.querySelector('#wjgDefs');
+    if (!defs){
+      defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+      defs.setAttribute('id','wjgDefs');
+      svg.prepend(defs);
+    }
+
+    // لو الفلتر موجود لا نعيد بناءه
+    if (defs.querySelector('#wjgInnerGlow')) return;
+
+    const f = document.createElementNS('http://www.w3.org/2000/svg','filter');
+    f.setAttribute('id','wjgInnerGlow');
+    // نوسّع حدود الفلتر عشان ما ينقص أي جزء (لكن النتيجة تبقى داخل الخلية)
+    f.setAttribute('x','-20%'); f.setAttribute('y','-20%');
+    f.setAttribute('width','140%'); f.setAttribute('height','140%');
+    f.setAttribute('color-interpolation-filters','sRGB');
+
+    // 1) نأخذ ألفا الشكل ونطريه
+    const blur = document.createElementNS('http://www.w3.org/2000/svg','feGaussianBlur');
+    blur.setAttribute('in','SourceAlpha');
+    blur.setAttribute('stdDeviation','7');
+    blur.setAttribute('result','blur');
+
+    // 2) نكوّن حلقه داخلية: SourceAlpha - blur (يخلّي الحواف من الداخل)
+    const inner = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    inner.setAttribute('in','SourceAlpha');
+    inner.setAttribute('in2','blur');
+    inner.setAttribute('operator','arithmetic');
+    inner.setAttribute('k2','-1'); // a*in*in2 + b*in + c*in2 + k
+    inner.setAttribute('k3','1');  // هنا نستخدم: in2*(-1) + in
+    inner.setAttribute('result','innerRing');
+
+    // 3) نلوّن الحلقة الداخلية بلون متدرّج عصري (سيان → بنفسجي خفيف)
+    const flood = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
+    flood.setAttribute('flood-color','#22d3ee'); // Cyan حديث
+    flood.setAttribute('flood-opacity','0.95');
+    flood.setAttribute('result','c1');
+
+    const maskC1 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    maskC1.setAttribute('in','c1');
+    maskC1.setAttribute('in2','innerRing');
+    maskC1.setAttribute('operator','in');
+    maskC1.setAttribute('result','innerCyan');
+
+    const flood2 = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
+    flood2.setAttribute('flood-color','#a855f7'); // Purple خفيف
+    flood2.setAttribute('flood-opacity','0.55');
+    flood2.setAttribute('result','c2');
+
+    const maskC2 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    maskC2.setAttribute('in','c2');
+    maskC2.setAttribute('in2','innerRing');
+    maskC2.setAttribute('operator','in');
+    maskC2.setAttribute('result','innerPurple');
+
+    // 4) ندمج اللونين داخليًا فقط
+    const merge = document.createElementNS('http://www.w3.org/2000/svg','feMerge');
+    const n1 = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); n1.setAttribute('in','innerCyan');
+    const n2 = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); n2.setAttribute('in','innerPurple');
+    const nSrc = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nSrc.setAttribute('in','SourceGraphic');
+    merge.append(n1,n2,nSrc);
+
+    f.append(blur, inner, flood, maskC1, flood2, maskC2, merge);
+    defs.appendChild(f);
+  }
+
+  // ————— إزالة التظليل الحالي عن مضلع الخلية فقط —————
   function clearInlineHighlight(letter){
     if (!letter) return;
     const g = document.querySelector(`[data-letter="${letter}"]`);
     if (!g) return;
+    g.classList.remove('is-selected');   // لو اعتمدنا على class
     const poly = g.querySelector('polygon');
     if (poly){
+      poly.style.filter = '';
+      poly.removeAttribute('filter');
       poly.removeAttribute('stroke');
       poly.removeAttribute('stroke-width');
       poly.removeAttribute('stroke-linejoin');
-      poly.style.filter = '';           // مهم: لا نلمس text إطلاقًا
     }
   }
 
-  // تظليل قوي وعصري: حد عريض + توهّج متدرّج بالنيو-سيان/بنفسجي
+  // ————— تطبيق ظل داخلي بارز (بدون أي تحريك أو تغيير نص) —————
   function applySelectedHighlight(letter){
-    // نظّف القديم
     if (window.selectedLetter && window.selectedLetter !== letter){
       clearInlineHighlight(window.selectedLetter);
     }
     window.selectedLetter = letter || null;
     if (!letter) return;
 
+    ensureInnerGlowFilter();
+
     const g = document.querySelector(`[data-letter="${letter}"]`);
     if (!g) return;
     const poly = g.querySelector('polygon');
     if (!poly) return;
 
-    // حدّ عريض جدًّا (بدون أي تحريك)
-    poly.setAttribute('stroke', '#22d3ee');       // cyan حديث
-    poly.setAttribute('stroke-width', '26');      // قوّيها لو حبيت (28/30)
+    // التظليل من الداخل فقط عبر الفلتر
+    poly.style.filter = 'url(#wjgInnerGlow)';
+    // حد خفيف جداً فقط لزيادة الوضوح (لا يغيّر المقاس)
+    poly.setAttribute('stroke', '#22d3ee');
+    poly.setAttribute('stroke-width', '2');
     poly.setAttribute('stroke-linejoin', 'round');
 
-    // توهّج قوي من دون تغيير لون الخلية ولا النص
-    // ثلاث طبقات drop-shadow تعطي إحساس نيو-جلوي
-    poly.style.filter =
-      'drop-shadow(0 0 8px rgba(34,211,238,.95))' +    // وهج داخلي قريب
-      ' drop-shadow(0 0 22px rgba(168,85,247,.55))' +  // هالة بنفسجية أوسع
-      ' drop-shadow(0 0 34px rgba(56,189,248,.45))';   // توسعة ناعمة
-
-    // مهم: لا تغيّر fill ولا text إطلاقًا → يبقى الحرف واضح وثابت مكانه
+    // لا نلمس <text> نهائياً
   }
+
 
 
   // ===================== أصوات + عدّ تنازلي =====================
