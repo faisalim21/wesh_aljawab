@@ -257,44 +257,15 @@
   let countdownInterval = null;
   let heartbeatTimer = null;
 
-  // نحفظ آخر حرف مميّز
+  // الحرف الحالي المظلّل (يبقى حتى يحدث تغيير آخر)
   let selectedLetter = null;
 
   // ===================== بناء خلايا العسل =====================
-  function ensureGlowFilter(svg){
-    // أضف <defs> لفلتر التوهج (مرة واحدة)
-    if (svg.querySelector('#strongGlow')) return;
-    const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
-    const filter = document.createElementNS('http://www.w3.org/2000/svg','filter');
-    filter.setAttribute('id','strongGlow');
-    filter.setAttribute('x','-60%');
-    filter.setAttribute('y','-60%');
-    filter.setAttribute('width','220%');
-    filter.setAttribute('height','220%');
-
-    const ds1 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
-    ds1.setAttribute('dx','0'); ds1.setAttribute('dy','0');
-    ds1.setAttribute('stdDeviation','6');
-    ds1.setAttribute('flood-color','#ffffff'); ds1.setAttribute('flood-opacity','0.95');
-
-    const ds2 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
-    ds2.setAttribute('dx','0'); ds2.setAttribute('dy','0');
-    ds2.setAttribute('stdDeviation','14');
-    ds2.setAttribute('flood-color','#7c3aed'); ds2.setAttribute('flood-opacity','0.65');
-
-    const ds3 = document.createElementNS('http://www.w3.org/2000/svg','feDropShadow');
-    ds3.setAttribute('dx','0'); ds3.setAttribute('dy','0');
-    ds3.setAttribute('stdDeviation','28');
-    ds3.setAttribute('flood-color','#7c3aed'); ds3.setAttribute('flood-opacity','0.45');
-
-    filter.appendChild(ds1); filter.appendChild(ds2); filter.appendChild(ds3);
-    defs.appendChild(filter);
-    svg.insertBefore(defs, svg.firstChild);
-  }
-
   function createHoneycombCells() {
     const svg = document.getElementById('honeycombSvg');
-    ensureGlowFilter(svg);
+
+    // فلتر التظليل الداخلي (مرة واحدة)
+    ensureInnerGlowFilter();
 
     const letters = (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
       ? window.sessionData.arabicLetters
@@ -348,13 +319,11 @@
       svg.appendChild(g);
     }
 
-    // لو فيه حرف مختار سابقًا وما زال ضمن الحروف الحالية، أعد إبرازُه
+    // إعادة إبراز الحرف السابق إن وُجد
     if (selectedLetter && letters.includes(selectedLetter)) {
       applySelectedHighlight(selectedLetter, /*silent*/true);
     }
   }
-
-  ensureInnerGlowFilter();
 
   function rebuildHoneycomb(letters, resetProgress = false) {
     const svg = document.getElementById('honeycombSvg');
@@ -367,7 +336,7 @@
     createHoneycombCells();
   }
 
-  // ===================== إبراز الحرف (قوي/بدون حركة) =====================
+  // ===================== فلتر تظليل داخلي قوي وواضح =====================
   function ensureInnerGlowFilter(){
     const svg = document.getElementById('honeycombSvg');
     if (!svg) return;
@@ -379,71 +348,75 @@
       svg.prepend(defs);
     }
 
-    // لو الفلتر موجود لا نعيد بناءه
     if (defs.querySelector('#wjgInnerGlow')) return;
 
+    // الفكرة: صبغة لطيفة تغطي داخل الخلية + حلقة توهج سميكة على الحواف من الداخل
     const f = document.createElementNS('http://www.w3.org/2000/svg','filter');
     f.setAttribute('id','wjgInnerGlow');
-    // نوسّع حدود الفلتر عشان ما ينقص أي جزء (لكن النتيجة تبقى داخل الخلية)
     f.setAttribute('x','-20%'); f.setAttribute('y','-20%');
     f.setAttribute('width','140%'); f.setAttribute('height','140%');
     f.setAttribute('color-interpolation-filters','sRGB');
 
-    // 1) نأخذ ألفا الشكل ونطريه
+    // (A) صبغة داخلية خفيفة تعطي إحساس التحديد بدون تحريك أي عنصر
+    const tint = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
+    tint.setAttribute('flood-color', '#06b6d4');     // teal حديث
+    tint.setAttribute('flood-opacity', '0.18');      // تغطية هادئة للداخل
+    tint.setAttribute('result', 'tint');
+    const tintMask = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    tintMask.setAttribute('in', 'tint');
+    tintMask.setAttribute('in2', 'SourceAlpha');
+    tintMask.setAttribute('operator', 'in');         // داخل شكل الخلية فقط
+    tintMask.setAttribute('result', 'innerTint');
+
+    // (B) حلقة توهج داخلية قوية وواضحة على الحواف
     const blur = document.createElementNS('http://www.w3.org/2000/svg','feGaussianBlur');
     blur.setAttribute('in','SourceAlpha');
-    blur.setAttribute('stdDeviation','7');
+    blur.setAttribute('stdDeviation','9');           // سماكة التوهج
     blur.setAttribute('result','blur');
 
-    // 2) نكوّن حلقه داخلية: SourceAlpha - blur (يخلّي الحواف من الداخل)
-    const inner = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
-    inner.setAttribute('in','SourceAlpha');
-    inner.setAttribute('in2','blur');
-    inner.setAttribute('operator','arithmetic');
-    inner.setAttribute('k2','-1'); // a*in*in2 + b*in + c*in2 + k
-    inner.setAttribute('k3','1');  // هنا نستخدم: in2*(-1) + in
-    inner.setAttribute('result','innerRing');
+    // SourceAlpha - blur  => حافة داخلية فقط
+    const innerRing = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    innerRing.setAttribute('in','SourceAlpha');
+    innerRing.setAttribute('in2','blur');
+    innerRing.setAttribute('operator','arithmetic');
+    innerRing.setAttribute('k2','-1');
+    innerRing.setAttribute('k3','1');
+    innerRing.setAttribute('result','edge');
 
-    // 3) نلوّن الحلقة الداخلية بلون متدرّج عصري (سيان → بنفسجي خفيف)
-    const flood = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
-    flood.setAttribute('flood-color','#22d3ee'); // Cyan حديث
-    flood.setAttribute('flood-opacity','0.95');
-    flood.setAttribute('result','c1');
-
-    const maskC1 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
-    maskC1.setAttribute('in','c1');
-    maskC1.setAttribute('in2','innerRing');
-    maskC1.setAttribute('operator','in');
-    maskC1.setAttribute('result','innerCyan');
+    // لونان عصريان ممزوجان على الحافة
+    const flood1 = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
+    flood1.setAttribute('flood-color','#22d3ee');    // Cyan ساطع
+    flood1.setAttribute('flood-opacity','0.9');
+    flood1.setAttribute('result','c1');
+    const mask1 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    mask1.setAttribute('in','c1'); mask1.setAttribute('in2','edge');
+    mask1.setAttribute('operator','in'); mask1.setAttribute('result','ring1');
 
     const flood2 = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
-    flood2.setAttribute('flood-color','#a855f7'); // Purple خفيف
+    flood2.setAttribute('flood-color','#8b5cf6');    // بنفسجي ناعم
     flood2.setAttribute('flood-opacity','0.55');
     flood2.setAttribute('result','c2');
+    const mask2 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
+    mask2.setAttribute('in','c2'); mask2.setAttribute('in2','edge');
+    mask2.setAttribute('operator','in'); mask2.setAttribute('result','ring2');
 
-    const maskC2 = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
-    maskC2.setAttribute('in','c2');
-    maskC2.setAttribute('in2','innerRing');
-    maskC2.setAttribute('operator','in');
-    maskC2.setAttribute('result','innerPurple');
-
-    // 4) ندمج اللونين داخليًا فقط
+    // دمج نهائي: الرسم الأصلي تحت ثم الصبغة ثم الحلقات فوقه
     const merge = document.createElementNS('http://www.w3.org/2000/svg','feMerge');
-    const n1 = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); n1.setAttribute('in','innerCyan');
-    const n2 = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); n2.setAttribute('in','innerPurple');
-    const nSrc = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nSrc.setAttribute('in','SourceGraphic');
-    merge.append(n1,n2,nSrc);
+    const nSrc  = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nSrc.setAttribute('in','SourceGraphic');
+    const nTint = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nTint.setAttribute('in','innerTint');
+    const nR1   = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nR1.setAttribute('in','ring1');
+    const nR2   = document.createElementNS('http://www.w3.org/2000/svg','feMergeNode'); nR2.setAttribute('in','ring2');
+    merge.append(nSrc, nTint, nR1, nR2);
 
-    f.append(blur, inner, flood, maskC1, flood2, maskC2, merge);
+    f.append(tint, tintMask, blur, innerRing, flood1, mask1, flood2, mask2, merge);
     defs.appendChild(f);
   }
 
-  // ————— إزالة التظليل الحالي عن مضلع الخلية فقط —————
+  // إزالة إبراز الخلية المحددة
   function clearInlineHighlight(letter){
     if (!letter) return;
     const g = document.querySelector(`[data-letter="${letter}"]`);
     if (!g) return;
-    g.classList.remove('is-selected');   // لو اعتمدنا على class
     const poly = g.querySelector('polygon');
     if (poly){
       poly.style.filter = '';
@@ -454,12 +427,12 @@
     }
   }
 
-  // ————— تطبيق ظل داخلي بارز (بدون أي تحريك أو تغيير نص) —————
+  // تطبيق إبراز داخلي واضح للخلية (بدون أي تحريك للنص/الخلية)
   function applySelectedHighlight(letter){
-    if (window.selectedLetter && window.selectedLetter !== letter){
-      clearInlineHighlight(window.selectedLetter);
+    if (selectedLetter && selectedLetter !== letter){
+      clearInlineHighlight(selectedLetter);
     }
-    window.selectedLetter = letter || null;
+    selectedLetter = letter || null;
     if (!letter) return;
 
     ensureInnerGlowFilter();
@@ -469,17 +442,14 @@
     const poly = g.querySelector('polygon');
     if (!poly) return;
 
-    // التظليل من الداخل فقط عبر الفلتر
+    // فلتر التظليل الداخلي
     poly.style.filter = 'url(#wjgInnerGlow)';
-    // حد خفيف جداً فقط لزيادة الوضوح (لا يغيّر المقاس)
-    poly.setAttribute('stroke', '#22d3ee');
-    poly.setAttribute('stroke-width', '2');
+    // حدود رفيعة لتأكيد التحديد (بدون تغيير الحجم)
+    poly.setAttribute('stroke', '#06b6d4');      // teal
+    poly.setAttribute('stroke-width', '2.5');
     poly.setAttribute('stroke-linejoin', 'round');
-
     // لا نلمس <text> نهائياً
   }
-
-
 
   // ===================== أصوات + عدّ تنازلي =====================
   function tone(freq, durMs) {
@@ -533,7 +503,7 @@
     if (!el) return;
     el.classList.remove('team1', 'team2');
     if (state && state !== 'normal') el.classList.add(state);
-    // لا نلمس تظليل الحرف المختار هنا — يبقى كما هو
+    // لا نلمس إبراز الحرف المختار هنا — يبقى كما هو
   }
 
   // ===================== مزامنة أوليّة من الخادم =====================
@@ -652,6 +622,7 @@
     });
   });
 </script>
+
 
 
 
