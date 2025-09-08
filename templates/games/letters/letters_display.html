@@ -360,7 +360,8 @@
     // (A) صبغة داخلية خفيفة تعطي إحساس التحديد بدون تحريك أي عنصر
     const tint = document.createElementNS('http://www.w3.org/2000/svg','feFlood');
     tint.setAttribute('flood-color', '#06b6d4');     // teal حديث
-    tint.setAttribute('flood-opacity', '0.18');      // تغطية هادئة للداخل
+    tint.setAttribute('flood-opacity', '0.30');  // جرّب 0.26–0.35
+  // تغطية هادئة للداخل
     tint.setAttribute('result', 'tint');
     const tintMask = document.createElementNS('http://www.w3.org/2000/svg','feComposite');
     tintMask.setAttribute('in', 'tint');
