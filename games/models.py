@@ -413,14 +413,6 @@ class GameSession(models.Model):
         default="الفريق البرتقالي",
         verbose_name="اسم الفريق الثاني"
     )
-    team1_score = models.IntegerField(
-        default=0,
-        verbose_name="نقاط الفريق الأول"
-    )
-    team2_score = models.IntegerField(
-        default=0,
-        verbose_name="نقاط الفريق الثاني"
-    )
 
     # حالة اللعبة
     is_active = models.BooleanField(
