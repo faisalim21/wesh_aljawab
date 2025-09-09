@@ -1278,12 +1278,11 @@ def api_contestant_buzz_http(request):
 @require_http_methods(["POST"])
 def letters_new_round(request):
     """
-    بدء جولة جديدة للحزم المدفوعة فقط، بدون أي توكن.
-    - لا يغيّر نقاط الفريقين إطلاقًا.
-    - يعيد ترتيب الحروف فقط ويفرّغ تقدم الخلايا.
-    - يبثّ عبر WebSocket:
-        * letters_updated  (للاستبدال)
-        * scores_updated   (بنفس القيم الحالية لتثبيت العرض)
+    بدء جولة جديدة للحزم المدفوعة فقط، بدون أي تعديل على النقاط إطلاقًا.
+    - لا يغير نقاط الفريقين مطلقًا.
+    - يبدّل ترتيب الحروف فقط ويفرّغ تقدم الخلايا.
+    - يبث عبر WebSocket: letters_updated لاستبدال الحروف فقط (بدون أي بث للنقاط).
+    - يعيد JSON يحتوي الحروف كـ fallback إن لم يكن WebSocket متاحًا.
     """
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
@@ -1302,11 +1301,11 @@ def letters_new_round(request):
     if session.package.is_free:
         return JsonResponse({'success': False, 'error': 'الميزة متاحة للحزم المدفوعة فقط'}, status=403)
 
-    # 1) بدّل ترتيب الحروف (بدون المساس بالنقاط)
+    # 1) بدّل ترتيب الحروف (لا علاقة للنقاط هنا)
     new_letters = get_paid_order_fresh()
     set_session_order(session.id, new_letters, is_free=False)
 
-    # 2) صفّر تقدّم الخلايا فقط
+    # 2) تصفير تقدّم الخلايا فقط
     try:
         progress = LettersGameProgress.objects.filter(session=session).first()
         if progress:
@@ -1316,36 +1315,22 @@ def letters_new_round(request):
     except Exception:
         pass
 
-    # 3) بثّ: استبدال الحروف + تثبيت النقاط الحالية
+    # 3) بثّ: استبدال الحروف فقط (بدون أي بث للنقاط)
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
-            # أ) استبدال الحروف
             async_to_sync(channel_layer.group_send)(
                 f"letters_session_{session.id}",
                 {"type": "broadcast_letters_replace", "letters": new_letters, "reset_progress": True}
             )
-            # ب) تثبيت النقاط الحالية (لا تغيير)
-            async_to_sync(channel_layer.group_send)(
-                f"letters_session_{session.id}",
-                {
-                    # ملاحظة: في LettersGameConsumer موجود handler باسم broadcast_score_update
-                    # لذلك نستخدم نفس الاسم مباشرة لضمان الاستقبال.
-                    "type": "broadcast_score_update",
-                    "team1_score": session.team1_score,
-                    "team2_score": session.team2_score,
-                }
-            )
     except Exception as e:
         logger.error(f"WS broadcast error (new round): {e}")
 
-    # 4) نرجّع النقاط كـ fallback في الاستجابة
+    # 4) الاستجابة: نعيد الحروف كـ fallback فقط (لا نعيد/نثبت النقاط)
     return JsonResponse({
         'success': True,
         'letters': new_letters,
-        'reset_progress': True,
-        'team1_score': session.team1_score,
-        'team2_score': session.team2_score,
+        'reset_progress': True
     })
 
 

@@ -432,6 +432,10 @@
   const cellStates = {};
   let lastClickedLetter = null;
 
+  // تتبع تثبيت (Acknowledgement) النقاط
+  let pendingScoreAckUntil = 0;       // timestamp حتى متى ننتظر تأكيد
+  let pendingScoreTimeoutId = null;   // timeout للمصالحة بعد 3 ثوانٍ
+
   function getLetters(){
     return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
       ? window.sessionData.arabicLetters
@@ -635,33 +639,26 @@
 
       document.getElementById('questionDisplay').textContent = `حرف ${letter}`;
 
-      // --- NEW: بثّ اختيار الحرف لشاشة العرض (API موحّد) ---
+      // بثّ اختيار الحرف لشاشة العرض (API موحّد)
       try{
         await fetch('/games/api/letters-select-letter/', {
           method: 'POST',
           headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ session_id: sessionId, letter })
         });
-      }catch(e){
-        // نطنّش فشل البث
-      }
-
+      }catch(e){}
     }catch{}
   }
 
-  // ========= النقاط (نسخة قوية تعالج تنويعات الـ DOM والأرقام العربية) =========
-  // IDs المحتملة لعرض النقاط في القالب (موبايل + ديسكتوب)
+  // ========= النقاط (IDs + تحويل أرقام عربية) =========
   const T1_IDS = ['team1ScoreDesktop','team1Score'];
   const T2_IDS = ['team2ScoreDesktop','team2Score'];
 
-  // حوّل أي أرقام عربية-هندية إلى ASCII قبل parseInt
   function toAsciiDigits(str){
     if (!str) return '';
     const ar = '٠١٢٣٤٥٦٧٨٩';
     return String(str).replace(/[٠-٩]/g, d => String(ar.indexOf(d)));
   }
-
-  // اقرأ النص من أول ID موجود من القائمة
   function readScoreFrom(ids){
     for (const id of ids){
       const el = document.getElementById(id);
@@ -673,20 +670,18 @@
     }
     return 0;
   }
-
-  // اكتب القيمة لكل العناصر إن وُجدت
   function writeScoreTo(ids, val){
     for (const id of ids){
       const el = document.getElementById(id);
       if (el) el.textContent = String(val);
     }
   }
-
   function reflectScores(t1,t2){
     writeScoreTo(T1_IDS, t1);
     writeScoreTo(T2_IDS, t2);
   }
 
+  // ========= تحديث النقاط — فوري + تثبيت خلال ≤3 ثواني =========
   async function updateScore(team, delta){
     const cur1 = readScoreFrom(T1_IDS);
     const cur2 = readScoreFrom(T2_IDS);
@@ -696,15 +691,38 @@
     else if (team==='team2') t2 = Math.max(0, cur2 + delta);
     else return;
 
-    // حدّث الواجهة فورًا
+    // (1) عرض تفاؤلي فوري
     reflectScores(t1,t2);
 
-    // حاول عبر WS أولًا، ولو فشل استخدم API
+    // (2) ننتظر تأكيد (WS أو API) حتى 3 ثوانٍ — وإلا نعمل مصالحة
+    startPendingScoreAckWindow();
+
+    // أ) WS أولًا
     try{
       await sendWS({type:'update_scores', team1_score:t1, team2_score:t2});
-    }catch{
-      await updateScoresAPI(t1,t2);
-    }
+      // سيصل broadcast 'scores_updated' ويُنهي نافذة الانتظار
+    }catch{}
+
+    // ب) API دومًا كضمان (idempotent بالقيم النهائية)
+    try{
+      const r = await fetch('/games/api/update-scores/',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({session_id:sessionId, team1_score:t1, team2_score:t2})
+      });
+      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return (window.location.href = HOME_URL); }
+      const data = await r.json().catch(()=> ({}));
+      if (data && data.success){
+        // لو ما جانا WS لأي سبب، نثبت من ردّ السيرفر
+        if (!isWithinPendingAckWindow()) {
+          onScoresUpdated(data);
+        } else {
+          // نكتب من ردّ الـAPI ونغلق نافذة الانتظار
+          onScoresUpdated(data);
+          endPendingScoreAckWindow();
+        }
+      }
+    }catch{}
   }
   window.updateScore = updateScore;
 
@@ -712,6 +730,37 @@
     const t1 = (typeof d.team1_score === 'number') ? d.team1_score : readScoreFrom(T1_IDS);
     const t2 = (typeof d.team2_score === 'number') ? d.team2_score : readScoreFrom(T2_IDS);
     reflectScores(t1, t2);
+    endPendingScoreAckWindow();
+  }
+
+  function startPendingScoreAckWindow(){
+    endPendingScoreAckWindow();
+    pendingScoreAckUntil = Date.now() + 3000; // 3s
+    pendingScoreTimeoutId = setTimeout(()=>{
+      // لو ما جاء تأكيد خلال 3 ثوانٍ، نعمل مصالحة سريعة
+      ensureScoresReconciled();
+    }, 3100);
+  }
+  function endPendingScoreAckWindow(){
+    pendingScoreAckUntil = 0;
+    if (pendingScoreTimeoutId){ clearTimeout(pendingScoreTimeoutId); pendingScoreTimeoutId = null; }
+  }
+  function isWithinPendingAckWindow(){
+    return pendingScoreAckUntil && Date.now() < pendingScoreAckUntil;
+  }
+
+  async function ensureScoresReconciled(){
+    try{
+      const r = await fetch(`/games/api/session-state/?session_id=${encodeURIComponent(sessionId)}`);
+      if (r.ok){
+        const data = await r.json();
+        // لو اختلفت عن عرضنا التفاؤلي، نثبت المتفق عليه من السيرفر
+        if (typeof data.team1_score === 'number' && typeof data.team2_score === 'number'){
+          reflectScores(data.team1_score, data.team2_score);
+        }
+      }
+    }catch{}
+    endPendingScoreAckWindow();
   }
 
   async function updateCellStateAPI(letter,state){
@@ -720,17 +769,6 @@
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({session_id:sessionId, letter, state})
-      });
-      if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
-    }catch{}
-  }
-
-  async function updateScoresAPI(team1,team2){
-    try{
-      const r = await fetch('/games/api/update-scores/',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({session_id:sessionId, team1_score:team1, team2_score:team2})
       });
       if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); window.location.href = HOME_URL; }
     }catch{}
@@ -760,13 +798,14 @@
       if (!r.ok) return;
       const data = await r.json();
 
-      if (Array.isArray(data.arabic_letters)) {
-        const cur = getLetters();
-        const changed = (cur.length !== data.arabic_letters.length) || (cur.join('|') !== data.arabic_letters.join('|'));
-        if (changed) rebuildHoneycomb(data.arabic_letters, false);
-      }
+      const newLetters = Array.isArray(data.arabic_letters) ? data.arabic_letters : [];
+      const cur = getLetters();
+      const changed = (cur.length !== newLetters.length) || (cur.join('|') !== newLetters.join('|'));
+      if (changed) rebuildHoneycomb(newLetters, false);
 
-      reflectScores(data.team1_score||0, data.team2_score||0);
+      if (!isWithinPendingAckWindow()){
+        reflectScores(data.team1_score||0, data.team2_score||0);
+      }
       if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
       if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
     }catch{}
@@ -812,6 +851,7 @@
           applyCellState(d.letter, d.state);
           break;
         case 'scores_updated':
+          // تثبيت من السيرفر؛ حتى لو كنا بعرض تفاؤلي، هذا يُنهي نافذة الانتظار ويثبّت القيم
           onScoresUpdated(d);
           break;
         case 'letters_updated':
@@ -871,14 +911,9 @@
         return;
       }
       const data = await r.json().catch(()=> ({}));
-      // في حالة عدم وجود WS: نحدّث الواجهة يدويًا،
-      // **النقاط تُترك كما هي** (القيم عائدة من السيرفر)
+      // في حالة عدم وجود WS: نحدّث الخلية فقط — لا نلمس النقاط إطلاقًا
       if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
         rebuildHoneycomb(data.letters, !!data.reset_progress);
-        reflectScores(
-          typeof data.team1_score === 'number' ? data.team1_score : readScoreFrom(T1_IDS),
-          typeof data.team2_score === 'number' ? data.team2_score : readScoreFrom(T2_IDS)
-        );
         setTimeout(loadSessionState, 50);
       }
     }catch(e){
@@ -915,6 +950,7 @@
     }
   });
 </script>
+
 
 
 
