@@ -379,6 +379,8 @@ class GameSession(models.Model):
         verbose_name="المقدم",
         help_text="الشخص الذي ينظم اللعبة (قد تكون فارغة)"
     )
+    team1_score = models.PositiveIntegerField(default=0)
+    team2_score = models.PositiveIntegerField(default=0)
 
     package = models.ForeignKey(
         GamePackage,

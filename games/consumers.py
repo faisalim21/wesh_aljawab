@@ -61,7 +61,10 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             if self.role == 'contestant':
                 return
             await self.send(text_data=json.dumps({'type': 'buzz_reset_by_host'}))
-
+    async def broadcast_scores(self, event):
+        # alias للتوافق الخلفي
+        await self.broadcast_score_update(event)
+        
     async def broadcast_cell_state(self, event):
         if self.role == 'contestant':
             return

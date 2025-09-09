@@ -925,7 +925,7 @@ def update_cell_state(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_scores(request):
-    """تحديث نقاط الفريقين + بثّ التحديث عبر WS"""
+    """تحديث نقاط الفريقين + بثّ التحديث عبر WS (متوافق مع Letters/Pictures)"""
     try:
         data = json.loads(request.body or "{}")
         session_id = data.get('session_id')
@@ -950,28 +950,30 @@ def update_scores(request):
                 'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
             }, status=410)
 
-        # تحديث النقاط وتحديد الفائز عند الحاجة
-        session.team1_score = team1_score
-        session.team2_score = team2_score
+        # احفظ داخل معاملة لضمان select_for_update عند الحاجة
+        from django.db import transaction
+        with transaction.atomic():
+            session.team1_score = team1_score
+            session.team2_score = team2_score
 
-        winning_score = 10
-        if session.team1_score >= winning_score and session.team1_score > session.team2_score:
-            session.winner_team = 'team1'
-            session.is_completed = True
-        elif session.team2_score >= winning_score and session.team2_score > session.team1_score:
-            session.winner_team = 'team2'
-            session.is_completed = True
+            winning_score = 10
+            if session.team1_score >= winning_score and session.team1_score > session.team2_score:
+                session.winner_team = 'team1'
+                session.is_completed = True
+            elif session.team2_score >= winning_score and session.team2_score > session.team1_score:
+                session.winner_team = 'team2'
+                session.is_completed = True
 
-        session.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
+            session.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
 
-        # ✅ الاسم صار ديناميكيًا حسب نوع اللعبة (letters / images / quiz مستقبلًا)
+        # ابث الحدث باسم موحّد مدعوم في الـ Consumers: broadcast_score_update
         try:
             channel_layer = get_channel_layer()
             if channel_layer:
                 async_to_sync(channel_layer.group_send)(
                     f"{session.game_type}_session_{session_id}",
                     {
-                        "type": "broadcast_scores",  # مدعوم في المستهلكين (PicturesGameConsumer لديه alias)
+                        "type": "broadcast_score_update",
                         "team1_score": session.team1_score,
                         "team2_score": session.team2_score,
                         "winner": session.winner_team,
