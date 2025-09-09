@@ -643,31 +643,76 @@
           body: JSON.stringify({ session_id: sessionId, letter })
         });
       }catch(e){
-        // نطنّش فشل البث، ليس حرجًا
+        // نطنّش فشل البث
       }
 
     }catch{}
   }
 
-  // ========= النقاط =========
+  // ========= النقاط (نسخة قوية تعالج تنويعات الـ DOM والأرقام العربية) =========
+  // IDs المحتملة لعرض النقاط في القالب (موبايل + ديسكتوب)
+  const T1_IDS = ['team1ScoreDesktop','team1Score'];
+  const T2_IDS = ['team2ScoreDesktop','team2Score'];
+
+  // حوّل أي أرقام عربية-هندية إلى ASCII قبل parseInt
+  function toAsciiDigits(str){
+    if (!str) return '';
+    const ar = '٠١٢٣٤٥٦٧٨٩';
+    return String(str).replace(/[٠-٩]/g, d => String(ar.indexOf(d)));
+  }
+
+  // اقرأ النص من أول ID موجود من القائمة
+  function readScoreFrom(ids){
+    for (const id of ids){
+      const el = document.getElementById(id);
+      if (el && el.textContent != null){
+        const cleaned = toAsciiDigits(el.textContent).replace(/[^\d\-]/g,'');
+        const v = parseInt(cleaned || '0', 10);
+        if (!Number.isNaN(v)) return v;
+      }
+    }
+    return 0;
+  }
+
+  // اكتب القيمة لكل العناصر إن وُجدت
+  function writeScoreTo(ids, val){
+    for (const id of ids){
+      const el = document.getElementById(id);
+      if (el) el.textContent = String(val);
+    }
+  }
+
   function reflectScores(t1,t2){
-    const m1 = document.getElementById('team1Score');
-    const m2 = document.getElementById('team2Score');
-    const d1 = document.getElementById('team1ScoreDesktop');
-    const d2 = document.getElementById('team2ScoreDesktop');
-    if (m1) m1.textContent = t1; if (m2) m2.textContent = t2;
-    if (d1) d1.textContent = t1; if (d2) d2.textContent = t2;
+    writeScoreTo(T1_IDS, t1);
+    writeScoreTo(T2_IDS, t2);
   }
 
   async function updateScore(team, delta){
-    const cur1 = parseInt(document.getElementById('team1ScoreDesktop')?.textContent || '0',10);
-    const cur2 = parseInt(document.getElementById('team2ScoreDesktop')?.textContent || '0',10);
+    const cur1 = readScoreFrom(T1_IDS);
+    const cur2 = readScoreFrom(T2_IDS);
     let t1 = cur1, t2 = cur2;
-    if (team==='team1') t1 = Math.max(0, cur1 + delta); else t2 = Math.max(0, cur2 + delta);
+
+    if (team==='team1') t1 = Math.max(0, cur1 + delta);
+    else if (team==='team2') t2 = Math.max(0, cur2 + delta);
+    else return;
+
+    // حدّث الواجهة فورًا
     reflectScores(t1,t2);
-    sendWS({type:'update_scores', team1_score:t1, team2_score:t2}).catch(()=> updateScoresAPI(t1,t2));
+
+    // حاول عبر WS أولًا، ولو فشل استخدم API
+    try{
+      await sendWS({type:'update_scores', team1_score:t1, team2_score:t2});
+    }catch{
+      await updateScoresAPI(t1,t2);
+    }
   }
   window.updateScore = updateScore;
+
+  function onScoresUpdated(d){
+    const t1 = (typeof d.team1_score === 'number') ? d.team1_score : readScoreFrom(T1_IDS);
+    const t2 = (typeof d.team2_score === 'number') ? d.team2_score : readScoreFrom(T2_IDS);
+    reflectScores(t1, t2);
+  }
 
   async function updateCellStateAPI(letter,state){
     try{
@@ -767,7 +812,7 @@
           applyCellState(d.letter, d.state);
           break;
         case 'scores_updated':
-          reflectScores(d.team1_score, d.team2_score);
+          onScoresUpdated(d);
           break;
         case 'letters_updated':
           rebuildHoneycomb(d.letters || [], !!d.reset_progress);
@@ -826,8 +871,14 @@
         return;
       }
       const data = await r.json().catch(()=> ({}));
+      // في حالة عدم وجود WS: نحدّث الواجهة يدويًا،
+      // **النقاط تُترك كما هي** (القيم عائدة من السيرفر)
       if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
         rebuildHoneycomb(data.letters, !!data.reset_progress);
+        reflectScores(
+          typeof data.team1_score === 'number' ? data.team1_score : readScoreFrom(T1_IDS),
+          typeof data.team2_score === 'number' ? data.team2_score : readScoreFrom(T2_IDS)
+        );
         setTimeout(loadSessionState, 50);
       }
     }catch(e){
@@ -864,6 +915,7 @@
     }
   });
 </script>
+
 
 
 
