@@ -925,36 +925,51 @@ def update_cell_state(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_scores(request):
-    """تحديث نقاط الفريقين + بثّ التحديث عبر WS (متوافق مع Letters/Pictures)"""
+    """
+    تحديث نقاط الفريقين + بثّ التحديث عبر WS (متوافق مع Letters/Pictures)
+    - قفل صف الجلسة بـ select_for_update لمنع سباقات الكتابة
+    - إعادة ضبط winner_team/is_completed عند عدم تحقق شرط الفوز
+    - البث باسم موحّد: broadcast_score_update
+    """
+    # 1) قراءة JSON بأمان
     try:
         data = json.loads(request.body or "{}")
-        session_id = data.get('session_id')
-        team1_score = data.get('team1_score', 0)
-        team2_score = data.get('team2_score', 0)
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
 
-        if not session_id:
-            return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
+    session_id = data.get('session_id')
+    if not session_id:
+        return JsonResponse({'success': False, 'error': 'معرف الجلسة مطلوب'}, status=400)
 
-        try:
-            team1_score = max(0, int(team1_score))
-            team2_score = max(0, int(team2_score))
-        except (ValueError, TypeError):
-            return JsonResponse({'success': False, 'error': 'قيم النقاط يجب أن تكون أرقام صحيحة'}, status=400)
+    # 2) تحويل القيم لأعداد صحيحة غير سالبة
+    try:
+        t1_in = max(0, int(data.get('team1_score', 0)))
+        t2_in = max(0, int(data.get('team2_score', 0)))
+    except (ValueError, TypeError):
+        return JsonResponse({'success': False, 'error': 'قيم النقاط يجب أن تكون أرقام صحيحة'}, status=400)
 
-        session = GameSession.objects.get(id=session_id, is_active=True)
-        if is_session_expired(session):
-            return JsonResponse({
-                'success': False,
-                'error': 'انتهت صلاحية الجلسة',
-                'session_expired': True,
-                'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
-            }, status=410)
+    # 3) التحقق من وجود الجلسة ونشاطها
+    try:
+        base_session = GameSession.objects.get(id=session_id, is_active=True)
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
 
-        # احفظ داخل معاملة لضمان select_for_update عند الحاجة
-        from django.db import transaction
+    if is_session_expired(base_session):
+        return JsonResponse({
+            'success': False,
+            'error': 'انتهت صلاحية الجلسة',
+            'session_expired': True,
+            'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
+        }, status=410)
+
+    # 4) حفظ من داخل معاملة مع قفل الصف لمنع السباقات
+    from django.db import transaction
+    try:
         with transaction.atomic():
-            session.team1_score = team1_score
-            session.team2_score = team2_score
+            session = GameSession.objects.select_for_update().get(id=session_id, is_active=True)
+
+            session.team1_score = t1_in
+            session.team2_score = t2_in
 
             winning_score = 10
             if session.team1_score >= winning_score and session.team1_score > session.team2_score:
@@ -963,43 +978,42 @@ def update_scores(request):
             elif session.team2_score >= winning_score and session.team2_score > session.team1_score:
                 session.winner_team = 'team2'
                 session.is_completed = True
+            else:
+                # لو ما تحقق شرط الفوز، نتأكد من إلغاء أي حالة فوز/اكتمال سابقة
+                session.winner_team = None
+                session.is_completed = False
 
             session.save(update_fields=['team1_score', 'team2_score', 'winner_team', 'is_completed'])
-
-        # ابث الحدث باسم موحّد مدعوم في الـ Consumers: broadcast_score_update
-        try:
-            channel_layer = get_channel_layer()
-            if channel_layer:
-                async_to_sync(channel_layer.group_send)(
-                    f"{session.game_type}_session_{session_id}",
-                    {
-                        "type": "broadcast_score_update",
-                        "team1_score": session.team1_score,
-                        "team2_score": session.team2_score,
-                        "winner": session.winner_team,
-                        "is_completed": session.is_completed,
-                    }
-                )
-        except Exception as e:
-            logger.error(f'WS broadcast error (scores): {e}')
-
-        logger.info(f'Scores updated in session {session_id}: Team1={team1_score}, Team2={team2_score}')
-        return JsonResponse({
-            'success': True,
-            'message': 'تم تحديث النقاط',
-            'team1_score': session.team1_score,
-            'team2_score': session.team2_score,
-            'winner': session.winner_team,
-            'is_completed': session.is_completed
-        })
-
-    except GameSession.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
-    except json.JSONDecodeError:
-        return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
     except Exception as e:
-        logger.error(f'Error updating scores: {e}')
-        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+        logger.error(f'DB update error (scores) for session {session_id}: {e}')
+        return JsonResponse({'success': False, 'error': 'خطأ داخلي أثناء تحديث النقاط'}, status=500)
+
+    # 5) بثّ التحديث باسم موحّد تدعمه المستهلكات (letters/images): broadcast_score_update
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"{session.game_type}_session_{session_id}",
+                {
+                    "type": "broadcast_score_update",
+                    "team1_score": session.team1_score,
+                    "team2_score": session.team2_score,
+                    "winner": session.winner_team,
+                    "is_completed": session.is_completed,
+                }
+            )
+    except Exception as e:
+        logger.error(f'WS broadcast error (scores) for session {session_id}: {e}')
+
+    logger.info(f'Scores updated in session {session_id}: Team1={session.team1_score}, Team2={session.team2_score}')
+    return JsonResponse({
+        'success': True,
+        'message': 'تم تحديث النقاط',
+        'team1_score': session.team1_score,
+        'team2_score': session.team2_score,
+        'winner': session.winner_team,
+        'is_completed': session.is_completed
+    })
 
 
 def session_state(request):
