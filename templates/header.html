@@ -95,31 +95,39 @@
         background:rgba(255,255,255,.97);
         border-radius:14px; padding:1rem; margin-top:.75rem;
         box-shadow:0 10px 25px rgba(0,0,0,.1);
+        position: relative;
       }
       .nav-link{ color:#2d3748!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; }
+      .close-navbar{
+        display:block;
+        position:absolute; top:10px; left:10px;
+        width:40px; height:40px; border:none; border-radius:50%;
+        background:rgba(139,92,246,.15); color:#8b5cf6;
+      }
     }
 
-    /* نزيل أي حيل CSS كانت تمنع التمرير أو تفرض عرض القوائم */
-    .dropdown-menu{ display:none; }
-    .dropdown.show .dropdown-menu{ display:block; }
+    /* زر الإغلاق مخفي على الديسكتوب */
+    .close-navbar{ display:none; }
   </style>
 </head>
 <body>
 
-<header class="main-header">
-  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+<header class="main-header" role="banner">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" aria-label="الشريط العلوي">
     <div class="container">
       <!-- Logo -->
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" aria-label="الرئيسية - وش الجواب">
         <div class="logo-container">
           <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img" width="160" height="60" loading="eager" decoding="async"/>
         </div>
       </a>
 
       <!-- Toggler -->
-      <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
+      <button class="navbar-toggler custom-toggler" type="button"
+              data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
         <span class="toggler-icon"></span>
         <span class="toggler-icon"></span>
         <span class="toggler-icon"></span>
@@ -127,28 +135,38 @@
 
       <!-- Menu -->
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto">
-          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home me-1"></i>الرئيسية</a></li>
+        <!-- زر إغلاق (X) للجوال -->
+        <button class="close-navbar" type="button" aria-label="إغلاق القائمة">&times;</button>
 
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" id="gamesDropdown">
-              <i class="fas fa-gamepad me-1"></i> الألعاب
+        <ul class="navbar-nav me-auto" role="menubar">
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="{% url 'home' %}" role="menuitem">
+              <i class="fas fa-home me-1" aria-hidden="true"></i>
+              الرئيسية
             </a>
-            <ul class="dropdown-menu custom-dropdown" aria-labelledby="gamesDropdown">
-              <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:letters_home' %}">
+          </li>
+
+          <li class="nav-item dropdown" role="none">
+            <a class="nav-link dropdown-toggle" href="#" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false" id="gamesDropdown">
+              <i class="fas fa-gamepad me-1" aria-hidden="true"></i>
+              الألعاب
+            </a>
+            <ul class="dropdown-menu custom-dropdown" role="menu" aria-labelledby="gamesDropdown">
+              <li role="none">
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:letters_home' %}" role="menuitem">
                   <span><i class="fas fa-font me-2"></i> خلية الحروف</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
               </li>
-              <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:images_home' %}">
+              <li role="none">
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:images_home' %}" role="menuitem">
                   <span><i class="fas fa-images me-2"></i> تحدي الصور</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
               </li>
-              <li>
-                <a class="dropdown-item d-flex justify-content-between align-items-center disabled" href="#" tabindex="-1" aria-disabled="true">
+              <li role="none">
+                <a class="dropdown-item d-flex justify-content-between align-items-center disabled" href="#" role="menuitem" aria-disabled="true" tabindex="-1">
                   <span><i class="fas fa-question-circle me-2"></i> سؤال وجواب</span>
                   <span class="game-status-badge coming-soon">قريباً</span>
                 </a>
@@ -156,39 +174,62 @@
             </ul>
           </li>
 
-          <li class="nav-item"><a class="nav-link" href="#about"><i class="fas fa-info-circle me-1"></i>حول المنصة</a></li>
-          <li class="nav-item"><a class="nav-link" href="#contact"><i class="fas fa-envelope me-1"></i>تواصل معنا</a></li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="#about" role="menuitem">
+              <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
+              حول المنصة
+            </a>
+          </li>
+          <li class="nav-item" role="none">
+            <a class="nav-link" href="#contact" role="menuitem">
+              <i class="fas fa-envelope me-1" aria-hidden="true"></i>
+              تواصل معنا
+            </a>
+          </li>
         </ul>
 
         <!-- User Actions -->
         <div class="navbar-nav ms-auto">
           {% if user.is_authenticated %}
           <div class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle user-menu" href="#" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
-              <div class="user-avatar"><i class="fas fa-user"></i></div>
+            <a class="nav-link dropdown-toggle user-menu" href="#" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
+              <div class="user-avatar" aria-hidden="true">
+                <i class="fas fa-user"></i>
+              </div>
               <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
             </a>
-            <ul class="dropdown-menu custom-dropdown" aria-labelledby="userDropdown">
-              <li class="px-3 py-2"><small class="text-muted d-block">{{ user.email }}</small></li>
-              <li><hr class="dropdown-divider"></li>
+            <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
+              <li class="px-3 py-2">
+                <small class="text-muted d-block">{{ user.email }}</small>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
               <!-- تمت إزالة: الملف الشخصي + الإعدادات -->
-              <li>
-                <a class="dropdown-item" href="{% url 'payments:history' %}">
-                  <i class="fas fa-credit-card me-2"></i> مشترياتي
+              <li role="none">
+                <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
+                  <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
+                  مشترياتي
                 </a>
               </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
-                  <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+              <li><hr class="dropdown-divider" /></li>
+              <li role="none">
+                <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}" role="menuitem">
+                  <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>
+                  تسجيل الخروج
                 </a>
               </li>
             </ul>
           </div>
           {% else %}
           <div class="auth-buttons d-flex align-items-center gap-2">
-            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light"><i class="fas fa-sign-in-alt me-1"></i> دخول</a>
-            <a href="{% url 'accounts:register' %}" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i> تسجيل جديد</a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light">
+              <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>
+              دخول
+            </a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+              <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
+              تسجيل جديد
+            </a>
           </div>
           {% endif %}
         </div>
@@ -208,6 +249,7 @@
   const navbar = document.querySelector('.navbar');
   const spacer = document.getElementById('header-spacer');
   const navCollapse = document.getElementById('navbarNav');
+  const closeBtn = document.querySelector('.close-navbar');
 
   // 1) ضبط ارتفاع الـ spacer دائمًا
   function setSpacerHeight(){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
@@ -223,7 +265,7 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive:true });
 
-  // 3) إبراز الرابط النشط (يدعم المسارات الفرعية)
+  // 3) إبراز الرابط النشط
   const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
   document.querySelectorAll('.nav-link[href]').forEach(link => {
     const href = link.getAttribute('href') || '';
@@ -234,7 +276,7 @@
     }
   });
 
-  // 4) إغلاق قائمة الجوال عند النقر على رابط (حقيقي)
+  // 4) إغلاق قائمة الجوال عند الضغط على رابط فعلي فقط (ليس dropdown-toggle)
   document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(a=>{
     a.addEventListener('click', () => {
       if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
@@ -243,34 +285,42 @@
     });
   });
 
-  // 5) Hover للديسكتوب فقط (بدون تعطيل تمرير الجوال)
-  const desktopHover = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  // 5) زر X يقفل القائمة فورًا
+  if (closeBtn){
+    closeBtn.addEventListener('click', () => {
+      const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+      inst.hide();
+    });
+  }
+
+  // 6) إظهار/إخفاء زر X عند فتح/غلق القائمة
+  if (navCollapse){
+    navCollapse.addEventListener('show.bs.collapse', () => { if (window.innerWidth <= 991 && closeBtn) closeBtn.style.display = 'block'; });
+    navCollapse.addEventListener('hide.bs.collapse', () => { if (closeBtn) closeBtn.style.display = 'none'; });
+  }
+
+  // 7) Hover للديسكتوب فقط
   const dropdowns = document.querySelectorAll('.nav-item.dropdown');
-  function bindHover(){
-    dropdowns.forEach(dd=>{
-      dd.addEventListener('mouseenter', onEnter);
-      dd.addEventListener('mouseleave', onLeave);
-    });
-  }
-  function unbindHover(){
-    dropdowns.forEach(dd=>{
-      dd.removeEventListener('mouseenter', onEnter);
-      dd.removeEventListener('mouseleave', onLeave);
-    });
-  }
-  function onEnter(){ if (desktopHover()){ this.classList.add('show'); this.querySelector('.dropdown-toggle').setAttribute('aria-expanded','true'); this.querySelector('.dropdown-menu')?.classList.add('show'); } }
-  function onLeave(){ if (desktopHover()){ this.classList.remove('show'); this.querySelector('.dropdown-toggle').setAttribute('aria-expanded','false'); this.querySelector('.dropdown-menu')?.classList.remove('show'); } }
+  const desktopHover = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  function onEnter(){ if (desktopHover()){ this.classList.add('show'); this.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','true'); this.querySelector('.dropdown-menu')?.classList.add('show'); } }
+  function onLeave(){ if (desktopHover()){ this.classList.remove('show'); this.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','false'); this.querySelector('.dropdown-menu')?.classList.remove('show'); } }
+  function bindHover(){ dropdowns.forEach(dd=>{ dd.addEventListener('mouseenter', onEnter); dd.addEventListener('mouseleave', onLeave); }); }
+  function unbindHover(){ dropdowns.forEach(dd=>{ dd.removeEventListener('mouseenter', onEnter); dd.removeEventListener('mouseleave', onLeave); }); }
+  function refreshHover(){ unbindHover(); if (desktopHover()) bindHover(); }
+  refreshHover(); window.addEventListener('resize', refreshHover);
 
-  // تفعيل/إلغاء hover حسب الجهاز/العرض
-  function refreshHover(){
-    unbindHover();
-    if (desktopHover()) bindHover();
-  }
-  refreshHover();
-  window.addEventListener('resize', refreshHover);
-
-  // 6) لا نجبر dropdown على الظهور عبر CSS في الجوال (نترك Bootstrap يديرها)
-  // 7) لا نمنع التمرير إطلاقًا؛ لا body overflow tricks هنا.
+  // 8) منع إغلاق القائمة عند الضغط على زر الدروبداون في الجوال (نخلي Bootstrap يدير الفتح/الإغلاق)
+  document.querySelectorAll('.nav-item.dropdown .dropdown-toggle').forEach(tgl=>{
+    tgl.addEventListener('click', (e)=>{
+      // لو داخل الجوال، نخليها تفتح/تغلق القائمة فقط بدون انهيار الـ collapse
+      if (window.innerWidth <= 991){
+        e.preventDefault();
+        e.stopPropagation();
+        const dd = bootstrap.Dropdown.getOrCreateInstance(tgl);
+        dd.toggle();
+      }
+    });
+  });
 
 })();
 </script>
