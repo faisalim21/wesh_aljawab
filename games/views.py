@@ -717,6 +717,10 @@ def get_question(request):
     if not letter or not session_id:
         return JsonResponse({'success': False, 'error': 'المعاملات مطلوبة'}, status=400)
 
+    # تطبيع الهاء: نقبل ه/هـ
+    def _variants(ltr: str):
+        return ['ه', 'هـ'] if ltr in ('ه', 'هـ') else [ltr]
+
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
 
@@ -727,30 +731,55 @@ def get_question(request):
                 'session_expired': True
             }, status=410)
 
-        # تأكد أن الحرف ضمن ترتيب الجلسة الفعلي
+        # تأكد أن الحرف ضمن ترتيب الجلسة (مع قبول ه/هـ)
         letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
-        if letter not in letters:
+
+        # حدّد الشكل المعتمد داخل ترتيب الجلسة (إن وُجد)
+        chosen_in_session = None
+        for v in _variants(letter):
+            if v in letters:
+                chosen_in_session = v
+                break
+        if not chosen_in_session:
             return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
 
         is_free_pkg = session.package.is_free
         question_types = ['main', 'alt1', 'alt2'] if is_free_pkg else ['main', 'alt1', 'alt2', 'alt3', 'alt4']
 
-        questions = {}
-        for qtype in question_types:
+        # جلب السؤال مع محاولة fallback على الشكل الآخر للهاء
+        def _get_q(qtype):
+            from django.core.exceptions import ObjectDoesNotExist
             try:
                 q = LettersGameQuestion.objects.get(
                     package=session.package,
-                    letter=letter,
+                    letter=chosen_in_session,
                     question_type=qtype
                 )
-                questions[qtype] = {'question': q.question, 'answer': q.answer, 'category': q.category}
-            except LettersGameQuestion.DoesNotExist:
-                questions[qtype] = {'question': f'لا يوجد سؤال {qtype} للحرف {letter}', 'answer': 'غير متاح', 'category': 'غير محدد'}
+                return {'question': q.question, 'answer': q.answer, 'category': q.category}
+            except ObjectDoesNotExist:
+                # جرّب الشكل الآخر إن كان الحرف ه/هـ
+                for alt in _variants('هـ' if chosen_in_session == 'ه' else 'ه'):
+                    if alt == chosen_in_session:
+                        continue
+                    try:
+                        q = LettersGameQuestion.objects.get(
+                            package=session.package,
+                            letter=alt,
+                            question_type=qtype
+                        )
+                        return {'question': q.question, 'answer': q.answer, 'category': q.category}
+                    except ObjectDoesNotExist:
+                        pass
+                # ما وجدنا شيء
+                return {'question': f'لا يوجد سؤال {qtype} للحرف {chosen_in_session}', 'answer': 'غير متاح', 'category': 'غير محدد'}
+
+        questions = {qt: _get_q(qt) for qt in question_types}
 
         return JsonResponse({
             'success': True,
             'questions': questions,
-            'letter': letter,
+            # نُرجع الشكل المعتمد داخل الجلسة لأجل العرض/التظليل
+            'letter': chosen_in_session,
             'session_info': {
                 'team1_name': session.team1_name,
                 'team2_name': session.team2_name,
@@ -764,6 +793,7 @@ def get_question(request):
     except Exception as e:
         logger.error(f'Error fetching question: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
 
 @require_http_methods(["GET"])
 def get_session_letters(request):
@@ -806,7 +836,7 @@ def get_session_letters(request):
 def update_cell_state(request):
     """
     تحديث حالة خلية (team1 / team2 / normal) وتخزينها في LettersGameProgress
-    + التحقق من صلاحية الجلسة والحرف
+    + التحقق من صلاحية الجلسة والحرف (مع قبول ه/هـ)
     + بثّ التغيير لكل العملاء عبر WebSocket
     """
     try:
@@ -815,15 +845,19 @@ def update_cell_state(request):
         return JsonResponse({'success': False, 'error': 'بيانات JSON غير صحيحة'}, status=400)
 
     session_id = data.get('session_id')
-    letter = data.get('letter')
+    letter_in = (data.get('letter') or '').strip()
     state = data.get('state')
 
-    if not session_id or not letter or state is None:
+    if not session_id or not letter_in or state is None:
         return JsonResponse({'success': False, 'error': 'جميع المعاملات مطلوبة'}, status=400)
 
     state = str(state)
     if state not in ('normal', 'team1', 'team2'):
         return JsonResponse({'success': False, 'error': 'حالة الخلية غير صحيحة'}, status=400)
+
+    # تطبيع الهاء
+    def _variants(ltr: str):
+        return ['ه', 'هـ'] if ltr in ('ه', 'هـ') else [ltr]
 
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
@@ -838,9 +872,15 @@ def update_cell_state(request):
             'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
         }, status=410)
 
+    # تأكد من الحرف داخل ترتيب الجلسة بأي من الشكلين، وثبّت الشكل المعتمد
     letters = get_letters_for_session(session)
-    if letter not in letters:
-        return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+    chosen_in_session = None
+    for v in _variants(letter_in):
+        if v in letters:
+            chosen_in_session = v
+            break
+    if not chosen_in_session:
+        return JsonResponse({'success': False, 'error': f'الحرف {letter_in} غير متاح في هذه الجلسة'}, status=400)
 
     try:
         progress, _ = LettersGameProgress.objects.get_or_create(
@@ -850,12 +890,13 @@ def update_cell_state(request):
 
         if not isinstance(progress.cell_states, dict):
             progress.cell_states = {}
-        progress.cell_states[letter] = state
+        # خزّن على الحرف بالشكل المعتمد داخل ترتيب الجلسة
+        progress.cell_states[chosen_in_session] = state
 
         if not isinstance(progress.used_letters, list):
             progress.used_letters = []
-        if letter not in progress.used_letters:
-            progress.used_letters.append(letter)
+        if chosen_in_session not in progress.used_letters:
+            progress.used_letters.append(chosen_in_session)
 
         progress.save(update_fields=['cell_states', 'used_letters'])
 
@@ -866,15 +907,15 @@ def update_cell_state(request):
                     f"letters_session_{session_id}",
                     {
                         "type": "broadcast_cell_state",
-                        "letter": letter,
+                        "letter": chosen_in_session,
                         "state": state,
                     }
                 )
         except Exception as e:
             logger.error(f'WS broadcast error (cell_state): {e}')
 
-        logger.info(f'Cell state updated: {letter} -> {state} in session {session_id}')
-        return JsonResponse({'success': True, 'message': 'تم تحديث حالة الخلية', 'letter': letter, 'state': state})
+        logger.info(f'Cell state updated: {chosen_in_session} -> {state} in session {session_id}')
+        return JsonResponse({'success': True, 'message': 'تم تحديث حالة الخلية', 'letter': chosen_in_session, 'state': state})
 
     except Exception as e:
         logger.error(f'Error updating cell state: {e}')
