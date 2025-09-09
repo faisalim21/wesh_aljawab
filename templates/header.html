@@ -4,790 +4,275 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- تثبيت الثيم على الفاتح ومنع تبديل الألوان التلقائي -->
+  <!-- تثبيت الثيم الفاتح -->
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#6d28d9">
 
-  <!-- رابط أيقونات Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Bootstrap & Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
     :root{
-      /* لوحة ألوان ثابتة (فاتح) */
-      --primary-start: #8b5cf6; /* بنفسجي */
-      --primary-end:   #06b6d4; /* سماوي */
-      --brand-bg: #ffffff;
-      --brand-bg-soft: #f8fafc;
-      --text-strong: #0f172a;
-      --text:        #1f2937;
-      --muted:       #64748b;
-      --white:       #ffffff;
-
-      --success-bg: rgba(16, 185, 129, 0.1);
-      --success-tx: #059669;
-      --warn-bg:    rgba(245, 158, 11, 0.1);
-      --warn-tx:    #d97706;
-
-      --navbar-grad: linear-gradient(135deg, rgba(139,92,246,.95), rgba(6,182,212,.95));
-      --navbar-grad-scrolled: linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
-      --btn-grad: linear-gradient(135deg,#f59e0b,#f97316);
-      --btn-grad-hover: linear-gradient(135deg,#f97316,#ea580c);
-      
-      --border-radius: 16px;
-      --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      --primary-start:#8b5cf6; --primary-end:#06b6d4;
+      --brand-bg:#ffffff; --brand-bg-soft:#f8fafc;
+      --text:#1f2937; --text-strong:#0f172a; --muted:#64748b;
+      --success-bg:rgba(16,185,129,.1); --success-tx:#059669;
+      --warn-bg:rgba(245,158,11,.1); --warn-tx:#d97706;
+      --navbar-grad:linear-gradient(135deg, rgba(139,92,246,.95), rgba(6,182,212,.95));
+      --navbar-grad-scrolled:linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
+      --btn-grad:linear-gradient(135deg,#f59e0b,#f97316);
+      --btn-grad-hover:linear-gradient(135deg,#f97316,#ea580c);
+      --radius:16px; --transition:.3s cubic-bezier(.25,.8,.25,1);
     }
 
-    html, body{ 
-      background: var(--brand-bg); 
-      color: var(--text);
-      scroll-behavior: smooth;
+    html,body{ background:var(--brand-bg); color:var(--text); }
+
+    .navbar{
+      background:var(--navbar-grad);
+      backdrop-filter:blur(10px);
+      padding:.75rem 0;
+      transition:var(--transition);
+      box-shadow:0 2px 20px rgba(0,0,0,.10);
     }
-    
-    .main-header { 
-      position: relative; 
-      z-index: 1000; 
+    .navbar.navbar-scrolled{
+      background:var(--navbar-grad-scrolled);
+      box-shadow:0 4px 20px rgba(0,0,0,.15);
+      padding:.5rem 0;
     }
 
-    .navbar {
-      background: var(--navbar-grad);
-      backdrop-filter: blur(10px);
-      padding: 0.75rem 0;
-      transition: var(--transition);
-      box-shadow: 0 2px 20px rgba(0,0,0,.1);
+    .logo-container{
+      background:linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
+      border-radius:var(--radius);
+      padding:10px 14px;
+      transition:var(--transition);
+      box-shadow:0 8px 25px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.8);
+      border:1px solid rgba(255,255,255,.3);
     }
-    
-    .navbar-scrolled {
-      background: var(--navbar-grad-scrolled);
-      box-shadow: 0 4px 20px rgba(0,0,0,.15);
-      padding: 0.5rem 0;
-    }
+    .logo-container:hover{ transform:translateY(-3px) scale(1.02); }
+    .logo-img{ height:58px; width:auto; }
 
-    /* الشعار (الكرت الأبيض يبقى كما هو) */
-    .logo-container {
-      position: relative;
-      background: linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
-      border-radius: var(--border-radius);
-      padding: 12px 16px;
-      transition: var(--transition);
-      box-shadow: 0 8px 25px rgba(0,0,0,.15), inset 0 1px 0 rgba(255,255,255,.8);
-      border: 1px solid rgba(255,255,255,.3);
+    .nav-link{
+      color:rgba(255,255,255,.95)!important; font-weight:500;
+      padding:.7rem .9rem!important; border-radius:10px;
+      transition:var(--transition); margin:0 .2rem;
+      position:relative;
     }
-    
-    .logo-container:hover { 
-      transform: translateY(-3px) scale(1.02); 
-      box-shadow: 0 12px 30px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.9);
-    }
-    
-    .logo-img { 
-      height: 60px !important; 
-      width: auto !important; 
-      filter: brightness(1.05) contrast(1.1); 
-      transition: var(--transition);
-    }
-    
-    .logo-container:hover .logo-img { 
-      filter: brightness(1.1) contrast(1.15); 
-    }
+    .nav-link:hover{ color:#fff!important; background:rgba(255,255,255,.12); transform:translateY(-2px); }
+    .nav-link.active{ background:rgba(255,255,255,.2); color:#fff!important; }
 
-    /* الروابط */
-    .nav-link {
-      color: rgba(255,255,255,.9) !important;
-      font-weight: 500;
-      padding: 0.75rem 1rem !important;
-      border-radius: 10px;
-      transition: var(--transition);
-      margin: 0 .25rem;
-      position: relative;
-      outline: none;
-    }
-    
-    .nav-link::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: 50%;
-      width: 0;
-      height: 2px;
-      background: white;
-      transition: var(--transition);
-      transform: translateX(50%);
-    }
-    
-    .nav-link:hover::after,
-    .nav-link.active::after {
-      width: 70%;
-    }
-    
-    .nav-link:hover,
-    .nav-link:focus-visible { 
-      color: #fff !important; 
-      background: rgba(255,255,255,.12); 
-      transform: translateY(-2px); 
-    }
-    
-    .nav-link.active{ 
-      background: rgba(255,255,255,.2); 
-      color: #fff !important; 
-    }
+    .custom-dropdown{ border:none; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.12); padding:.35rem 0; min-width:260px; }
+    .dropdown-item{ padding:.7rem 1rem; font-weight:500; }
+    .dropdown-item:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6; }
 
-    /* القوائم المنسدلة */
-    .custom-dropdown{
-      background: #fff;
-      border: none;
-      border-radius: var(--border-radius);
-      box-shadow: 0 10px 30px rgba(0,0,0,.15);
-      padding: .5rem 0; 
-      margin-top: .5rem; 
-      min-width: 260px;
-      overflow: hidden;
-    }
-    
-    .dropdown-item{
-      padding: .75rem 1.5rem;
-      color: #2d3748;
-      font-weight: 500;
-      transition: var(--transition);
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      position: relative;
-    }
-    
-    .dropdown-item::before {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 0;
-      height: 100%;
-      width: 0;
-      background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08));
-      transition: var(--transition);
-      z-index: -1;
-    }
-    
-    .dropdown-item:hover::before,
-    .dropdown-item:focus-visible::before{
-      width: 100%;
-    }
-    
-    .dropdown-item:hover,
-    .dropdown-item:focus-visible{
-      color: #8b5cf6;
-      transform: translateX(-3px);
-    }
-    
-    .dropdown-item.disabled{ 
-      color: #a0aec0; 
-      pointer-events: none; 
-    }
+    .game-status-badge{ font-size:.7rem; padding:.25rem .55rem; border-radius:14px; font-weight:700; }
+    .available{ background:var(--success-bg); color:var(--success-tx); }
+    .coming-soon{ background:var(--warn-bg); color:var(--warn-tx); }
 
-    .game-status-badge{ 
-      font-size: .7rem; 
-      padding: .25rem .5rem; 
-      border-radius: 15px; 
-      font-weight: 600; 
+    .user-menu{
+      display:flex; align-items:center;
+      background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important; gap:.5rem;
     }
-    
-    .game-status-badge.available{ 
-      background: var(--success-bg); 
-      color: var(--success-tx); 
-    }
-    
-    .game-status-badge.coming-soon{ 
-      background: var(--warn-bg); 
-      color: var(--warn-tx); 
-    }
+    .user-menu:hover{ background:rgba(255,255,255,.18); }
+    .user-avatar{ width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 
-    /* المستخدم */
-    .user-menu{ 
-      display:flex; 
-      align-items:center; 
-      background: rgba(255,255,255,.1); 
-      border-radius: 25px; 
-      padding:.5rem 1rem !important; 
-      transition: var(--transition);
-    }
-    
-    .user-menu:hover {
-      background: rgba(255,255,255,.15);
-    }
-    
-    .user-avatar{
-      width: 35px; 
-      height: 35px; 
-      background: #fff; 
-      border-radius: 50%;
-      display:flex; 
-      align-items:center; 
-      justify-content:center; 
-      color:#8b5cf6; 
-      margin-left:.5rem;
-      transition: var(--transition);
-    }
-    
-    .user-name{ 
-      font-weight:600; 
-    }
-    
-    .user-dropdown{ 
-      min-width: 280px; 
-    }
-
-    /* أزرار الدخول */
-    .auth-buttons{ 
-      display:flex; 
-      gap:.5rem; 
-    }
-    
     .btn-outline-light{
-      border: 2px solid rgba(255,255,255,.35); 
-      color:#fff; 
-      font-weight:600;
-      padding:.5rem 1.5rem; 
-      border-radius:25px; 
-      transition: var(--transition);
+      border:2px solid rgba(255,255,255,.35); color:#fff; font-weight:600; padding:.45rem 1.25rem; border-radius:25px; transition:var(--transition);
     }
-    
-    .btn-outline-light:hover{ 
-      background:#fff; 
-      color:#8b5cf6; 
-      border-color:#fff; 
-      transform: translateY(-2px); 
-      box-shadow: 0 5px 15px rgba(255,255,255,.25);
-    }
-    
+    .btn-outline-light:hover{ background:#fff; color:#8b5cf6; border-color:#fff; transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,255,255,.25); }
+
     .btn-primary{
-      background: var(--btn-grad); 
-      border:none; 
-      font-weight:600;
-      padding:.5rem 1.5rem; 
-      border-radius:25px; 
-      transition: var(--transition);
-      color:#fff;
-      position: relative;
-      overflow: hidden;
+      background:var(--btn-grad); border:none; font-weight:700; padding:.5rem 1.25rem; border-radius:25px; color:#fff; transition:var(--transition);
     }
-    
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1));
-      transform: translateX(-100%);
-      transition: transform 0.6s;
-    }
-    
-    .btn-primary:hover::before {
-      transform: translateX(100%);
-    }
-    
-    .btn-primary:hover{ 
-      background: var(--btn-grad-hover); 
-      transform: translateY(-2px); 
-      box-shadow: 0 5px 15px rgba(245,158,11,.35); 
-    }
+    .btn-primary:hover{ background:var(--btn-grad-hover); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    /* زر الجوال */
-    .custom-toggler{ 
-      border:none; 
-      padding:.5rem; 
-      background: rgba(255,255,255,.12); 
-      border-radius:10px; 
-      transition: var(--transition);
-      position: relative;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .custom-toggler:hover {
-      background: rgba(255,255,255,.2);
-    }
-    
-    .custom-toggler:focus{ 
-      box-shadow:none; 
-    }
-    
-    .toggler-icon{ 
-      display:block; 
-      width:25px; 
-      height:3px; 
-      background:#fff; 
-      margin:3px 0; 
-      transition: var(--transition); 
-      border-radius:2px; 
-    }
-    
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(1){ 
-      transform: rotate(45deg) translate(6px, 6px); 
-    }
-    
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){ 
-      opacity:0; 
-    }
-    
-    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){ 
-      transform: rotate(-45deg) translate(6px, -6px); 
-    }
+    .custom-toggler{ border:none; width:44px; height:44px; background:rgba(255,255,255,.12); border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; }
+    .toggler-icon{ width:25px; height:3px; background:#fff; border-radius:2px; display:block; }
 
-    /* زر الإغلاق (X) */
-    .close-navbar {
-      display: none;
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      background: rgba(139,92,246,.15);
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      color: #8b5cf6;
-      font-size: 1.2rem;
-      z-index: 1001;
-      transition: var(--transition);
-    }
-    
-    .close-navbar:hover {
-      background: rgba(139,92,246,.25);
-      transform: rotate(90deg);
-    }
-
-    /* Responsive */
-    @media (max-width: 991px){
+    /* موبایل */
+    @media (max-width: 991.98px){
       .navbar-collapse{
-        background: rgba(255,255,255,.97);
-        border-radius: var(--border-radius);
-        padding: 1rem;
-        margin-top: 1rem;
-        backdrop-filter: blur(10px);
-        box-shadow: 0 10px 25px rgba(0,0,0,.1);
-        position: relative;
+        background:rgba(255,255,255,.97);
+        border-radius:14px; padding:1rem; margin-top:.75rem;
+        box-shadow:0 10px 25px rgba(0,0,0,.1);
       }
-      
-      .close-navbar {
-        display: block;
-      }
-      
-      .nav-link{ 
-        color:#2d3748 !important; 
-        margin:.25rem 0; 
-      }
-      
-      .nav-link:hover{ 
-        background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(6,182,212,.1)); 
-        color:#8b5cf6 !important; 
-      }
-      
-      .auth-buttons{ 
-        margin-top:.5rem; 
-        flex-direction:column; 
-        gap:.75rem; 
-      }
-      
-      .user-menu{ 
-        background: linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); 
-        color:#2d3748 !important; 
-      }
-      
-      .logo-img{ 
-        height:50px !important; 
-      }
-      
-      .logo-container{ 
-        padding: 8px 12px; 
-      }
-      
-      .dropdown-menu {
-        border: none;
-        box-shadow: none;
-        margin: 0.5rem 0;
-        padding-right: 1rem;
-      }
-    }
-    
-    @media (max-width: 576px){
-      .navbar{ 
-        padding:.5rem 0; 
-      }
-      
-      .logo-img{ 
-        height:45px !important; 
-      }
-      
-      .logo-container{ 
-        padding: 6px 10px; 
-      }
+      .nav-link{ color:#2d3748!important; }
+      .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
+      .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; }
     }
 
-    /* حركة القوائم على الديسكتوب فقط */
-    .dropdown-menu{ 
-      opacity:0; 
-      transform: translateY(-8px); 
-      transition: var(--transition); 
-      display:block; 
-      visibility:hidden; 
-    }
-    
-    .dropdown:hover .dropdown-menu,
-    .dropdown.show .dropdown-menu{ 
-      opacity:1; 
-      transform: translateY(0); 
-      visibility:visible; 
-    }
-    
-    @media (max-width: 991px){
-      .dropdown-menu{ 
-        opacity:1; 
-        transform:none; 
-        visibility:visible; 
-      }
-    }
-
-    /* تحسين تركيز لوحة المفاتيح */
-    .nav-link:focus-visible, 
-    .dropdown-item:focus-visible, 
-    .btn-primary:focus-visible, 
-    .btn-outline-light:focus-visible{
-      outline: 3px solid rgba(255,255,255,.6);
-      outline-offset: 2px;
-    }
-    
-    /* تأثيرات إضافية للأناقة */
-    .dropdown-item i {
-      transition: var(--transition);
-    }
-    
-    .dropdown-item:hover i {
-      transform: scale(1.2);
-    }
-    
-    /* تحسينات للرسوم المتحركة */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .dropdown-menu.show {
-      animation: fadeIn 0.3s ease forwards;
-    }
+    /* نزيل أي حيل CSS كانت تمنع التمرير أو تفرض عرض القوائم */
+    .dropdown-menu{ display:none; }
+    .dropdown.show .dropdown-menu{ display:block; }
   </style>
 </head>
 <body>
-  <!-- Header Section -->
-  <header class="main-header" role="banner">
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top" aria-label="الشريط العلوي">
-      <div class="container">
-        <!-- Logo and Brand -->
-        <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" aria-label="الرئيسية - وش الجواب">
-          <div class="logo-container">
-            <img
-              src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-              alt="وش الجواب"
-              class="logo-img"
-              width="160"
-              height="60"
-              loading="eager"
-              fetchpriority="high"
-              decoding="async"
-            />
+
+<header class="main-header">
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container">
+      <!-- Logo -->
+      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+        <div class="logo-container">
+          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img" width="160" height="60" loading="eager" decoding="async"/>
+        </div>
+      </a>
+
+      <!-- Toggler -->
+      <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
+        <span class="toggler-icon"></span>
+        <span class="toggler-icon"></span>
+        <span class="toggler-icon"></span>
+      </button>
+
+      <!-- Menu -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home me-1"></i>الرئيسية</a></li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" aria-expanded="false" id="gamesDropdown">
+              <i class="fas fa-gamepad me-1"></i> الألعاب
+            </a>
+            <ul class="dropdown-menu custom-dropdown" aria-labelledby="gamesDropdown">
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:letters_home' %}">
+                  <span><i class="fas fa-font me-2"></i> خلية الحروف</span>
+                  <span class="game-status-badge available">متاح</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:images_home' %}">
+                  <span><i class="fas fa-images me-2"></i> تحدي الصور</span>
+                  <span class="game-status-badge available">متاح</span>
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item d-flex justify-content-between align-items-center disabled" href="#" tabindex="-1" aria-disabled="true">
+                  <span><i class="fas fa-question-circle me-2"></i> سؤال وجواب</span>
+                  <span class="game-status-badge coming-soon">قريباً</span>
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item"><a class="nav-link" href="#about"><i class="fas fa-info-circle me-1"></i>حول المنصة</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact"><i class="fas fa-envelope me-1"></i>تواصل معنا</a></li>
+        </ul>
+
+        <!-- User Actions -->
+        <div class="navbar-nav ms-auto">
+          {% if user.is_authenticated %}
+          <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle user-menu" href="#" data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
+              <div class="user-avatar"><i class="fas fa-user"></i></div>
+              <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
+            </a>
+            <ul class="dropdown-menu custom-dropdown" aria-labelledby="userDropdown">
+              <li class="px-3 py-2"><small class="text-muted d-block">{{ user.email }}</small></li>
+              <li><hr class="dropdown-divider"></li>
+              <!-- تمت إزالة: الملف الشخصي + الإعدادات -->
+              <li>
+                <a class="dropdown-item" href="{% url 'payments:history' %}">
+                  <i class="fas fa-credit-card me-2"></i> مشترياتي
+                </a>
+              </li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}">
+                  <i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج
+                </a>
+              </li>
+            </ul>
           </div>
-        </a>
-
-        <!-- Mobile Toggle Button -->
-        <button
-          class="navbar-toggler custom-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          aria-controls="navbarNav"
-          aria-expanded="false"
-          aria-label="تبديل القائمة"
-        >
-          <span class="toggler-icon"></span>
-          <span class="toggler-icon"></span>
-          <span class="toggler-icon"></span>
-        </button>
-
-        <!-- زر الإغلاق (X) للجوال -->
-        <button class="close-navbar" aria-label="إغلاق القائمة">
-          <i class="fas fa-times"></i>
-        </button>
-
-        <!-- Navigation Menu -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav me-auto" role="menubar">
-            <li class="nav-item" role="none">
-              <a class="nav-link" href="{% url 'home' %}" role="menuitem">
-                <i class="fas fa-home me-1" aria-hidden="true"></i>
-                الرئيسية
-              </a>
-            </li>
-
-            <li class="nav-item dropdown" role="none">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                id="gamesDropdown"
-              >
-                <i class="fas fa-gamepad me-1" aria-hidden="true"></i>
-                الألعاب
-              </a>
-              <ul class="dropdown-menu custom-dropdown" role="menu" aria-labelledby="gamesDropdown">
-                <li role="none">
-                  <a class="dropdown-item" href="{% url 'games:letters_home' %}" role="menuitem">
-                    <span class="d-flex align-items-center">
-                      <i class="fas fa-font me-2" aria-hidden="true"></i>
-                      خلية الحروف
-                    </span>
-                    <span class="game-status-badge available">متاح</span>
-                  </a>
-                </li>
-                <li role="none">
-                  <!-- المسار الصحيح حسب urls.py لديك -->
-                  <a class="dropdown-item" href="{% url 'games:images_home' %}" role="menuitem">
-                    <span class="d-flex align-items-center">
-                      <i class="fas fa-images me-2" aria-hidden="true"></i>
-                      تحدي الصور
-                    </span>
-                    <span class="game-status-badge available">متاح</span>
-                  </a>
-                </li>
-                <li role="none">
-                  <a class="dropdown-item disabled" href="#" role="menuitem" aria-disabled="true">
-                    <span class="d-flex align-items-center">
-                      <i class="fas fa-question-circle me-2" aria-hidden="true"></i>
-                      سؤال وجواب
-                    </span>
-                    <span class="game-status-badge coming-soon">قريباً</span>
-                  </a>
-                </li>
-              </ul>
-            </li>
-
-            <li class="nav-item" role="none">
-              <a class="nav-link" href="#about" role="menuitem">
-                <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
-                حول المنصة
-              </a>
-            </li>
-            <li class="nav-item" role="none">
-              <a class="nav-link" href="#contact" role="menuitem">
-                <i class="fas fa-envelope me-1" aria-hidden="true"></i>
-                تواصل معنا
-              </a>
-            </li>
-          </ul>
-
-          <!-- User Actions -->
-          <div class="navbar-nav ms-auto">
-            {% if user.is_authenticated %}
-            <div class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle user-menu"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                id="userDropdown"
-              >
-                <div class="user-avatar" aria-hidden="true">
-                  <i class="fas fa-user"></i>
-                </div>
-                <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
-              </a>
-              <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
-                <!-- تم إزالة تكرار الاسم؛ نعرض البريد فقط كمرجع صغير -->
-                <li class="px-3 py-2">
-                  <small class="text-muted d-block">{{ user.email }}</small>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li role="none">
-                  <a class="dropdown-item" href="{% url 'accounts:profile' %}" role="menuitem">
-                    <i class="fas fa-user-circle me-2" aria-hidden="true"></i>
-                    الملف الشخصي
-                  </a>
-                </li>
-                <li role="none">
-                  <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
-                    <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
-                    مشترياتي
-                  </a>
-                </li>
-                <li role="none">
-                  <a class="dropdown-item" href="#" role="menuitem">
-                    <i class="fas fa-cog me-2" aria-hidden="true"></i>
-                    الإعدادات
-                  </a>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li role="none">
-                  <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}" role="menuitem">
-                    <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>
-                    تسجيل الخروج
-                  </a>
-                </li>
-              </ul>
-            </div>
-            {% else %}
-            <div class="auth-buttons d-flex align-items-center">
-              <a href="{% url 'accounts:login' %}" class="btn btn-outline-light me-2">
-                <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>
-                دخول
-              </a>
-              <a href="{% url 'accounts:register' %}" class="btn btn-primary">
-                <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
-                تسجيل جديد
-              </a>
-            </div>
-            {% endif %}
+          {% else %}
+          <div class="auth-buttons d-flex align-items-center gap-2">
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light"><i class="fas fa-sign-in-alt me-1"></i> دخول</a>
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary"><i class="fas fa-user-plus me-1"></i> تسجيل جديد</a>
           </div>
+          {% endif %}
         </div>
       </div>
-    </nav>
-  </header>
+    </div>
+  </nav>
+</header>
 
-  <!-- Spacer يمنع تداخل الهيدر الثابت مع المحتوى -->
-  <div id="header-spacer" aria-hidden="true"></div>
+<!-- Spacer لمنع تداخل الهيدر الثابت مع المحتوى -->
+<div id="header-spacer" aria-hidden="true"></div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const navbar = document.querySelector('.navbar');
-    const spacer = document.getElementById('header-spacer');
-    const navCollapse = document.getElementById('navbarNav');
-    const dropdowns = document.querySelectorAll('.dropdown');
-    const closeNavbarBtn = document.querySelector('.close-navbar');
+(function(){
+  const navbar = document.querySelector('.navbar');
+  const spacer = document.getElementById('header-spacer');
+  const navCollapse = document.getElementById('navbarNav');
 
-    // 1) حلّ التداخل: اجعل الـ spacer يساوي ارتفاع الهيدر دائماً
-    function setSpacerHeight() {
-      const h = navbar.getBoundingClientRect().height;
-      spacer.style.height = h + 'px';
-    }
-    setSpacerHeight();
+  // 1) ضبط ارتفاع الـ spacer دائمًا
+  function setSpacerHeight(){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
+  setSpacerHeight();
+  if ('ResizeObserver' in window){
+    new ResizeObserver(setSpacerHeight).observe(navbar);
+  } else {
     window.addEventListener('resize', setSpacerHeight);
+  }
 
-    // 2) تغيير نمط الهيدر عند التمرير
-    function onScroll() {
-      if (window.scrollY > 50) {
-        navbar.classList.add('navbar-scrolled');
-      } else {
-        navbar.classList.remove('navbar-scrolled');
-      }
-    }
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
+  // 2) تأثير التمرير
+  function onScroll(){ (window.scrollY > 50) ? navbar.classList.add('navbar-scrolled') : navbar.classList.remove('navbar-scrolled'); }
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive:true });
 
-    // 3) إبراز الرابط النشط (يدعم المسارات الفرعية)
-    const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
-    document.querySelectorAll('.nav-link[href]').forEach(link => {
-      const href = link.getAttribute('href') || '';
-      if (href.startsWith('#')) return; // تجاهل روابط المقاطع
-      const normalized = (href.replace(/\/+$/, '') || '/');
-      if (currentPath === normalized || (normalized !== '/' && currentPath.startsWith(normalized))) {
-        link.classList.add('active');
-      }
-    });
-
-    // 4) القوائم المنسدلة بالهوفر على الديسكتوب فقط (نفس سلوكك السابق)
-    dropdowns.forEach(dd => {
-      dd.addEventListener('mouseenter', () => {
-        if (window.innerWidth > 991) {
-          dd.classList.add('show');
-          dd.querySelector('.dropdown-menu')?.classList.add('show');
-        }
-      });
-      dd.addEventListener('mouseleave', () => {
-        if (window.innerWidth > 991) {
-          dd.classList.remove('show');
-          dd.querySelector('.dropdown-menu')?.classList.remove('show');
-        }
-      });
-    });
-
-    // 5) عند فتح/غلق التوجل في الجوال، أعِد حساب ارتفاع الـ spacer
-    if (navCollapse) {
-      navCollapse.addEventListener('shown.bs.collapse', setSpacerHeight);
-      navCollapse.addEventListener('hidden.bs.collapse', setSpacerHeight);
-    }
-
-    // 6) إغلاق طيّة الجوال عند الضغط على "روابط حقيقية" فقط (استثناء الـ dropdown-toggle)
-    document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(a => {
-      a.addEventListener('click', () => {
-        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-        if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')) {
-          bsCollapse.hide();
-        }
-      });
-    });
-
-    // 7) إصلاح مشكلة القوائم المنسدلة - إغلاقها عند النقر على عنصر
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-      item.addEventListener('click', function() {
-        // إغلاق القائمة المنسدلة عند النقر على عنصر
-        const dropdownElement = this.closest('.dropdown');
-        const dropdownInstance = bootstrap.Dropdown.getInstance(dropdownElement.querySelector('.dropdown-toggle'));
-        if (dropdownInstance) {
-          dropdownInstance.hide();
-        }
-        
-        // إغلاق القائمة على الجوال
-        if (window.innerWidth <= 991) {
-          const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-          bsCollapse.hide();
-        }
-      });
-    });
-
-    // 8) إغلاق أي قائمة مفتوحة عند الضغط خارج الهيدر
-    document.addEventListener('click', (e) => {
-      const insideNav = e.target.closest('.navbar');
-      if (!insideNav) {
-        dropdowns.forEach(dd => {
-          dd.classList.remove('show');
-          dd.querySelector('.dropdown-menu')?.classList.remove('show');
-        });
-      }
-    }, { passive: true });
-
-    // 9) إضافة وظيفة زر الإغلاق (X) للجوال
-    if (closeNavbarBtn && navCollapse) {
-      closeNavbarBtn.addEventListener('click', () => {
-        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-        bsCollapse.hide();
-      });
-    }
-
-    // 10) إخفاء زر الإغلاق عند إغلاق القائمة وإظهاره عند فتحها
-    if (navCollapse) {
-      navCollapse.addEventListener('show.bs.collapse', () => {
-        if (closeNavbarBtn && window.innerWidth <= 991) {
-          closeNavbarBtn.style.display = 'block';
-        }
-      });
-      
-      navCollapse.addEventListener('hide.bs.collapse', () => {
-        if (closeNavbarBtn) {
-          closeNavbarBtn.style.display = 'none';
-        }
-      });
-    }
-
-    // إخفاء زر الإغلاق افتراضيًا
-    if (closeNavbarBtn) {
-      closeNavbarBtn.style.display = 'none';
+  // 3) إبراز الرابط النشط (يدعم المسارات الفرعية)
+  const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
+  document.querySelectorAll('.nav-link[href]').forEach(link => {
+    const href = link.getAttribute('href') || '';
+    if (href.startsWith('#')) return;
+    const normalized = (href.replace(/\/+$/, '') || '/');
+    if (currentPath === normalized || (normalized !== '/' && currentPath.startsWith(normalized))){
+      link.classList.add('active');
     }
   });
+
+  // 4) إغلاق قائمة الجوال عند النقر على رابط (حقيقي)
+  document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(a=>{
+    a.addEventListener('click', () => {
+      if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
+        bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
+      }
+    });
+  });
+
+  // 5) Hover للديسكتوب فقط (بدون تعطيل تمرير الجوال)
+  const desktopHover = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  const dropdowns = document.querySelectorAll('.nav-item.dropdown');
+  function bindHover(){
+    dropdowns.forEach(dd=>{
+      dd.addEventListener('mouseenter', onEnter);
+      dd.addEventListener('mouseleave', onLeave);
+    });
+  }
+  function unbindHover(){
+    dropdowns.forEach(dd=>{
+      dd.removeEventListener('mouseenter', onEnter);
+      dd.removeEventListener('mouseleave', onLeave);
+    });
+  }
+  function onEnter(){ if (desktopHover()){ this.classList.add('show'); this.querySelector('.dropdown-toggle').setAttribute('aria-expanded','true'); this.querySelector('.dropdown-menu')?.classList.add('show'); } }
+  function onLeave(){ if (desktopHover()){ this.classList.remove('show'); this.querySelector('.dropdown-toggle').setAttribute('aria-expanded','false'); this.querySelector('.dropdown-menu')?.classList.remove('show'); } }
+
+  // تفعيل/إلغاء hover حسب الجهاز/العرض
+  function refreshHover(){
+    unbindHover();
+    if (desktopHover()) bindHover();
+  }
+  refreshHover();
+  window.addEventListener('resize', refreshHover);
+
+  // 6) لا نجبر dropdown على الظهور عبر CSS في الجوال (نترك Bootstrap يديرها)
+  // 7) لا نمنع التمرير إطلاقًا؛ لا body overflow tricks هنا.
+
+})();
 </script>
 
 </body>
