@@ -60,6 +60,7 @@
     }
     .nav-link:hover{ color:#fff!important; background:rgba(255,255,255,.12); transform:translateY(-2px); }
     .nav-link.active{ background:rgba(255,255,255,.2); color:#fff!important; }
+    .dropdown-toggle::after{ border-top-color: currentColor; }
 
     .custom-dropdown{ border:none; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.12); padding:.35rem 0; min-width:260px; }
     .dropdown-item{ padding:.7rem 1rem; font-weight:500; }
@@ -86,8 +87,25 @@
     }
     .btn-primary:hover{ background:var(--btn-grad-hover); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    .custom-toggler{ border:none; width:44px; height:44px; background:rgba(255,255,255,.12); border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; }
-    .toggler-icon{ width:25px; height:3px; background:#fff; border-radius:2px; display:block; }
+    /* زر الـ Hamburger مع أنميشن التحول إلى X */
+    .custom-toggler{
+      border:none; width:44px; height:44px; background:rgba(255,255,255,.12);
+      border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      gap:6px; padding:0; transition:var(--transition);
+    }
+    .custom-toggler .toggler-icon{
+      width:26px; height:3px; background:#fff; border-radius:2px; display:block;
+      transition:transform .25s ease, opacity .25s ease;
+    }
+    .navbar-toggler[aria-expanded="true"] .toggler-icon:nth-child(1){
+      transform: translateY(9px) rotate(45deg);
+    }
+    .navbar-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){
+      opacity:0;
+    }
+    .navbar-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){
+      transform: translateY(-9px) rotate(-45deg);
+    }
 
     /* موبایل */
     @media (max-width: 991.98px){
@@ -95,21 +113,16 @@
         background:rgba(255,255,255,.97);
         border-radius:14px; padding:1rem; margin-top:.75rem;
         box-shadow:0 10px 25px rgba(0,0,0,.1);
-        position: relative;
       }
       .nav-link{ color:#2d3748!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; }
-      .close-navbar{
-        display:block;
-        position:absolute; top:10px; left:10px;
-        width:40px; height:40px; border:none; border-radius:50%;
-        background:rgba(139,92,246,.15); color:#8b5cf6;
+      /* إبقاء نص الأزرار ظاهر عند فتح القوائم المنسدلة */
+      .dropdown .nav-link.dropdown-toggle[aria-expanded="true"]{
+        color:#8b5cf6!important;
+        background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12));
       }
     }
-
-    /* زر الإغلاق مخفي على الديسكتوب */
-    .close-navbar{ display:none; }
   </style>
 </head>
 <body>
@@ -135,9 +148,6 @@
 
       <!-- Menu -->
       <div class="collapse navbar-collapse" id="navbarNav">
-        <!-- زر إغلاق (X) للجوال -->
-        <button class="close-navbar" type="button" aria-label="إغلاق القائمة">&times;</button>
-
         <ul class="navbar-nav me-auto" role="menubar">
           <li class="nav-item" role="none">
             <a class="nav-link" href="{% url 'home' %}" role="menuitem">
@@ -204,7 +214,7 @@
                 <small class="text-muted d-block">{{ user.email }}</small>
               </li>
               <li><hr class="dropdown-divider" /></li>
-              <!-- تمت إزالة: الملف الشخصي + الإعدادات -->
+              <!-- مُبقي فقط: مشترياتي + خروج -->
               <li role="none">
                 <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
                   <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
@@ -249,7 +259,6 @@
   const navbar = document.querySelector('.navbar');
   const spacer = document.getElementById('header-spacer');
   const navCollapse = document.getElementById('navbarNav');
-  const closeBtn = document.querySelector('.close-navbar');
 
   // 1) ضبط ارتفاع الـ spacer دائمًا
   function setSpacerHeight(){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
@@ -285,21 +294,7 @@
     });
   });
 
-  // 5) زر X يقفل القائمة فورًا
-  if (closeBtn){
-    closeBtn.addEventListener('click', () => {
-      const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-      inst.hide();
-    });
-  }
-
-  // 6) إظهار/إخفاء زر X عند فتح/غلق القائمة
-  if (navCollapse){
-    navCollapse.addEventListener('show.bs.collapse', () => { if (window.innerWidth <= 991 && closeBtn) closeBtn.style.display = 'block'; });
-    navCollapse.addEventListener('hide.bs.collapse', () => { if (closeBtn) closeBtn.style.display = 'none'; });
-  }
-
-  // 7) Hover للديسكتوب فقط
+  // 5) Hover للديسكتوب فقط
   const dropdowns = document.querySelectorAll('.nav-item.dropdown');
   const desktopHover = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
   function onEnter(){ if (desktopHover()){ this.classList.add('show'); this.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','true'); this.querySelector('.dropdown-menu')?.classList.add('show'); } }
@@ -309,19 +304,7 @@
   function refreshHover(){ unbindHover(); if (desktopHover()) bindHover(); }
   refreshHover(); window.addEventListener('resize', refreshHover);
 
-  // 8) منع إغلاق القائمة عند الضغط على زر الدروبداون في الجوال (نخلي Bootstrap يدير الفتح/الإغلاق)
-  document.querySelectorAll('.nav-item.dropdown .dropdown-toggle').forEach(tgl=>{
-    tgl.addEventListener('click', (e)=>{
-      // لو داخل الجوال، نخليها تفتح/تغلق القائمة فقط بدون انهيار الـ collapse
-      if (window.innerWidth <= 991){
-        e.preventDefault();
-        e.stopPropagation();
-        const dd = bootstrap.Dropdown.getOrCreateInstance(tgl);
-        dd.toggle();
-      }
-    });
-  });
-
+  // 6) اترك Bootstrap يدير فتح/غلق dropdown بالنقر على الجوال (لا stopPropagation ولا toggle يدوي)
 })();
 </script>
 
