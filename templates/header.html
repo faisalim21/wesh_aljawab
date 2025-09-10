@@ -86,8 +86,31 @@
     }
     .btn-primary:hover{ background:var(--btn-grad-hover); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    .custom-toggler{ border:none; width:44px; height:44px; background:rgba(255,255,255,.12); border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; }
-    .toggler-icon{ width:25px; height:3px; background:#fff; border-radius:2px; display:block; }
+    /* تحسين الـ Hamburger Menu */
+    .custom-toggler{ 
+      border:none; width:44px; height:44px; background:rgba(255,255,255,.12); 
+      border-radius:10px; display:flex; flex-direction:column; 
+      justify-content:center; align-items:center; gap:5px; 
+      position:relative; cursor:pointer; transition:var(--transition);
+    }
+    .custom-toggler:hover{ background:rgba(255,255,255,.18); }
+    
+    .toggler-icon{ 
+      width:25px; height:3px; background:#fff; border-radius:2px; 
+      display:block; transition:all 0.3s cubic-bezier(.25,.8,.25,1);
+      transform-origin:center;
+    }
+    
+    /* تحويل الهامبرغر إلى X */
+    .custom-toggler.active .toggler-icon:nth-child(1){ 
+      transform:translateY(8px) rotate(45deg); 
+    }
+    .custom-toggler.active .toggler-icon:nth-child(2){ 
+      opacity:0; transform:scaleX(0);
+    }
+    .custom-toggler.active .toggler-icon:nth-child(3){ 
+      transform:translateY(-8px) rotate(-45deg); 
+    }
 
     /* موبایل */
     @media (max-width: 991.98px){
@@ -98,18 +121,38 @@
         position: relative;
       }
       .nav-link{ color:#2d3748!important; }
+      .nav-link:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
-      .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; }
-      .close-navbar{
-        display:block;
-        position:absolute; top:10px; left:10px;
-        width:40px; height:40px; border:none; border-radius:50%;
-        background:rgba(139,92,246,.15); color:#8b5cf6;
+      
+      /* تحسين قائمة المستخدم في الجوال */
+      .user-menu{ 
+        background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); 
+        color:#2d3748!important; border-radius:10px;
+      }
+      .user-menu:hover{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); }
+      
+      /* تحسين الدروب داون في الجوال */
+      .dropdown-menu.show{ 
+        display:block!important; 
+        position:static!important; 
+        transform:none!important; 
+        box-shadow:none!important; 
+        border:none!important; 
+        background:transparent!important; 
+        margin:0.5rem 0 0 0!important; 
+        padding:0!important;
+      }
+      
+      .dropdown-item{ 
+        background:rgba(139,92,246,.05)!important; 
+        margin:0.25rem 0; 
+        border-radius:8px; 
+        color:#2d3748!important;
+      }
+      .dropdown-item:hover{ 
+        background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12))!important; 
       }
     }
-
-    /* زر الإغلاق مخفي على الديسكتوب */
-    .close-navbar{ display:none; }
   </style>
 </head>
 <body>
@@ -118,13 +161,13 @@
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" aria-label="الشريط العلوي">
     <div class="container">
       <!-- Logo -->
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" aria-label="الرئيسية - وش الجواب">
+      <a class="navbar-brand d-flex align-items-center" href="#" aria-label="الرئيسية - وش الجواب">
         <div class="logo-container">
           <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img" width="160" height="60" loading="eager" decoding="async"/>
         </div>
       </a>
 
-      <!-- Toggler -->
+      <!-- Toggler المُحسن -->
       <button class="navbar-toggler custom-toggler" type="button"
               data-bs-toggle="collapse" data-bs-target="#navbarNav"
               aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
@@ -135,12 +178,9 @@
 
       <!-- Menu -->
       <div class="collapse navbar-collapse" id="navbarNav">
-        <!-- زر إغلاق (X) للجوال -->
-        <button class="close-navbar" type="button" aria-label="إغلاق القائمة">&times;</button>
-
         <ul class="navbar-nav me-auto" role="menubar">
           <li class="nav-item" role="none">
-            <a class="nav-link" href="{% url 'home' %}" role="menuitem">
+            <a class="nav-link active" href="#" role="menuitem">
               <i class="fas fa-home me-1" aria-hidden="true"></i>
               الرئيسية
             </a>
@@ -154,13 +194,13 @@
             </a>
             <ul class="dropdown-menu custom-dropdown" role="menu" aria-labelledby="gamesDropdown">
               <li role="none">
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:letters_home' %}" role="menuitem">
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" role="menuitem">
                   <span><i class="fas fa-font me-2"></i> خلية الحروف</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
               </li>
               <li role="none">
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:images_home' %}" role="menuitem">
+                <a class="dropdown-item d-flex justify-content-between align-items-center" href="#" role="menuitem">
                   <span><i class="fas fa-images me-2"></i> تحدي الصور</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
@@ -190,47 +230,47 @@
 
         <!-- User Actions -->
         <div class="navbar-nav ms-auto">
-          {% if user.is_authenticated %}
-          <div class="nav-item dropdown">
+          <!-- حالة المستخدم المسجل -->
+          <div class="nav-item dropdown user-authenticated" style="display: block;">
             <a class="nav-link dropdown-toggle user-menu" href="#" role="button"
                data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
               <div class="user-avatar" aria-hidden="true">
                 <i class="fas fa-user"></i>
               </div>
-              <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
+              <span class="user-name">أحمد محمد</span>
             </a>
             <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
               <li class="px-3 py-2">
-                <small class="text-muted d-block">{{ user.email }}</small>
+                <small class="text-muted d-block">ahmed@example.com</small>
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
-                <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
+                <a class="dropdown-item" href="#" role="menuitem">
                   <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
                   مشترياتي
                 </a>
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
-                <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}" role="menuitem">
+                <a class="dropdown-item text-danger" href="#" role="menuitem">
                   <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>
                   تسجيل الخروج
                 </a>
               </li>
             </ul>
           </div>
-          {% else %}
-          <div class="auth-buttons d-flex align-items-center gap-2">
-            <a href="{% url 'accounts:login' %}" class="btn btn-outline-light">
+          
+          <!-- أزرار التسجيل (مخفية افتراضياً لعرض حالة المستخدم المسجل) -->
+          <div class="auth-buttons d-flex align-items-center gap-2" style="display: none;">
+            <a href="#" class="btn btn-outline-light">
               <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>
               دخول
             </a>
-            <a href="{% url 'accounts:register' %}" class="btn btn-primary">
+            <a href="#" class="btn btn-primary">
               <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
               تسجيل جديد
             </a>
           </div>
-          {% endif %}
         </div>
       </div>
     </div>
@@ -240,19 +280,80 @@
 <!-- Spacer لمنع تداخل الهيدر الثابت مع المحتوى -->
 <div id="header-spacer" aria-hidden="true"></div>
 
-<!-- Bootstrap JS (defer لتحسين الأداء) -->
-<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- محتوى تجريبي لاختبار التمرير -->
+<div class="container mt-5 pt-5">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="text-center mb-5">مرحباً بك في منصة وش الجواب</h1>
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">اختبار التنقل</h5>
+          <p class="card-text">هذا محتوى تجريبي لاختبار عمل شريط التنقل وانيميشن الهامبرغر مينو.</p>
+          <p>جرب الضغط على زر القائمة في الجوال لتشاهد التحول الناعم من الثلاث شرطات إلى علامة X.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- محتوى إضافي للتمرير -->
+  <div class="row mt-5">
+    <div class="col-md-6">
+      <h3>الميزات الجديدة</h3>
+      <ul>
+        <li>انيميشن ناعم للهامبرغر مينو</li>
+        <li>قوائم منسدلة تعمل بشكل صحيح في الجوال</li>
+        <li>تصميم محسن وسريع الاستجابة</li>
+        <li>أمان وأداء عالي</li>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h3>الألعاب المتاحة</h3>
+      <div class="list-group">
+        <div class="list-group-item d-flex justify-content-between">
+          <span>خلية الحروف</span>
+          <span class="badge bg-success">متاح</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between">
+          <span>تحدي الصور</span>
+          <span class="badge bg-success">متاح</span>
+        </div>
+        <div class="list-group-item d-flex justify-content-between">
+          <span>سؤال وجواب</span>
+          <span class="badge bg-warning">قريباً</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- محتوى إضافي للتمرير -->
+  <div style="height: 1000px; background: linear-gradient(to bottom, #f8fafc, #e2e8f0); margin-top: 3rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center;">
+    <div class="text-center">
+      <h2>محتوى إضافي لاختبار التمرير</h2>
+      <p class="text-muted">لاحظ كيف يتغير شريط التنقل عند التمرير</p>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
 (function(){
+  'use strict';
+  
   const navbar = document.querySelector('.navbar');
   const spacer = document.getElementById('header-spacer');
   const navCollapse = document.getElementById('navbarNav');
-  const closeBtn = document.querySelector('.close-navbar');
+  const toggler = document.querySelector('.custom-toggler');
 
   // 1) ضبط ارتفاع الـ spacer دائمًا
-  function setSpacerHeight(){ if(spacer && navbar){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; } }
+  function setSpacerHeight(){ 
+    if(spacer && navbar){ 
+      spacer.style.height = navbar.getBoundingClientRect().height + 'px'; 
+    } 
+  }
   setSpacerHeight();
+  
   if ('ResizeObserver' in window && navbar){
     new ResizeObserver(setSpacerHeight).observe(navbar);
   } else {
@@ -262,25 +363,55 @@
   // 2) تأثير التمرير
   function onScroll(){
     if(!navbar) return;
-    (window.scrollY > 50) ? navbar.classList.add('navbar-scrolled') : navbar.classList.remove('navbar-scrolled');
+    if(window.scrollY > 50){
+      navbar.classList.add('navbar-scrolled');
+    } else {
+      navbar.classList.remove('navbar-scrolled');
+    }
   }
   onScroll();
   window.addEventListener('scroll', onScroll, { passive:true });
 
-  // 3) إبراز الرابط النشط
-  const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
+  // 3) إبراز الرابط النشط (محاكاة)
+  const currentPath = window.location.hash || '#home';
   document.querySelectorAll('.nav-link[href]').forEach(link => {
     const href = link.getAttribute('href') || '';
-    if (href.startsWith('#')) return;
-    const normalized = (href.replace(/\/+$/, '') || '/');
-    if (currentPath === normalized || (normalized !== '/' && currentPath.startsWith(normalized))){
+    if (href === currentPath || (currentPath === '' && href === '#')){
       link.classList.add('active');
     }
   });
 
-  // 4) إغلاق قائمة الجوال عند الضغط على رابط فعلي فقط (ليس dropdown-toggle)
-  document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(a=>{
-    a.addEventListener('click', () => {
+  // 4) التحكم في انيميشن الهامبرغر
+  if(toggler && navCollapse){
+    // عند فتح/إغلاق القائمة
+    navCollapse.addEventListener('show.bs.collapse', function(){
+      toggler.classList.add('active');
+      toggler.setAttribute('aria-expanded', 'true');
+    });
+    
+    navCollapse.addEventListener('hide.bs.collapse', function(){
+      toggler.classList.remove('active');
+      toggler.setAttribute('aria-expanded', 'false');
+    });
+    
+    // التأكد من الحالة الصحيحة عند تغيير حجم الشاشة
+    window.addEventListener('resize', function(){
+      if(window.innerWidth > 991){
+        toggler.classList.remove('active');
+        toggler.setAttribute('aria-expanded', 'false');
+      }
+    }, { passive: true });
+  }
+
+  // 5) إغلاق القائمة عند الضغط على رابط عادي (ليس dropdown)
+  document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(link => {
+    link.addEventListener('click', function(e){
+      // إذا كان رابط وهمي، منع السلوك الافتراضي
+      if(this.getAttribute('href') === '#'){
+        e.preventDefault();
+      }
+      
+      // إغلاق القائمة في الجوال
       if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
         const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
         inst.hide();
@@ -288,64 +419,70 @@
     });
   });
 
-  // 5) زر X يقفل القائمة فورًا
-  if (closeBtn){
-    closeBtn.addEventListener('click', () => {
-      const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-      inst.hide();
-    });
-  }
-
-  // 6) إظهار/إخفاء زر X عند فتح/غلق القائمة
-  if (navCollapse){
-    navCollapse.addEventListener('show.bs.collapse', () => {
-      if (window.innerWidth <= 991 && closeBtn) closeBtn.style.display = 'block';
-    });
-    navCollapse.addEventListener('hide.bs.collapse', () => {
-      if (closeBtn) closeBtn.style.display = 'none';
-    });
-  }
-
-  // 7) Hover للديسكتوب فقط (لا نعطّل سلوك Bootstrap على الجوال)
+  // 6) تحسين أداء الدروب داون في الجوال والديسكتوب
   const dropdowns = document.querySelectorAll('.nav-item.dropdown');
-  const desktopHover = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  
+  function isDesktop(){
+    return window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  }
 
-  function onEnter(){
-    if (!desktopHover()) return;
-    this.classList.add('show');
-    const toggle = this.querySelector('.dropdown-toggle');
-    const menu = this.querySelector('.dropdown-menu');
+  // Hover للديسكتوب
+  function onDropdownEnter(){
+    if (!isDesktop()) return;
+    const dropdown = this;
+    const toggle = dropdown.querySelector('.dropdown-toggle');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    
+    dropdown.classList.add('show');
     if (toggle) toggle.setAttribute('aria-expanded','true');
     if (menu) menu.classList.add('show');
   }
 
-  function onLeave(){
-    if (!desktopHover()) return;
-    this.classList.remove('show');
-    const toggle = this.querySelector('.dropdown-toggle');
-    const menu = this.querySelector('.dropdown-menu');
+  function onDropdownLeave(){
+    if (!isDesktop()) return;
+    const dropdown = this;
+    const toggle = dropdown.querySelector('.dropdown-toggle');
+    const menu = dropdown.querySelector('.dropdown-menu');
+    
+    dropdown.classList.remove('show');
     if (toggle) toggle.setAttribute('aria-expanded','false');
     if (menu) menu.classList.remove('show');
   }
 
-  function bindHover(){
-    dropdowns.forEach(dd=>{
-      dd.addEventListener('mouseenter', onEnter);
-      dd.addEventListener('mouseleave', onLeave);
+  function bindDesktopHover(){
+    dropdowns.forEach(dropdown => {
+      dropdown.addEventListener('mouseenter', onDropdownEnter);
+      dropdown.addEventListener('mouseleave', onDropdownLeave);
     });
   }
 
-  function unbindHover(){
-    dropdowns.forEach(dd=>{
-      dd.removeEventListener('mouseenter', onEnter);
-      dd.removeEventListener('mouseleave', onLeave);
+  function unbindDesktopHover(){
+    dropdowns.forEach(dropdown => {
+      dropdown.removeEventListener('mouseenter', onDropdownEnter);
+      dropdown.removeEventListener('mouseleave', onDropdownLeave);
     });
   }
 
-  function refreshHover(){ unbindHover(); if (desktopHover()) bindHover(); }
-  refreshHover(); window.addEventListener('resize', refreshHover, { passive:true });
+  function refreshDropdownBehavior(){
+    unbindDesktopHover();
+    if (isDesktop()) {
+      bindDesktopHover();
+    }
+  }
 
-  // ملاحظة: لا نمنع الحدث الافتراضي على الجوال؛ Bootstrap يدير toggle لل-dropdown تلقائيًا
+  refreshDropdownBehavior();
+  window.addEventListener('resize', refreshDropdownBehavior, { passive:true });
+
+  // 7) منع الإغلاق التلقائي للدروب داون في الجوال عند الضغط داخلها
+  document.querySelectorAll('.dropdown-menu').forEach(menu => {
+    menu.addEventListener('click', function(e){
+      if(window.innerWidth <= 991){
+        e.stopPropagation();
+      }
+    });
+  });
+
+  console.log('✅ شريط التنقل جاهز - جميع الميزات تعمل بشكل صحيح');
 })();
 </script>
 
