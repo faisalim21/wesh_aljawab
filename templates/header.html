@@ -3,97 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
-</head>
-<body>
-<header class="main-header" role="banner">
+
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#6d28d9">
+
+  <title>وش الجواب - الهيدر</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
   <style>
+    * { font-family: 'Tajawal', sans-serif; }
     :root{
-      --primary-start:#8b5cf6; --primary-end:#06b6d4;
       --navbar-grad: linear-gradient(135deg, rgba(139,92,246,.95), rgba(6,182,212,.95));
       --navbar-grad-scrolled: linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
-      --btn-grad: linear-gradient(135deg,#f59e0b,#f97316);
-      --border-radius: 16px;
-      --transition: all .3s cubic-bezier(.25,.8,.25,1);
+      --transition: all .3s ease;
     }
-    .navbar{background:var(--navbar-grad);backdrop-filter:blur(10px);padding:.75rem 0;transition:var(--transition);box-shadow:0 2px 20px rgba(0,0,0,.1);}
-    .navbar .navbar-brand .logo-container{background:linear-gradient(145deg,rgba(255,255,255,.95),rgba(255,255,255,.85));border-radius:var(--border-radius);padding:10px 14px;box-shadow:0 8px 25px rgba(0,0,0,.15),inset 0 1px 0 rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.3);transition:var(--transition);}
-    .navbar .navbar-brand .logo-img{height:56px;width:auto;}
-    .nav-link{color:rgba(255,255,255,.95)!important;font-weight:600;padding:.6rem .9rem!important;border-radius:10px;transition:var(--transition);display:flex;align-items:center;gap:.35rem;}
-    .nav-link:hover,.nav-link:focus{color:#fff!important;background:rgba(255,255,255,.12);transform:translateY(-1px);}
-    .dropdown-menu.custom-dropdown{border:none;border-radius:14px;padding:.5rem 0;min-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.15);}
-    .dropdown-item{padding:.7rem 1rem;font-weight:500;display:flex;justify-content:space-between;align-items:center;transition:var(--transition);}
-    .dropdown-item:hover{background:rgba(139,92,246,.08);color:#8b5cf6;}
-    .game-status-badge{font-size:.72rem;padding:.15rem .5rem;border-radius:999px;}
-    .game-status-badge.available{background:rgba(16,185,129,.15);color:#059669;}
-    .game-status-badge.coming-soon{background:rgba(245,158,11,.15);color:#d97706;}
-    .navbar-toggler.custom-toggler{border:none;width:42px;height:42px;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;transition:var(--transition);}
-    .navbar-toggler.custom-toggler:focus{box-shadow:none;}
-    .toggler-icon{position:relative;width:24px;height:2px;background:#fff;border-radius:2px;transition:var(--transition);}
-    .toggler-icon::before,.toggler-icon::after{content:'';position:absolute;right:0;width:24px;height:2px;background:#fff;border-radius:2px;transition:var(--transition);}
-    .toggler-icon::before{transform:translateY(-7px);}
-    .toggler-icon::after{transform:translateY(7px);}
-    .navbar-toggler.custom-toggler.is-open .toggler-icon{background:transparent;}
-    .navbar-toggler.custom-toggler.is-open .toggler-icon::before{transform:rotate(45deg);}
-    .navbar-toggler.custom-toggler.is-open .toggler-icon::after{transform:rotate(-45deg);}
-    @media (min-width:992px){.dropdown-hover:hover>.dropdown-menu{display:block;}}
-    @media (max-width:991.98px){
-      .navbar-collapse{background:rgba(255,255,255,.97);border-radius:14px;margin-top:.75rem;padding:.75rem;}
-      .navbar .nav-link{color:#2d3748!important;}
-      .navbar .nav-link:hover{background:linear-gradient(135deg,rgba(139,92,246,.1),rgba(6,182,212,.1));color:#8b5cf6!important;}
-      .dropdown-menu.custom-dropdown{box-shadow:none;border:none;}
+    .navbar{
+      background: var(--navbar-grad);
+      transition: var(--transition);
+      box-shadow: 0 2px 20px rgba(0,0,0,.1);
     }
-  </style>
+    .navbar-scrolled{ background: var(--navbar-grad-scrolled); box-shadow: 0 4px 20px rgba(0,0,0,.15); }
+    .logo-img{ height: 56px; width: auto; }
+    .nav-link{ color:#fff !important; font-weight:700; }
+    .nav-link.active{ background: rgba(255,255,255,.2); border-radius:8px; }
 
-  <nav class="navbar navbar-expand-lg navbar-dark" aria-label="الشريط العلوي">
-    <div class="container">
-      <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" aria-label="الرئيسية - وش الجواب">
-        <div class="logo-container">
-          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img" width="160" height="56" />
-        </div>
-      </a>
-      <button class="navbar-toggler custom-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة" id="navTogglerBtn">
-        <span class="toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav me-auto" role="menubar">
-          <li class="nav-item"><a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home"></i><span>الرئيسية</span></a></li>
-          <li class="nav-item dropdown dropdown-hover">
-            <a class="nav-link dropdown-toggle" href="#" id="gamesDropdown" role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-              <i class="fas fa-gamepad"></i><span>الألعاب</span>
-            </a>
-            <ul class="dropdown-menu custom-dropdown" aria-labelledby="gamesDropdown">
-              <li><a class="dropdown-item" href="{% url 'games:letters_home' %}"><span><i class="fas fa-font me-2"></i> خلية الحروف</span><span class="game-status-badge available">متاح</span></a></li>
-              <li><a class="dropdown-item" href="{% url 'games:images_home' %}"><span><i class="fas fa-images me-2"></i> تحدي الصور</span><span class="game-status-badge available">متاح</span></a></li>
-              <li><a class="dropdown-item disabled" href="#"><span><i class="fas fa-question-circle me-2"></i> سؤال وجواب</span><span class="game-status-badge coming-soon">قريباً</span></a></li>
-            </ul>
-          </li>
-          <li class="nav-item"><a class="nav-link" href="#about"><i class="fas fa-info-circle"></i><span>حول المنصة</span></a></li>
-          <li class="nav-item"><a class="nav-link" href="#contact"><i class="fas fa-envelope"></i><span>تواصل معنا</span></a></li>
-        </ul>
-        <div class="navbar-nav ms-auto">
-          {% if user.is_authenticated %}
-            <a class="nav-link" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt"></i><span>تسجيل الخروج</span></a>
-          {% else %}
-            <a href="{% url 'accounts:login' %}" class="nav-link"><i class="fas fa-sign-in-alt"></i><span>دخول</span></a>
-            <a href="{% url 'accounts:register' %}" class="nav-link" style="background:rgba(255,255,255,.12);border-radius:10px;"><i class="fas fa-user-plus"></i><span>تسجيل جديد</span></a>
-          {% endif %}
-        </div>
-      </div>
+    /* التوجل */
+    .navbar-toggler{ border:none; background:none; }
+    .navbar-toggler:focus{ box-shadow:none; }
+    .toggler-icon{
+      display:block; width:24px; height:3px; background:#fff; margin:5px 0;
+      transition: var(--transition);
+    }
+    .navbar-toggler.collapsed .toggler-icon:nth-child(1){ transform:none; }
+    .navbar-toggler.collapsed .toggler-icon:nth-child(2){ opacity:1; }
+    .navbar-toggler.collapsed .toggler-icon:nth-child(3){ transform:none; }
+    .navbar-toggler:not(.collapsed) .toggler-icon:nth-child(1){ transform:rotate(45deg) translate(5px,5px); }
+    .navbar-toggler:not(.collapsed) .toggler-icon:nth-child(2){ opacity:0; }
+    .navbar-toggler:not(.collapsed) .toggler-icon:nth-child(3){ transform:rotate(-45deg) translate(5px,-5px); }
+
+    /* القائمة المنسدلة */
+    .dropdown-menu{ border-radius:12px; padding:.5rem 0; min-width:220px; }
+    .dropdown-item{ font-weight:600; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+  <div class="container">
+    <a class="navbar-brand" href="#">
+      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img">
+    </a>
+    <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="toggler-icon"></span>
+      <span class="toggler-icon"></span>
+      <span class="toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link active" href="#">الرئيسية</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">الألعاب</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">خلية الحروف</a></li>
+            <li><a class="dropdown-item" href="#">تحدي الصور</a></li>
+            <li><a class="dropdown-item disabled" href="#">سؤال وجواب (قريباً)</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="#about">حول المنصة</a></li>
+        <li class="nav-item"><a class="nav-link" href="#contact">تواصل معنا</a></li>
+      </ul>
     </div>
-  </nav>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    (function(){
-      const toggler=document.getElementById('navTogglerBtn');
-      const collapseEl=document.getElementById('navbarNav');
-      if(toggler&&collapseEl){
-        collapseEl.addEventListener('show.bs.collapse',()=>toggler.classList.add('is-open'));
-        collapseEl.addEventListener('hide.bs.collapse',()=>toggler.classList.remove('is-open'));
-      }
-    })();
-  </script>
-</header>
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener('scroll', ()=>{
+    const nav=document.querySelector('.navbar');
+    if(window.scrollY>50){ nav.classList.add('navbar-scrolled'); }
+    else{ nav.classList.remove('navbar-scrolled'); }
+  });
+</script>
+
 </body>
 </html>

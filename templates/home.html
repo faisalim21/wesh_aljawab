@@ -1,369 +1,396 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
+  <!-- ====== META (مُنظّف بدون تكرار) ====== -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    {# ——— الأساسيات ——— #}
-    <title>
-      {% block title %}{{ page_title|default:"وش الجواب - منصة الألعاب الذكية" }}{% endblock %}
-    </title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- ====== SEO / Social ====== -->
+  <title>
+    {% block title %}{{ page_title|default:"وش الجواب - منصة الألعاب الذكية" }}{% endblock %}
+  </title>
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
 
-    <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-    <meta name="robots" content="index,follow">
+  <!-- Open Graph -->
+  <meta property="og:locale" content="ar_SA">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
 
-    {# ——— Canonical ——— #}
-    <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
 
-    {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
-    <meta property="og:locale" content="ar_SA">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="وش الجواب">
-    <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-    <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-    {# غيّر الصورة لكل صفحة عبر المتغير page_og_image إن وُجد #}
-    <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-    <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-    <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-    <!-- <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630"> -->
+  <!-- ====== PWA / Icons ====== -->
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
 
-    {# ——— Twitter Card ——— #}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-    <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-
-    {# ——— Favicons / PWA ——— #}
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
-    <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-    <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-    <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-
-    {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "وش الجواب",
-      "url": "https://wesh-aljawab.onrender.com/",
-      "inLanguage": "ar",
-      "publisher": {
-        "@type": "Organization",
-        "name": "وش الجواب",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-        }
-      }
+  <!-- JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context":"https://schema.org",
+    "@type":"WebSite",
+    "name":"وش الجواب",
+    "url":"https://wesh-aljawab.onrender.com/",
+    "inLanguage":"ar",
+    "publisher":{
+      "@type":"Organization",
+      "name":"وش الجواب",
+      "logo":{"@type":"ImageObject","url":"https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"}
     }
-    </script>
+  }
+  </script>
 
-    {% block meta_overrides %}{% endblock %}
+  {% block meta_overrides %}{% endblock %}
 
-    <!-- CSS & Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- ====== CSS ====== -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
-        * { font-family: 'Tajawal', sans-serif; }
-        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 0; }
+  <style>
+    /* ====== أساس الصفحة (كما هو) ====== */
+    * { font-family: 'Tajawal', sans-serif; }
+    body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 0; }
 
-        .hero-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(6, 182, 212, 0.9)); padding: 100px 0; text-align: center; color: white; position: relative; overflow: hidden; }
-        .hero-section::before{
-            content:''; position:absolute; inset:0;
-            background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a"><stop offset="0" stop-color="%23ffffff" stop-opacity=".1"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><g opacity=".8"><circle fill="url(%23a)" cx="200" cy="200" r="180"/><circle fill="url(%23a)" cx="800" cy="800" r="180"/><circle fill="url(%23a)" cx="800" cy="200" r="180"/><circle fill="url(%23a)" cx="200" cy="800" r="180"/></g></svg>') center/cover;
-            z-index:1;
-        }
-        .hero-content{ position:relative; z-index:2; }
-        .hero-title{ font-size:3.5rem; font-weight:700; margin-bottom:1rem; text-shadow:2px 2px 4px rgba(0,0,0,0.3); }
-        .hero-subtitle{ font-size:1.3rem; margin-bottom:2rem; opacity:.9; }
+    .hero-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(6, 182, 212, 0.9)); padding: 100px 0; text-align: center; color: white; position: relative; overflow: hidden; }
+    .hero-section::before{
+      content:''; position:absolute; inset:0;
+      background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a"><stop offset="0" stop-color="%23ffffff" stop-opacity=".1"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><g opacity=".8"><circle fill="url(%23a)" cx="200" cy="200" r="180"/><circle fill="url(%23a)" cx="800" cy="800" r="180"/><circle fill="url(%23a)" cx="800" cy="200" r="180"/><circle fill="url(%23a)" cx="200" cy="800" r="180"/></g></svg>') center/cover;
+      z-index:1;
+    }
+    .hero-content{ position:relative; z-index:2; }
+    .hero-title{ font-size:3.5rem; font-weight:700; margin-bottom:1rem; text-shadow:2px 2px 4px rgba(0,0,0,0.3); }
+    .hero-subtitle{ font-size:1.3rem; margin-bottom:2rem; opacity:.9; }
 
-        .games-section{ padding:80px 0; background:rgba(255,255,255,.95); backdrop-filter:blur(10px); }
-        .section-title{ text-align:center; margin-bottom:60px; color:#2d3748; }
-        .section-title h2{
-            font-size:2.5rem; font-weight:700; margin-bottom:1rem;
-            background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-        }
+    .games-section{ padding:80px 0; background:rgba(255,255,255,.95); backdrop-filter:blur(10px); }
+    .section-title{ text-align:center; margin-bottom:60px; color:#2d3748; }
+    .section-title h2{
+      font-size:2.5rem; font-weight:700; margin-bottom:1rem;
+      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
 
-        .game-card{
-            background:#fff; border-radius:20px; padding:2rem;
-            box-shadow:0 20px 40px rgba(0,0,0,.1); transition:all .4s ease;
-            position:relative; overflow:hidden; margin-bottom:2rem;
-            border:1px solid rgba(139,92,246,.1);
-        }
-        .game-card::before{
-            content:''; position:absolute; top:0; left:0; right:0; height:5px;
-            background:linear-gradient(90deg,#8b5cf6,#06b6d4);
-            transform:scaleX(0); transition:transform .4s ease;
-        }
-        .game-card:hover{ transform:translateY(-10px); box-shadow:0 30px 60px rgba(139,92,246,.2); }
-        .game-card:hover::before{ transform:scaleX(1); }
+    .game-card{
+      background:#fff; border-radius:20px; padding:2rem;
+      box-shadow:0 20px 40px rgba(0,0,0,.1); transition:all .4s ease;
+      position:relative; overflow:hidden; margin-bottom:2rem;
+      border:1px solid rgba(139,92,246,.1);
+    }
+    .game-card::before{
+      content:''; position:absolute; top:0; left:0; right:0; height:5px;
+      background:linear-gradient(90deg,#8b5cf6,#06b6d4);
+      transform:scaleX(0); transition:transform .4s ease;
+    }
+    .game-card:hover{ transform:translateY(-10px); box-shadow:0 30px 60px rgba(139,92,246,.2); }
+    .game-card:hover::before{ transform:scaleX(1); }
 
-        .game-icon{
-            width:140px; height:140px; margin:0 auto 1.5rem;
-            background:linear-gradient(135deg,#8b5cf6,#06b6d4);
-            border-radius:24px; display:flex; align-items:center; justify-content:center;
-            font-size:2.4rem; color:#fff; box-shadow:0 10px 20px rgba(139,92,246,.3);
-            overflow:hidden;
-        }
-        /* دعم الصورة داخل الأيقونة */
-        .game-icon img{
-            width:100%; height:100%; object-fit:cover; display:block; border-radius:20px;
-        }
+    .game-icon{
+      width:140px; height:140px; margin:0 auto 1.5rem;
+      background:linear-gradient(135deg,#8b5cf6,#06b6d4);
+      border-radius:24px; display:flex; align-items:center; justify-content:center;
+      font-size:2.4rem; color:#fff; box-shadow:0 10px 20px rgba(139,92,246,.3);
+      overflow:hidden;
+    }
+    .game-icon img{ width:100%; height:100%; object-fit:cover; display:block; border-radius:20px; }
 
-        .game-title{ font-size:1.5rem; font-weight:700; margin-bottom:1rem; color:#2d3748; text-align:center; }
-        .game-description{ color:#718096; text-align:center; margin-bottom:1.5rem; line-height:1.6; }
-        .game-status{ text-align:center; margin-bottom:1.5rem; }
+    .game-title{ font-size:1.5rem; font-weight:700; margin-bottom:1rem; color:#2d3748; text-align:center; }
+    .game-description{ color:#718096; text-align:center; margin-bottom:1.5rem; line-height:1.6; }
+    .game-status{ text-align:center; margin-bottom:1.5rem; }
+    .status-badge{ display:inline-block; padding:.5rem 1rem; border-radius:25px; font-size:.9rem; font-weight:500; }
+    .status-available{ background:rgba(16,185,129,.1); color:#059669; border:1px solid rgba(16,185,129,.2); }
+    .status-coming-soon{ background:rgba(245,158,11,.1); color:#d97706; border:1px solid rgba(245,158,11,.2); }
 
-        .status-badge{ display:inline-block; padding:.5rem 1rem; border-radius:25px; font-size:.9rem; font-weight:500; }
-        .status-available{ background:rgba(16,185,129,.1); color:#059669; border:1px solid rgba(16,185,129,.2); }
-        .status-coming-soon{ background:rgba(245,158,11,.1); color:#d97706; border:1px solid rgba(245,158,11,.2); }
+    .play-button{
+      width:100%; padding:1rem; border:none; border-radius:15px;
+      font-weight:600; font-size:1.1rem; transition:all .3s ease;
+      text-decoration:none; display:block; text-align:center;
+    }
+    .play-button.available{ background:linear-gradient(135deg,#8b5cf6,#06b6d4); color:#fff; }
+    .play-button.available:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(139,92,246,.3); color:#fff; text-decoration:none; }
+    .play-button.disabled{ background:#e2e8f0; color:#a0aec0; cursor:not-allowed; }
+    .play-button.whatsapp{ background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
+    .play-button.whatsapp:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(18,140,126,.25); color:#fff; text-decoration:none; }
 
-        .play-button{
-            width:100%; padding:1rem; border:none; border-radius:15px;
-            font-weight:600; font-size:1.1rem; transition:all .3s ease;
-            text-decoration:none; display:block; text-align:center;
-        }
-        .play-button.available{ background:linear-gradient(135deg,#8b5cf6,#06b6d4); color:#fff; }
-        .play-button.available:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(139,92,246,.3); color:#fff; text-decoration:none; }
-        .play-button.disabled{ background:#e2e8f0; color:#a0aec0; cursor:not-allowed; }
+    .floating-shapes{ position:absolute; width:100%; height:100%; overflow:hidden; z-index:1; }
+    .shape{ position:absolute; background:rgba(255,255,255,.1); border-radius:50%; animation:float 6s ease-in-out infinite; }
+    .shape:nth-child(1){ width:60px; height:60px; top:20%; left:10%; animation-delay:0s; }
+    .shape:nth-child(2){ width:40px; height:40px; top:60%; right:10%; animation-delay:2s; }
+    .shape:nth-child(3){ width:80px; height:80px; bottom:20%; left:20%; animation-delay:4s; }
+    @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
 
-        /* زر واتساب */
-        .play-button.whatsapp{ background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
-        .play-button.whatsapp:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(18,140,126,.25); color:#fff; text-decoration:none; }
+    .stats-section{ background:linear-gradient(135deg,#1a202c,#2d3748); color:#fff; padding:60px 0; text-align:center; }
+    .stat-item{ margin-bottom:2rem; }
+    .stat-number{
+      font-size:3rem; font-weight:700;
+      background:linear-gradient(135deg,#8b5cf6,#06b6د4);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .stat-label{ font-size:1.1rem; color:#a0aec0; }
 
-        .floating-shapes{ position:absolute; width:100%; height:100%; overflow:hidden; z-index:1; }
-        .shape{ position:absolute; background:rgba(255,255,255,.1); border-radius:50%; animation:float 6s ease-in-out infinite; }
-        .shape:nth-child(1){ width:60px; height:60px; top:20%; left:10%; animation-delay:0s; }
-        .shape:nth-child(2){ width:40px; height:40px; top:60%; right:10%; animation-delay:2s; }
-        .shape:nth-child(3){ width:80px; height:80px; bottom:20%; left:20%; animation-delay:4s; }
-        @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+    @media (max-width:768px){
+      .hero-title{ font-size:2.5rem; }
+      .hero-subtitle{ font-size:1.1rem; }
+      .game-card{ margin-bottom:1.5rem; }
+      .game-icon{ width:180px; height:180px; }
+    }
 
-        .stats-section{ background:linear-gradient(135deg,#1a202c,#2d3748); color:#fff; padding:60px 0; text-align:center; }
-        .stat-item{ margin-bottom:2rem; }
-        .stat-number{
-            font-size:3rem; font-weight:700;
-            background:linear-gradient(135deg,#8b5cf6,#06b6د4);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-        }
-        .stat-label{ font-size:1.1rem; color:#a0aec0; }
+    /* ====== ترقيعات توافق لضمان عمل الهيدر الحالي بدون تغيير التصميم ====== */
+    /* لو كان الهيدر القديم fixed-top ويمنع التمرير بالجوال، نحوله لحركة طبيعية */
+    .navbar.fixed-top { position: relative !important; }
 
-        @media (max-width:768px){
-            .hero-title{ font-size:2.5rem; }
-            .hero-subtitle{ font-size:1.1rem; }
-            .game-card{ margin-bottom:1.5rem; }
-            .game-icon{ width:180px; height:180px; } /* تكبير لطيف على الجوال */
-        }
-    </style>
+    /* تأكيد عدم اختفاء نص "الألعاب/الحساب" أثناء فتح القائمة */
+    .nav-link.dropdown-toggle { visibility: visible !important; opacity: 1 !important; }
+
+    /* دعم أنيميشن تحويل زر الهامبرجر إلى X في حال الهيدر يستخدم 3 أشرطة بعناصر .toggler-icon */
+    .navbar-toggler .toggler-icon { width: 26px; height: 3px; background:#fff; margin: 4px 0; transition: .25s ease; display:block; border-radius:2px; }
+    .navbar-toggler.is-open .toggler-icon:nth-child(1){ transform: rotate(45deg) translate(6px, 6px); }
+    .navbar-toggler.is-open .toggler-icon:nth-child(2){ opacity: 0; }
+    .navbar-toggler.is-open .toggler-icon:nth-child(3){ transform: rotate(-45deg) translate(6px, -6px); }
+  </style>
 </head>
 <body>
-    {% include 'header.html' %}
 
-    <section class="hero-section">
-        <div class="floating-shapes"><div class="shape"></div><div class="shape"></div><div class="shape"></div></div>
-        <div class="hero-content">
-            <div class="container">
-                <h1 class="hero-title">وش الجواب؟</h1>
-                <p class="hero-subtitle">منصة الألعاب الذكية التفاعلية للشباب السعودي</p>
-                <p class="hero-subtitle">اختبر ذكاءك، تحدى أصدقاءك، واستمتع بأفضل تجربة ألعاب تعليمية</p>
+  {# ====== الهيدر (نفس ملفك الحالي عبر include — لا نلمس التصميم) ====== #}
+  {% include 'header.html' %}
+
+  <!-- ====== المحتوى كما هو ====== -->
+  <section class="hero-section">
+    <div class="floating-shapes"><div class="shape"></div><div class="shape"></div><div class="shape"></div></div>
+    <div class="hero-content">
+      <div class="container">
+        <h1 class="hero-title">وش الجواب؟</h1>
+        <p class="hero-subtitle">منصة الألعاب الذكية التفاعلية للشباب السعودي</p>
+        <p class="hero-subtitle">اختبر ذكاءك، تحدى أصدقاءك، واستمتع بأفضل تجربة ألعاب تعليمية</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="games-section">
+    <div class="container">
+      <div class="section-title">
+        <h2>اختر لعبتك المفضلة</h2>
+        <p>مجموعة متنوعة من الألعاب الذكية والممتعة</p>
+      </div>
+
+      <div class="row justify-content-center">
+        <!-- خلية الحروف -->
+        <div class="col-lg-4 col-md-6">
+          <div class="game-card">
+            <div class="game-icon" aria-label="خلية الحروف">
+              <img src="https://i.imgur.com/iRwZgzE.jpeg" alt="خلية الحروف" loading="lazy" decoding="async">
             </div>
+            <h3 class="game-title">خلية الحروف</h3>
+            <p class="game-description">
+              خلية الحروف مع 140 سؤال، وشاشة عرض وزر للمتسابقين، تجربة كاملة ومتكاملة كما لو كنت في «حروف مع عزيز».
+            </p>
+            <div class="game-status">
+              <span class="status-badge status-available">
+                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+                متاح الآن
+              </span>
+            </div>
+            <a href="{% url 'games:letters_home' %}" class="play-button available" aria-label="ابدأ لعب خلية الحروف">
+              <i class="fas fa-play me-2" aria-hidden="true"></i>
+              ابدأ اللعب
+            </a>
+          </div>
         </div>
-    </section>
 
-    <section class="games-section">
-        <div class="container">
-            <div class="section-title">
-                <h2>اختر لعبتك المفضلة</h2>
-                <p>مجموعة متنوعة من الألعاب الذكية والممتعة</p>
+        <!-- تحدي الصور -->
+        <div class="col-lg-4 col-md-6">
+          <div class="game-card">
+            <div class="game-icon" aria-label="تحدي الصور">
+              <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="تحدي الصور" loading="lazy" decoding="async">
             </div>
-
-            <div class="row justify-content-center">
-                <!-- لعبة خلية الحروف (تم استبدال الأيقونة بصورة) -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="game-card">
-                        <div class="game-icon" aria-label="خلية الحروف">
-                            <!-- ملاحظة: استخدمت رابط صورة مباشر من Imgur لضمان العرض -->
-                            <img src="https://i.imgur.com/iRwZgzE.jpeg"
-                                 alt="خلية الحروف"
-                                 loading="lazy" decoding="async">
-                        </div>
-                        <h3 class="game-title">خلية الحروف</h3>
-                        <p class="game-description">
-                                خلية الحروف مع 140 سؤال، وشاشة عرض وزر للمتسابقين، تجربة كاملة ومتكاملة
-                                كما لو كنت في «حروف مع عزيز».
-                            
-                        </p>
-                        <div class="game-status">
-                            <span class="status-badge status-available">
-                                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                                متاح الآن
-                            </span>
-                        </div>
-                        <a href="{% url 'games:letters_home' %}" class="play-button available" aria-label="ابدأ لعب خلية الحروف">
-                            <i class="fas fa-play me-2" aria-hidden="true"></i>
-                            ابدأ اللعب
-                        </a>
-                    </div>
-                </div>
-
-                <!-- لعبة تحدي الصور -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="game-card">
-                        <div class="game-icon" aria-label="تحدي الصور">
-                            <img src="https://i.imgur.com/j6j3hJD.jpeg"
-                                alt="تحدي الصور"
-                                loading="lazy" decoding="async">
-                        </div>
-                        <h3 class="game-title">تحدي الصور</h3>
-                        <p class="game-description">
-                                لعبة مقتبسة من سلسلة أبو عمر على يوتيوب «أتحداك تجيب الصورة»،
-                                 مع زر للمتسابقين، وشاشة للعرض لتعيش التجربة بشكل كامل.
-                        </p>
-                        <div class="game-status">
-                            <span class="status-badge status-available">
-                                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                                متاح الآن
-                            </span>
-                        </div>
-                        <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور">
-                            <i class="fas fa-play me-2" aria-hidden="true"></i>
-                            ابدأ اللعب
-                        </a>
-                    </div>
-                </div>
-
-
-
-                <!-- لعبة سؤال وجواب -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="game-card">
-                        <div class="game-icon">
-                            <i class="fas fa-question-circle" aria-hidden="true"></i>
-                        </div>
-                        <h3 class="game-title">سؤال وجواب</h3>
-                        <p class="game-description">
-                            التحدي الكلاسيكي بطعم عصري! اختر التصنيفات المفضلة لديك وتنافس مع الفرق الأخرى 
-                            في مجموعة متنوعة من الأسئلة الثقافية والعلمية.
-                        </p>
-                        <div class="game-status">
-                            <span class="status-badge status-coming-soon">
-                                <i class="fas fa-clock me-1" aria-hidden="true"></i>
-                                قريباً
-                            </span>
-                        </div>
-                        <button class="play-button disabled" disabled aria-disabled="true">
-                            <i class="fas fa-lock me-2" aria-hidden="true"></i>
-                            غير متاح حالياً
-                        </button>
-                    </div>
-                </div>
-
-                <!-- تصميم لعبة حسب الطلب (واتساب) -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="game-card">
-                        <div class="game-icon" title="تصميم لعبة حسب الطلب">
-                            <i class="fas fa-magic" aria-hidden="true"></i>
-                        </div>
-                        <h3 class="game-title">تصميم لعبة حسب الطلب</h3>
-                        <p class="game-description">
-                            عندك فكرة لعبة خاصة؟ ننفّذها لك بالكامل وتتماشى مع هوية منصتك واحتياجك.
-                        </p>
-                        <a
-                            class="play-button whatsapp"
-                            href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D9%84%D8%B9%D8%A8%D8%A9%20%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B7%D9%84%D8%A8%20%D9%84%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
-                            target="_blank" rel="noopener"
-                            aria-label="تواصل عبر واتساب لتصميم لعبة حسب الطلب">
-                            <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
-                            تواصل معنا عبر الواتساب
-                        </a>
-                    </div>
-                </div>
-
-                <!-- اقترح لنا ألعاب ولك نسبة (واتساب) -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="game-card">
-                        <div class="game-icon" title="اقترح لنا ألعاب ولك نسبة">
-                            <i class="fas fa-lightbulb" aria-hidden="true"></i>
-                        </div>
-                        <h3 class="game-title">اقترح لنا ألعاب ولك نسبة</h3>
-                        <p class="game-description">
-                            عندك فكرة لعبة قوية؟ أرسلها لنا، ولو اعتمدناها لك نسبة من الأرباح.
-                        </p>
-                        <a
-                            class="play-button whatsapp"
-                            href="https://wa.me/966550799857?text=%D8%B9%D9%86%D8%AF%D9%8A%20%D9%81%D9%83%D8%B1%D8%A9%20%D9%84%D8%B9%D8%A8%D8%A9%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D9%85%D9%86%D8%A7%D9%82%D8%B4%D8%AA%D9%87%D8%A7%D8%8C%20%D9%88%D9%87%D9%84%20%D9%87%D9%86%D8%A7%D9%83%20%D9%86%D8%B8%D8%A7%D9%85%20%D9%86%D8%B3%D8%A8%D8%A9%D8%9F"
-                            target="_blank" rel="noopener"
-                            aria-label="اقترح لعبة واحصل على نسبة عبر واتساب">
-                            <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
-                            تواصل معنا عبر الواتساب
-                        </a>
-                    </div>
-                </div>
-
+            <h3 class="game-title">تحدي الصور</h3>
+            <p class="game-description">
+              لعبة مقتبسة من سلسلة أبو عمر على يوتيوب «أتحداك تجيب الصورة»، مع زر للمتسابقين، وشاشة للعرض لتعيش التجربة بشكل كامل.
+            </p>
+            <div class="game-status">
+              <span class="status-badge status-available">
+                <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
+                متاح الآن
+              </span>
             </div>
+            <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور">
+              <i class="fas fa-play me-2" aria-hidden="true"></i>
+              ابدأ اللعب
+            </a>
+          </div>
         </div>
-    </section>
 
-    <section class="stats-section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4"><div class="stat-item"><div class="stat-number">1000+</div><div class="stat-label">سؤال متنوع</div></div></div>
-                <div class="col-md-4"><div class="stat-item"><div class="stat-number">500+</div><div class="stat-label">لاعب نشط</div></div></div>
-                <div class="col-md-4"><div class="stat-item"><div class="stat-number">3</div><div class="stat-label">ألعاب ممتعة</div></div></div>
+        <!-- سؤال وجواب -->
+        <div class="col-lg-4 col-md-6">
+          <div class="game-card">
+            <div class="game-icon">
+              <i class="fas fa-question-circle" aria-hidden="true"></i>
             </div>
+            <h3 class="game-title">سؤال وجواب</h3>
+            <p class="game-description">
+              التحدي الكلاسيكي بطعم عصري! اختر التصنيفات المفضلة لديك وتنافس مع الفرق الأخرى في مجموعة متنوعة من الأسئلة الثقافية والعلمية.
+            </p>
+            <div class="game-status">
+              <span class="status-badge status-coming-soon">
+                <i class="fas fa-clock me-1" aria-hidden="true"></i>
+                قريباً
+              </span>
+            </div>
+            <button class="play-button disabled" disabled aria-disabled="true">
+              <i class="fas fa-lock me-2" aria-hidden="true"></i>
+              غير متاح حالياً
+            </button>
+          </div>
         </div>
-    </section>
 
-    {% include 'footer.html' %}
+        <!-- واتساب: تصميم لعبة -->
+        <div class="col-lg-4 col-md-6">
+          <div class="game-card">
+            <div class="game-icon" title="تصميم لعبة حسب الطلب">
+              <i class="fas fa-magic" aria-hidden="true"></i>
+            </div>
+            <h3 class="game-title">تصميم لعبة حسب الطلب</h3>
+            <p class="game-description">عندك فكرة لعبة خاصة؟ ننفّذها لك بالكامل وتتماشى مع هوية منصتك واحتياجك.</p>
+            <a class="play-button whatsapp"
+               href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D9%84%D8%B9%D8%A8%D8%A9%20%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B7%D9%84%D8%A8%20%D9%84%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
+               target="_blank" rel="noopener"
+               aria-label="تواصل عبر واتساب لتصميم لعبة حسب الطلب">
+              <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
+              تواصل معنا عبر الواتساب
+            </a>
+          </div>
+        </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // تأثيرات تفاعلية بسيطة
-        document.addEventListener('DOMContentLoaded', function () {
-            // ظهور تدريجي للكروت
-            const cards = document.querySelectorAll('.game-card');
-            cards.forEach((card, index) => {
-                card.style.opacity = '0';
-                card.style.transform = 'translateY(50px)';
-                setTimeout(() => {
-                    card.style.transition = 'all 0.6s ease';
-                    card.style.opacity = '1';
-                    card.style.transform = 'translateY(0)';
-                }, index * 200);
-            });
+        <!-- واتساب: اقترح لعبة -->
+        <div class="col-lg-4 col-md-6">
+          <div class="game-card">
+            <div class="game-icon" title="اقترح لنا ألعاب ولك نسبة">
+              <i class="fas fa-lightbulb" aria-hidden="true"></i>
+            </div>
+            <h3 class="game-title">اقترح لنا ألعاب ولك نسبة</h3>
+            <p class="game-description">عندك فكرة لعبة قوية؟ أرسلها لنا، ولو اعتمدناها لك نسبة من الأرباح.</p>
+            <a class="play-button whatsapp"
+               href="https://wa.me/966550799857?text=%D8%B9%D9%86%D8%AF%D9%8A%20%D9%81%D9%83%D8%B1%D8%A9%20%D9%84%D8%B9%D8%A8%D8%A9%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D9%85%D9%86%D8%A7%D9%82%D8%B4%D8%AA%D9%87%D8%A7%D8%8C%20%D9%88%D9%87%D9%84%20%D9%87%D9%86%D8%A7%D9%83%20%D9%86%D8%B8%D8%A7%D9%85%20%D9%86%D8%B3%D8%A8%D8%A9%D8%9F"
+               target="_blank" rel="noopener"
+               aria-label="اقترح لعبة واحصل على نسبة عبر واتساب">
+              <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
+              تواصل معنا عبر الواتساب
+            </a>
+          </div>
+        </div>
 
-            // عدّاد الأرقام في الإحصائيات
-            const countElements = document.querySelectorAll('.stat-number');
-            countElements.forEach(element => {
-                const finalNumber = parseInt(element.textContent.replace(/\D/g, ''));
-                const suffix = element.textContent.replace(/[0-9]/g, '');
-                let currentNumber = 0;
-                const increment = finalNumber / 50;
+      </div>
+    </div>
+  </section>
 
-                const counter = setInterval(() => {
-                    currentNumber += increment;
-                    if (currentNumber >= finalNumber) {
-                        element.textContent = finalNumber + suffix;
-                        clearInterval(counter);
-                    } else {
-                        element.textContent = Math.floor(currentNumber) + suffix;
-                    }
-                }, 50);
-            });
+  <section class="stats-section">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4"><div class="stat-item"><div class="stat-number">1000+</div><div class="stat-label">سؤال متنوع</div></div></div>
+        <div class="col-md-4"><div class="stat-item"><div class="stat-number">500+</div><div class="stat-label">لاعب نشط</div></div></div>
+        <div class="col-md-4"><div class="stat-item"><div class="stat-number">3</div><div class="stat-label">ألعاب ممتعة</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  {% include 'footer.html' %}
+
+  <!-- ====== JS (Bootstrap مرة واحدة) ====== -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ====== سكربتات توافقية للهيدر بدون تغيير تصميمه ======
+    document.addEventListener('DOMContentLoaded', function () {
+      // 1) إصلاح dropdown "الألعاب" و "الحساب" ليفتح بالإجراء الطبيعي ويظل النص ظاهر
+      // (تعتمد على Bootstrap bundle – لا إعادة تهيئة مضاعفة)
+      // لو كان لديك كود قديم يمنع الفتح/الغلق، هذا يضمن سلوك البوتستراب فقط.
+      document.querySelectorAll('.dropdown-toggle').forEach(function (toggle) {
+        // امنع أي سكربت قديم من إخفاء النص عبر إضافة style غريب
+        toggle.style.visibility = 'visible';
+        toggle.style.opacity = '1';
+      });
+
+      // 2) دعم زر الهامبرجر ليتحول إلى X إن كانت عناصر .toggler-icon موجودة في الهيدر الحالي
+      const toggler = document.querySelector('.navbar-toggler');
+      const navCollapse = document.getElementById('navbarNav');
+
+      if (toggler && navCollapse) {
+        // عند الفتح
+        navCollapse.addEventListener('show.bs.collapse', function () {
+          toggler.classList.add('is-open');
+          // منع "تثبيت" الصفحة عند الفتح على الجوال (لو كان CSS قديم يمنع التمرير)
+          document.body.style.overflow = 'auto';
         });
-    </script>
+        // عند الإغلاق
+        navCollapse.addEventListener('hide.bs.collapse', function () {
+          toggler.classList.remove('is-open');
+        });
+
+        // إن لم يكن الهيدر يحتوي .navbar-toggler-icon الافتراضية
+        // لكنه يحتوي 3 .toggler-icon مخصصة – لا نغيّر التصميم – فقط نحرّك الكلاس
+        toggler.addEventListener('click', function () {
+          // Bootstrap سيتكفّل بالفتح/الغلق، نحن فقط نضيف/نزيل الكلاس في حالة collapse مفتوح/مغلق
+          setTimeout(function () {
+            const isShown = navCollapse.classList.contains('show');
+            toggler.classList.toggle('is-open', isShown);
+          }, 10);
+        });
+      }
+
+      // 3) إغلاق القائمة المنسدلة على الجوال عند اختيار عنصر فعلي
+      document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item').forEach(function (a) {
+        a.addEventListener('click', function () {
+          if (window.innerWidth <= 991 && navCollapse && navCollapse.classList.contains('show')) {
+            const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+            bsCollapse.hide();
+          }
+        });
+      });
+
+      // ====== الحركات الموجودة أصلاً في الصفحة (كما هي) ======
+      // ظهور تدريجي للكروت
+      const cards = document.querySelectorAll('.game-card');
+      cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(50px)';
+        setTimeout(() => {
+          card.style.transition = 'all 0.6s ease';
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, index * 200);
+      });
+
+      // عدّاد الإحصائيات
+      const countElements = document.querySelectorAll('.stat-number');
+      countElements.forEach(element => {
+        const finalNumber = parseInt((element.textContent || '').replace(/\D/g, ''), 10) || 0;
+        const suffix = (element.textContent || '').replace(/[0-9]/g, '');
+        let currentNumber = 0;
+        const steps = 50;
+        const increment = finalNumber / steps;
+        const counter = setInterval(() => {
+          currentNumber += increment;
+          if (currentNumber >= finalNumber) {
+            element.textContent = finalNumber + suffix;
+            clearInterval(counter);
+          } else {
+            element.textContent = Math.floor(currentNumber) + suffix;
+          }
+        }, 50);
+      });
+    });
+  </script>
 </body>
 </html>
