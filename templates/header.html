@@ -7,7 +7,7 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#6d28d9">
 
-  <!-- Bootstrap (bundle يحتوي Popper) -->
+  <!-- Bootstrap (bundle = +Popper) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
@@ -15,8 +15,6 @@
     :root{
       --primary-start:#8b5cf6; --primary-end:#06b6d4;
       --brand-bg:#ffffff; --text:#1f2937;
-      --success-bg:rgba(16,185,129,.12); --success-tx:#059669;
-      --warn-bg:rgba(245,158,11,.12); --warn-tx:#d97706;
       --navbar-grad:linear-gradient(135deg, rgba(139,92,246,.95), rgba(6,182,212,.95));
       --navbar-grad-scrolled:linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
       --btn-grad:linear-gradient(135deg,#f59e0b,#f97316);
@@ -26,19 +24,16 @@
 
     html,body{ background:var(--brand-bg); color:var(--text); }
 
+    /* NAVBAR */
     .navbar{
-      position: sticky; top:0; z-index: 1040;
+      position:sticky; top:0; z-index:1040;
       background:var(--navbar-grad);
       backdrop-filter:blur(10px);
       padding:.75rem 0;
-      transition:var(--transition);
       box-shadow:0 2px 20px rgba(0,0,0,.10);
+      transition:var(--transition);
     }
-    .navbar.navbar-scrolled{
-      background:var(--navbar-grad-scrolled);
-      box-shadow:0 4px 20px rgba(0,0,0,.15);
-      padding:.5rem 0;
-    }
+    .navbar.navbar-scrolled{ padding:.5rem 0; background:var(--navbar-grad-scrolled); box-shadow:0 4px 20px rgba(0,0,0,.15); }
 
     .logo-container{
       background:linear-gradient(145deg, rgba(255,255,255,.95), rgba(255,255,255,.88));
@@ -50,17 +45,16 @@
     .logo-img{ height:58px; width:auto; }
 
     .nav-link{
-      color:rgba(255,255,255,.95)!important; font-weight:500;
-      padding:.7rem .9rem!important; border-radius:10px;
-      transition:var(--transition); margin:0 .2rem;
-      position:relative;
+      color:rgba(255,255,255,.95)!important;
+      font-weight:600; padding:.7rem .9rem!important; border-radius:10px;
+      margin:0 .2rem; transition:var(--transition);
     }
     .nav-link:hover{ color:#fff!important; background:rgba(255,255,255,.12); transform:translateY(-1px); }
     .nav-link.active{ background:rgba(255,255,255,.2); color:#fff!important; }
 
     .dropdown-toggle::after{ border-top-color: currentColor; }
 
-    .custom-dropdown{
+    .dropdown-menu.custom-dropdown{
       border:none; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.12);
       padding:.35rem 0; min-width:260px;
     }
@@ -68,33 +62,33 @@
     .dropdown-item:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6; }
 
     .game-status-badge{ font-size:.7rem; padding:.25rem .55rem; border-radius:14px; font-weight:700; }
-    .available{ background:var(--success-bg); color:var(--success-tx); }
-    .coming-soon{ background:var(--warn-bg); color:var(--warn-tx); }
+    .available{ background:rgba(16,185,129,.12); color:#059669; }
+    .coming-soon{ background:rgba(245,158,11,.12); color:#d97706; }
 
     .user-menu{
       display:flex; align-items:center; gap:.5rem;
       background:rgba(255,255,255,.14); border-radius:25px; padding:.4rem .9rem!important;
+      color:#fff!important;
     }
     .user-menu:hover{ background:rgba(255,255,255,.2); }
     .user-avatar{ width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; }
 
     .btn-outline-light{
-      border:2px solid rgba(255,255,255,.36); color:#fff; font-weight:600; padding:.45rem 1.25rem; border-radius:25px; transition:var(--transition);
+      border:2px solid rgba(255,255,255,.36); color:#fff; font-weight:700; padding:.45rem 1.25rem; border-radius:25px;
     }
     .btn-outline-light:hover{ background:#fff; color:#8b5cf6; border-color:#fff; transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,255,255,.25); }
 
     .btn-primary{
-      background:var(--btn-grad); border:none; font-weight:700; padding:.5rem 1.25rem; border-radius:25px; color:#fff; transition:var(--transition);
+      background:var(--btn-grad); border:none; font-weight:700; padding:.5rem 1.25rem; border-radius:25px; color:#fff;
     }
     .btn-primary:hover{ background:var(--btn-grad-hover); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    /* زر Hamburger مع أنميشن التحول إلى X */
+    /* TOGGLER => X */
     .navbar-toggler.custom-toggler{
       border:none; width:44px; height:44px; background:rgba(255,255,255,.14);
       border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center;
       gap:6px; padding:0; transition:var(--transition); z-index:1050;
     }
-    .custom-toggler:focus{ outline: none; box-shadow: 0 0 0 .1rem rgba(255,255,255,.35); }
     .custom-toggler .toggler-icon{
       width:26px; height:3px; background:#fff; border-radius:2px; display:block;
       transition:transform .25s ease, opacity .25s ease;
@@ -103,17 +97,16 @@
     .navbar-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){ opacity:0; }
     .navbar-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){ transform: translateY(-9px) rotate(-45deg); }
 
-    /* موبايل */
+    /* MOBILE */
     @media (max-width: 991.98px){
       .navbar-collapse{
-        background:rgba(255,255,255,.98);
-        border-radius:14px; padding:1rem; margin-top:.75rem;
+        background:#fff; border-radius:14px; padding:1rem; margin-top:.75rem;
         box-shadow:0 10px 25px rgba(0,0,0,.12);
       }
       .nav-link{ color:#2d3748!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; }
-      /* عند فتح القوائم المنسدلة في الجوال نبقي نص الزر واضحًا */
+      /* إبقاء نص الزر عند فتح القائمة المنسدلة واضح ولا يختفي */
       .dropdown .nav-link.dropdown-toggle[aria-expanded="true"]{
         color:#8b5cf6!important;
         background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12));
@@ -129,11 +122,12 @@
       <!-- Logo -->
       <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" aria-label="الرئيسية - وش الجواب">
         <div class="logo-container">
-          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="logo-img" width="160" height="60" loading="eager" decoding="async"/>
+          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+               alt="وش الجواب" class="logo-img" width="160" height="60" loading="eager" decoding="async"/>
         </div>
       </a>
 
-      <!-- Toggler (يتحول لنفسه إلى X) -->
+      <!-- TOGGLER (same button animates to X) -->
       <button class="navbar-toggler custom-toggler" type="button"
               data-bs-toggle="collapse" data-bs-target="#navbarNav"
               aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
@@ -142,7 +136,7 @@
         <span class="toggler-icon"></span>
       </button>
 
-      <!-- Menu -->
+      <!-- MENU -->
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto" role="menubar">
           <li class="nav-item" role="none">
@@ -155,19 +149,21 @@
           <!-- الألعاب -->
           <li class="nav-item dropdown" role="none">
             <a class="nav-link dropdown-toggle" href="#" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false" id="gamesDropdown" data-bs-auto-close="outside">
+               data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" id="gamesDropdown">
               <i class="fas fa-gamepad me-1" aria-hidden="true"></i>
               الألعاب
             </a>
             <ul class="dropdown-menu custom-dropdown" role="menu" aria-labelledby="gamesDropdown">
               <li role="none">
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:letters_home' %}" role="menuitem">
+                <a class="dropdown-item d-flex justify-content-between align-items-center"
+                   href="{% url 'games:letters_home' %}" role="menuitem">
                   <span><i class="fas fa-font me-2"></i> خلية الحروف</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
               </li>
               <li role="none">
-                <a class="dropdown-item d-flex justify-content-between align-items-center" href="{% url 'games:images_home' %}" role="menuitem">
+                <a class="dropdown-item d-flex justify-content-between align-items-center"
+                   href="{% url 'games:images_home' %}" role="menuitem">
                   <span><i class="fas fa-images me-2"></i> تحدي الصور</span>
                   <span class="game-status-badge available">متاح</span>
                 </a>
@@ -195,19 +191,17 @@
           </li>
         </ul>
 
-        <!-- User -->
+        <!-- USER -->
         <div class="navbar-nav ms-auto">
           {% if user.is_authenticated %}
           <div class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle user-menu" href="#" role="button"
-               data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown" data-bs-auto-close="outside">
+            <a class="nav-link dropdown-toggle user-menu" href="#" id="userDropdown"
+               role="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
               <div class="user-avatar" aria-hidden="true"><i class="fas fa-user"></i></div>
               <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
             </a>
             <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
-              <li class="px-3 py-2">
-                <small class="text-muted d-block">{{ user.email }}</small>
-              </li>
+              <li class="px-3 py-2"><small class="text-muted d-block">{{ user.email }}</small></li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
                 <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
@@ -242,7 +236,7 @@
   </nav>
 </header>
 
-<!-- Spacer -->
+<!-- Spacer (يتكيّف تلقائيًا) -->
 <div id="header-spacer" aria-hidden="true"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -252,23 +246,20 @@
   const spacer = document.getElementById('header-spacer');
   const navCollapse = document.getElementById('navbarNav');
 
-  // ضبط ارتفاع الـ spacer حسب ارتفاع الهيدر
-  function setSpacerHeight(){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
-  setSpacerHeight();
-  if ('ResizeObserver' in window){
-    new ResizeObserver(setSpacerHeight).observe(navbar);
-  } else {
-    window.addEventListener('resize', setSpacerHeight);
-  }
+  // spacer = ارتفاع الهيدر دائماً (بدون منع سكرول الصفحة)
+  function setSpacer(){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
+  setSpacer();
+  if ('ResizeObserver' in window){ new ResizeObserver(setSpacer).observe(navbar); }
+  window.addEventListener('resize', setSpacer);
 
-  // تأثير التمرير
+  // تأثير تمرير بسيط
   function onScroll(){ (window.scrollY > 50) ? navbar.classList.add('navbar-scrolled') : navbar.classList.remove('navbar-scrolled'); }
   onScroll();
   window.addEventListener('scroll', onScroll, { passive:true });
 
   // إبراز الرابط النشط
   const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
-  document.querySelectorAll('.nav-link[href]').forEach(link => {
+  document.querySelectorAll('.nav-link[href]').forEach(link=>{
     const href = link.getAttribute('href') || '';
     if (href.startsWith('#')) return;
     const normalized = (href.replace(/\/+$/, '') || '/');
@@ -277,17 +268,17 @@
     }
   });
 
-  // عند فتح/غلق collapse حدّث aria-expanded (Bootstrap يفعلها؛ هذا احتياط للأنميشن)
-  navCollapse?.addEventListener('show.bs.collapse', () => {
-    const btn = document.querySelector('.navbar-toggler'); btn && btn.setAttribute('aria-expanded','true');
-    setSpacerHeight();
+  // تحديث aria-expanded للتوجل (الأنميشن يعتمد عليها)
+  navCollapse?.addEventListener('show.bs.collapse', ()=> {
+    document.querySelector('.navbar-toggler')?.setAttribute('aria-expanded','true');
+    setSpacer();
   });
-  navCollapse?.addEventListener('hide.bs.collapse', () => {
-    const btn = document.querySelector('.navbar-toggler'); btn && btn.setAttribute('aria-expanded','false');
-    setSpacerHeight();
+  navCollapse?.addEventListener('hide.bs.collapse', ()=> {
+    document.querySelector('.navbar-toggler')?.setAttribute('aria-expanded','false');
+    setSpacer();
   });
 
-  // إغلاق قائمة الجوال عند الضغط على رابط فعلي أو عنصر من القائمة
+  // إغلاق قائمة الجوال بعد اختيار عنصر (روابط حقيقية فقط)
   document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(a=>{
     a.addEventListener('click', () => {
       if (window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
@@ -296,7 +287,7 @@
     });
   });
 
-  // لا نطبّق أي hover JS — نترك Bootstrap يدير dropdown بالنقر (يصلح للجوال والديسكتوب)
+  // لا hover JS: نترك Bootstrap يدير الـ dropdown بالنقر (يحل مشكلة "تختفي كلمة الألعاب/الحساب")
 })();
 </script>
 
