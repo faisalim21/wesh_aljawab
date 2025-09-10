@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- تثبيت الثيم الفاتح -->
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#6d28d9">
 
@@ -15,14 +14,9 @@
   <style>
     :root{
       --primary-start:#8b5cf6; --primary-end:#06b6d4;
-      --brand-bg:#ffffff; --brand-bg-soft:#f8fafc;
-      --text:#1f2937; --text-strong:#0f172a; --muted:#64748b;
-      --success-bg:rgba(16,185,129,.1); --success-tx:#059669;
-      --warn-bg:rgba(245,158,11,.1); --warn-tx:#d97706;
+      --brand-bg:#ffffff; --text:#1f2937;
       --navbar-grad:linear-gradient(135deg, rgba(139,92,246,.95), rgba(6,182,212,.95));
       --navbar-grad-scrolled:linear-gradient(135deg, rgba(139,92,246,.98), rgba(6,182,212,.98));
-      --btn-grad:linear-gradient(135deg,#f59e0b,#f97316);
-      --btn-grad-hover:linear-gradient(135deg,#f97316,#ea580c);
       --radius:16px; --transition:.3s cubic-bezier(.25,.8,.25,1);
     }
 
@@ -56,7 +50,6 @@
       color:rgba(255,255,255,.95)!important; font-weight:500;
       padding:.7rem .9rem!important; border-radius:10px;
       transition:var(--transition); margin:0 .2rem;
-      position:relative;
     }
     .nav-link:hover{ color:#fff!important; background:rgba(255,255,255,.12); transform:translateY(-2px); }
     .nav-link.active{ background:rgba(255,255,255,.2); color:#fff!important; }
@@ -66,15 +59,18 @@
     .dropdown-item:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6; }
 
     .game-status-badge{ font-size:.7rem; padding:.25rem .55rem; border-radius:14px; font-weight:700; }
-    .available{ background:var(--success-bg); color:var(--success-tx); }
-    .coming-soon{ background:var(--warn-bg); color:var(--warn-tx); }
+    .available{ background:rgba(16,185,129,.1); color:#059669; }
+    .coming-soon{ background:rgba(245,158,11,.1); color:#d97706; }
 
+    /* User menu alignment fix */
     .user-menu{
-      display:flex; align-items:center;
-      background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important; gap:.5rem;
+      display:flex; align-items:center; gap:.5rem;
+      background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important;
+      white-space:nowrap;
     }
-    .user-menu:hover{ background:rgba(255,255,255,.18); }
-    .user-avatar{ width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    .user-menu .user-avatar{ width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 34px; }
+    .user-menu .user-name{ overflow:hidden; text-overflow:ellipsis; max-width:14ch; display:inline-block; }
+    .user-menu.dropdown-toggle::after{ margin-inline-start:.35rem; }
 
     .btn-outline-light{
       border:2px solid rgba(255,255,255,.35); color:#fff; font-weight:600; padding:.45rem 1.25rem; border-radius:25px; transition:var(--transition);
@@ -82,20 +78,20 @@
     .btn-outline-light:hover{ background:#fff; color:#8b5cf6; border-color:#fff; transform:translateY(-2px); box-shadow:0 5px 15px rgba(255,255,255,.25); }
 
     .btn-primary{
-      background:var(--btn-grad); border:none; font-weight:700; padding:.5rem 1.25rem; border-radius:25px; color:#fff; transition:var(--transition);
+      background:linear-gradient(135deg,#f59e0b,#f97316); border:none; font-weight:700; padding:.5rem 1.25rem; border-radius:25px; color:#fff; transition:var(--transition);
     }
-    .btn-primary:hover{ background:var(--btn-grad-hover); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
+    .btn-primary:hover{ background:linear-gradient(135deg,#f97316,#ea580c); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    /* Hamburger */
+    /* Hamburger -> X */
     .custom-toggler{
       border:none; width:44px; height:44px; background:rgba(255,255,255,.12);
       border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px;
-      position:relative; cursor:pointer; transition:var(--transition);
+      cursor:pointer; transition:var(--transition);
     }
     .custom-toggler:hover{ background:rgba(255,255,255,.18); }
     .toggler-icon{
       width:25px; height:3px; background:#fff; border-radius:2px; display:block;
-      transition:all .3s cubic-bezier(.25,.8,.25,1); transform-origin:center;
+      transition:all .25s cubic-bezier(.25,.8,.25,1); transform-origin:center;
     }
     .custom-toggler.active .toggler-icon:nth-child(1){ transform:translateY(8px) rotate(45deg); }
     .custom-toggler.active .toggler-icon:nth-child(2){ opacity:0; transform:scaleX(0); }
@@ -107,16 +103,15 @@
         background:rgba(255,255,255,.97);
         border-radius:14px; padding:1rem; margin-top:.75rem;
         box-shadow:0 10px 25px rgba(0,0,0,.1);
-        position: relative;
       }
       .nav-link{ color:#2d3748!important; }
       .nav-link:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
 
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; border-radius:10px; }
-      .user-menu:hover{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); }
+      .user-menu .user-name{ max-width:18ch; }
 
-      /* اجعل الدروبداون يأخذ نمط قائمة داخلية */
+      /* تجعل الدروبداون كقائمة داخلية */
       .dropdown-menu.show{
         display:block!important; position:static!important; transform:none!important;
         box-shadow:none!important; border:none!important; background:transparent!important;
@@ -193,12 +188,8 @@
             </ul>
           </li>
 
-          <li class="nav-item" role="none">
-            <a class="nav-link" href="#about" role="menuitem">
-              <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
-              حول المنصة
-            </a>
-          </li>
+          <!-- تمت إزالة "حول المنصة" حسب طلبك -->
+
           <li class="nav-item" role="none">
             <a class="nav-link" href="#contact" role="menuitem">
               <i class="fas fa-envelope me-1" aria-hidden="true"></i>
@@ -213,27 +204,21 @@
           <div class="nav-item dropdown">
             <a class="nav-link dropdown-toggle user-menu" href="#" role="button"
                data-bs-toggle="dropdown" aria-expanded="false" id="userDropdown">
-              <div class="user-avatar" aria-hidden="true">
-                <i class="fas fa-user"></i>
-              </div>
+              <div class="user-avatar" aria-hidden="true"><i class="fas fa-user"></i></div>
               <span class="user-name">{{ user.profile.display_name|default:user.username }}</span>
             </a>
             <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
-              <li class="px-3 py-2">
-                <small class="text-muted d-block">{{ user.email }}</small>
-              </li>
+              <li class="px-3 py-2"><small class="text-muted d-block">{{ user.email }}</small></li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
                 <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
-                  <i class="fas fa-credit-card me-2" aria-hidden="true"></i>
-                  مشترياتي
+                  <i class="fas fa-credit-card me-2" aria-hidden="true"></i> مشترياتي
                 </a>
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
                 <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}" role="menuitem">
-                  <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i>
-                  تسجيل الخروج
+                  <i class="fas fa-sign-out-alt me-2" aria-hidden="true"></i> تسجيل الخروج
                 </a>
               </li>
             </ul>
@@ -241,12 +226,10 @@
           {% else %}
           <div class="auth-buttons d-flex align-items-center gap-2">
             <a href="{% url 'accounts:login' %}" class="btn btn-outline-light">
-              <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i>
-              دخول
+              <i class="fas fa-sign-in-alt me-1" aria-hidden="true"></i> دخول
             </a>
             <a href="{% url 'accounts:register' %}" class="btn btn-primary">
-              <i class="fas fa-user-plus me-1" aria-hidden="true"></i>
-              تسجيل جديد
+              <i class="fas fa-user-plus me-1" aria-hidden="true"></i> تسجيل جديد
             </a>
           </div>
           {% endif %}
@@ -271,7 +254,7 @@
   const navCollapse = document.getElementById('navbarNav');
   const toggler = document.querySelector('.custom-toggler');
 
-  // 1) ضبط ارتفاع الـ spacer
+  // Spacer height
   function setSpacerHeight(){
     if(spacer && navbar){ spacer.style.height = navbar.getBoundingClientRect().height + 'px'; }
   }
@@ -282,14 +265,14 @@
     window.addEventListener('resize', setSpacerHeight, { passive:true });
   }
 
-  // 2) تأثير التمرير
+  // Scroll effect
   function onScroll(){
     if(!navbar) return;
     (window.scrollY > 50) ? navbar.classList.add('navbar-scrolled') : navbar.classList.remove('navbar-scrolled');
   }
   onScroll(); window.addEventListener('scroll', onScroll, { passive:true });
 
-  // 3) إبراز الرابط النشط حسب المسار
+  // Active link
   (function highlightActive(){
     const currentPath = (window.location.pathname.replace(/\/+$/, '') || '/');
     document.querySelectorAll('.nav-link[href]').forEach(link=>{
@@ -302,75 +285,68 @@
     });
   })();
 
-  // 4) تحريك الهامبرغر مع فتح/إغلاق القائمة
+  // Hamburger -> X (robust)
   if(toggler && navCollapse){
-    navCollapse.addEventListener('show.bs.collapse', ()=>{ toggler.classList.add('active'); toggler.setAttribute('aria-expanded','true'); });
-    navCollapse.addEventListener('hide.bs.collapse', ()=>{ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); });
-    window.addEventListener('resize', ()=>{
-      if(window.innerWidth > 991){ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); }
-    }, { passive:true });
+    // بعد اكتمال الفتح/الإغلاق
+    navCollapse.addEventListener('shown.bs.collapse', ()=>{ toggler.classList.add('active'); toggler.setAttribute('aria-expanded','true'); });
+    navCollapse.addEventListener('hidden.bs.collapse', ()=>{ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); });
+
+    // فallback لو تغيّر قبل firing
+    toggler.addEventListener('click', ()=>{ setTimeout(()=>{ toggler.classList.toggle('active', navCollapse.classList.contains('show')); }, 0); });
+    window.addEventListener('resize', ()=>{ if(window.innerWidth > 991){ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); } }, { passive:true });
   }
 
-  // 5) إغلاق قائمة الجوال عند الضغط على رابط فعلي أو عنصر داخل القائمة
+  // Close mobile menu on item click
   document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(link=>{
     link.addEventListener('click', ()=>{
       if(window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
-        const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-        inst.hide();
+        bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
       }
     });
   });
 
-  // 6) Hover للديسكتوب فقط
+  // Desktop hover only
   const dropdowns = document.querySelectorAll('.nav-item.dropdown');
   const isDesktop = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
 
   function onEnter(){
     if(!isDesktop()) return;
     this.classList.add('show');
-    const toggle = this.querySelector('.dropdown-toggle');
-    const menu = this.querySelector('.dropdown-menu');
-    if(toggle) toggle.setAttribute('aria-expanded','true');
-    if(menu) menu.classList.add('show');
+    this.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','true');
+    this.querySelector('.dropdown-menu')?.classList.add('show');
   }
   function onLeave(){
     if(!isDesktop()) return;
     this.classList.remove('show');
-    const toggle = this.querySelector('.dropdown-toggle');
-    const menu = this.querySelector('.dropdown-menu');
-    if(toggle) toggle.setAttribute('aria-expanded','false');
-    if(menu) menu.classList.remove('show');
+    this.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded','false');
+    this.querySelector('.dropdown-menu')?.classList.remove('show');
   }
-
   function bindDesktopHover(){ dropdowns.forEach(dd=>{ dd.addEventListener('mouseenter', onEnter); dd.addEventListener('mouseleave', onLeave); }); }
   function unbindDesktopHover(){ dropdowns.forEach(dd=>{ dd.removeEventListener('mouseenter', onEnter); dd.removeEventListener('mouseleave', onLeave); }); }
   function refreshHover(){ unbindDesktopHover(); if(isDesktop()) bindDesktopHover(); }
   refreshHover(); window.addEventListener('resize', refreshHover, { passive:true });
 
-  // 7) سلوك الدروبداون للجوال: فتح واحد وإغلاق الباقي
+  // Mobile dropdown: one open at a time
   document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
     toggle.addEventListener('click', function(e){
       if(window.innerWidth <= 991){
         e.preventDefault(); e.stopPropagation();
-        const dropdown = this.closest('.dropdown');
-        const menu = dropdown?.querySelector('.dropdown-menu');
-        if(!dropdown || !menu) return;
+        const dd = this.closest('.dropdown');
+        const menu = dd?.querySelector('.dropdown-menu');
+        if(!dd || !menu) return;
 
         document.querySelectorAll('.dropdown-menu.show').forEach(other=>{
           if(other !== menu){ other.classList.remove('show'); other.closest('.dropdown')?.classList.remove('show'); }
         });
 
-        dropdown.classList.toggle('show');
-        menu.classList.toggle('show');
+        dd.classList.toggle('show'); menu.classList.toggle('show');
         this.setAttribute('aria-expanded', menu.classList.contains('show'));
       }
     });
   });
 
   document.querySelectorAll('.dropdown-menu').forEach(menu=>{
-    menu.addEventListener('click', e=>{
-      if(window.innerWidth <= 991){ e.stopPropagation(); }
-    });
+    menu.addEventListener('click', e=>{ if(window.innerWidth <= 991) e.stopPropagation(); });
   });
 })();
 </script>
