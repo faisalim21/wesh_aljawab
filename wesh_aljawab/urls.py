@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.shortcuts import render
+from django.views.generic import TemplateView
 
 def home_view(request):
     """الصفحة الرئيسية"""
