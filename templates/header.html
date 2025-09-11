@@ -62,19 +62,29 @@
     .available{ background:rgba(16,185,129,.1); color:#059669; }
     .coming-soon{ background:rgba(245,158,11,.1); color:#d97706; }
 
-    /* ===== إصلاح محاذاة قائمة المستخدم ===== */
+    /* ===== إصلاح قائمة المستخدم - المحاذاة الأفقية ===== */
     .user-menu{
-      display:flex; align-items:center; gap:.7rem;
-      background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important;
-      white-space:nowrap; flex-wrap:nowrap;
+      display:flex !important; 
+      align-items:center !important; 
+      flex-direction:row !important;
+      gap:.6rem !important;
+      background:rgba(255,255,255,.12); 
+      border-radius:25px; 
+      padding:.4rem .9rem!important;
+      white-space:nowrap;
     }
     .user-menu .user-avatar{
-      width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%;
-      display:flex; align-items:center; justify-content:center; flex:0 0 34px;
+      width:34px; height:34px; 
+      background:#fff; color:#8b5cf6; 
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center; 
+      flex-shrink:0;
     }
     .user-menu .user-name{
-      overflow:hidden; text-overflow:ellipsis; max-width:14ch;
-      display:block; min-width:0; flex:1 1 auto; line-height:1.2;
+      overflow:hidden; text-overflow:ellipsis; 
+      max-width:14ch;
+      line-height:1.2;
+      flex-shrink:1;
     }
     .user-menu.dropdown-toggle::after{ margin-inline-start:.35rem; }
 
@@ -88,21 +98,42 @@
     }
     .btn-primary:hover{ background:linear-gradient(135deg,#f97316,#ea580c); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    /* Hamburger -> X مع إصلاح التداخل */
+    /* ===== إصلاح الهامبرغر -> X بدون تداخل ===== */
     .custom-toggler{
-      border:none; width:44px; height:44px; background:rgba(255,255,255,.12);
-      border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px;
-      cursor:pointer; transition:var(--transition); position:relative; z-index:1051;
+      border:none !important; 
+      width:44px; height:44px; 
+      background:rgba(255,255,255,.12) !important;
+      border-radius:10px; 
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      cursor:pointer; 
+      transition:var(--transition); 
+      position:relative; 
+      z-index:1051;
+      padding:0 !important;
     }
-    .custom-toggler:hover{ background:rgba(255,255,255,.18); }
+    .custom-toggler:hover{ background:rgba(255,255,255,.18) !important; }
+    .custom-toggler:focus{ box-shadow: none !important; }
+    
     .toggler-icon{
-      width:25px; height:3px; background:#fff; border-radius:2px; display:block;
-      transition:all .25s cubic-bezier(.25,.8,.25,1); transform-origin:center;
-      pointer-events:none; /* منع تداخل العناصر مع النقر */
+      width:25px; height:3px; 
+      background:#fff; 
+      border-radius:2px; 
+      display:block;
+      transition:all .3s ease;
+      margin:2px 0;
+      position:relative;
     }
-    .custom-toggler.active .toggler-icon:nth-child(1){ transform:translateY(8px) rotate(45deg); }
-    .custom-toggler.active .toggler-icon:nth-child(2){ opacity:0; transform:scaleX(0); }
-    .custom-toggler.active .toggler-icon:nth-child(3){ transform:translateY(-8px) rotate(-45deg); }
+    
+    /* حالة الـ X */
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(1){ 
+      transform:rotate(45deg) translate(6px, 6px); 
+    }
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(2){ 
+      opacity:0; 
+    }
+    .custom-toggler[aria-expanded="true"] .toggler-icon:nth-child(3){ 
+      transform:rotate(-45deg) translate(6px, -6px); 
+    }
 
     /* Mobile */
     @media (max-width: 991.98px){
@@ -146,10 +177,10 @@
         </div>
       </a>
 
-      <!-- Toggler -->
+      <!-- Toggler المُحسن -->
       <button class="navbar-toggler custom-toggler" type="button"
-              data-bs-toggle="collapse" data-bs-target="#navbarNav"
-              aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة">
+              aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل القائمة"
+              id="navToggler">
         <span class="toggler-icon"></span>
         <span class="toggler-icon"></span>
         <span class="toggler-icon"></span>
@@ -255,7 +286,7 @@
   const navbar = document.querySelector('.navbar');
   const spacer = document.getElementById('header-spacer');
   const navCollapse = document.getElementById('navbarNav');
-  const toggler = document.querySelector('.custom-toggler');
+  const toggler = document.getElementById('navToggler');
 
   // Spacer height
   function setSpacerHeight(){
@@ -288,58 +319,55 @@
     });
   })();
 
-  // إصلاح الهامبرغر -> X للعمل بشكل صحيح
+  // ===== إصلاح نهائي للهامبرغر -> X =====
   if(toggler && navCollapse){
-    // تحديث حالة الأيقونة عند فتح/إغلاق القائمة
-    navCollapse.addEventListener('shown.bs.collapse', function(){
-      toggler.classList.add('active');
-      toggler.setAttribute('aria-expanded','true');
-    });
     
-    navCollapse.addEventListener('hidden.bs.collapse', function(){
-      toggler.classList.remove('active');
-      toggler.setAttribute('aria-expanded','false');
-    });
-
-    // معالج نقر الهامبرغر المحسن مع منع التداخل
-    toggler.addEventListener('click', function(e){
+    // التحكم المباشر في الهامبرغر بدون Bootstrap
+    toggler.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
       
-      try{
-        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-        if(navCollapse.classList.contains('show')){
-          bsCollapse.hide();
-        } else {
-          bsCollapse.show();
-        }
-      } catch(error) {
-        // fallback إذا فشل Bootstrap
-        navCollapse.classList.toggle('show');
-        toggler.classList.toggle('active');
+      const isExpanded = toggler.getAttribute('aria-expanded') === 'true';
+      
+      if(isExpanded) {
+        // إغلاق القائمة
+        navCollapse.classList.remove('show');
+        toggler.setAttribute('aria-expanded', 'false');
+      } else {
+        // فتح القائمة  
+        navCollapse.classList.add('show');
+        toggler.setAttribute('aria-expanded', 'true');
       }
     });
 
-    // تنظيف الحالة عند التوسّع إلى سطح المكتب
+    // إغلاق عند النقر خارج القائمة
+    document.addEventListener('click', function(e) {
+      if(window.innerWidth <= 991) {
+        const isClickInsideNav = navCollapse.contains(e.target);
+        const isClickOnToggler = toggler.contains(e.target);
+        
+        if(!isClickInsideNav && !isClickOnToggler && navCollapse.classList.contains('show')) {
+          navCollapse.classList.remove('show');
+          toggler.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+
+    // إغلاق عند تغيير حجم الشاشة للديسكتوب
     window.addEventListener('resize', function(){
-      if(window.innerWidth > 991){
-        toggler.classList.remove('active');
-        toggler.setAttribute('aria-expanded','false');
+      if(window.innerWidth > 991 && navCollapse.classList.contains('show')) {
         navCollapse.classList.remove('show');
+        toggler.setAttribute('aria-expanded', 'false');
       }
     }, { passive:true });
   }
 
-  // Close mobile menu on item click
+  // إغلاق القائمة عند النقر على العناصر
   document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(link=>{
     link.addEventListener('click', function(){
       if(window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
-        try{
-          bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
-        } catch(error) {
-          navCollapse.classList.remove('show');
-          toggler.classList.remove('active');
-        }
+        navCollapse.classList.remove('show');
+        toggler.setAttribute('aria-expanded', 'false');
       }
     });
   });
