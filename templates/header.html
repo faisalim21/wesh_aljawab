@@ -62,14 +62,20 @@
     .available{ background:rgba(16,185,129,.1); color:#059669; }
     .coming-soon{ background:rgba(245,158,11,.1); color:#d97706; }
 
-    /* User menu alignment fix */
+    /* ===== إصلاح محاذاة قائمة المستخدم ===== */
     .user-menu{
       display:flex; align-items:center; gap:.5rem;
       background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important;
-      white-space:nowrap;
+      white-space:nowrap; flex-wrap:nowrap;
     }
-    .user-menu .user-avatar{ width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 34px; }
-    .user-menu .user-name{ overflow:hidden; text-overflow:ellipsis; max-width:14ch; display:inline-block; }
+    .user-menu .user-avatar{
+      width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; flex:0 0 34px;
+    }
+    .user-menu .user-name{
+      overflow:hidden; text-overflow:ellipsis; max-width:14ch;
+      display:inline-block; min-width:0; flex:1 1 auto; line-height:1.2;
+    }
     .user-menu.dropdown-toggle::after{ margin-inline-start:.35rem; }
 
     .btn-outline-light{
@@ -86,12 +92,13 @@
     .custom-toggler{
       border:none; width:44px; height:44px; background:rgba(255,255,255,.12);
       border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px;
-      cursor:pointer; transition:var(--transition);
+      cursor:pointer; transition:var(--transition); position:relative; z-index:1051; /* فوق القوائم المفتوحة */
     }
     .custom-toggler:hover{ background:rgba(255,255,255,.18); }
     .toggler-icon{
       width:25px; height:3px; background:#fff; border-radius:2px; display:block;
       transition:all .25s cubic-bezier(.25,.8,.25,1); transform-origin:center;
+      pointer-events:none; /* <-- يمنع تداخل الشرطات مع النقر */
     }
     .custom-toggler.active .toggler-icon:nth-child(1){ transform:translateY(8px) rotate(45deg); }
     .custom-toggler.active .toggler-icon:nth-child(2){ opacity:0; transform:scaleX(0); }
@@ -110,8 +117,6 @@
 
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; border-radius:10px; }
       .user-menu .user-name{ max-width:18ch; }
-
-      /* تجعل الدروبداون كقائمة داخلية */
       .dropdown-menu.show{
         display:block!important; position:static!important; transform:none!important;
         box-shadow:none!important; border:none!important; background:transparent!important;
@@ -187,8 +192,6 @@
               </li>
             </ul>
           </li>
-
-          <!-- تمت إزالة "حول المنصة" حسب طلبك -->
 
           <li class="nav-item" role="none">
             <a class="nav-link" href="#contact" role="menuitem">
@@ -285,15 +288,30 @@
     });
   })();
 
-  // Hamburger -> X (robust)
+  // Hamburger -> X state
   if(toggler && navCollapse){
-    // بعد اكتمال الفتح/الإغلاق
-    navCollapse.addEventListener('shown.bs.collapse', ()=>{ toggler.classList.add('active'); toggler.setAttribute('aria-expanded','true'); });
-    navCollapse.addEventListener('hidden.bs.collapse', ()=>{ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); });
+    navCollapse.addEventListener('shown.bs.collapse', ()=>{
+      toggler.classList.add('active'); toggler.setAttribute('aria-expanded','true');
+    });
+    navCollapse.addEventListener('hidden.bs.collapse', ()=>{
+      toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false');
+    });
 
-    // فallback لو تغيّر قبل firing
-    toggler.addEventListener('click', ()=>{ setTimeout(()=>{ toggler.classList.toggle('active', navCollapse.classList.contains('show')); }, 0); });
-    window.addEventListener('resize', ()=>{ if(window.innerWidth > 991){ toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false'); } }, { passive:true });
+    // ضمان الإغلاق عند الضغط على الـ X حتى لو تعارضت طبقات العناصر
+    toggler.addEventListener('click', ()=>{
+      try{
+        const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+        if(navCollapse.classList.contains('show')){ inst.hide(); }
+      }catch(_){}
+    });
+
+    // تنظيف الحالة عند التوسّع إلى سطح المكتب
+    window.addEventListener('resize', ()=>{
+      if(window.innerWidth > 991){
+        toggler.classList.remove('active');
+        toggler.setAttribute('aria-expanded','false');
+      }
+    }, { passive:true });
   }
 
   // Close mobile menu on item click
