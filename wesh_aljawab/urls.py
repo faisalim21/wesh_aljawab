@@ -13,6 +13,8 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('games/', include('games.urls')),
     path('accounts/', include('accounts.urls')),
+    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
+    path("returns/", TemplateView.as_view(template_name="returns.html"), name="returns"),
 
     # تأكيد الـ namespace لتطبيق المدفوعات
     path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
