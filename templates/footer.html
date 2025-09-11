@@ -49,7 +49,7 @@
     .contact-item a{ color:#a0aec0; text-decoration:none; transition:color .3s; }
     .contact-item a:hover{ color:#06b6d4; }
 
-    /* Social (TikTok فقط) */
+    /* Social (أزرار دائرية بنفس الثيم) */
     .social-links{ display:flex; gap:1rem; flex-wrap:wrap; }
     .social-link{
       width:45px; height:45px; background:rgba(255,255,255,.1); border-radius:50%;
@@ -61,7 +61,7 @@
       box-shadow:0 10px 20px rgba(139,92,246,.3);
     }
 
-    /* WhatsApp CTA */
+    /* WhatsApp CTA (موجود إن احتجته لاحقًا – غير مستخدم الآن) */
     .whatsapp-cta{
       display:inline-flex; align-items:center; gap:.5rem; font-weight:700;
       padding:.6rem 1rem; border:none; border-radius:999px; color:#fff; text-decoration:none;
@@ -98,6 +98,7 @@
     .contact-item:nth-child(2){animation-delay:.12s}
     .contact-item:nth-child(3){animation-delay:.18s}
     .social-link:nth-child(1){animation-delay:.06s}
+    .social-link:nth-child(2){animation-delay:.12s}
     @keyframes fadeUp{ to{ opacity:1; transform:translateY(0) } }
 
     /* Responsive */
@@ -154,6 +155,7 @@
         <h6 class="footer-title">روابط سريعة</h6>
         <ul class="footer-links">
           <li><a href="{% url 'home' %}">الرئيسية</a></li>
+        </ul>
       </div>
 
       <!-- Games -->
@@ -161,7 +163,8 @@
         <h6 class="footer-title">الألعاب</h6>
         <ul class="footer-links">
           <li><a href="{% url 'games:letters_home' %}">خلية الحروف</a></li>
-          <li><a href="{% url 'games:images_home' %}"> تحدي الصور </li>
+          <!-- تفعيل تحدي الصور مثل خلية الحروف -->
+          <li><a href="{% url 'games:images_home' %}">تحدي الصور</a></li>
           <li><a class="disabled" style="pointer-events:none; color:#718096;">سؤال وجواب <small>(قريباً)</small></a></li>
         </ul>
       </div>
@@ -169,33 +172,28 @@
       <!-- Contact & Social -->
       <div class="col-lg-4 col-md-6 mb-4">
         <h6 class="footer-title">تواصل معنا</h6>
-        <div class="contact-info mb-3">
-          <p class="contact-item">
-          <p class="contact-item">
-            <i class="fab fa-whatsapp me-2" aria-hidden="true"></i>
-            <!-- زر واتساب كتطبيق -->
-            <a class="whatsapp-cta"
-               href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D8%AD%D9%88%D9%84%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
-               target="_blank" rel="noopener"
-               aria-label="تواصل عبر واتساب">
-              <i class="fab fa-whatsapp" aria-hidden="true"></i>
-              واتساب: <span dir="ltr">0550799857</span>
-            </a>
-          </p>
+
+        <!-- أيقونات واتساب + تيك توك بنفس الثيم -->
+        <div class="social-links mb-3" aria-label="وسائل التواصل">
+          <a href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D8%AD%D9%88%D9%84%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
+             class="social-link" target="_blank" rel="noopener noreferrer"
+             title="واتساب - وش الجواب" aria-label="واتساب - وش الجواب">
+            <i class="fab fa-whatsapp" aria-hidden="true"></i>
+          </a>
+
+          <a href="https://www.tiktok.com/@wesh_aljawab?_t=ZS-8zc6F2n2CQK&_r=1"
+             class="social-link" target="_blank" rel="noopener noreferrer"
+             title="تيك توك - وش الجواب" aria-label="تيك توك - وش الجواب">
+            <i class="fab fa-tiktok" aria-hidden="true"></i>
+          </a>
+        </div>
+
+        <!-- الموقع بعد الأيقونات -->
+        <div class="contact-info">
           <p class="contact-item">
             <i class="fas fa-map-marker-alt me-2" aria-hidden="true"></i>
             الرياض، المملكة العربية السعودية
           </p>
-        </div>
-
-        <!-- Social: TikTok فقط -->
-        <div class="social-links" aria-label="حساباتنا على الشبكات">
-          <a href="https://www.tiktok.com/@wesh_aljawab?_t=ZS-8zc6F2n2CQK&_r=1"
-             class="social-link"
-             target="_blank" rel="noopener"
-             title="تيك توك - وش الجواب" aria-label="تيك توك - وش الجواب">
-            <i class="fab fa-tiktok" aria-hidden="true"></i>
-          </a>
         </div>
       </div>
     </div>
