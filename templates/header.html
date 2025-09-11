@@ -64,17 +64,17 @@
 
     /* ===== إصلاح محاذاة قائمة المستخدم ===== */
     .user-menu{
-      display:inline-flex; align-items:center; gap:.5rem;
+      display:flex; align-items:center; gap:.7rem;
       background:rgba(255,255,255,.12); border-radius:25px; padding:.4rem .9rem!important;
-      white-space:nowrap; flex-wrap:nowrap; max-width:100%;
+      white-space:nowrap; flex-wrap:nowrap;
     }
     .user-menu .user-avatar{
       width:34px; height:34px; background:#fff; color:#8b5cf6; border-radius:50%;
       display:flex; align-items:center; justify-content:center; flex:0 0 34px;
     }
     .user-menu .user-name{
-      display:block; overflow:hidden; text-overflow:ellipsis;
-      min-width:0; max-width:20ch; line-height:1.2; flex:1 1 auto;
+      overflow:hidden; text-overflow:ellipsis; max-width:14ch;
+      display:block; min-width:0; flex:1 1 auto; line-height:1.2;
     }
     .user-menu.dropdown-toggle::after{ margin-inline-start:.35rem; }
 
@@ -88,25 +88,21 @@
     }
     .btn-primary:hover{ background:linear-gradient(135deg,#f97316,#ea580c); transform:translateY(-2px); box-shadow:0 5px 15px rgba(245,158,11,.35); }
 
-    /* Hamburger -> X */
+    /* Hamburger -> X مع إصلاح التداخل */
     .custom-toggler{
       border:none; width:44px; height:44px; background:rgba(255,255,255,.12);
       border-radius:10px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px;
-      cursor:pointer; transition:var(--transition);
-      position:relative; z-index:1065; /* أعلى من القائمة عند الفتح */
+      cursor:pointer; transition:var(--transition); position:relative; z-index:1051;
     }
     .custom-toggler:hover{ background:rgba(255,255,255,.18); }
     .toggler-icon{
       width:25px; height:3px; background:#fff; border-radius:2px; display:block;
       transition:all .25s cubic-bezier(.25,.8,.25,1); transform-origin:center;
-      pointer-events:none; /* يمنع تداخل الشرطات مع النقر */
+      pointer-events:none; /* منع تداخل العناصر مع النقر */
     }
     .custom-toggler.active .toggler-icon:nth-child(1){ transform:translateY(8px) rotate(45deg); }
     .custom-toggler.active .toggler-icon:nth-child(2){ opacity:0; transform:scaleX(0); }
     .custom-toggler.active .toggler-icon:nth-child(3){ transform:translateY(-8px) rotate(-45deg); }
-
-    /* نجعل طبقة القائمة أسفل زر التبديل في المحمول */
-    .navbar-collapse{ position:relative; z-index:1060; }
 
     /* Mobile */
     @media (max-width: 991.98px){
@@ -119,11 +115,7 @@
       .nav-link:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
 
-      .user-menu{
-        background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08));
-        color:#2d3748!important; border-radius:10px;
-        width:fit-content; /* يمنع الامتداد ثم الكسر */
-      }
+      .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; border-radius:10px; }
       .user-menu .user-name{ max-width:18ch; }
       .dropdown-menu.show{
         display:block!important; position:static!important; transform:none!important;
@@ -296,35 +288,58 @@
     });
   })();
 
-  // تزامن حالة زر الهامبرغر مع الإظهار/الإخفاء
+  // إصلاح الهامبرغر -> X للعمل بشكل صحيح
   if(toggler && navCollapse){
-    navCollapse.addEventListener('shown.bs.collapse', ()=>{
-      toggler.classList.add('active'); toggler.setAttribute('aria-expanded','true');
+    // تحديث حالة الأيقونة عند فتح/إغلاق القائمة
+    navCollapse.addEventListener('shown.bs.collapse', function(){
+      toggler.classList.add('active');
+      toggler.setAttribute('aria-expanded','true');
     });
-    navCollapse.addEventListener('hidden.bs.collapse', ()=>{
-      toggler.classList.remove('active'); toggler.setAttribute('aria-expanded','false');
+    
+    navCollapse.addEventListener('hidden.bs.collapse', function(){
+      toggler.classList.remove('active');
+      toggler.setAttribute('aria-expanded','false');
     });
 
-    // تبديل مؤكد (يفتح/يقفل حتى لو اختلطت الحالة)
-    toggler.addEventListener('click', (e)=>{
+    // معالج نقر الهامبرغر المحسن مع منع التداخل
+    toggler.addEventListener('click', function(e){
+      e.preventDefault();
       e.stopPropagation();
-      const inst = bootstrap.Collapse.getOrCreateInstance(navCollapse);
-      inst.toggle();
+      
+      try{
+        const bsCollapse = bootstrap.Collapse.getOrCreateInstance(navCollapse);
+        if(navCollapse.classList.contains('show')){
+          bsCollapse.hide();
+        } else {
+          bsCollapse.show();
+        }
+      } catch(error) {
+        // fallback إذا فشل Bootstrap
+        navCollapse.classList.toggle('show');
+        toggler.classList.toggle('active');
+      }
     });
 
-    // إغلاق عند تكبير العرض
-    window.addEventListener('resize', ()=>{
-      if(window.innerWidth > 991 && navCollapse.classList.contains('show')){
-        bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
+    // تنظيف الحالة عند التوسّع إلى سطح المكتب
+    window.addEventListener('resize', function(){
+      if(window.innerWidth > 991){
+        toggler.classList.remove('active');
+        toggler.setAttribute('aria-expanded','false');
+        navCollapse.classList.remove('show');
       }
     }, { passive:true });
   }
 
   // Close mobile menu on item click
   document.querySelectorAll('#navbarNav a.nav-link:not(.dropdown-toggle), #navbarNav .dropdown-item:not(.disabled)').forEach(link=>{
-    link.addEventListener('click', ()=>{
+    link.addEventListener('click', function(){
       if(window.innerWidth <= 991 && navCollapse?.classList.contains('show')){
-        bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
+        try{
+          bootstrap.Collapse.getOrCreateInstance(navCollapse).hide();
+        } catch(error) {
+          navCollapse.classList.remove('show');
+          toggler.classList.remove('active');
+        }
       }
     });
   });
