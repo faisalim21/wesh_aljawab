@@ -115,3 +115,80 @@ def time_home(request):
     except TemplateDoesNotExist:
         # مؤقّتًا: نص بسيط عشان ما يطيح السيرفر لو القالب مو جاهز
         return HttpResponse("تحدّي الوقت — صفحة الحزم (قريبًا).", content_type="text/plain")
+
+
+
+# games/views_time.py
+
+from django.shortcuts import render, redirect
+from django.http import HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
+from django.utils.crypto import get_random_string
+
+from .models import GameSession
+try:
+    from .models import GamePackage  # لو ما تستخدم باقات حالياً، ما فيه مشكلة
+except Exception:
+    GamePackage = None
+
+# لو موديل التقدم موجود، نحاول إنشائه؛ لو الحقول تختلف ما راح نكسر الصفحة
+try:
+    from .models import TimeGameProgress
+except Exception:
+    TimeGameProgress = None
+
+
+def _gen_code(n=10):
+    # كود قصير للرابطين (display / contestants)
+    return get_random_string(n=n, allowed_chars='abcdefghijklmnopqrstuvwxyz0123456789')
+
+
+@login_required
+def create_time_session(request):
+    """
+    إنشاء جلسة (تحدّي الوقت) وإعادة توجيه مباشرة لصفحة المقدم.
+    يدعم تمرير package_id اختياريًا وأسماء الفرق. 
+    """
+    if request.method != 'POST':
+        return HttpResponseBadRequest('طريقة الطلب غير صحيحة')
+
+    package_obj = None
+    package_id = request.POST.get('package_id')
+    if package_id and GamePackage:
+        try:
+            package_obj = GamePackage.objects.get(id=package_id)
+        except GamePackage.DoesNotExist:
+            package_obj = None
+
+    team1 = (request.POST.get('team1_name') or 'الفريق A').strip()
+    team2 = (request.POST.get('team2_name') or 'الفريق B').strip()
+
+    session = GameSession.objects.create(
+        user=request.user,
+        game_type='time',           # ← مهم
+        package=package_obj,        # اختياري
+        team1_name=team1,
+        team2_name=team2,
+        display_link=_gen_code(12),
+        contestants_link=_gen_code(12),
+        is_active=True
+    )
+
+    # إنشاء تقدّم افتراضي (اختياري — محاط بـ try)
+    if TimeGameProgress:
+        try:
+            TimeGameProgress.objects.get_or_create(
+                session=session,
+                defaults={
+                    # لو أسماء الحقول تختلف في موديلك، هذا البلوك بيتجاهَل بدون كسر
+                    'current_index': 1,
+                    'active_team': 'team1',
+                    'team1_ms': 60000,  # 60 ثانية
+                    'team2_ms': 60000,
+                }
+            )
+        except Exception:
+            pass
+
+    # توجيه لواجهة المقدم
+    return redirect('games:time_host', session_id=session.id)

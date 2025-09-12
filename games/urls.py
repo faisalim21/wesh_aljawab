@@ -84,5 +84,6 @@ urlpatterns = [
 
     # APIs البدئية (لتهيئة الحالة والfallback)
     path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
+    path('time/create/', views_time.create_time_session, name='create_time_session'),
 
 ]
