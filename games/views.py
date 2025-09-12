@@ -32,44 +32,7 @@ logger = logging.getLogger('games')
 def _expired_text(session):
     return 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)' if session.package.is_free else 'انتهت صلاحية الجلسة (72 ساعة)'
 
-def is_session_expired(session):
-    """انتهاء صلاحية الجلسة أو تعطيلها:
-    - المجاني: 1 ساعة من وقت إنشاء الجلسة
-    - المدفوع: حتى 72 ساعة كحد أقصى من وقت إنشاء الجلسة، وبشرط بقاء الشراء نشطًا
-    """
-    if not session or not getattr(session, "created_at", None):
-        return True
 
-    now = timezone.now()
-
-    # مجانياً: ساعة من إنشاء الجلسة
-    if getattr(session, "package", None) and session.package.is_free:
-        expiry_time = session.created_at + timedelta(hours=1)
-        return (now >= expiry_time) or (not session.is_active)
-
-    # مدفوع: لا تتجاوز 72 ساعة من إنشاء الجلسة،
-    # واعتبرها منتهية فور انتهاء صلاحية الشراء النشط للمضيف/الحزمة
-    hard_cap = session.created_at + timedelta(hours=72)
-    if (now >= hard_cap) or (not session.is_active):
-        return True
-
-    # مهم: لو ما فيه host نكتفي بالـ hard cap
-    if not session.host_id:
-        return False
-
-    # لابد من شراء نشط أثناء الجلسة
-    has_active_purchase = UserPurchase.objects.filter(
-        user_id=session.host_id,
-        package=session.package,
-        is_completed=False,
-        expires_at__gt=now
-    ).exists()
-
-    return not has_active_purchase
-
-
-# للتوافق مع أي استخدام سابق
-_session_expired = is_session_expired
 
 def get_session_time_remaining(session):
     if not session.package.is_free:
@@ -311,8 +274,9 @@ def letters_game_home(request):
                      .filter(host=request.user, package=free_package, is_active=True)
                      .order_by('-created_at')
                      .first())
-        if candidate and not is_session_expired(candidate):
+        if candidate and not candidate.is_time_expired:
             free_active_session = candidate
+
 
     context = {
         'free_package': free_package,
@@ -370,9 +334,10 @@ def create_letters_session(request):
                         .filter(host=request.user, package=package, is_active=True)
                         .order_by('-created_at')
                         .first())
-            if existing and not is_session_expired(existing):
+            if existing and not existing.is_time_expired:
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
                 return redirect('games:letters_session', session_id=existing.id)
+
 
             # إنشاء جلسة مجانية جديدة
             team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
@@ -429,16 +394,17 @@ def create_letters_session(request):
 
             # جلسة موجودة مرتبطة بنفس الشراء؟
             existing_by_purchase = GameSession.objects.filter(purchase=purchase, is_active=True).first()
-            if existing_by_purchase and not is_session_expired(existing_by_purchase):
+            if existing_by_purchase and not existing_by_purchase.is_time_expired:
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
                 return redirect('games:letters_session', session_id=existing_by_purchase.id)
+
 
             # بديل احتياطي: جلسة بعد وقت الشراء لنفس الحزمة والمضيف
             existing_session = (GameSession.objects
                                 .filter(host=request.user, package=package, is_active=True, created_at__gte=purchase.purchase_date)
                                 .order_by('-created_at')
                                 .first())
-            if existing_session and not is_session_expired(existing_session):
+            if existing_session and not existing_session.is_time_expired:
                 # لو موجودة وما كانت مربوطة، اربطها بهذا الشراء (لو كان الحقل فارغ)
                 if existing_session.purchase_id is None:
                     existing_session.purchase = purchase
@@ -488,7 +454,7 @@ def create_letters_session(request):
 def letters_session(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
 
-    if is_session_expired(session):
+    if session.is_time_expired:
         messages.error(request, f'⏰ {_expired_text(session)}')
         return redirect('games:letters_home')
 
@@ -526,7 +492,7 @@ def letters_session(request, session_id):
 
 def letters_display(request, display_link):
     session = get_object_or_404(GameSession, display_link=display_link, is_active=True)
-    if is_session_expired(session):
+    if session.is_time_expired:
         return render(request, 'games/session_expired.html', {
             'message': _expired_text(session),
             'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
@@ -551,7 +517,7 @@ def letters_display(request, display_link):
 def letters_contestants(request, contestants_link):
     session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True)
 
-    if is_session_expired(session):
+    if session.is_time_expired:
         return render(request, 'games/session_expired.html', {
             'message': _expired_text(session),
             'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
@@ -616,7 +582,7 @@ def images_game_home(request):
                          .filter(host=request.user, package=free_package, is_active=True, game_type='images')
                          .order_by('-created_at')
                          .first())
-            if candidate and not is_session_expired(candidate):
+            if candidate and not candidate.is_time_expired:
                 free_active_session = candidate
 
     else:
@@ -724,7 +690,7 @@ def get_question(request):
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
 
-        if is_session_expired(session):
+        if session.is_time_expired:
             return JsonResponse({
                 'success': False,
                 'error': 'انتهت صلاحية الجلسة',
@@ -803,7 +769,7 @@ def get_session_letters(request):
 
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
-        if is_session_expired(session):
+        if session.is_time_expired:
             return JsonResponse({
                 'success': False,
                 'error': 'انتهت صلاحية الجلسة',
@@ -864,7 +830,7 @@ def update_cell_state(request):
     except GameSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
 
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({
             'success': False,
             'error': 'انتهت صلاحية الجلسة',
@@ -954,13 +920,14 @@ def update_scores(request):
     except GameSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
 
-    if is_session_expired(base_session):
+    if base_session.is_time_expired:
         return JsonResponse({
             'success': False,
             'error': 'انتهت صلاحية الجلسة',
             'session_expired': True,
             'message': 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)'
         }, status=410)
+
 
     # 4) حفظ من داخل معاملة مع قفل الصف لمنع السباقات
     from django.db import transaction
@@ -1022,7 +989,7 @@ def session_state(request):
         return HttpResponseBadRequest("missing session_id")
 
     session = get_object_or_404(GameSession, id=sid)
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({"detail": "expired"}, status=410)
 
     progress = LettersGameProgress.objects.filter(session=session).only("cell_states").first()
@@ -1063,7 +1030,7 @@ def add_contestant(request):
             return JsonResponse({'success': False, 'error': 'اسم المتسابق طويل جداً'}, status=400)
 
         session = GameSession.objects.get(id=session_id, is_active=True)
-        if is_session_expired(session):
+        if session.is_time_expired:
             return JsonResponse({
                 'success': False,
                 'error': 'انتهت صلاحية الجلسة',
@@ -1204,7 +1171,7 @@ def api_contestant_buzz_http(request):
         except GameSession.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
 
-        if is_session_expired(session):
+        if session.is_time_expired:
             return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
         buzz_lock_key = f"buzz_lock_{session_id}"
@@ -1295,7 +1262,7 @@ def letters_new_round(request):
 
     session = get_object_or_404(GameSession, id=sid, is_active=True)
 
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     if session.package.is_free:
@@ -1359,7 +1326,7 @@ def api_letters_select_letter(request):
     except GameSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة أو غير نشطة'}, status=404)
 
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     # تأكد أن الحرف موجود في ترتيب هذه الجلسة
@@ -1487,9 +1454,10 @@ def create_images_session(request):
             existing = (GameSession.objects
                         .filter(host=request.user, package=package, is_active=True)
                         .order_by('-created_at').first())
-            if existing and not is_session_expired(existing):
+            if existing and not existing.is_time_expired:
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
                 return redirect('games:images_session', session_id=existing.id)
+
 
             session = GameSession.objects.create(
                 host=request.user,
@@ -1529,22 +1497,24 @@ def create_images_session(request):
 
             # جلسة مرتبطة بنفس الشراء؟
             existing = GameSession.objects.filter(purchase=purchase, is_active=True).first()
-            if existing and not is_session_expired(existing):
+            if existing and not existing.is_time_expired:
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
                 return redirect('games:images_session', session_id=existing.id)
+
 
             # أو جلسة نشطة لنفس الحزمة بعد وقت الشراء
             existing2 = (GameSession.objects
                          .filter(host=request.user, package=package, is_active=True,
                                  created_at__gte=purchase.purchase_date)
                          .order_by('-created_at').first())
-            if existing2 and not is_session_expired(existing2):
+            if existing2 and not existing2.is_time_expired:
                 if existing2.purchase_id is None:
                     existing2.purchase = purchase
                     existing2.full_clean()
                     existing2.save(update_fields=['purchase'])
                 messages.info(request, 'تم ربط جلستك الحالية بالشراء وإعادتك لها.')
                 return redirect('games:images_session', session_id=existing2.id)
+
 
             # إنشاء جديدة
             try:
@@ -1573,7 +1543,7 @@ def create_images_session(request):
 
 def images_display(request, display_link):
     session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return render(request, 'games/session_expired.html', {
             'message': _expired_text(session),
             'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
@@ -1597,7 +1567,7 @@ def images_display(request, display_link):
 def images_contestants(request, contestants_link):
     """صفحة المتسابقين (نفس زر الطنطيط والفرق)؛ العرض الفعلي للصورة على شاشة العرض."""
     session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return render(request, 'games/session_expired.html', {
             'message': _expired_text(session),
             'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
@@ -1617,7 +1587,7 @@ def api_images_get_current(request):
         return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
 
     session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     riddles = list(_get_riddles_qs(session))
@@ -1644,7 +1614,7 @@ def api_images_set_index(request):
         return JsonResponse({'success': False, 'error': 'session_id و index مطلوبة'}, status=400)
 
     session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     riddles = list(_get_riddles_qs(session))
@@ -1681,7 +1651,7 @@ def api_images_next(request):
         return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
 
     session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     riddles = list(_get_riddles_qs(session))
@@ -1718,7 +1688,7 @@ def api_images_prev(request):
         return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
 
     session = get_object_or_404(GameSession, id=sid, is_active=True, game_type='images')
-    if is_session_expired(session):
+    if session.is_time_expired:
         return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
     riddles = list(_get_riddles_qs(session))
@@ -1754,7 +1724,7 @@ def images_session(request, session_id):
     session = get_object_or_404(GameSession, id=session_id, is_active=True, game_type='images')
 
     # انتهاء الصلاحية
-    if is_session_expired(session):
+    if session.is_time_expired:
         return render(request, 'games/session_expired.html', {
             'message': _expired_text(session),
             'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',

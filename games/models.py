@@ -371,7 +371,8 @@ class GameSession(models.Model):
     """جلسة لعب (جلسة واحدة لكل شراء بفضل OneToOneField)"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     IMAGES_FREE_TTL_MINUTES = 60
-    # المضيف (قد يكون None في نمط "أي شخص معه الرابط")
+    LETTERS_FREE_TTL_MINUTES = 60
+
     host = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -393,7 +394,6 @@ class GameSession(models.Model):
         verbose_name="نوع اللعبة"
     )
 
-    # جلسة واحدة فقط لكل شراء
     purchase = models.OneToOneField(
         UserPurchase,
         on_delete=models.PROTECT,
@@ -402,63 +402,22 @@ class GameSession(models.Model):
         help_text="الشراء المرتبط بهذه الجلسة (إن وُجد)"
     )
 
-    # إعدادات اللعبة
-    team1_name = models.CharField(
-        max_length=50,
-        default="الفريق الأخضر",
-        verbose_name="اسم الفريق الأول"
-    )
-    team2_name = models.CharField(
-        max_length=50,
-        default="الفريق البرتقالي",
-        verbose_name="اسم الفريق الثاني"
-    )
+    team1_name = models.CharField(max_length=50, default="الفريق الأخضر")
+    team2_name = models.CharField(max_length=50, default="الفريق البرتقالي")
 
-    # حالة اللعبة
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name="نشطة؟",
-        help_text="هل الجلسة نشطة حالياً؟"
-    )
-    is_completed = models.BooleanField(
-        default=False,
-        verbose_name="مكتملة؟",
-        help_text="هل انتهت الجلسة؟"
-    )
+    is_active = models.BooleanField(default=True)
+    is_completed = models.BooleanField(default=False)
     winner_team = models.CharField(
         max_length=10,
-        choices=[
-            ('team1', 'الفريق الأول'),
-            ('team2', 'الفريق الثاني'),
-            ('draw', 'تعادل'),
-        ],
-        null=True,
-        blank=True,
-        verbose_name="الفريق الفائز"
+        choices=[('team1', 'الفريق الأول'), ('team2', 'الفريق الثاني'), ('draw', 'تعادل')],
+        null=True, blank=True
     )
 
-    # روابط العرض
-    display_link = models.CharField(
-        max_length=100,
-        unique=True,
-        verbose_name="رابط العرض",
-        help_text="رابط شاشة العرض للجمهور"
-    )
-    contestants_link = models.CharField(
-        max_length=100,
-        unique=True,
-        verbose_name="رابط المتسابقين",
-        help_text="رابط صفحة المتسابقين"
-    )
+    display_link = models.CharField(max_length=100, unique=True)
+    contestants_link = models.CharField(max_length=100, unique=True)
 
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="تاريخ الإنشاء"
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="تاريخ التحديث"
-    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "جلسة لعب"
@@ -471,7 +430,6 @@ class GameSession(models.Model):
         ]
 
     def clean(self):
-        # تحقق من التوافق مع الشراء عند الربط
         if self.purchase:
             if self.package_id != self.purchase.package_id:
                 raise ValidationError("الحزمة في الجلسة لا تطابق حزمة الشراء.")
@@ -479,36 +437,31 @@ class GameSession(models.Model):
                 raise ValidationError("المضيف يجب أن يكون نفس صاحب الشراء.")
             if self.purchase.is_completed or self.purchase.is_expired:
                 raise ValidationError("لا يمكن إنشاء جلسة لشراء منتهي/مكتمل.")
-
-        # لا تسمح بجلسة لحزمة غير مفعّلة
         if self.package and not self.package.is_active:
             raise ValidationError("لا يمكن إنشاء جلسة لحزمة غير مفعّلة.")
 
     def save(self, *args, **kwargs):
-        # توليد روابط العرض/المتسابقين عند الإنشاء
         if not self.display_link:
             self.display_link = f"display-{str(self.id)[:8]}"
         if not self.contestants_link:
             self.contestants_link = f"contestants-{str(self.id)[:8]}"
-
-        # مزامنة نوع الجلسة مع نوع الحزمة (حماية من التعارض)
         if self.package and self.game_type != self.package.game_type:
             self.game_type = self.package.game_type
-
         super().save(*args, **kwargs)
 
     def __str__(self):
         host_txt = self.host.username if self.host else "بدون مُضيف"
         return f"جلسة {self.get_game_type_display()} - {host_txt}"
-    
 
-      
+    @property
+    def letters_free_expires_at(self):
+        if self.package and self.package.game_type == 'letters' and self.package.is_free and not self.purchase_id:
+            base = self.created_at or timezone.now()
+            return base + timedelta(minutes=self.LETTERS_FREE_TTL_MINUTES)
+        return None
+
     @property
     def images_free_expires_at(self):
-        """
-        وقت انتهاء الجلسة إذا كانت الحزمة المجانيّة لتحدّي الصور.
-        (لو فيه purchase نستعمل صلاحية الشراء بدلًا من هذا)
-        """
         if self.package and self.package.game_type == 'images' and self.package.is_free and not self.purchase_id:
             base = self.created_at or timezone.now()
             return base + timedelta(minutes=self.IMAGES_FREE_TTL_MINUTES)
@@ -516,19 +469,22 @@ class GameSession(models.Model):
 
     @property
     def is_time_expired(self) -> bool:
-        """
-        منتهية بالتوقيت؟ (شراء منتهي أو جلسة صور مجانية مضت مدّتها)
-        """
+        """التحقق الموحّد لانتهاء الجلسة (مدفوعة/مجانية)"""
+        # جلسة مدفوعة
         if self.purchase_id:
             return self.purchase.is_expired
-        exp = self.images_free_expires_at
-        return exp is not None and timezone.now() >= exp
+
+        # جلسة مجانية الحروف
+        if self.letters_free_expires_at:
+            return timezone.now() >= self.letters_free_expires_at
+
+        # جلسة مجانية الصور
+        if self.images_free_expires_at:
+            return timezone.now() >= self.images_free_expires_at
+
+        return False
 
     def mark_session_expired_if_needed(self, auto_save=True) -> bool:
-        """
-        يقفل الجلسة (is_active=False, is_completed=True) إذا انتهت تلقائيًا.
-        استدعِها من الـ view/consumer بشكل دوري.
-        """
         if not self.is_completed and self.is_time_expired:
             self.is_active = False
             self.is_completed = True
