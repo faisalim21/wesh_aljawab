@@ -1,77 +1,100 @@
-# games/views_time.py
-
+# === أضِف/تأكّد من هذه الاستيرادات أعلى الملف ===
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseNotAllowed
+from django.http import JsonResponse, HttpResponseNotAllowed
 from django.utils.crypto import get_random_string
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_GET
+from django.utils import timezone
+from datetime import timedelta
 
 from .models import GamePackage, GameSession, TimeGameProgress, TimeRiddle
 
-# صفحة الهوم/الباقات لتحدّي الوقت
-def time_home(request):
-    # الحزم الخاصة بلعبة الوقت
-    free_package = GamePackage.objects.filter(game_type='time', is_free=True).first()
-    paid_packages = GamePackage.objects.filter(game_type='time', is_free=False).order_by('package_number')
 
-    # فئات/تصنيفات متوفرة (اختياري للعرض في القالب)
-    categories = (
-        TimeRiddle.objects.values_list('category', flat=True)
-        .distinct()
-        .order_by('category')
+# === مساعد: فحص انتهاء الصلاحية ===
+def _is_session_expired(session: GameSession) -> bool:
+    expiry = session.created_at + (
+        timedelta(hours=1) if session.package and session.package.is_free else timedelta(hours=72)
     )
-
-    ctx = {
-        'page_title': 'تحدّي الوقت — اختر باقتك',
-        'free_package': free_package,
-        'paid_packages': paid_packages,
-        'categories': categories,
-        # متغيرات توافقية إن احتجتها في القالب (قابلة للتوسعة لاحقًا)
-        'free_active_session': None,
-        'free_session_eligible': True,
-        'free_session_message': '',
-        'used_before_ids': [],
-        'user_purchases': [],
-    }
-    return render(request, 'games/time/packages.html', ctx)
+    return timezone.now() >= expiry
 
 
-# إنشاء جلسة لتحدّي الوقت
-@login_required
-def create_time_session(request):
-    if request.method != 'POST':
-        return HttpResponseNotAllowed(['POST'])
+# === صفحة المقدم (المتحكم) ===
+def time_host(request, session_id):
+    session = get_object_or_404(GameSession, id=session_id, game_type='time')
+    if _is_session_expired(session) or not session.is_active:
+        # صفحة انتهاء الصلاحية العامة لديك
+        return render(request, 'games/session_expired.html', {
+            'session_type': 'مجانية' if (session.package and session.package.is_free) else 'مدفوعة',
+            'message': 'انتهت صلاحية الجلسة.',
+            'upgrade_message': 'يمكنك إنشاء جلسة جديدة أو شراء حزمة.'
+        }, status=410)
+    # مبدئيًا نعرض قالب (سننشئه لاحقًا)
+    return render(request, 'games/time/time_host.html', {
+        'session': session,
+        'page_title': f'المقدم — {session.team1_name} ضد {session.team2_name}',
+    })
 
-    package_id = request.POST.get('package_id')
-    package = get_object_or_404(GamePackage, id=package_id, game_type='time')
 
-    # TODO: هنا لاحقًا نتحقق من الأهلية/الدفع (مثل بقية الألعاب)
-    # حالياً ننشئ الجلسة مباشرة للربط مع القوالب
+# === شاشة العرض (عندك قالبها time_display.html جاهز) ===
+def time_display(request, display_link):
+    session = get_object_or_404(GameSession, display_link=display_link, game_type='time')
+    if _is_session_expired(session) or not session.is_active:
+        return render(request, 'games/session_expired.html', {
+            'session_type': 'مجانية' if (session.package and session.package.is_free) else 'مدفوعة',
+            'message': 'انتهت صلاحية الجلسة.',
+            'upgrade_message': 'يمكنك إنشاء جلسة جديدة أو شراء حزمة.'
+        }, status=410)
+    return render(request, 'games/time/time_display.html', {
+        'session': session,
+        'page_title': f'{session.team1_name} ضد {session.team2_name} — شاشة العرض',
+    })
 
-    display_link = get_random_string(12)
-    contestants_link = get_random_string(12)
 
-    session = GameSession.objects.create(
-        user=request.user,
-        package=package,
-        game_type='time',
-        team1_name='اللاعب A',
-        team2_name='اللاعب B',
-        display_link=display_link,
-        contestants_link=contestants_link,
-        is_active=True,
-        is_completed=False,
-    )
+# === صفحة المتسابقين (سنكمل قالبها لاحقًا) ===
+def time_contestants(request, contestants_link):
+    session = get_object_or_404(GameSession, contestants_link=contestants_link, game_type='time')
+    if _is_session_expired(session) or not session.is_active:
+        return render(request, 'games/session_expired.html', {
+            'session_type': 'مجانية' if (session.package and session.package.is_free) else 'مدفوعة',
+            'message': 'انتهت صلاحية الجلسة.',
+            'upgrade_message': 'يمكنك إنشاء جلسة جديدة أو شراء حزمة.'
+        }, status=410)
+    return render(request, 'games/time/time_contestants.html', {
+        'session': session,
+        'page_title': f'المتسابقون — {session.team1_name} ضد {session.team2_name}',
+    })
 
-    # تهيئة تقدّم اللعبة (مؤقّتات 60 ثانية لكل لاعب كبداية)
-    TimeGameProgress.objects.get_or_create(
+
+# === API البدء/المزامنة الأولية (يستدعيه قالب العرض) ===
+@require_GET
+def api_time_get_current(request):
+    session_id = request.GET.get('session_id')
+    session = get_object_or_404(GameSession, id=session_id, game_type='time')
+
+    if _is_session_expired(session) or not session.is_active:
+        return JsonResponse({'detail': 'expired'}, status=410)
+
+    # تأكيد/تهيئة التقدّم
+    progress, _ = TimeGameProgress.objects.get_or_create(
         session=session,
-        defaults={
-            'current_index': 1,
-            'active_team': 'team1',
-            'team1_ms': 60000,
-            'team2_ms': 60000,
-        }
+        defaults={'current_index': 1, 'active_team': 'team1', 'team1_ms': 60000, 'team2_ms': 60000}
     )
 
-    # وجّه المقدم لصفحة التحكم
-    return redirect('games:time_host', session_id=session.id)
+    riddles = list(
+        TimeRiddle.objects.filter(package=session.package)
+        .order_by('order')
+        .values('image_url', 'hint', 'answer')
+    )
+    total = len(riddles)
+    idx = progress.current_index
+    cur = riddles[idx - 1] if (1 <= idx <= total) else {}
+
+    return JsonResponse({
+        'success': True,
+        'active_team': progress.active_team,
+        'team1_ms': progress.team1_ms,
+        'team2_ms': progress.team2_ms,
+        'current_index': idx,
+        'count': total,
+        'current': cur,
+    })
