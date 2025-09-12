@@ -1,7 +1,7 @@
 # games/urls.py
 from django.urls import path
 from . import views
-from . import views_time  # ← جديد: فيوزات تحدّي الوقت
+from . import views_time  # فيوزات تحدّي الوقت
 
 app_name = 'games'
 
@@ -57,33 +57,19 @@ urlpatterns = [
     # =========================
     # تحدّي الوقت (Time Challenge)
     # =========================
-    # صفحة المقدم (تم إنشاؤها في الخطوة الحالية)
-    path('time/host/<uuid:session_id>/', views_time.time_host, name='time_host'),
-
-    # سنضيف الصفحات التالية في الخطوات القادمة:
-    path('time/display/<str:display_link>/', views_time.time_display, name='time_display'),
-    path('time/contestants/<str:contestants_link>/', views_time.time_contestants, name='time_contestants'),
-
-    # (اختياري) APIs عامة لتحدّي الوقت — مفيدة كـ fallback/بدء أولي
-    path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
-
-    # =========================
-    # تحدّي الوقت (Time Challenge)
-    # =========================
-    # صفحة الهوم/الباقات (التي سمّيتها packages.html)
-    path('time/', views_time.time_home, name='time_home'),                # GET: صفحة اختيار الفئات والباقات
-    path('time/create/', views_time.create_time_session, name='time_create_session'),  # POST: إنشاء جلسة
-
-    # شاشة المقدم/الجلسة (متوافقة مع نمط باقي الألعاب)
-    path('time/session/<uuid:session_id>/', views_time.time_host, name='time_session'),  # alias مريح
-    path('time/host/<uuid:session_id>/', views_time.time_host, name='time_host'),
-
-    # شاشة العرض والمتسابقين (بالروابط العشوائية)
-    path('time/display/<str:display_link>/', views_time.time_display, name='time_display'),
-    path('time/contestants/<str:contestants_link>/', views_time.time_contestants, name='time_contestants'),
-
-    # APIs البدئية (لتهيئة الحالة والfallback)
-    path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
+    # صفحة الحزم/الفئات (packages.html)
+    path('time/', views_time.time_home, name='time_home'),
+    # إنشاء جلسة (يُستخدم في الفورم: {% url 'games:create_time_session' %})
     path('time/create/', views_time.create_time_session, name='create_time_session'),
 
+    # شاشة المقدم + alias على نفس الفيو (اختياري)
+    path('time/host/<uuid:session_id>/', views_time.time_host, name='time_host'),
+    path('time/session/<uuid:session_id>/', views_time.time_host, name='time_session'),
+
+    # شاشة العرض والمتسابقين (روابط عامة)
+    path('time/display/<str:display_link>/', views_time.time_display, name='time_display'),
+    path('time/contestants/<str:contestants_link>/', views_time.time_contestants, name='time_contestants'),
+
+    # API تهيئة الحالة
+    path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
 ]
