@@ -98,3 +98,20 @@ def api_time_get_current(request):
         'count': total,
         'current': cur,
     })
+
+
+from django.http import HttpResponse
+from django.template import TemplateDoesNotExist
+
+# صفحة/home لتحدّي الوقت (الحزم/التصنيفات)
+def time_home(request):
+    context = {
+        "page_title": "تحدّي الوقت — الحزم",
+        # ممكن لاحقًا تمرر free_package/paid_packages الخ...
+    }
+    try:
+        # لو جهّزنا القالب: games/time/packages.html
+        return render(request, "games/time/packages.html", context)
+    except TemplateDoesNotExist:
+        # مؤقّتًا: نص بسيط عشان ما يطيح السيرفر لو القالب مو جاهز
+        return HttpResponse("تحدّي الوقت — صفحة الحزم (قريبًا).", content_type="text/plain")
