@@ -768,3 +768,451 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             return
         if error:
             await self.send(text_data=json.dumps({'type': 'error', 'message': error}))
+
+
+
+# === Time Game Consumer (تحدي الوقت) ===
+import json
+import asyncio
+import logging
+from datetime import timedelta
+import time
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.core.cache import cache
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from datetime import timedelta
+
+from games.models import GameSession, TimeRiddle, TimeGameProgress
+from asgiref.sync import sync_to_async
+from channels.generic.websocket import AsyncWebsocketConsumer
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+
+from games.models import GameSession, TimeRiddle, TimeGameProgress
+
+tlogger = logging.getLogger('games')
+
+
+class TimeGameConsumer(AsyncWebsocketConsumer):
+    """
+    WebSocket لتحدّي الوقت:
+    - host: يتحكم بالصورة (next/prev/set_index) + إدارة المؤقّت (start/pause/reset).
+    - display: يستقبل الصورة + حالة المؤقّتين ويعرضها.
+    - contestant: يستقبل الصورة + حالة المؤقّتين؛ وعنده زر "جوّبت" يرسل stop&switch.
+    منطق الوقت مثل ساعة الشطرنج: side A/B.
+    """
+
+    # --------------- Lifecycle ---------------
+    async def connect(self):
+        self.session_id = self.scope['url_route']['kwargs']['session_id']
+        self.group_name = f"time_session_{self.session_id}"
+        self.role = self._parse_qs().get('role', ['viewer'])[0]
+
+        try:
+            self.session = await self._get_session()
+        except ObjectDoesNotExist:
+            await self.close(code=4404)
+            return
+
+        if await self._is_session_expired(self.session) or not self.session.is_active:
+            await self.close(code=4401)
+            return
+
+        # اقبل الاتصال أولًا
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        tlogger.info(f"WS connected (time): session={self.session_id}, role={self.role}")
+
+        # حمّل الألغاز المرتبطة بالحزمة
+        self.riddles = []
+        try:
+            self.riddles = await sync_to_async(lambda: list(
+                TimeRiddle.objects.filter(package=self.session.package)
+                .order_by('order')
+                .values('order', 'image_url', 'hint', 'answer')
+            ))()
+        except Exception as e:
+            tlogger.error(f"time: failed loading riddles for {self.session_id}: {e}")
+
+        # تأكد من وجود progress وضبط الحدود
+        try:
+            await self._ensure_progress_bounds()
+        except Exception as e:
+            tlogger.error(f"time: ensure progress failed for {self.session_id}: {e}")
+
+        # أرسل الحالة الأولية (صورة + مؤقتين)
+        await self._send_puzzle_state()
+        await self._send_timer_state()
+
+    async def disconnect(self, code):
+        try:
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        except Exception:
+            pass
+
+    # --------------- Receive ---------------
+    async def receive(self, text_data: str):
+        if await self._is_session_expired(self.session) or not self.session.is_active:
+            try:
+                await self.send(text_data=json.dumps({'type': 'error', 'message': 'انتهت صلاحية الجلسة'}))
+            finally:
+                await self.close(code=4401)
+            return
+
+        try:
+            data = json.loads(text_data or '{}')
+        except json.JSONDecodeError:
+            return
+
+        t = data.get('type')
+
+        # keep alive
+        if t == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+            return
+
+        # المتسابق: أوقف وقتي وبدّل للخصم
+        if t == 'contestant_stop_and_switch' and self.role == 'contestant':
+            side = (data.get('side') or '').upper()  # 'A'|'B'
+            name = (data.get('contestant_name') or '').strip()
+            await self._handle_contestant_stop_and_switch(side, name)
+            return
+
+        # المقدم: تحكّم
+        if self.role == 'host':
+            if t == 'puzzle_nav':
+                await self._handle_nav(data.get('dir'))
+                return
+            if t == 'puzzle_set_index':
+                await self._handle_set_index(data.get('index'))
+                return
+            if t == 'timer_start':
+                side = (data.get('side') or '').upper()
+                await self._handle_timer_start(side)
+                return
+            if t == 'timer_pause':
+                await self._handle_timer_pause()
+                return
+            if t == 'timer_reset':
+                seconds_each = int(data.get('seconds_each') or 60)
+                start_side = (data.get('start_side') or 'A').upper()
+                # أسماء اللاعبين (اختياري)
+                a_name = (data.get('player_a_name') or '').strip()
+                b_name = (data.get('player_b_name') or '').strip()
+                await self._handle_timer_reset(seconds_each, start_side, a_name, b_name)
+                return
+
+    # --------------- Handlers: Puzzle ---------------
+    async def _handle_nav(self, dir_):
+        if dir_ not in ('next', 'prev'):
+            return
+        total = max(1, len(self.riddles) or 1)
+
+        def _upd():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+            if dir_ == 'next':
+                prog.current_index = min(prog.current_index + 1, total)
+            else:
+                prog.current_index = max(prog.current_index - 1, 1)
+            prog.save(update_fields=['current_index'])
+            return prog.current_index
+
+        await sync_to_async(_upd)()
+        await self._broadcast_puzzle_state()
+
+    async def _handle_set_index(self, index):
+        try:
+            idx = int(index)
+        except (TypeError, ValueError):
+            return
+        total = max(1, len(self.riddles) or 1)
+
+        def _upd():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+            prog.current_index = max(1, min(idx, total))
+            prog.save(update_fields=['current_index'])
+            return prog.current_index
+
+        await sync_to_async(_upd)()
+        await self._broadcast_puzzle_state()
+
+    # --------------- Handlers: Timer Core ---------------
+    async def _handle_timer_start(self, side):
+        if side not in ('A', 'B'):
+            return
+
+        now = timezone.now()
+
+        def _start():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+            # لو كان يجري، نخصم أولًا
+            if prog.is_running and prog.active_side in ('A', 'B') and prog.last_started_at:
+                elapsed = (now - prog.last_started_at).total_seconds()
+                if prog.active_side == 'A':
+                    prog.a_time_left_seconds = max(0, int(prog.a_time_left_seconds - elapsed))
+                else:
+                    prog.b_time_left_seconds = max(0, int(prog.b_time_left_seconds - elapsed))
+
+            # ابدأ الجانب المطلوب إن بقي وقت
+            if side == 'A' and prog.a_time_left_seconds > 0:
+                prog.active_side = 'A'; prog.is_running = True; prog.last_started_at = now
+            elif side == 'B' and prog.b_time_left_seconds > 0:
+                prog.active_side = 'B'; prog.is_running = True; prog.last_started_at = now
+            else:
+                # لا يوجد وقت متبقٍ لهذا الجانب
+                prog.is_running = False
+                prog.active_side = None
+                prog.last_started_at = None
+
+            prog.save(update_fields=[
+                'a_time_left_seconds', 'b_time_left_seconds',
+                'active_side', 'is_running', 'last_started_at'
+            ])
+
+        await sync_to_async(_start)()
+        await self._broadcast_timer_state()
+
+    async def _handle_timer_pause(self):
+        now = timezone.now()
+
+        def _pause():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+            if prog.is_running and prog.active_side in ('A', 'B') and prog.last_started_at:
+                elapsed = (now - prog.last_started_at).total_seconds()
+                if prog.active_side == 'A':
+                    prog.a_time_left_seconds = max(0, int(prog.a_time_left_seconds - elapsed))
+                else:
+                    prog.b_time_left_seconds = max(0, int(prog.b_time_left_seconds - elapsed))
+            prog.is_running = False
+            prog.last_started_at = None
+            prog.save(update_fields=[
+                'a_time_left_seconds', 'b_time_left_seconds',
+                'is_running', 'last_started_at'
+            ])
+
+        await sync_to_async(_pause)()
+        await self._broadcast_timer_state()
+
+    async def _handle_timer_reset(self, seconds_each, start_side, a_name, b_name):
+        now = timezone.now()
+        seconds_each = max(1, int(seconds_each))
+        start_side = 'A' if start_side != 'B' else 'B'
+
+        def _reset():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+            prog.a_time_left_seconds = seconds_each
+            prog.b_time_left_seconds = seconds_each
+            prog.player_a_name = a_name or prog.player_a_name or ""
+            prog.player_b_name = b_name or prog.player_b_name or ""
+            prog.active_side = start_side
+            prog.is_running = True
+            prog.last_started_at = now
+            prog.save(update_fields=[
+                'a_time_left_seconds', 'b_time_left_seconds',
+                'player_a_name', 'player_b_name',
+                'active_side', 'is_running', 'last_started_at'
+            ])
+
+        await sync_to_async(_reset)()
+        await self._broadcast_timer_state()
+
+    async def _handle_contestant_stop_and_switch(self, side, name):
+        """
+        المتسابق على الجانب (A/B) يضغط: نخصم وقته منذ آخر تشغيل → نوقفه → نبدّل للخصم ويبدأ من رصيده الحالي.
+        """
+        if side not in ('A', 'B'):
+            await self._reply(error='Side غير صحيح')
+            return
+
+        now = timezone.now()
+
+        def _stop_and_switch():
+            prog = TimeGameProgress.objects.select_for_update().get(session=self.session)
+
+            # حفظ الاسم اختياريًا (لو أرسله أول مرة)
+            if side == 'A' and name and not prog.player_a_name:
+                prog.player_a_name = name
+            if side == 'B' and name and not prog.player_b_name:
+                prog.player_b_name = name
+
+            # يجب أن يكون الدور للـside نفسه وهو يجري
+            if not prog.is_running or prog.active_side != side or not prog.last_started_at:
+                return False, prog
+
+            # خصم الوقت المنقضي
+            elapsed = (now - prog.last_started_at).total_seconds()
+            if side == 'A':
+                prog.a_time_left_seconds = max(0, int(prog.a_time_left_seconds - elapsed))
+            else:
+                prog.b_time_left_seconds = max(0, int(prog.b_time_left_seconds - elapsed))
+
+            # إنتهى وقت هذا الجانب؟
+            if (side == 'A' and prog.a_time_left_seconds <= 0) or (side == 'B' and prog.b_time_left_seconds <= 0):
+                prog.is_running = False
+                prog.active_side = None
+                prog.last_started_at = None
+                prog.save(update_fields=[
+                    'a_time_left_seconds','b_time_left_seconds','is_running','active_side','last_started_at',
+                    'player_a_name','player_b_name'
+                ])
+                return True, prog
+
+            # بدّل للخصم وابدأ فورًا من رصيده الحالي
+            next_side = 'B' if side == 'A' else 'A'
+            # لو الخصم وقته صفر، نوقف اللعبة
+            if (next_side == 'A' and prog.a_time_left_seconds <= 0) or (next_side == 'B' and prog.b_time_left_seconds <= 0):
+                prog.is_running = False
+                prog.active_side = None
+                prog.last_started_at = None
+            else:
+                prog.active_side = next_side
+                prog.is_running = True
+                prog.last_started_at = now
+
+            prog.save(update_fields=[
+                'a_time_left_seconds','b_time_left_seconds','is_running','active_side','last_started_at',
+                'player_a_name','player_b_name'
+            ])
+            return True, prog
+
+        ok, _ = await sync_to_async(_stop_and_switch)()
+        if not ok:
+            await self._reply(error='الحالة غير صالحة الآن (ليس دورك أو المؤقت متوقف).')
+            return
+
+        await self._broadcast_timer_state()
+
+    # --------------- Group broadcasts ---------------
+    async def broadcast_puzzle_state(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'puzzle_updated',
+            'index': event.get('index'),
+            'total': event.get('total'),
+            'image_url': event.get('image_url'),
+            'hint': event.get('hint'),
+            'answer': event.get('answer'),
+        }))
+
+    async def broadcast_timer_state(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'timer_state',
+            'active_side': event.get('active_side'),
+            'a_left': event.get('a_left'),
+            'b_left': event.get('b_left'),
+            'is_running': event.get('is_running'),
+            'last_started_at': event.get('last_started_at'),
+            'player_a_name': event.get('player_a_name') or '',
+            'player_b_name': event.get('player_b_name') or '',
+        }))
+
+    # --------------- Helpers: puzzle state ---------------
+    async def _send_puzzle_state(self):
+        idx = await self._get_current_index()
+        await self.send(text_data=json.dumps({'type': 'puzzle_updated', **self._state_payload(idx)}))
+
+    async def _broadcast_puzzle_state(self):
+        idx = await self._get_current_index()
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_puzzle_state', **self._state_payload(idx)
+        })
+
+    def _state_payload(self, idx: int):
+        if 1 <= idx <= len(self.riddles):
+            r = self.riddles[idx - 1]
+        else:
+            r = {'image_url': '', 'hint': '', 'answer': ''}
+
+        return {
+            'index': max(1, idx),
+            'total': max(1, len(self.riddles) or 1),
+            'image_url': r.get('image_url') or '',
+            'hint': (r.get('hint') or ''),
+            'answer': (r.get('answer') or ''),
+        }
+
+    async def _get_current_index(self) -> int:
+        def _read():
+            return TimeGameProgress.objects.filter(session=self.session)\
+                   .values_list('current_index', flat=True).first() or 1
+        return await sync_to_async(_read)()
+
+    async def _ensure_progress_bounds(self):
+        def _ensure():
+            obj, _ = TimeGameProgress.objects.get_or_create(
+                session=self.session,
+                defaults={
+                    'current_index': 1,
+                    'a_time_left_seconds': 60,
+                    'b_time_left_seconds': 60,
+                    'active_side': None,
+                    'is_running': False,
+                    'last_started_at': None
+                }
+            )
+            total = max(1, len(self.riddles) or 1)
+            if obj.current_index < 1 or obj.current_index > total:
+                obj.current_index = 1
+                obj.save(update_fields=['current_index'])
+        return await sync_to_async(_ensure)()
+
+    # --------------- Helpers: timer state ---------------
+    async def _send_timer_state(self):
+        payload = await self._timer_payload()
+        await self.send(text_data=json.dumps({'type': 'timer_state', **payload}))
+
+    async def _broadcast_timer_state(self):
+        payload = await self._timer_payload()
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_timer_state', **payload
+        })
+
+    async def _timer_payload(self):
+        def _read():
+            p = TimeGameProgress.objects.filter(session=self.session).values(
+                'a_time_left_seconds', 'b_time_left_seconds',
+                'active_side', 'is_running', 'last_started_at',
+                'player_a_name', 'player_b_name'
+            ).first()
+            return p or {}
+        p = await sync_to_async(_read)()
+
+        # نعيد القيم كما هي؛ الواجهات تحدث العرض محليًا باستخدام last_started_at (إن كان جاريًا)
+        last_ts = p.get('last_started_at')
+        last_iso = last_ts.isoformat() if last_ts else None
+
+        return {
+            'active_side': p.get('active_side'),
+            'a_left': int(p.get('a_time_left_seconds') or 0),
+            'b_left': int(p.get('b_time_left_seconds') or 0),
+            'is_running': bool(p.get('is_running')),
+            'last_started_at': last_iso,
+            'player_a_name': p.get('player_a_name') or '',
+            'player_b_name': p.get('player_b_name') or '',
+        }
+
+    # --------------- Misc helpers ---------------
+    async def _get_session(self):
+        return await sync_to_async(
+            lambda: GameSession.objects.select_related('package').get(id=self.session_id)
+        )()
+
+    async def _is_session_expired(self, session: GameSession) -> bool:
+        expiry = session.created_at + (timedelta(hours=1) if session.package and session.package.is_free else timedelta(hours=72))
+        return timezone.now() >= expiry
+
+    def _parse_qs(self):
+        try:
+            from urllib.parse import parse_qs
+            return parse_qs(self.scope.get('query_string', b'').decode())
+        except Exception:
+            return {}
+
+    async def _reply(self, error=''):
+        if error:
+            await self.send(text_data=json.dumps({'type': 'error', 'message': error}))
+
+
+
+

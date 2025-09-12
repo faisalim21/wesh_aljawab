@@ -1,11 +1,14 @@
 # games/urls.py
 from django.urls import path
 from . import views
+from . import views_time  # ← جديد: فيوزات تحدّي الوقت
 
 app_name = 'games'
 
 urlpatterns = [
+    # =========================
     # الصفحة الرئيسية لقسم الألعاب
+    # =========================
     path('', views.games_home, name='home'),
 
     # =========================
@@ -31,7 +34,6 @@ urlpatterns = [
     path('api/letters-new-round/', views.letters_new_round, name='api_letters_new_round'),
     path('api/letters-select-letter/', views.api_letters_select_letter, name='api_letters_select_letter'),
 
-
     # =========================
     # تحدّي الصور (Images)
     # =========================
@@ -41,7 +43,7 @@ urlpatterns = [
     path('images/display/<str:display_link>/', views.images_display, name='images_display'),
     path('images/contestants/<str:contestants_link>/', views.images_contestants, name='images_contestants'),
 
-    # APIs لتحدّي الصور — متطابقة مع ما يستدعيه القالب (شرطة)
+    # APIs لتحدّي الصور
     path('api/images-get-current/', views.api_images_get_current, name='api_images_get_current'),
     path('api/images-set-index/', views.api_images_set_index, name='api_images_set_index'),
     path('api/images-next/', views.api_images_next, name='api_images_next'),
@@ -51,4 +53,17 @@ urlpatterns = [
     # سؤال وجواب (Quiz)
     # =========================
     path('quiz/', views.quiz_game_home, name='quiz_home'),
+
+    # =========================
+    # تحدّي الوقت (Time Challenge)
+    # =========================
+    # صفحة المقدم (تم إنشاؤها في الخطوة الحالية)
+    path('time/host/<uuid:session_id>/', views_time.time_host, name='time_host'),
+
+    # سنضيف الصفحات التالية في الخطوات القادمة:
+    path('time/display/<str:display_link>/', views_time.time_display, name='time_display'),
+    path('time/contestants/<str:contestants_link>/', views_time.time_contestants, name='time_contestants'),
+
+    # (اختياري) APIs عامة لتحدّي الوقت — مفيدة كـ fallback/بدء أولي
+    path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
 ]

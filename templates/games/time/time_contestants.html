@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+  <meta name="theme-color" content="#4f46e5"/>
+  <title>{{ session.team1_name }} ضد {{ session.team2_name }} — صفحة المتسابقين (تحدّي الوقت)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg1:#7c3aed; --bg2:#5b21b6; --bg3:#1e1b4b;
+      --glass:rgba(255,255,255,.12); --glass-b:rgba(255,255,255,.22);
+      --ring:rgba(255,255,255,.3);
+      --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --btn1:#ef4444; --btn2:#dc2626; --btn3:#b91c1c;
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0; padding:0; color:#fff;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      min-height:100vh; overflow:hidden;
+    }
+
+    /* توزيع أفقي: يسار (فريق 2) — وسط (الصورة) — يمين (فريق 1) */
+    .layout{
+      position:fixed; inset:0;
+      display:grid; grid-template-columns: 1fr minmax(0, 55vw) 1fr;
+      align-items:center; gap: min(2vw, 24px);
+      padding: min(2.2vw, 22px);
+    }
+
+    /* عمود التحكم لكل فريق (مؤقت + زر) */
+    .side{
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap: 12px;
+    }
+    /* الصندوق الذي يحتوي الوقت */
+    .timer{
+      width: min(92%, 300px);
+      background: var(--glass); border: 2px solid var(--glass-b);
+      border-radius: 18px; padding: 12px; text-align:center;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 16px 40px rgba(0,0,0,.25);
+    }
+    .name{ font-weight:900; font-size:1.05rem; opacity:.95; margin-bottom:6px }
+    .time{
+      font-weight:900; font-size: 3rem; line-height:1; letter-spacing:1px;
+      text-shadow: 2px 2px 6px rgba(0,0,0,.35);
+    }
+    .timer.active{ outline:4px solid rgba(34,197,94,.65); box-shadow:0 0 0 6px rgba(34,197,94,.18) inset }
+
+    /* زر كل لاعب (تحت المؤقّت مباشرة، قريب منه) */
+    .buzz-btn{
+      --size: clamp(110px, 20vw, 180px);
+      width: var(--size); height: var(--size);
+      border-radius: 999px; border: 0; cursor:pointer; position:relative;
+      display:grid; place-items:center; font-weight:900; letter-spacing:.4px;
+      font-size: clamp(1.05rem, 2.4vw, 1.5rem); color:#fff; outline:none;
+      background:
+        radial-gradient(140% 60% at 50% 8%, rgba(255,255,255,.35), transparent 40%),
+        linear-gradient(165deg, var(--btn1) 0%, var(--btn2) 45%, var(--btn3) 100%);
+      box-shadow: 0 18px 35px rgba(239,68,68,.45), inset 0 -10px 18px rgba(0,0,0,.25), inset 0 8px 12px rgba(255,255,255,.08);
+      transition: transform .12s ease, filter .12s ease;
+    }
+    .buzz-btn:hover{ transform: translateY(-2px) scale(1.03) }
+    .buzz-btn:active{ transform: translateY(1px) scale(.97); filter: saturate(1.1) }
+    .buzz-btn:disabled{
+      background: linear-gradient(165deg, #6b7280, #4b5563);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 -10px 18px rgba(0,0,0,.2);
+      cursor:not-allowed;
+    }
+
+    /* إطار الصورة بالمنتصف */
+    .frame{
+      width: 100%; height: min(82vh, 760px);
+      background: #000; border-radius: 18px; overflow:hidden;
+      display:grid; place-items:center; border:1px solid var(--ring);
+      box-shadow:0 22px 60px rgba(0,0,0,.4);
+    }
+    .frame img{ max-width:100%; max-height:100%; display:block }
+
+    /* الشعار */
+    .logo{
+      position:fixed; top:12px; right:12px; background:#fff; color:#111827;
+      border-radius:14px; padding:8px 12px; z-index:10;
+      box-shadow:0 12px 28px rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.35);
+    }
+    .logo img{ max-height:46px; display:block }
+
+    /* لمبة حالة الاتصال (لاحقًا عند ربط WS) */
+    .conn{
+      position:fixed; top:12px; left:12px; z-index:10; padding:8px 12px; border-radius:999px; font-weight:800; font-size:.85rem;
+      background: rgba(239,68,68,.92); /* افتراضي منقطع */
+    }
+    .conn.connected{ background: rgba(34,197,94,.92) }
+    .conn.partial{ background: rgba(245,158,11,.92) }
+
+    @media (max-width: 980px){
+      .time{ font-size: 2.4rem }
+    }
+    @media (max-width: 720px){
+      .layout{ grid-template-columns: 1fr minmax(0, 54vw) 1fr; gap:12px; }
+      .time{ font-size: 2rem }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- لمبة اتصال (للمستقبل مع WS) -->
+  <div id="conn" class="conn">🔴 منقطع</div>
+
+  <!-- شعار -->
+  <div class="logo">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب"/>
+  </div>
+
+  <!-- توزيع أفقي: يسار (team2) — وسط (image) — يمين (team1) -->
+  <section class="layout">
+
+    <!-- يسار: الفريق الثاني -->
+    <aside class="side">
+      <div id="timer2" class="timer">
+        <div class="name">🟠 {{ session.team2_name }}</div>
+        <div id="t2" class="time">1:00</div>
+      </div>
+      <button id="btn2" class="buzz-btn" type="button" aria-label="إيقاف/تمرير الدور للفريق الأول">تم</button>
+    </aside>
+
+    <!-- المنتصف: الصورة -->
+    <main class="frame">
+      <img id="img" alt="الصورة الحالية"/>
+    </main>
+
+    <!-- يمين: الفريق الأول -->
+    <aside class="side">
+      <div id="timer1" class="timer">
+        <div class="name">🟢 {{ session.team1_name }}</div>
+        <div id="t1" class="time">1:00</div>
+      </div>
+      <button id="btn1" class="buzz-btn" type="button" aria-label="إيقاف/تمرير الدور للفريق الثاني">تم</button>
+    </aside>
+
+  </section>
+
+<script>
+  // ===== ثوابت =====
+  const SESSION_ID = '{{ session.id }}';
+  const API_INIT   = "{% url 'games:api_time_get_current' %}?session_id=" + encodeURIComponent(SESSION_ID);
+  // WS سيُفعّل لاحقًا بعد إضافة الـConsumer:
+  const WS_URL     = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/time/${SESSION_ID}/?role=contestants`;
+
+  // ===== عناصر =====
+  const el = {
+    conn: document.getElementById('conn'),
+    img:  document.getElementById('img'),
+    t1:   document.getElementById('t1'),
+    t2:   document.getElementById('t2'),
+    box1: document.getElementById('timer1'),
+    box2: document.getElementById('timer2'),
+    b1:   document.getElementById('btn1'),
+    b2:   document.getElementById('btn2'),
+  };
+
+  // ===== حالة محلية =====
+  let active = 'team1';           // من يلعب الآن
+  let t1ms = 60000, t2ms = 60000; // أزمنة متبقية لكل فريق (ms)
+  let ticking = false;
+  let last = performance.now();
+  let lock = false;               // منع الطقطقة السريعة على الأزرار
+
+  function fmt(ms){
+    ms = Math.max(0, Math.floor(ms));
+    const s = Math.floor(ms/1000), m = Math.floor(s/60), r = s%60;
+    return `${m}:${String(r).padStart(2,'0')}`;
+  }
+  function reflect(){
+    el.t1.textContent = fmt(t1ms);
+    el.t2.textContent = fmt(t2ms);
+    if (active==='team1'){ el.box1.classList.add('active'); el.box2.classList.remove('active'); }
+    else                 { el.box2.classList.add('active'); el.box1.classList.remove('active'); }
+  }
+
+  function tick(now){
+    if (!ticking) return;
+    const dt = now - last; last = now;
+    if (active==='team1'){ t1ms -= dt; if (t1ms<0) t1ms=0; }
+    else                 { t2ms -= dt; if (t2ms<0) t2ms=0; }
+    reflect();
+    requestAnimationFrame(tick);
+  }
+  function startTick(){ if (!ticking){ ticking=true; last=performance.now(); requestAnimationFrame(tick);} }
+  function stopTick(){ ticking=false; }
+
+  // تبديل الدور (زر أي لاعب)
+  function switchTurn(nextActive){
+    // لو ضغط اللاعب الصحيح: نبدّل للثاني
+    if (lock) return;
+    lock = true; setTimeout(()=>lock=false, 180);
+
+    // لا تسمح لمن ليس دوره بإجبار التبديل
+    if (nextActive==='team1' && active!=='team2') return;
+    if (nextActive==='team2' && active!=='team1') return;
+
+    active = (active==='team1') ? 'team2' : 'team1';
+    reflect();
+    // لاحقًا سنبثّ للسيرفر عبر WS:
+    // ws?.readyState===1 && ws.send(JSON.stringify({type:'timer_switched', active_team:active, team1_ms:t1ms|0, team2_ms:t2ms|0}));
+  }
+
+  // تحميل الحالة الأولية + تشغيل العدّ
+  async function init(){
+    try{
+      const r = await fetch(API_INIT, {cache:'no-store'});
+      if (r.status===410){ alert('انتهت صلاحية الجلسة'); return; }
+      if (!r.ok) return;
+      const d = await r.json();
+
+      active = d.active_team || 'team1';
+      t1ms = +d.team1_ms || 60000;
+      t2ms = +d.team2_ms || 60000;
+
+      if (d.current && d.current.image_url){ el.img.src = d.current.image_url; }
+
+      reflect(); startTick();
+    }catch(e){}
+  }
+
+  // WS (جاهز للمستقبل، غير مفعّل حاليًا)
+  let ws=null, hb=null;
+  function setConn(){
+    const c = ws && ws.readyState===1;
+    el.conn.className = 'conn ' + (c ? 'connected' : 'disconnected');
+    el.conn.textContent = c ? '🟢 متصل' : '🔴 منقطع';
+  }
+  function connectWS(){
+    try{ ws = new WebSocket(WS_URL); }catch{ setConn(); return; }
+    ws.onopen = ()=>{ setConn(); hb && clearInterval(hb); hb=setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} },20000); };
+    ws.onmessage = (ev)=>{
+      let d={}; try{ d=JSON.parse(ev.data||'{}'); }catch{ return; }
+
+      // استلام صورة جديدة من المقدم
+      if (d.type==='puzzle_updated' && d.image_url){ el.img.src = d.image_url; }
+
+      // استلام حالة مؤقت مصححة من الخادم (لو احتجنا مرجعية مركزية)
+      if (d.type==='timer_state'){
+        stopTick();
+        if (typeof d.team1_ms==='number') t1ms = d.team1_ms;
+        if (typeof d.team2_ms==='number') t2ms = d.team2_ms;
+        active = d.active_team || active;
+        reflect(); startTick();
+      }
+    };
+    ws.onclose = ()=>{ hb && clearInterval(hb); setConn(); };
+    ws.onerror = ()=>{ try{ ws.close(); }catch{} };
+  }
+
+  // أحداث الأزرار
+  el.b1.addEventListener('click', ()=>switchTurn('team2')); // زر الفريق1 يمرّر الدور للفريق2
+  el.b2.addEventListener('click', ()=>switchTurn('team1')); // زر الفريق2 يمرّر الدور للفريق1
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    init();
+    // سنفعل WS بعد إضافة المستهلك في الخطوة القادمة:
+    // connectWS();
+  });
+</script>
+</body>
+</html>

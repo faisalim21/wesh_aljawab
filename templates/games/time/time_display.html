@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+  <meta name="theme-color" content="#4f46e5"/>
+  <title>{{ session.team1_name }} ضد {{ session.team2_name }} — شاشة العرض (تحدّي الوقت)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg1:#1e3a8a; --bg2:#3730a3; --bg3:#581c87;
+      --ring:rgba(255,255,255,.3);
+      --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+      --glass:rgba(255,255,255,.12); --glass-b:rgba(255,255,255,.22);
+    }
+    *{ box-sizing:border-box }
+    body{
+      margin:0; padding:0; overflow:hidden; color:#fff;
+      min-height:100vh; background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+      font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial;
+    }
+    /* الإطار الأوسط للصورة */
+    .stage{ position:fixed; inset:0; display:grid; place-items:center; padding:16px }
+    .frame{
+      width:min(92vw,1200px); height:min(80vh,760px);
+      background:#000; border-radius:18px; overflow:hidden; display:grid; place-items:center;
+      box-shadow:0 22px 60px rgba(0,0,0,.4); border:1px solid var(--ring);
+    }
+    .frame img{ max-width:100%; max-height:100%; display:block }
+
+    /* المؤقّتات على الطرفين (اتجاه أفقي) */
+    .timer-box{
+      position:fixed; top:50%; transform:translateY(-50%);
+      width:min(22vw, 280px);
+      background:var(--glass); border:2px solid var(--glass-b);
+      backdrop-filter: blur(14px);
+      border-radius:18px; padding:14px; text-align:center;
+      box-shadow:0 16px 40px rgba(0,0,0,.25);
+    }
+    .left  { left: 16px; }
+    .right { right:16px; }
+    .name{ font-weight:900; font-size:1.15rem; letter-spacing:.2px; opacity:.95; margin-bottom:8px }
+    .time{
+      font-weight:900; font-size:3.2rem; line-height:1; letter-spacing:1px;
+      text-shadow:2px 2px 6px rgba(0,0,0,.35);
+    }
+    .active{ outline:4px solid rgba(34,197,94,.65); box-shadow:0 0 0 6px rgba(34,197,94,.18) inset }
+    .sub{ margin-top:6px; font-weight:800; opacity:.85; font-size:.95rem }
+    .logo{
+      position:fixed; top:16px; right:16px; background:#fff; border-radius:16px; padding:8px 12px;
+      box-shadow:0 10px 28px rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.35);
+    }
+    .logo img{ max-height:68px; display:block }
+    @media (max-width: 900px){
+      .timer-box{ width: 40vw; }
+    }
+    @media (max-width: 640px){
+      .timer-box{ width: 44vw; padding:12px }
+      .time{ font-size: 2.4rem }
+      .name{ font-size: 1rem }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- الشعار -->
+  <div class="logo">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+  </div>
+
+  <!-- المؤقّت يسار (الفريق 1) -->
+  <aside id="box1" class="timer-box left">
+    <div class="name" id="n1">🟢 {{ session.team1_name }}</div>
+    <div class="time" id="t1">1:00</div>
+    <div class="sub">الوقت المتبقي</div>
+  </aside>
+
+  <!-- المؤقّت يمين (الفريق 2) -->
+  <aside id="box2" class="timer-box right">
+    <div class="name" id="n2">🟠 {{ session.team2_name }}</div>
+    <div class="time" id="t2">1:00</div>
+    <div class="sub">الوقت المتبقي</div>
+  </aside>
+
+  <!-- الإطار الأوسط للصورة -->
+  <main class="stage">
+    <div class="frame">
+      <img id="img" alt="الصورة الحالية"/>
+    </div>
+  </main>
+
+<script>
+  // ============ ثوابت ============
+  const SESSION_ID = '{{ session.id }}';
+  const API_INIT   = "{% url 'games:api_time_get_current' %}?session_id=" + encodeURIComponent(SESSION_ID);
+  // مبدئيًا نجهّز WS (سيتوفر لاحقًا عند إضافة المستهلك):
+  const WS_URL     = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/time/${SESSION_ID}/?role=display`;
+
+  // ============ عناصر ============
+  const el = {
+    img: document.getElementById('img'),
+    box1: document.getElementById('box1'),
+    box2: document.getElementById('box2'),
+    t1: document.getElementById('t1'),
+    t2: document.getElementById('t2'),
+  };
+
+  // ============ حالة محلية ============
+  let active = 'team1';
+  let t1ms = 60000, t2ms = 60000;
+  let lastTick = performance.now();
+  let ticking = false;
+
+  // تنسيق mm:ss
+  function fmt(ms){
+    ms = Math.max(0, Math.floor(ms));
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60);
+    const r = s % 60;
+    return `${m}:${String(r).padStart(2,'0')}`;
+  }
+
+  function reflect(){
+    el.t1.textContent = fmt(t1ms);
+    el.t2.textContent = fmt(t2ms);
+    // إبراز النشط
+    if (active === 'team1'){
+      el.box1.classList.add('active'); el.box2.classList.remove('active');
+    }else{
+      el.box2.classList.add('active'); el.box1.classList.remove('active');
+    }
+  }
+
+  // تيك محلّي سلس (يوقَف عند التحديث من الخادم)
+  function tick(now){
+    if (!ticking) return;
+    const dt = now - lastTick;
+    lastTick = now;
+
+    if (active === 'team1'){ t1ms -= dt; if (t1ms < 0) t1ms = 0; }
+    else                   { t2ms -= dt; if (t2ms < 0) t2ms = 0; }
+
+    reflect();
+    requestAnimationFrame(tick);
+  }
+  function startTick(){
+    if (ticking) return;
+    ticking = true; lastTick = performance.now();
+    requestAnimationFrame(tick);
+  }
+  function stopTick(){ ticking = false; }
+
+  // ============ جلب أولي ============
+  async function loadInit(){
+    try{
+      const r = await fetch(API_INIT, {cache:'no-store'});
+      if (r.status === 410){ alert('انتهت صلاحية الجلسة'); return; }
+      if (!r.ok) return;
+
+      const d = await r.json();
+      active = d.active_team || 'team1';
+      t1ms = +d.team1_ms || 60000;
+      t2ms = +d.team2_ms || 60000;
+
+      // الصورة
+      if (d.current && d.current.image_url){
+        el.img.src = d.current.image_url;
+      } else {
+        el.img.removeAttribute('src');
+      }
+
+      reflect();
+      startTick();
+    }catch(e){}
+  }
+
+  // ============ WebSocket (جاهز للخطوة القادمة) ============
+  let ws=null, hb=null, backoff=1000, MAX=5000;
+  function connectWS(){
+    try{ ws = new WebSocket(WS_URL); }catch{ return; }
+
+    ws.onopen = ()=>{
+      backoff = 1000;
+      if (hb) clearInterval(hb);
+      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+    };
+    ws.onmessage = (ev)=>{
+      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
+
+      // تحديث الصورة من المقدم
+      if (d.type === 'puzzle_updated'){
+        if (d.image_url) el.img.src = d.image_url;
+      }
+
+      // تحديث حالة المؤقتين من السيرفر (تضمّن تصحيح القيم وتبديل اللاعب)
+      if (d.type === 'timer_state'){
+        stopTick();
+        active = d.active_team || active;
+        if (typeof d.team1_ms === 'number') t1ms = d.team1_ms;
+        if (typeof d.team2_ms === 'number') t2ms = d.team2_ms;
+        reflect();
+        startTick();
+      }
+
+      // تبديل فقط (بدون قيم) — نتابع من آخر أرقام معروضة
+      if (d.type === 'timer_switched'){
+        active = (active === 'team1') ? 'team2' : 'team1';
+        reflect();
+      }
+
+      // إيقاف/استئناف قسري (لو احتجنا)
+      if (d.type === 'force_pause'){ stopTick(); }
+      if (d.type === 'force_resume'){ startTick(); }
+    };
+    ws.onclose = ()=>{ hb && clearInterval(hb); setTimeout(connectWS, backoff); backoff = Math.min(MAX, backoff*2); };
+    ws.onerror = ()=>{ try{ ws.close(); }catch{} };
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    loadInit();
+    // WS سيفتح عند إضافة المستهلك في الخطوة القادمة
+    // connectWS();
+  });
+</script>
+</body>
+</html>
