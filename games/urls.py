@@ -66,4 +66,23 @@ urlpatterns = [
 
     # (اختياري) APIs عامة لتحدّي الوقت — مفيدة كـ fallback/بدء أولي
     path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
+
+    # =========================
+    # تحدّي الوقت (Time Challenge)
+    # =========================
+    # صفحة الهوم/الباقات (التي سمّيتها packages.html)
+    path('time/', views_time.time_home, name='time_home'),                # GET: صفحة اختيار الفئات والباقات
+    path('time/create/', views_time.create_time_session, name='time_create_session'),  # POST: إنشاء جلسة
+
+    # شاشة المقدم/الجلسة (متوافقة مع نمط باقي الألعاب)
+    path('time/session/<uuid:session_id>/', views_time.time_host, name='time_session'),  # alias مريح
+    path('time/host/<uuid:session_id>/', views_time.time_host, name='time_host'),
+
+    # شاشة العرض والمتسابقين (بالروابط العشوائية)
+    path('time/display/<str:display_link>/', views_time.time_display, name='time_display'),
+    path('time/contestants/<str:contestants_link>/', views_time.time_contestants, name='time_contestants'),
+
+    # APIs البدئية (لتهيئة الحالة والfallback)
+    path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
+
 ]
