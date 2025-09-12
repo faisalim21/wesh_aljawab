@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{% block title %}{{ page_title|default:"وش الجواب - تحدّي الوقت | اختيار الفئات" }}{% endblock %}</title>
+
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختر فئاتك المفضلة للعب تحدّي الوقت — اختر حتى 8 فئات وابدأ.' }}{% endblock %}">
+  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta property="og:site_name" content="وش الجواب">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - تحدّي الوقت | اختيار الفئات' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختر فئاتك للعب تحدّي الوقت.' }}{% endblock %}">
+  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg1:#667eea; --bg2:#764ba2;
+      --ink:#0f172a; --muted:#64748b;
+      --card:#ffffff; --ring:rgba(139,92,246,.18);
+      --primary:#8b5cf6; --cyan:#06b6d4; --ok:#22c55e; --warn:#d97706;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh;
+      font-family:'Tajawal',sans-serif; color:var(--ink);
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+    .wrap{background:#fff; border-radius:18px; margin:18px auto; padding:18px; max-width:1200px; box-shadow:0 18px 40px rgba(0,0,0,.12); border:1px solid var(--ring)}
+    .title h1{
+      font-weight:900; font-size:1.8rem; margin:0;
+      background:linear-gradient(135deg,var(--primary),var(--cyan));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .sub{color:#334155}
+    .tools{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px}
+    .search{flex:1}
+    .search input{
+      width:100%; border:1px solid #e2e8f0; border-radius:12px; padding:10px 12px; font-weight:700;
+    }
+    .limiter{
+      background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-weight:800; color:#334155;
+    }
+
+    /* الشبكة */
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:14px; margin-top:14px}
+    .col{grid-column:span 12}
+    @media (min-width:768px){ .col{grid-column:span 6} }
+    @media (min-width:992px){ .col{grid-column:span 4} }
+
+    .card-cat{
+      height:100%; background:var(--card); border:1px solid var(--ring); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; position:relative; transition:.25s
+    }
+    .card-cat:hover{ transform:translateY(-3px); box-shadow:0 18px 36px rgba(0,0,0,.08) }
+    .thumb{aspect-ratio: 16/9; background:#000; display:grid; place-items:center; overflow:hidden}
+    .thumb img{width:100%; height:100%; object-fit:cover}
+    .body{padding:12px}
+    .name{font-weight:900; font-size:1.05rem; margin:0 0 6px}
+    .desc{color:var(--muted); font-size:.95rem; margin:0}
+    .meta{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap}
+    .pill{background:#f8fafc; border:1px solid #e2e8f0; padding:4px 8px; border-radius:999px; font-weight:800; font-size:.85rem; color:#334155}
+
+    /* اختيار */
+    .pick{
+      position:absolute; top:10px; left:10px; font-weight:900;
+      background:#fff; border:2px solid #e2e8f0; color:#475569;
+      padding:6px 10px; border-radius:999px;
+      display:flex; align-items:center; gap:6px;
+    }
+    .card-cat.selected .pick{
+      border-color:#86efac; color:#166534; background:#f0fdf4;
+    }
+    .badge-used{
+      position:absolute; top:10px; right:10px;
+      background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
+      padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem; display:flex; align-items:center; gap:6px
+    }
+
+    /* شريط سفلي ثابت */
+    .bar{
+      position:sticky; bottom:0; inset-inline:0; margin-top:12px;
+      background:rgba(255,255,255,.96); border:1px solid var(--ring);
+      border-radius:14px; padding:12px; display:flex; align-items:center; gap:12px; justify-content:space-between;
+      box-shadow:0 -8px 24px rgba(0,0,0,.08)
+    }
+    .bar .left{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .count{font-weight:900}
+    .price{font-weight:900; color:#0ea5e9}
+    .btn-main{
+      background:linear-gradient(135deg,var(--primary),var(--cyan)); color:#fff; border:none; border-radius:12px; padding:10px 14px; font-weight:900
+    }
+    .btn-main:disabled{ background:#e2e8f0 !important; color:#94a3b8 !important; }
+    .btns .btn{border-radius:10px}
+
+    /* تنبيه عدم التكرار */
+    .tip{
+      background:#f1f5f9; border:1px dashed #cbd5e1; color:#0f172a; border-radius:12px; padding:10px; font-weight:800; font-size:.95rem
+    }
+  </style>
+</head>
+<body>
+
+  {% include 'header.html' %}
+
+  <main class="container my-3">
+    <div class="wrap">
+      <div class="title">
+        <h1>اختَر فئاتك لتحدّي الوقت</h1>
+        <div class="sub">اختر حتى <b>{{ bundle_size|default:8 }}</b> فئات — المحتوى يتجدّد عند إعادة اللعب لنفس الفئة.</div>
+      </div>
+
+      <div class="tools">
+        <div class="search">
+          <input id="q" type="search" placeholder="ابحث عن فئة (مثال: أعلام الدول، شعارات الأندية...)">
+        </div>
+        <div class="limiter">
+          المختار: <span id="selCount">0</span> / <span id="needCount">{{ bundle_size|default:8 }}</span>
+        </div>
+        <div class="btns">
+          <button class="btn btn-outline-secondary btn-sm" id="btnClear">مسح الاختيار</button>
+          <button class="btn btn-outline-primary btn-sm" id="btnRandom">اختيار عشوائي</button>
+        </div>
+      </div>
+
+      <div class="tip mt-2">
+        🔁 لا قلق من التكرار: إن لعبت نفس الفئات لاحقًا، سيظهر لك <u>محتوى مختلف</u> داخل كل فئة (نضمن تدوير العناصر).
+      </div>
+
+      <!-- الشبكة -->
+      <section class="grid" id="catsGrid"
+               data-bundle-size="{{ bundle_size|default:8 }}"
+               data-price-per="{{ per_cat_price|default:5 }}"
+               data-discount="{{ bundle_discount_pct|default:0 }}">
+        {% for c in categories %}
+          <article class="col">
+            <div class="card-cat" data-id="{{ c.id }}" data-name="{{ c.name|lower }}">
+              <div class="thumb">
+                {% if c.image_url %}
+                  <img src="{{ c.image_url }}" alt="{{ c.name }}">
+                {% else %}
+                  <img src="https://placehold.co/640x360?text={{ c.name|urlencode }}" alt="{{ c.name }}">
+                {% endif %}
+              </div>
+              <div class="body">
+                <div class="name">{{ c.name }}</div>
+                {% if c.description %}
+                  <p class="desc">{{ c.description }}</p>
+                {% endif %}
+                <div class="meta">
+                  {% if c.item_count %}
+                    <span class="pill"><i class="fa-solid fa-images"></i> {{ c.item_count }} عنصر</span>
+                  {% endif %}
+                  <span class="pill">محتوى متجدد</span>
+                </div>
+              </div>
+
+              <div class="pick"><span class="chk">⬜</span> اختيار</div>
+
+              {% if c.used_before %}
+                <div class="badge-used"><i class="fa-solid fa-rotate-left"></i> سبق لعبها</div>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </section>
+
+      <!-- شريط سفلي -->
+      <div class="bar">
+        <div class="left">
+          <span class="count">المختار: <span id="selCount2">0</span> / <span id="needCount2">{{ bundle_size|default:8 }}</span></span>
+          <span class="price">الإجمالي: <span id="priceVal">0</span> ر.س</span>
+          {% if bundle_discount_pct %}
+            <span class="pill">خصم باقة {{ bundle_discount_pct }}%</span>
+          {% endif %}
+        </div>
+        <div class="right d-flex gap-2">
+          {% if request.user.is_authenticated %}
+            <button id="submitBtn" class="btn-main" disabled>متابعة</button>
+          {% else %}
+            <a class="btn btn-outline-primary" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">سجّل الدخول للمتابعة</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- فورم خفي -->
+      <form id="timeCheckoutForm" method="post" action="{% url 'games:create_time_session' %}" style="display:none">
+        {% csrf_token %}
+        <input type="hidden" name="selected_category_ids" id="selectedIds">
+        <input type="hidden" name="bundle_size" value="{{ bundle_size|default:8 }}">
+      </form>
+
+    </div>
+  </main>
+
+  {% include 'footer.html' %}
+
+  <script>
+    (function(){
+      const grid = document.getElementById('catsGrid');
+      const need = parseInt(grid.dataset.bundleSize || '8', 10);
+      const pricePer = parseFloat(grid.dataset.pricePer || '5');
+      const discountPct = parseFloat(grid.dataset.discount || '0');
+
+      const q = document.getElementById('q');
+      const btnClear = document.getElementById('btnClear');
+      const btnRandom = document.getElementById('btnRandom');
+      const selCount = document.getElementById('selCount');
+      const selCount2 = document.getElementById('selCount2');
+      const needCount = document.getElementById('needCount');
+      const needCount2 = document.getElementById('needCount2');
+      const priceVal = document.getElementById('priceVal');
+      const submitBtn = document.getElementById('submitBtn');
+      const form = document.getElementById('timeCheckoutForm');
+      const selectedIdsInput = document.getElementById('selectedIds');
+
+      needCount.textContent = need;
+      needCount2.textContent = need;
+
+      const cards = Array.from(grid.querySelectorAll('.card-cat'));
+      const selected = new Set();
+
+      function updateUI(){
+        const n = selected.size;
+        selCount.textContent = n;
+        selCount2.textContent = n;
+
+        // السعر
+        let total = n * pricePer;
+        if (discountPct > 0 && n === need){
+          total = Math.round((total * (100 - discountPct))/100);
+        }
+        priceVal.textContent = total.toFixed(0);
+
+        // تفعيل زر المتابعة فقط عند اكتمال العدد
+        if (submitBtn){
+          submitBtn.disabled = (n !== need);
+        }
+      }
+
+      function toggleCard(card){
+        const id = card.dataset.id;
+        if (!selected.has(id)){
+          if (selected.size >= need){ return; } // لا تتجاوز الحد
+          selected.add(id);
+          card.classList.add('selected');
+          card.querySelector('.pick .chk').textContent = '✅';
+        }else{
+          selected.delete(id);
+          card.classList.remove('selected');
+          card.querySelector('.pick .chk').textContent = '⬜';
+        }
+        updateUI();
+      }
+
+      cards.forEach(card=>{
+        card.addEventListener('click', ()=> toggleCard(card));
+      });
+
+      // بحث بالاسم
+      q.addEventListener('input', (e)=>{
+        const term = (e.target.value || '').trim().toLowerCase();
+        cards.forEach(c=>{
+          const name = c.dataset.name || '';
+          c.parentElement.style.display = name.includes(term) ? '' : 'none';
+        });
+      });
+
+      // مسح
+      btnClear.addEventListener('click', ()=>{
+        selected.clear();
+        cards.forEach(c=>{
+          c.classList.remove('selected');
+          const chk = c.querySelector('.pick .chk');
+          if (chk) chk.textContent = '⬜';
+        });
+        updateUI();
+      });
+
+      // عشوائي
+      btnRandom.addEventListener('click', ()=>{
+        // صفّر أولاً
+        selected.clear();
+        cards.forEach(c=>{
+          c.classList.remove('selected');
+          const chk = c.querySelector('.pick .chk');
+          if (chk) chk.textContent = '⬜';
+        });
+
+        // اختَر need عناصر عشوائيًا
+        const pool = cards.slice();
+        for (let i = pool.length - 1; i > 0; i--){
+          const j = Math.floor(Math.random()*(i+1)); [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        const pick = pool.slice(0, Math.min(need, pool.length));
+        pick.forEach(c=>{
+          selected.add(c.dataset.id);
+          c.classList.add('selected');
+          const chk = c.querySelector('.pick .chk');
+          if (chk) chk.textContent = '✅';
+        });
+        updateUI();
+      });
+
+      // إرسال
+      if (submitBtn){
+        submitBtn.addEventListener('click', ()=>{
+          if (selected.size !== need){
+            alert(`اختر ${need} فئات بالضبط.`);
+            return;
+          }
+          selectedIdsInput.value = Array.from(selected).join(',');
+          form.submit();
+        });
+      }
+
+      // تهيئة
+      updateUI();
+    })();
+  </script>
+</body>
+</html>
