@@ -350,3 +350,5 @@ class UserPreferencesAdmin(admin.ModelAdmin):
         ("اللعب", {"fields": ("default_team1_name", "default_team2_name", "auto_start_timer", "show_answers_immediately")}),
         ("التحكم والعرض", {"fields": ("quick_mode_enabled", "show_statistics")}),
     )
+
+

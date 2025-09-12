@@ -1462,3 +1462,19 @@ admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
 admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
 
+
+
+# games/admin.py
+from django.contrib import admin
+from .models import TimeRiddle, TimeGameProgress
+
+@admin.register(TimeRiddle)
+class TimeRiddleAdmin(admin.ModelAdmin):
+    list_display = ('package', 'order', 'answer')
+    list_filter  = ('package',)
+    search_fields = ('answer',)
+
+@admin.register(TimeGameProgress)
+class TimeGameProgressAdmin(admin.ModelAdmin):
+    list_display = ('session', 'current_index', 'active_side', 'a_time_left_seconds', 'b_time_left_seconds', 'is_running')
+    search_fields = ('session__id',)

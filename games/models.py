@@ -15,6 +15,7 @@ class GamePackage(models.Model):
     GAME_TYPES = [
         ('letters', 'خلية الحروف'),
         ('images', 'تحدي الصور'),
+        ('time',   'تحدّي الوقت'),
         ('quiz', 'سؤال وجواب'),
     ]
 
@@ -687,3 +688,128 @@ class PictureGameProgress(models.Model):
 
 
 
+class TimeRiddle(models.Model):
+    """
+    عنصر واحد داخل تصنيف (باقة) تحدّي الوقت: صورة + إجابة (واختياري تلميح).
+    ملاحظة: الـ package هنا هو GamePackage بنوع game_type = 'time'
+    """
+    package     = models.ForeignKey('GamePackage', on_delete=models.CASCADE, related_name='time_riddles')
+    order       = models.PositiveIntegerField(default=1, help_text="ترتيب العرض داخل الباقة")
+    image_url   = models.URLField(max_length=1000, help_text="رابط الصورة")
+    answer      = models.CharField(max_length=200, help_text="الإجابة الصحيحة")
+    hint        = models.CharField(max_length=300, blank=True, null=True, help_text="تلميح اختياري")
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'id']
+        unique_together = [('package', 'order')]
+        verbose_name = "عنصر تحدّي الوقت"
+        verbose_name_plural = "عناصر تحدّي الوقت"
+
+    def __str__(self):
+        return f"[{self.package}] #{self.order} — {self.answer}"
+    
+
+class TimeGameProgress(models.Model):
+    """
+    حالة جلسة تحدّي الوقت (مثل ساعة الشطرنج):
+    - current_index: رقم العنصر الحالي (1..N)
+    - active_side: اللاعب النشط حاليًا ('A' أو 'B')
+    - a_time_left_seconds / b_time_left_seconds: الوقت المتبقي لكل لاعب
+    - last_started_at + is_running: لتتبع الخصم الذي يجري وقته الآن
+    """
+    SIDE_CHOICES = (
+        ('A', 'اللاعب A'),
+        ('B', 'اللاعب B'),
+    )
+
+    session                 = models.OneToOneField('GameSession', on_delete=models.CASCADE, related_name='time_progress')
+    current_index           = models.PositiveIntegerField(default=1)
+    active_side             = models.CharField(max_length=1, choices=SIDE_CHOICES, default='A')
+    a_time_left_seconds     = models.PositiveIntegerField(default=60)
+    b_time_left_seconds     = models.PositiveIntegerField(default=60)
+    last_started_at         = models.DateTimeField(blank=True, null=True)
+    is_running              = models.BooleanField(default=False)
+
+    created_at              = models.DateTimeField(auto_now_add=True)
+    updated_at              = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "تقدّم تحدّي الوقت"
+        verbose_name_plural = "تقدّم تحدّي الوقت"
+
+    def __str__(self):
+        return f"TimeProgress(session={self.session_id}, idx={self.current_index}, side={self.active_side})"
+
+    # ======= أدوات بسيطة سنستخدمها لاحقًا في الـConsumer =======
+
+    def _apply_elapsed(self):
+        """
+        يخصم الثواني المنقضية من اللاعب النشط إذا كانت الساعة تعمل.
+        لا تحفظ تلقائيًا — فقط تُعدّل الحقول في الذاكرة.
+        """
+        if not self.is_running or not self.last_started_at:
+            return
+        now = timezone.now()
+        elapsed = max(0, int((now - self.last_started_at).total_seconds()))
+        if elapsed <= 0:
+            return
+
+        if self.active_side == 'A':
+            self.a_time_left_seconds = max(0, self.a_time_left_seconds - elapsed)
+        else:
+            self.b_time_left_seconds = max(0, self.b_time_left_seconds - elapsed)
+
+        # ثبّت نقطة البداية الجديدة (لو استمر التشغيل)
+        self.last_started_at = now
+
+    def start(self, side: str):
+        """
+        تشغيل ساعة اللاعب المحدّد (A/B). لا تحفظ تلقائيًا.
+        """
+        side = 'A' if side == 'A' else 'B'
+        # قبل التحويل، طبّق الاستهلاك على الحالة الحالية
+        self._apply_elapsed()
+        self.active_side = side
+        self.is_running = True
+        self.last_started_at = timezone.now()
+
+    def stop(self):
+        """
+        إيقاف الساعة الحالية مع خصم الزمن المنقضي من اللاعب النشط. لا تحفظ تلقائيًا.
+        """
+        self._apply_elapsed()
+        self.is_running = False
+        self.last_started_at = None
+
+    def switch_after_answer(self):
+        """
+        المنطق المطلوب: عند إجابة اللاعب الذي عليه الدور → نوقف وقته ونبدأ وقت خصمه
+        من رصيده المتبقي.
+        """
+        # خصم وقت اللاعب الحالي وإيقافه
+        self.stop()
+
+        # بدّل الدور
+        next_side = 'B' if self.active_side == 'A' else 'A'
+        self.active_side = next_side
+
+        # إذا عند الخصم وقت متبقّي > 0 شغّل ساعته
+        if (next_side == 'A' and self.a_time_left_seconds > 0) or (next_side == 'B' and self.b_time_left_seconds > 0):
+            self.is_running = True
+            self.last_started_at = timezone.now()
+        else:
+            # خصمه انتهى وقته — تبقى متوقفة (نقرّر السلوك لاحقًا)
+            self.is_running = False
+            self.last_started_at = None
+
+    def reset_timers(self, seconds_each: int = 60, start_side: str = 'A'):
+        """
+        تهيئة سريعة قبل بداية الجولة (لكل لاعب نفس المدة).
+        """
+        self.a_time_left_seconds = max(0, int(seconds_each))
+        self.b_time_left_seconds = max(0, int(seconds_each))
+        self.active_side = 'A' if start_side == 'A' else 'B'
+        self.is_running = False
+        self.last_started_at = None
+        self.current_index = 1
