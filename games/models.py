@@ -14,12 +14,42 @@ import uuid
 # =========================
 
 class TimeCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=120, unique=True)
-    is_free_category = models.BooleanField(default=False, help_text="فئة تجربة (يجب أن تحتوي الحزمة #0 فقط)")
-    order = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
-    cover_image = models.URLField(blank=True, default="", help_text="صورة الغلاف في الواجهة")
+    """
+    تصنيف تحدّي الوقت:
+      - slug يُولّد تلقائيًا من الاسم (مع دعم العربي)، ويُضمن أنه فريد.
+      - order يحدد ترتيب الظهور (رقم أصغر = أعلى). لو تُرك فارغ/صفر عند الإضافة، يُحدَّد تلقائيًا للرقم التالي.
+    """
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name="الاسم"
+    )
+    slug = models.SlugField(
+        max_length=120,
+        unique=True,
+        verbose_name="المعرّف (Slug)",
+        help_text="يُولَّد تلقائيًا من الاسم؛ اتركه فارغًا."
+    )
+    is_free_category = models.BooleanField(
+        default=False,
+        verbose_name="فئة مجانية؟",
+        help_text="فئة تجربة (يجب أن تحتوي الحزمة #0 فقط)."
+    )
+    order = models.PositiveIntegerField(
+        default=1,
+        verbose_name="الترتيب",
+        help_text="تحديد موضع الظهور؛ رقم أصغر يعني ظهورًا أعلى."
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name="فعّالة؟"
+    )
+    cover_image = models.URLField(
+        blank=True,
+        default="",
+        verbose_name="صورة الغلاف",
+        help_text="رابط صورة الغلاف التي تظهر في الواجهة."
+    )
 
     class Meta:
         ordering = ("order", "name")
@@ -31,8 +61,29 @@ class TimeCategory(models.Model):
 
     @property
     def free_only(self):
-        # إن كانت فئة تجريبية: نتوقع أن فيها الحزمة 0 فقط
+        """إن كانت فئة تجريبية نتوقع وجود الحزمة #0 فقط داخلها."""
         return self.is_free_category
+
+    def save(self, *args, **kwargs):
+        # توليد slug تلقائيًا (مع ضمان الفريد) إن كان فارغًا
+        if not self.slug and self.name:
+            from django.utils.text import slugify
+            from django.db.models import Max
+            base = slugify(self.name, allow_unicode=True) or "category"
+            candidate = base
+            i = 2
+            while TimeCategory.objects.filter(slug=candidate).exclude(pk=self.pk).exists():
+                candidate = f"{base}-{i}"
+                i += 1
+            self.slug = candidate
+
+        # ضبط الترتيب تلقائيًا عند الإضافة إذا كان 0/فارغ
+        if not self.pk and (self.order is None or self.order == 0):
+            from django.db.models import Max
+            last = TimeCategory.objects.aggregate(m=Max('order'))['m'] or 0
+            self.order = last + 1
+
+        super().save(*args, **kwargs)
 
 
 # =========================

@@ -894,6 +894,7 @@ def _img_thumb(url, h=56):
 
 @admin.register(TimeCategory)
 class TimeCategoryAdmin(admin.ModelAdmin):
+    prepopulated_fields = {"slug": ("name",)}
     list_display  = (
         'name_col',       # الاسم
         'is_free_col',    # فئة مجانية؟
