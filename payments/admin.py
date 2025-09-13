@@ -37,53 +37,6 @@ try:
 except Exception:
     pass
 
-
-def _listing_table(headers, rows_html):
-    """
-    يبني جدول HTML قابل لإعادة الاستخدام.
-    يتحمّل:
-      - rows_html كـ list[str]
-      - rows_html كـ str
-      - rows_html كـ callable يرجّع str أو list[str]
-    ويتفادى TypeError لما يمرّر بالخطأ “ميثود” بدل ناتجها.
-    """
-    # لو انمررت دالة (callable) استدعها أولاً
-    if callable(rows_html):
-        rows_html = rows_html()
-
-    # جهّز جسم الجدول
-    if isinstance(rows_html, str):
-        body = rows_html
-    else:
-        try:
-            body = "".join(rows_html)
-        except TypeError:
-            # آخر علاج: حوّله نص مباشرة (لمنع كراش ولو كان إدخال خاطئ)
-            body = str(rows_html)
-
-    # رؤوس الجدول
-    head = "".join(
-        f"<th style='padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;'>{h}</th>"
-        for h in headers
-    )
-
-    # صف افتراضي لو ما فيه بيانات
-    if not body:
-        body = (
-            f"<tr><td colspan='{len(headers)}' "
-            f"style='padding:12px;color:#94a3b8;'>لا توجد بيانات</td></tr>"
-        )
-
-    # الغلاف
-    return f"""
-    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
-      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
-        <thead style="background:#0f172a;color:#cbd5e1;">{head}</thead>
-        <tbody style="color:#e2e8f0;">{body}</tbody>
-      </table>
-    </div>
-    """
-
 # -----------------------------
 # افتراضات مرنة وقابلة للتعديل من صفحة الإحصائيات
 # -----------------------------
