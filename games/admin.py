@@ -1464,17 +1464,77 @@ admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
 
 
 
-# games/admin.py
-from django.contrib import admin
-from .models import TimeRiddle, TimeGameProgress
+# === NEW: Admin لفئات تحدّي الوقت ===
+@admin.register(TimeCategory)
+class TimeCategoryAdmin(admin.ModelAdmin):
+    list_display = ('name','is_free_category','is_active','order','packages_count','free_pkg_ok','cover_preview')
+    list_filter = ('is_free_category','is_active')
+    search_fields = ('name','slug')
+    ordering = ('order','name')
 
-@admin.register(TimeRiddle)
-class TimeRiddleAdmin(admin.ModelAdmin):
-    list_display = ('package', 'order', 'answer')
-    list_filter  = ('package',)
-    search_fields = ('answer',)
+    def packages_count(self, obj):
+        return obj.time_packages.filter(game_type='time').count()
+    packages_count.short_description = "عدد الحزم"
 
-@admin.register(TimeGameProgress)
-class TimeGameProgressAdmin(admin.ModelAdmin):
-    list_display = ('session', 'current_index', 'active_side', 'a_time_left_seconds', 'b_time_left_seconds', 'is_running')
-    search_fields = ('session__id',)
+    def free_pkg_ok(self, obj):
+        # نتأكد إذا كانت فئة مجانية أن فيها حزمة رقم 0 واحدة وفعّالة
+        if not obj.is_free_category:
+            return "—"
+        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
+    free_pkg_ok.short_description = "حزمة التجربة"
+
+    def cover_preview(self, obj):
+        if not obj.cover_image:
+            return "—"
+        return format_html('<img src="{}" style="height:40px;border-radius:6px;border:1px solid #ddd;">', obj.cover_image)
+    cover_preview.short_description = "غلاف"
+
+# === NEW: Proxy لحزم تحدّي الوقت ===
+class TimePackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - تحدّي الوقت"
+        verbose_name_plural = "حزم - تحدّي الوقت"
+
+@admin.register(TimePackage)
+class TimePackageAdmin(admin.ModelAdmin):
+    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at')
+    list_filter = ('is_active','is_free','time_category','created_at')
+    search_fields = ('package_number','description','time_category__name')
+    ordering = ('time_category__order','time_category__name','package_number')
+
+    fieldsets = (
+        ('المعلومات الأساسية', {
+            'fields': ('time_category','package_number','is_free','is_active')
+        }),
+        ('التسعير/الوصف', {
+            'fields': (('original_price','discounted_price','price'), 'description')
+        }),
+    )
+
+    def get_queryset(self, request):
+        return (super().get_queryset(request)
+                .filter(game_type='time')
+                .select_related('time_category'))
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'time'
+        super().save_model(request, obj, form, change)
+
+    def pkg_ref(self, obj):
+        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
+        return format_html("<b>حزمة {}</b>", tag)
+    pkg_ref.short_description = "الحزمة"
+
+    def category_ref(self, obj):
+        return obj.time_category.name if obj.time_category else "—"
+    category_ref.short_description = "التصنيف"
+
+    def is_free_icon(self, obj):
+        return "✅" if (obj.is_free or obj.package_number == 0) else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
+    status_badge.short_description = "الحالة"

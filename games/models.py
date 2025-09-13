@@ -813,3 +813,78 @@ class TimeGameProgress(models.Model):
         self.is_running = False
         self.last_started_at = None
         self.current_index = 1
+
+
+
+# === NEW: فئات تحدّي الوقت ===
+class TimeCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+    is_free_category = models.BooleanField(default=False)  # الفئات المجانية (تجربة)
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    cover_image = models.URLField(blank=True, default="")
+
+    class Meta:
+        ordering = ("order", "name")
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def free_only(self):
+        # إن كانت فئة تجريبية: نتوقع أن فيها الحزمة 0 فقط
+        return self.is_free_category
+
+# ملاحظة: GamePackage موجود عندك. نحتاج فقط نضمن أنه يدعم game_type='time'
+# ونربطه بالفئات. إذا كان عندك FK باسم آخر، استبدله. هذا الحقل آمن إن كان nullable.
+class GamePackage(models.Model):
+    # ... حقولك الحالية ...
+    game_type = models.CharField(
+        max_length=20,
+        choices=(
+            ('letters','خلية الحروف'),
+            ('images','تحدي الصور'),
+            ('quiz','سؤال وجواب'),
+            ('time','تحدي الوقت'),  # 👈 تأكد أن هذا الاختيار موجود
+        ),
+        default='letters'
+    )
+    # ربط الفئة (خاص بتحدي الوقت)
+    time_category = models.ForeignKey(
+        'TimeCategory', null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='time_packages'
+    )
+    # رقم الحزمة داخل الفئة (0 = المجانية)
+    package_number = models.PositiveIntegerField(default=1)
+
+    # ... بقيّة الحقول كما هي (price/discounted_price/is_free/is_active/description ...)
+    # تذكير: اجعل package_number فريدًا ضمن (game_type='time', time_category)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['game_type','time_category','package_number'],
+                name='uniq_timepkg_per_category_number'
+            )
+        ]
+
+# تتبع الحزم التي لعبها المستخدم لكل فئة (تاريخ دقيق)
+class TimePlayHistory(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    category = models.ForeignKey(TimeCategory, on_delete=models.CASCADE)
+    package = models.ForeignKey(GamePackage, on_delete=models.CASCADE)
+    played_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user','category','package')
+        ordering = ('-played_at',)
+
+# الجلسة قد تحمل 8 فئات؛ هذا يربط الجلسة بكل فئة وحزمتها المختارة
+class TimeSessionPackage(models.Model):
+    session = models.ForeignKey('GameSession', on_delete=models.CASCADE, related_name='time_session_packages')
+    category = models.ForeignKey(TimeCategory, on_delete=models.PROTECT)
+    package = models.ForeignKey(GamePackage, on_delete=models.PROTECT)
+
+    class Meta:
+        unique_together = ('session','category')
