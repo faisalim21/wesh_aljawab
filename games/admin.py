@@ -894,6 +894,38 @@ def _img_thumb(url, h=56):
 
 @admin.register(TimeCategory)
 class TimeCategoryAdmin(admin.ModelAdmin):
+    list_display  = ('name','is_free_category','is_active','order','packages_count','free_pkg_ok','cover_preview')
+    list_filter   = ('is_free_category','is_active')
+    search_fields = ('name','slug')
+    ordering      = ('order','name')
+    exclude       = ('slug',)  # <-- نخفيه من الفورم
+
+    def get_changeform_initial_data(self, request):
+        # عند الإضافة، نعطي order الرقم التالي تلقائيًا
+        initial = super().get_changeform_initial_data(request)
+        from django.db.models import Max
+        last = TimeCategory.objects.aggregate(m=Max('order'))['m'] or 0
+        initial.setdefault('order', last + 1)
+        return initial
+
+    def packages_count(self, obj):
+        return obj.time_packages.filter(game_type='time').count()
+    packages_count.short_description = "عدد الحزم"
+
+    def free_pkg_ok(self, obj):
+        if not obj.is_free_category:
+            return "—"
+        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
+    free_pkg_ok.short_description = "حزمة التجربة"
+
+    def cover_preview(self, obj):
+        if not getattr(obj, "cover_image", None):
+            return "—"
+        from django.utils.html import format_html, escape
+        return format_html('<img src="{}" style="height:40px;border-radius:6px;border:1px solid #ddd;" alt="cover"/>', escape(obj.cover_image))
+    cover_preview.short_description = "غلاف"
+
     prepopulated_fields = {"slug": ("name",)}
     list_display  = (
         'name_col',       # الاسم
