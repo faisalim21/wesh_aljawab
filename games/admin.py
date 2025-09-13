@@ -1464,77 +1464,444 @@ admin.site.index_title = 'مرحبًا بك في لوحة التحكم'
 
 
 
-# === NEW: Admin لفئات تحدّي الوقت ===
-@admin.register(TimeCategory)
-class TimeCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name','is_free_category','is_active','order','packages_count','free_pkg_ok','cover_preview')
-    list_filter = ('is_free_category','is_active')
-    search_fields = ('name','slug')
-    ordering = ('order','name')
+# ===========================
+#  تحدّي الوقت: الفئات + الحزم + الألغاز (صور)
+# ===========================
 
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
+# استيراد موديلات تحدّي الوقت (آمنة لو غير موجودة بعد)
+try:
+    from .models import TimeCategory, TimeRiddle, TimeGameProgress
+except Exception:
+    TimeCategory = None
+    TimeRiddle = None
+    TimeGameProgress = None
 
-    def free_pkg_ok(self, obj):
-        # نتأكد إذا كانت فئة مجانية أن فيها حزمة رقم 0 واحدة وفعّالة
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
+# --- أدوات مساعدة بسيطة ---
+def _img_thumb(url, h=56):
+    if not url:
+        return "—"
+    return format_html(
+        '<img src="{}" style="height:{}px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>',
+        escape(url), h
+    )
 
-    def cover_preview(self, obj):
-        if not obj.cover_image:
-            return "—"
-        return format_html('<img src="{}" style="height:40px;border-radius:6px;border:1px solid #ddd;">', obj.cover_image)
-    cover_preview.short_description = "غلاف"
+# ============ Admin: فئات تحدّي الوقت ============
+if TimeCategory:
+    @admin.register(TimeCategory)
+    class TimeCategoryAdmin(admin.ModelAdmin):
+        """
+        فئات تحدّي الوقت:
+        - إبراز الفئة إن كانت مجانية (تعني ضرورة وجود حزمة #0 تجريبية فعّالة داخلها).
+        - عدّاد الحزم / غلاف معاينة.
+        """
+        list_display = ('name','is_free_category','is_active','order','packages_count','free_pkg_ok','cover_preview')
+        list_filter  = ('is_free_category','is_active')
+        search_fields= ('name','slug')
+        ordering     = ('order','name')
 
-# === NEW: Proxy لحزم تحدّي الوقت ===
+        def packages_count(self, obj):
+            # عدد الحزم الخاصة بهذه الفئة (من نوع time حصراً)
+            return obj.time_packages.filter(game_type='time').count()
+        packages_count.short_description = "عدد الحزم"
+
+        def free_pkg_ok(self, obj):
+            # لو الفئة مجانية: تأكد من وجود حزمة رقم 0 واحدة وفعّالة
+            if not obj.is_free_category:
+                return "—"
+            ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+            return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
+        free_pkg_ok.short_description = "حزمة التجربة"
+
+        def cover_preview(self, obj):
+            if not getattr(obj, "cover_image", None):
+                return "—"
+            return _img_thumb(obj.cover_image, h=40)
+        cover_preview.short_description = "غلاف"
+
+
+# ============ Proxy: حزم تحدّي الوقت (تعتمد GamePackage) ============
 class TimePackage(GamePackage):
     class Meta:
         proxy = True
         verbose_name = "حزمة - تحدّي الوقت"
         verbose_name_plural = "حزم - تحدّي الوقت"
 
+
+# ============ Inline: ألغاز الصور لحزمة تحدّي الوقت ============
+if TimeRiddle:
+    class TimeRiddleInlineFormSet(BaseInlineFormSet):
+        """
+        - يفرض حد أقصى 40 لغزًا لكل حزمة.
+        - يمنع تكرار أرقام order داخل نفس الحزمة.
+        """
+        def clean(self):
+            super().clean()
+            if any(self.errors):
+                return
+
+            alive = []
+            orders = set()
+            dup_orders = set()
+
+            for form in self.forms:
+                if form.cleaned_data.get('DELETE'):
+                    continue
+                # تجاهل صف الـ extra الفارغ
+                empty_extra = (not form.cleaned_data and not form.instance.pk)
+                if empty_extra:
+                    continue
+
+                alive.append(form)
+                o = form.cleaned_data.get('order') or getattr(form.instance, 'order', None)
+                if o is not None:
+                    if o in orders:
+                        dup_orders.add(o)
+                    orders.add(o)
+
+            # حد الصور
+            pkg = self.instance
+            limit = 40
+            if len(alive) > limit:
+                raise forms.ValidationError(f"الحدّ الأقصى لعدد الألغاز في حزمة تحدّي الوقت هو {limit} صورة.")
+
+            # تكرار ترتيب
+            if dup_orders:
+                dup_s = ", ".join(str(x) for x in sorted(dup_orders))
+                raise forms.ValidationError(f"يوجد تكرار في حقل (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
+
+    class TimeRiddleInline(admin.TabularInline):
+        """
+        ألغاز الصور (تحدّي الوقت) داخل الحزمة:
+        - image_url + answer + hint + order + معاينة
+        - حقل الإجابة مخصّص للمقدّم فقط (ملاحظة في help_text)
+        """
+        model = TimeRiddle
+        extra = 0
+        formset = TimeRiddleInlineFormSet
+        fields = ('order','image_url','answer','hint','thumb_tag')
+        readonly_fields = ('thumb_tag',)
+        ordering = ('order',)
+
+        def thumb_tag(self, obj):
+            return _img_thumb(getattr(obj, 'image_url', ''))
+        thumb_tag.short_description = "معاينة"
+
+        # وضع help_text واضح على حقل الإجابة
+        def formfield_for_dbfield(self, db_field, request, **kwargs):
+            field = super().formfield_for_dbfield(db_field, request, **kwargs)
+            if db_field.name == 'answer':
+                field.help_text = "الإجابة تظهر للمقدّم فقط أثناء اللعب، ولا تظهر للمتسابقين."
+            return field
+
+
+# ============ Admin: حزم تحدّي الوقت ============
 @admin.register(TimePackage)
 class TimePackageAdmin(admin.ModelAdmin):
-    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at')
-    list_filter = ('is_active','is_free','time_category','created_at')
-    search_fields = ('package_number','description','time_category__name')
-    ordering = ('time_category__order','time_category__name','package_number')
+    """
+    إدارة حزم تحدّي الوقت:
+
+    • تصنيف (time_category) + رقم الحزمة:
+        - إن كانت الفئة مجانية ⇒ يجب أن تكون الحزمة برقم 0 (تجريبية) ومجانية.
+        - إن كانت الفئة غير مجانية ⇒ يجب أن تكون الحزم مدفوعة وبرقم ≥ 1.
+
+    • الألغاز (صور) Inline: حد أقصى 40 صورة/حزمة.
+
+    • ملاحظة التسعير:
+        الدفع الفعلي في المنتج ثابت (20 ريال عند اختيار 8 فئات) — حقول الأسعار هنا للعرض فقط.
+    """
+    list_display = ('pkg_ref','category_ref','riddles_count_badge','is_free_icon','status_badge','created_at')
+    list_filter  = ('is_active','is_free','time_category','created_at')
+    search_fields= ('package_number','description','time_category__name')
+    ordering     = ('time_category__order','time_category__name','package_number')
+
+    # إظهار ألغاز الصور داخل نموذج الحزمة
+    inlines = [TimeRiddleInline] if TimeRiddle else []
 
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': ('time_category','package_number','is_free','is_active')
         }),
-        ('التسعير/الوصف', {
-            'fields': (('original_price','discounted_price','price'), 'description')
+        ('الوصف/ملاحظات', {
+            'fields': ('description',)
+        }),
+        ('(اختياري) التسعير', {
+            'classes': ('collapse',),
+            'fields': (('original_price','discounted_price','price'),),
+            'description': mark_safe("<small>الدفع الفعلي يتم كحزمة فئات (20 ريال/8 فئات) — هذه الحقول اختيارية وغير مستخدمة في التدفق.</small>")
         }),
     )
 
+    # قيود استعلام الحزم: نوع time فقط
     def get_queryset(self, request):
-        return (super().get_queryset(request)
-                .filter(game_type='time')
-                .select_related('time_category'))
+        qs = (super().get_queryset(request)
+              .filter(game_type='time')
+              .select_related('time_category'))
+        return qs
 
+    # قواعد الحفظ: فرض منطق الفئات المجانية/المدفوعة
     def save_model(self, request, obj, form, change):
+        from django.db.models import Q
+
         obj.game_type = 'time'
+
+        cat = getattr(obj, 'time_category', None)
+        if cat and getattr(cat, 'is_free_category', False):
+            # فئة مجانية ⇒ يجب أن تكون حزمة #0 ومجانية — وتكون الوحيدة #0 في هذه الفئة
+            obj.package_number = 0
+            obj.is_free = True
+
+            # تحقّق عدم وجود حزمة 0 أخرى فعّالة في نفس الفئة
+            clash = GamePackage.objects.filter(
+                game_type='time', time_category=cat, package_number=0
+            ).exclude(pk=obj.pk).exists()
+            if clash:
+                messages.error(request, "يوجد بالفعل حزمة #0 لهذه الفئة. لا يمكن إنشاء أكثر من حزمة تجريبية واحدة.")
+                # نسمح بالحفظ لو كانت تعديل لنفس الحزمة، لكن إن كانت إضافة ثانية، سنمنع بالحالة غير الفعالة
+                obj.is_active = False
+
+        elif cat and not getattr(cat, 'is_free_category', False):
+            # فئة مدفوعة ⇒ لا يسمح برقم 0، ولا تعتبر مجانية
+            if obj.package_number == 0:
+                # اضبط رقم مناسب تلقائيًا بعد آخر رقم داخل الفئة
+                last_num = (GamePackage.objects
+                            .filter(game_type='time', time_category=cat)
+                            .exclude(pk=obj.pk)
+                            .aggregate(Max('package_number'))['package_number__max'] or 0)
+                obj.package_number = max(1, last_num + 1)
+            obj.is_free = False
+
         super().save_model(request, obj, form, change)
 
+    # مرجع الحزمة
     def pkg_ref(self, obj):
-        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
+        tag = "مجانية" if (obj.is_free or obj.package_number == 0) else f"#{obj.package_number}"
         return format_html("<b>حزمة {}</b>", tag)
     pkg_ref.short_description = "الحزمة"
 
+    # مرجع الفئة
     def category_ref(self, obj):
         return obj.time_category.name if obj.time_category else "—"
     category_ref.short_description = "التصنيف"
 
+    # حالة مجانية؟
     def is_free_icon(self, obj):
         return "✅" if (obj.is_free or obj.package_number == 0) else "—"
     is_free_icon.short_description = "مجانية"
 
+    # عدد الألغاز في الحزمة
+    def riddles_count_badge(self, obj):
+        if not TimeRiddle:
+            return "—"
+        cnt = TimeRiddle.objects.filter(package=obj).count()
+        limit = 40
+        if cnt == 0:
+            color, icon = '#94a3b8', '—'
+        elif cnt > limit:
+            color, icon = '#ef4444', '⚠️'
+        elif cnt == limit:
+            color, icon = '#10b981', '✅'
+        else:
+            color, icon = '#f59e0b', '🧩'
+        return format_html('<span style="color:{};font-weight:700;">{} {}/{} </span>', color, icon, cnt, limit)
+    riddles_count_badge.short_description = "ألغاز الحزمة"
+
+    # بادج الحالة
     def status_badge(self, obj):
         return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
     status_badge.short_description = "الحالة"
+
+    # ===== روابط/عمليات خاصة لرفع/تصدير ألغاز الوقت (CSV/Excel) =====
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("<uuid:pk>/time-upload/", self.admin_site.admin_view(self.upload_time_riddles_view),  name="games_timepackage_upload"),
+            path("<uuid:pk>/time-export/", self.admin_site.admin_view(self.export_time_riddles_view),  name="games_timepackage_export"),
+            path("time-download-template/", self.admin_site.admin_view(self.download_time_template_view), name="games_timepackage_download_template"),
+        ]
+        return custom + urls
+
+    def _time_actions_html(self, obj):
+        upload_url   = reverse('admin:games_timepackage_upload',   args=[obj.id])
+        template_url = reverse('admin:games_timepackage_download_template')
+        export_url   = reverse('admin:games_timepackage_export',   args=[obj.id])
+        return mark_safe(
+            f'<a class="button" href="{upload_url}"   style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع</a>'
+            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
+            f'<a class="button" href="{export_url}"   style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
+        )
+
+    # نعرض أزرار الرفع/التنزيل أعلى النموذج
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        try:
+            obj = self.get_object(request, object_id)
+        except Exception:
+            obj = None
+        extra_context['time_io_actions'] = mark_safe(self._time_actions_html(obj)) if obj else ""
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
+    # ===== Import/Export/Template (ألغاز الوقت) =====
+
+    def download_time_template_view(self, request):
+        """
+        قالب الاستيراد:
+        الأعمدة: الترتيب | رابط الصورة | الإجابة | تلميح (اختياري)
+        """
+        try:
+            import openpyxl  # قد لا يكون مثبتًا
+            wb = openpyxl.Workbook()
+            sh = wb.active
+            sh.title = "قالب ألغاز الوقت"
+            sh.append(['الترتيب','رابط الصورة','الإجابة','تلميح (اختياري)'])
+            sh.append([1, 'https://example.com/img1.jpg', 'الإجابة 1', 'تلميح بسيط'])
+            sh.append([2, 'https://example.com/img2.jpg', 'الإجابة 2', ''])
+            response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            response['Content-Disposition'] = 'attachment; filename="time_riddles_template.xlsx"'
+            wb.save(response)
+            return response
+        except Exception:
+            # CSV بديل
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="time_riddles_template.csv"'
+            w = csv.writer(response)
+            w.writerow(['الترتيب','رابط الصورة','الإجابة','تلميح (اختياري)'])
+            w.writerow([1, 'https://example.com/img1.jpg', 'الإجابة 1', 'تلميح بسيط'])
+            w.writerow([2, 'https://example.com/img2.jpg', 'الإجابة 2', ''])
+            return response
+
+    def export_time_riddles_view(self, request, pk):
+        if not TimeRiddle:
+            messages.error(request, "نموذج TimeRiddle غير متاح.")
+            return HttpResponseRedirect(reverse('admin:timepackage_changelist'))  # احتياط
+        package = get_object_or_404(GamePackage, pk=pk, game_type='time')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="time_package_{package.package_number}_riddles.csv"'
+        w = csv.writer(response)
+        w.writerow(['الترتيب','رابط الصورة','الإجابة','تلميح (اختياري)'])
+        for r in TimeRiddle.objects.filter(package=package).order_by('order','id'):
+            w.writerow([r.order, r.image_url, r.answer, r.hint or ''])
+        return response
+
+    def upload_time_riddles_view(self, request, pk):
+        if not TimeRiddle:
+            messages.error(request, "نموذج TimeRiddle غير متاح.")
+            return HttpResponseRedirect(reverse('admin:timepackage_changelist'))  # احتياط
+
+        package = get_object_or_404(GamePackage, pk=pk, game_type='time')
+
+        if request.method == 'POST':
+            file = request.FILES.get('file')
+            replace_existing = bool(request.POST.get('replace'))
+
+            if not file:
+                messages.error(request, "يرجى اختيار ملف")
+                return HttpResponseRedirect(request.path)
+
+            if replace_existing:
+                TimeRiddle.objects.filter(package=package).delete()
+
+            added = 0
+            failed = 0
+            failed_examples = []
+
+            name = (file.name or "").lower()
+
+            try:
+                # Excel
+                if name.endswith(('.xlsx','.xlsm','.xltx','.xltm')):
+                    try:
+                        import openpyxl
+                    except Exception:
+                        messages.error(request, "openpyxl غير مثبت؛ ارفع CSV بدلًا من Excel.")
+                        return HttpResponseRedirect(request.path)
+
+                    wb = openpyxl.load_workbook(file, data_only=True)
+                    sh = wb.active
+                    for row in sh.iter_rows(min_row=2, values_only=True):
+                        if not row:
+                            continue
+                        order, image_url, answer, hint = (row + (None, None, None, None))[:4]
+                        if image_url is None or answer is None:
+                            failed += 1
+                            if len(failed_examples) < 5:
+                                failed_examples.append(f"[order={order}, image_url={image_url}, answer={answer}]")
+                            continue
+                        TimeRiddle.objects.update_or_create(
+                            package=package, order=int(order or 0),
+                            defaults={'image_url': str(image_url).strip(),
+                                      'answer': str(answer).strip(),
+                                      'hint': (str(hint).strip() if hint else '')}
+                        )
+                        added += 1
+
+                else:
+                    # CSV
+                    decoded = file.read().decode('utf-8-sig', errors='ignore')
+                    reader = csv.reader(io.StringIO(decoded))
+                    next(reader, None)  # تخطّي الهيدر
+                    for row in reader:
+                        if not row or len(row) < 3:
+                            failed += 1
+                            continue
+                        order = (row[0] or '').strip()
+                        image_url = (row[1] or '').strip()
+                        answer = (row[2] or '').strip()
+                        hint = (row[3] or '').strip() if len(row) > 3 else ''
+                        if not image_url or not answer:
+                            failed += 1
+                            if len(failed_examples) < 5:
+                                failed_examples.append(f"[order={order}, image_url={image_url}, answer={answer}]")
+                            continue
+                        try:
+                            order_int = int(order or 0)
+                        except Exception:
+                            order_int = 0
+                        TimeRiddle.objects.update_or_create(
+                            package=package, order=order_int,
+                            defaults={'image_url': image_url, 'answer': answer, 'hint': hint}
+                        )
+                        added += 1
+
+                # بعد الاستيراد، تأكد من عدم تجاوز 40
+                total_cnt = TimeRiddle.objects.filter(package=package).count()
+                if total_cnt > 40:
+                    messages.warning(request, f"تم استيراد {added} لغز، لكن العدد الإجمالي تجاوز 40 ({total_cnt}). احذف الزائد يدويًا.")
+                else:
+                    if added and failed:
+                        messages.warning(request, f"تمت إضافة/تحديث {added} لغز. تم تجاهل {failed} صف.")
+                    elif added:
+                        messages.success(request, f"تمت إضافة/تحديث {added} لغز.")
+                    else:
+                        messages.info(request, "لم تتم إضافة أي ألغاز.")
+
+                if failed_examples:
+                    messages.info(request, "أمثلة متجاهلة: " + ", ".join(failed_examples))
+
+                return HttpResponseRedirect(reverse('admin:timepackage_change', args=[package.id]))
+
+            except Exception as e:
+                messages.error(request, f"خطأ أثناء الرفع: {e}")
+                return HttpResponseRedirect(request.path)
+
+        # GET (نفس صفحة رفع أسئلة الحروف لكن مخصّصة للوقت)
+        context = {
+            **self.admin_site.each_context(request),
+            "opts": self.model._meta,
+            "title": f"رفع ألغاز الوقت - حزمة {package.package_number}",
+            "package": package,
+            "accept": ".csv,.xlsx,.xlsm,.xltx,.xltm",
+            "download_template_url": reverse('admin:games_timepackage_download_template'),
+            "export_url": reverse('admin:games_timepackage_export', args=[package.id]),
+            "change_url": reverse('admin:timepackage_change', args=[package.id]),
+            "back_url": reverse('admin:timepackage_changelist'),
+            "help_rows": [
+                "الملف يجب أن يحتوي على صف عناوين (هيدر) ثم البيانات.",
+                "الأعمدة: الترتيب | رابط الصورة | الإجابة | تلميح (اختياري).",
+                "الحد الأقصى 40 لغزًا لكل حزمة.",
+                "الإجابة تظهر للمقدّم فقط أثناء اللعب.",
+            ],
+            "extra_note": "تفعيل خيار الحذف سيحذف ألغاز هذه الحزمة قبل الاستيراد.",
+            "submit_label": "رفع الملف",
+            "replace_label": "حذف الألغاز الحالية قبل الرفع",
+        }
+        return TemplateResponse(request, "admin/import_csv.html", context)

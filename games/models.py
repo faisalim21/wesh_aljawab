@@ -1,27 +1,56 @@
-# games/models.py - النسخة المُحسّنة والنهائية
+# games/models.py
 
 from django.db import models
 from django.utils import timezone
-from django.db.models import Q, F
+from django.db.models import Q, F, Max
 from django.conf import settings
 from django.core.exceptions import ValidationError
-import uuid
 from datetime import timedelta
-from django.db.models import Max
 from decimal import Decimal
+import uuid
+
+# =========================
+#  فئات تحدّي الوقت
+# =========================
+
+class TimeCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=120, unique=True)
+    is_free_category = models.BooleanField(default=False, help_text="فئة تجربة (يجب أن تحتوي الحزمة #0 فقط)")
+    order = models.PositiveIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+    cover_image = models.URLField(blank=True, default="", help_text="صورة الغلاف في الواجهة")
+
+    class Meta:
+        ordering = ("order", "name")
+        verbose_name = "تصنيف تحدّي الوقت"
+        verbose_name_plural = "تصنيفات تحدّي الوقت"
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def free_only(self):
+        # إن كانت فئة تجريبية: نتوقع أن فيها الحزمة 0 فقط
+        return self.is_free_category
+
+
+# =========================
+#  حِزم الألعاب
+# =========================
 
 class GamePackage(models.Model):
     """حزم الألعاب"""
     GAME_TYPES = [
         ('letters', 'خلية الحروف'),
-        ('images', 'تحدي الصور'),
-        ('time',   'تحدّي الوقت'),
-        ('quiz', 'سؤال وجواب'),
+        ('images',  'تحدي الصور'),
+        ('time',    'تحدّي الوقت'),
+        ('quiz',    'سؤال وجواب'),
     ]
 
-    # أنواع الأسئلة (قابلة للتوسّع لاحقًا)
+    # أنواع الأسئلة (للحروف - قابلة للتوسّع)
     QUESTION_THEMES = [
-        ('mixed', 'متنوعة'),
+        ('mixed',  'متنوعة'),
         ('sports', 'رياضية'),
     ]
 
@@ -35,10 +64,10 @@ class GamePackage(models.Model):
         help_text="اختر نوع اللعبة"
     )
 
-    # رقم الحزمة داخل نوع اللعبة
+    # رقم الحزمة داخل نوع اللعبة/التصنيف
     package_number = models.IntegerField(
         verbose_name="رقم الحزمة",
-        help_text="رقم الحزمة (1، 2، 3...)"
+        help_text="رقم الحزمة (0 للتجريبية في فئات تحدّي الوقت، وإلا 1، 2، 3...)"
     )
 
     # مجاني/غير مجاني
@@ -85,13 +114,22 @@ class GamePackage(models.Model):
         help_text="وصف قصير للحزمة يظهر للمستخدمين"
     )
 
-    # نوع الأسئلة
+    # نوع الأسئلة (للحروف)
     question_theme = models.CharField(
         max_length=20,
         choices=QUESTION_THEMES,
         default='mixed',
         verbose_name="نوع الأسئلة",
         help_text="مثال: متنوعة، رياضية"
+    )
+
+    # ربط فئات تحدّي الوقت (اختياري لباقي الألعاب — إجباري عند game_type='time')
+    time_category = models.ForeignKey(
+        TimeCategory,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        related_name='time_packages',
+        verbose_name="تصنيف (تحدّي الوقت)"
     )
 
     created_at = models.DateTimeField(
@@ -104,23 +142,30 @@ class GamePackage(models.Model):
         verbose_name = "حزمة لعبة"
         verbose_name_plural = "حزم الألعاب"
         constraints = [
-            # فريدة رقم الحزمة داخل نوع اللعبة
+            # لو النوع Time → الفريدة داخل (التصنيف + رقم الحزمة)
+            models.UniqueConstraint(
+                fields=['time_category', 'package_number'],
+                condition=Q(game_type='time'),
+                name='uniq_timepkg_per_category_number'
+            ),
+            # لباقي الأنواع → الفريدة (نوع اللعبة + رقم الحزمة)
             models.UniqueConstraint(
                 fields=['game_type', 'package_number'],
-                name='uniq_pkg_by_type_number'
+                condition=~Q(game_type='time'),
+                name='uniq_pkg_by_type_number_except_time'
             ),
-            # إذا كانت مجانية يجب أن يكون السعر 0.00
+            # المجانية سعرها 0
             models.CheckConstraint(
                 check=Q(is_free=False) | Q(price=Decimal('0.00')),
                 name='free_pkg_price_must_be_zero'
             ),
-            # علاقة خصم صحيحة: كلاهما None أو (خصم > 0 وأقل من الأصلي وكلاهما > 0)
+            # علاقة خصم صحيحة
             models.CheckConstraint(
                 check=(
-                    (Q(discounted_price__isnull=True) & Q(original_price__isnull=True))
-                    | (Q(discounted_price__isnull=False) & Q(original_price__isnull=False)
-                       & Q(discounted_price__gt=Decimal('0.00')) & Q(original_price__gt=Decimal('0.00'))
-                       & Q(discounted_price__lt=F('original_price')))
+                    (Q(discounted_price__isnull=True) & Q(original_price__isnull=True)) |
+                    (Q(discounted_price__isnull=False) & Q(original_price__isnull=False) &
+                     Q(discounted_price__gt=Decimal('0.00')) & Q(original_price__gt=Decimal('0.00')) &
+                     Q(discounted_price__lt=F('original_price')))
                 ),
                 name='valid_discount_relation'
             ),
@@ -128,13 +173,15 @@ class GamePackage(models.Model):
         indexes = [
             models.Index(fields=['game_type', 'is_active']),
             models.Index(fields=['is_free']),
+            models.Index(fields=['game_type', 'time_category', 'package_number']),
         ]
 
     def __str__(self):
         return f"{self.get_game_type_display()} - حزمة {self.package_number}"
 
+    # قواعد التحقق
     def clean(self):
-        # تحقق إضافي وودّي للأخطاء المفهومة
+        # عام
         if self.is_free and self.price != Decimal('0.00'):
             raise ValidationError("الحزم المجانية يجب أن يكون سعرها 0.00.")
         if (self.discounted_price is None) ^ (self.original_price is None):
@@ -145,33 +192,51 @@ class GamePackage(models.Model):
             if self.discounted_price >= self.original_price:
                 raise ValidationError("سعر الخصم يجب أن يكون أقل من السعر الأصلي.")
 
+        # خاص بتحدّي الوقت
+        if self.game_type == 'time':
+            if not self.time_category:
+                raise ValidationError("يجب تحديد التصنيف (time_category) لحزم تحدّي الوقت.")
+            if self.time_category.is_free_category:
+                # الفئة مجانية ⇒ الحزمة يجب أن تكون التجريبية #0 ومجانية
+                if self.package_number != 0:
+                    raise ValidationError("الفئة المجانية لتحدّي الوقت يجب أن تحتوي حزمة رقم 0 فقط.")
+                if not self.is_free:
+                    raise ValidationError("حزمة #0 داخل الفئة المجانية يجب أن تكون مجانية.")
+            else:
+                # الفئة غير مجانية ⇒ لا نسمح برقم 0 ولا بحزمة مجانية
+                if self.package_number == 0:
+                    raise ValidationError("لا يمكن استخدام رقم 0 في فئة غير مجانية لتحدّي الوقت.")
+                if self.is_free:
+                    raise ValidationError("الحزم داخل فئة غير مجانية يجب أن تكون غير مجانية.")
+
+    # خصائص مساعدة
     @property
     def has_discount(self) -> bool:
         try:
             return (
-                self.original_price is not None
-                and self.discounted_price is not None
-                and self.discounted_price > Decimal('0.00')
-                and self.original_price > self.discounted_price
+                self.original_price is not None and
+                self.discounted_price is not None and
+                self.discounted_price > Decimal('0.00') and
+                self.original_price > self.discounted_price
             )
         except Exception:
             return False
 
     @property
     def effective_price(self) -> Decimal:
-        """السعر المعتمد للعرض/الشراء."""
-        if self.discounted_price and self.discounted_price > Decimal('0.00'):
-            return self.discounted_price
-        return self.price
-    
+        return self.discounted_price if (self.discounted_price and self.discounted_price > Decimal('0.00')) else self.price
+
     @property
     def picture_limit(self) -> int:
-        """حدّ ألغاز الصور: المجاني 9، المدفوع 21."""
+        """حدّ ألغاز الصور: المجاني 10، المدفوع 22 (خاص بتحدّي الصور)."""
         return 10 if self.is_free else 22
 
 
+# =========================
+#  أسئلة خلية الحروف
+# =========================
+
 class LettersGameQuestion(models.Model):
-    """أسئلة لعبة خلية الحروف"""
     package = models.ForeignKey(
         GamePackage,
         on_delete=models.CASCADE,
@@ -179,11 +244,7 @@ class LettersGameQuestion(models.Model):
         verbose_name="الحزمة",
         help_text="اختر حزمة خلية الحروف"
     )
-    letter = models.CharField(
-        max_length=3,
-        verbose_name="الحرف",
-        help_text="الحرف العربي (أ، ب، ت...)"
-    )
+    letter = models.CharField(max_length=3, verbose_name="الحرف")
     question_type = models.CharField(
         max_length=10,
         choices=[
@@ -194,30 +255,17 @@ class LettersGameQuestion(models.Model):
             ('alt4', 'بديل رابع'),
         ],
         default='main',
-        verbose_name="نوع السؤال",
-        help_text="نوع السؤال (رئيسي أم بديل)"
+        verbose_name="نوع السؤال"
     )
-    question = models.TextField(
-        verbose_name="السؤال",
-        help_text="نص السؤال كاملاً"
-    )
-    answer = models.CharField(
-        max_length=100,
-        verbose_name="الإجابة",
-        help_text="الإجابة الصحيحة"
-    )
-    category = models.CharField(
-        max_length=50,
-        verbose_name="التصنيف",
-        help_text="تصنيف السؤال (بلدان، وظائف، حيوانات...)"
-    )
+    question = models.TextField(verbose_name="السؤال")
+    answer = models.CharField(max_length=100, verbose_name="الإجابة")
+    category = models.CharField(max_length=50, verbose_name="التصنيف")
 
     class Meta:
         verbose_name = "سؤال خلية حروف"
         verbose_name_plural = "أسئلة خلية الحروف"
         ordering = ['letter', 'question_type']
         constraints = [
-            # سؤال واحد فقط لكل (حزمة، حرف، نوع)
             models.UniqueConstraint(
                 fields=['package', 'letter', 'question_type'],
                 name='uniq_letter_qtype_per_pkg'
@@ -241,55 +289,26 @@ class LettersGameQuestion(models.Model):
             raise ValidationError("هذه الحزمة ليست من نوع خلية الحروف.")
 
 
+# =========================
+#  مشتريات المستخدمين
+# =========================
+
 class UserPurchase(models.Model):
-    """
-    مشتريات المستخدمين
-    السياسة: تنتهي صلاحية المشتريات المدفوعة بعد 72 ساعة من وقت الشراء.
-    - يُسمح بشراء الحزمة مرة أخرى بعد انتهاء الصلاحية (أو إتمام الاستخدام).
-    - قيد فريد (شرطي) يمنع وجود أكثر من "شراء نشط" واحد غير مكتمل لنفس الحزمة لكل مستخدم.
-    - "نشط" = is_completed=False. عند مرور 72 ساعة يتم اعتباره منتهيًا.
-    """
-    EXPIRY_HOURS = 72  # صلاحية الشراء
+    """مشتريات المستخدمين — تنتهي صلاحية المدفوعة بعد 72 ساعة."""
+    EXPIRY_HOURS = 72
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        verbose_name="المستخدم"
-    )
-    package = models.ForeignKey(
-        GamePackage,
-        on_delete=models.CASCADE,
-        verbose_name="الحزمة"
-    )
-
-    purchase_date = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="تاريخ الشراء"
-    )
-    expires_at = models.DateTimeField(
-        blank=True, null=True,
-        verbose_name="ينتهي في",
-        help_text="وقت انتهاء صلاحية الشراء (يُحدَّد تلقائيًا إلى 72 ساعة بعد الشراء)"
-    )
-
-    # حالة الشراء
-    is_completed = models.BooleanField(
-        default=False,
-        verbose_name="مكتملة؟",
-        help_text="هل انتهى المستخدم من الاستخدام/اللعب على هذه الحزمة؟"
-    )
-    games_played = models.IntegerField(
-        default=0,
-        verbose_name="عدد الألعاب",
-        help_text="عدد المرات التي لعب فيها"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="المستخدم")
+    package = models.ForeignKey(GamePackage, on_delete=models.CASCADE, verbose_name="الحزمة")
+    purchase_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الشراء")
+    expires_at = models.DateTimeField(blank=True, null=True, verbose_name="ينتهي في")
+    is_completed = models.BooleanField(default=False, verbose_name="مكتملة؟")
+    games_played = models.IntegerField(default=0, verbose_name="عدد الألعاب")
 
     class Meta:
         verbose_name = "مشترى حزمة"
         verbose_name_plural = "مشتريات الحزم"
         ordering = ['-purchase_date']
         constraints = [
-            # يمنع شراءين "نشطين" (غير مكتملين) لنفس الحزمة للمستخدم
             models.UniqueConstraint(
                 fields=['user', 'package'],
                 condition=Q(is_completed=False),
@@ -306,40 +325,29 @@ class UserPurchase(models.Model):
         status = "نشط" if not self.is_completed else "مكتمل"
         return f"{self.user} - {self.package} ({status})"
 
-    # ======== أدوات مساعدة ========
+    # أدوات مساعدة
     @property
     def expiry_duration(self) -> timedelta:
-        """مدة صلاحية الشراء (افتراضيًا 72 ساعة)."""
         return timedelta(hours=self.EXPIRY_HOURS)
 
     @property
     def computed_expires_at(self):
-        """تاريخ الانتهاء المحسوب إن لم يكن مضبوطًا في الحقل."""
         base = self.purchase_date or timezone.now()
         return base + self.expiry_duration
 
     @property
     def is_expired(self) -> bool:
-        """
-        هل الشراء منتهي الصلاحية الآن؟
-        - يعتمد على expires_at إن وُجد، وإلا يُحسب من purchase_date.
-        """
         now = timezone.now()
         end = self.expires_at or self.computed_expires_at
         return now >= end
 
     @property
     def time_left(self) -> timedelta:
-        """الوقت المتبقي قبل الانتهاء (للعرض في الواجهة/API)."""
         end = self.expires_at or self.computed_expires_at
         delta = end - timezone.now()
         return max(timedelta(0), delta)
 
     def mark_expired_if_needed(self, auto_save=True) -> bool:
-        """
-        يضع is_completed=True تلقائيًا إذا انتهت الصلاحية.
-        يعيد True لو تغيّرت الحالة.
-        """
         if not self.is_completed and self.is_expired:
             self.is_completed = True
             if auto_save:
@@ -350,23 +358,23 @@ class UserPurchase(models.Model):
     def save(self, *args, **kwargs):
         is_create = self._state.adding
 
-        # قبل الحفظ: إن انتهت الصلاحية نُكمِل الشراء
         if not self.is_completed and self.expires_at and timezone.now() >= self.expires_at:
             self.is_completed = True
 
         super().save(*args, **kwargs)
 
-        # بعد الحفظ الأول: purchase_date صار متوفر
         if is_create and self.expires_at is None:
-            # تحديد الانتهاء مرة واحدة بناءً على purchase_date
             self.expires_at = self.purchase_date + self.expiry_duration
             super().save(update_fields=['expires_at'])
 
-        # بعد الحفظ: لو الوقت تعدّى الانتهاء، نكمّلها (حماية مزدوجة)
         if not self.is_completed and self.is_expired:
             self.is_completed = True
             super().save(update_fields=['is_completed'])
 
+
+# =========================
+#  جلسات اللعب
+# =========================
 
 class GameSession(models.Model):
     """جلسة لعب (جلسة واحدة لكل شراء بفضل OneToOneField)"""
@@ -379,27 +387,17 @@ class GameSession(models.Model):
         on_delete=models.CASCADE,
         null=True, blank=True,
         verbose_name="المقدم",
-        help_text="الشخص الذي ينظم اللعبة (قد تكون فارغة)"
+        help_text="الشخص الذي ينظم اللعبة"
     )
     team1_score = models.PositiveIntegerField(default=0)
     team2_score = models.PositiveIntegerField(default=0)
 
-    package = models.ForeignKey(
-        GamePackage,
-        on_delete=models.CASCADE,
-        verbose_name="الحزمة"
-    )
-    game_type = models.CharField(
-        max_length=20,
-        choices=GamePackage.GAME_TYPES,
-        verbose_name="نوع اللعبة"
-    )
+    package = models.ForeignKey(GamePackage, on_delete=models.CASCADE, verbose_name="الحزمة")
+    game_type = models.CharField(max_length=20, choices=GamePackage.GAME_TYPES, verbose_name="نوع اللعبة")
 
     purchase = models.OneToOneField(
-        UserPurchase,
-        on_delete=models.PROTECT,
-        related_name="game_session",
-        null=True, blank=True,
+        UserPurchase, on_delete=models.PROTECT,
+        related_name="game_session", null=True, blank=True,
         help_text="الشراء المرتبط بهذه الجلسة (إن وُجد)"
     )
 
@@ -454,6 +452,7 @@ class GameSession(models.Model):
         host_txt = self.host.username if self.host else "بدون مُضيف"
         return f"جلسة {self.get_game_type_display()} - {host_txt}"
 
+    # انتهاء الجلسات المجانية
     @property
     def letters_free_expires_at(self):
         if self.package and self.package.game_type == 'letters' and self.package.is_free and not self.purchase_id:
@@ -470,19 +469,12 @@ class GameSession(models.Model):
 
     @property
     def is_time_expired(self) -> bool:
-        """التحقق الموحّد لانتهاء الجلسة (مدفوعة/مجانية)"""
-        # جلسة مدفوعة
         if self.purchase_id:
             return self.purchase.is_expired
-
-        # جلسة مجانية الحروف
         if self.letters_free_expires_at:
             return timezone.now() >= self.letters_free_expires_at
-
-        # جلسة مجانية الصور
         if self.images_free_expires_at:
             return timezone.now() >= self.images_free_expires_at
-
         return False
 
     def mark_session_expired_if_needed(self, auto_save=True) -> bool:
@@ -495,41 +487,19 @@ class GameSession(models.Model):
         return False
 
 
+# =========================
+#  تقدّم لعبة الحروف
+# =========================
+
 class LettersGameProgress(models.Model):
-    """تقدم لعبة الحروف"""
     session = models.OneToOneField(
-        GameSession,
-        on_delete=models.CASCADE,
-        related_name='letters_progress',
-        verbose_name="الجلسة"
+        GameSession, on_delete=models.CASCADE,
+        related_name='letters_progress', verbose_name="الجلسة"
     )
-
-    # حالة الخلايا
-    cell_states = models.JSONField(
-        default=dict,
-        verbose_name="حالة الخلايا",
-        help_text="حالة كل خلية في الشبكة"
-    )
-
-    # الحروف المستخدمة
-    used_letters = models.JSONField(
-        default=list,
-        verbose_name="الحروف المستخدمة",
-        help_text="قائمة الحروف التي تم استخدامها"
-    )
-
-    # السؤال الحالي
-    current_letter = models.CharField(
-        max_length=3,
-        null=True,
-        blank=True,
-        verbose_name="الحرف الحالي"
-    )
-    current_question_type = models.CharField(
-        max_length=10,
-        default='main',
-        verbose_name="نوع السؤال الحالي"
-    )
+    cell_states = models.JSONField(default=dict, verbose_name="حالة الخلايا")
+    used_letters = models.JSONField(default=list, verbose_name="الحروف المستخدمة")
+    current_letter = models.CharField(max_length=3, null=True, blank=True, verbose_name="الحرف الحالي")
+    current_question_type = models.CharField(max_length=10, default='main', verbose_name="نوع السؤال الحالي")
 
     class Meta:
         verbose_name = "تقدم لعبة الحروف"
@@ -539,44 +509,23 @@ class LettersGameProgress(models.Model):
         return f"تقدم جلسة {self.session.id}"
 
 
+# =========================
+#  المتسابقون
+# =========================
+
 class Contestant(models.Model):
-    """المتسابقون"""
-    session = models.ForeignKey(
-        GameSession,
-        on_delete=models.CASCADE,
-        related_name='contestants',
-        verbose_name="الجلسة"
-    )
-    name = models.CharField(
-        max_length=50,
-        verbose_name="اسم المتسابق"
-    )
-    team = models.CharField(
-        max_length=10,
-        choices=[
-            ('team1', 'الفريق الأول'),
-            ('team2', 'الفريق الثاني'),
-        ],
-        verbose_name="الفريق"
-    )
-    joined_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="تاريخ الانضمام"
-    )
-    is_active = models.BooleanField(
-        default=True,
-        verbose_name="نشط؟"
-    )
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='contestants', verbose_name="الجلسة")
+    name = models.CharField(max_length=50, verbose_name="اسم المتسابق")
+    team = models.CharField(max_length=10, choices=[('team1', 'الفريق الأول'), ('team2', 'الفريق الثاني')], verbose_name="الفريق")
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الانضمام")
+    is_active = models.BooleanField(default=True, verbose_name="نشط؟")
 
     class Meta:
         verbose_name = "متسابق"
         verbose_name_plural = "المتسابقون"
         ordering = ['team', 'name']
         constraints = [
-            models.UniqueConstraint(
-                fields=['session', 'name'],
-                name='uniq_contestant_name_per_session'
-            )
+            models.UniqueConstraint(fields=['session', 'name'], name='uniq_contestant_name_per_session')
         ]
         indexes = [
             models.Index(fields=['session', 'team']),
@@ -586,15 +535,15 @@ class Contestant(models.Model):
         return f"{self.name} - {self.get_team_display()}"
 
 
+# =========================
+#  تجربة مجانية (letters/images)
+# =========================
+
 class FreeTrialUsage(models.Model):
     """سجل استخدام التجربة المجانية لكل مستخدم/لعبة (مرة واحدة لكل لعبة)."""
     GAME_TYPES = (('letters', 'Letters'), ('images', 'Images'))
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='free_trials'
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='free_trials')
     game_type = models.CharField(max_length=32, choices=GAME_TYPES, default='letters')
     used_at = models.DateTimeField(auto_now_add=True)
 
@@ -610,16 +559,12 @@ class FreeTrialUsage(models.Model):
         return f"FreeTrial({self.user_id}, {self.game_type})"
 
 
-
-
-
-
-
-from django.db.models import Max
-from django.core.exceptions import ValidationError
+# =========================
+#  تحدّي الصور (ألغاز صور)
+# =========================
 
 class PictureRiddle(models.Model):
-    package   = models.ForeignKey('GamePackage', on_delete=models.CASCADE, related_name='picture_riddles')
+    package   = models.ForeignKey(GamePackage, on_delete=models.CASCADE, related_name='picture_riddles')
     order     = models.PositiveIntegerField(default=1, db_index=True, help_text="ترتيب اللغز داخل الحزمة")
     image_url = models.URLField(max_length=500, help_text="رابط الصورة (Cloudinary/سحابة)")
     hint      = models.CharField(max_length=255, blank=True, default='', help_text="تلميح يظهر للمقدم فقط")
@@ -636,36 +581,26 @@ class PictureRiddle(models.Model):
             raise ValidationError("هذه الحزمة ليست من نوع تحدّي الصور.")
         if self.order < 1:
             raise ValidationError("الترتيب يبدأ من 1.")
-
-        # الحدّ باستخدام خاصية الحزمة (مجاني 10، مدفوع 22)
+        # حد الحزمة (مجاني 10، مدفوع 22)
         limit = self.package.picture_limit if self.package else 22
         count = PictureRiddle.objects.filter(package=self.package).exclude(pk=self.pk).count()
         if self._state.adding and count >= limit:
             raise ValidationError(f"تجاوزت الحدّ الأقصى ({limit}) لهذه الحزمة.")
 
     def save(self, *args, **kwargs):
-        """
-        عند الإنشاء:
-        - إن لم يُحدَّد order (أو كان مكررًا)، نضعه تلقائيًا = (أكبر order موجود لنفس الحزمة) + 1
-        - نحترم الحدّ (clean() سيتحقق)
-        """
         if self._state.adding:
             if not self.order:
                 self.order = 1
-            # لو مكرر أو 1 افتراضية من الفورم؛ نحرّكها تلقائيًا إلى آخر ترتيب + 1
             exists_same = PictureRiddle.objects.filter(package=self.package, order=self.order).exists()
             if exists_same:
                 last = PictureRiddle.objects.filter(package=self.package).aggregate(m=Max('order'))['m'] or 0
                 self.order = last + 1
-
-        self.full_clean()  # يتأكد من الحد والترتيب
+        self.full_clean()
         return super().save(*args, **kwargs)
 
 
-            
-
 class PictureGameProgress(models.Model):
-    session = models.OneToOneField('GameSession', on_delete=models.CASCADE, related_name='picture_progress')
+    session = models.OneToOneField(GameSession, on_delete=models.CASCADE, related_name='picture_progress')
     current_index = models.PositiveIntegerField(default=1)
 
     class Meta:
@@ -686,18 +621,20 @@ class PictureGameProgress(models.Model):
         return PictureRiddle.objects.filter(package=self.session.package).count() if self.session else 0
 
 
-
+# =========================
+#  تحدّي الوقت (العناصر + التقدّم)
+# =========================
 
 class TimeRiddle(models.Model):
     """
-    عنصر واحد داخل تصنيف (باقة) تحدّي الوقت: صورة + إجابة (واختياري تلميح).
+    عنصر واحد داخل باقة تحدّي الوقت: صورة + إجابة (واختياري تلميح).
     ملاحظة: الـ package هنا هو GamePackage بنوع game_type = 'time'
     """
-    package     = models.ForeignKey('GamePackage', on_delete=models.CASCADE, related_name='time_riddles')
+    package     = models.ForeignKey(GamePackage, on_delete=models.CASCADE, related_name='time_riddles')
     order       = models.PositiveIntegerField(default=1, help_text="ترتيب العرض داخل الباقة")
     image_url   = models.URLField(max_length=1000, help_text="رابط الصورة")
-    answer      = models.CharField(max_length=200, help_text="الإجابة الصحيحة")
-    hint        = models.CharField(max_length=300, blank=True, null=True, help_text="تلميح اختياري")
+    answer      = models.CharField(max_length=200, help_text="الإجابة الصحيحة (تظهر للمقدّم فقط)")
+    hint        = models.CharField(max_length=300, blank=True, null=True, help_text="تلميح اختياري (يظهر للمقدّم)")
     created_at  = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -708,22 +645,31 @@ class TimeRiddle(models.Model):
 
     def __str__(self):
         return f"[{self.package}] #{self.order} — {self.answer}"
-    
+
+    def clean(self):
+        super().clean()
+        if not self.package or self.package.game_type != 'time':
+            raise ValidationError("هذه الحزمة ليست من نوع تحدّي الوقت.")
+        if self.order < 1:
+            raise ValidationError("الترتيب يبدأ من 1.")
+        # حد عناصر الحزمة (قرابة 40 صورة)
+        limit = 40
+        count = TimeRiddle.objects.filter(package=self.package).exclude(pk=self.pk).count()
+        if self._state.adding and count >= limit:
+            raise ValidationError(f"تجاوزت الحدّ الأقصى ({limit}) لعناصر هذه الحزمة.")
+
 
 class TimeGameProgress(models.Model):
     """
     حالة جلسة تحدّي الوقت (مثل ساعة الشطرنج):
     - current_index: رقم العنصر الحالي (1..N)
-    - active_side: اللاعب النشط حاليًا ('A' أو 'B')
+    - active_side: اللاعب النشط ('A' أو 'B')
     - a_time_left_seconds / b_time_left_seconds: الوقت المتبقي لكل لاعب
     - last_started_at + is_running: لتتبع الخصم الذي يجري وقته الآن
     """
-    SIDE_CHOICES = (
-        ('A', 'اللاعب A'),
-        ('B', 'اللاعب B'),
-    )
+    SIDE_CHOICES = (('A', 'اللاعب A'), ('B', 'اللاعب B'))
 
-    session                 = models.OneToOneField('GameSession', on_delete=models.CASCADE, related_name='time_progress')
+    session                 = models.OneToOneField(GameSession, on_delete=models.CASCADE, related_name='time_progress')
     current_index           = models.PositiveIntegerField(default=1)
     active_side             = models.CharField(max_length=1, choices=SIDE_CHOICES, default='A')
     a_time_left_seconds     = models.PositiveIntegerField(default=60)
@@ -741,72 +687,44 @@ class TimeGameProgress(models.Model):
     def __str__(self):
         return f"TimeProgress(session={self.session_id}, idx={self.current_index}, side={self.active_side})"
 
-    # ======= أدوات بسيطة سنستخدمها لاحقًا في الـConsumer =======
-
+    # أدوات الوقت
     def _apply_elapsed(self):
-        """
-        يخصم الثواني المنقضية من اللاعب النشط إذا كانت الساعة تعمل.
-        لا تحفظ تلقائيًا — فقط تُعدّل الحقول في الذاكرة.
-        """
         if not self.is_running or not self.last_started_at:
             return
         now = timezone.now()
         elapsed = max(0, int((now - self.last_started_at).total_seconds()))
         if elapsed <= 0:
             return
-
         if self.active_side == 'A':
             self.a_time_left_seconds = max(0, self.a_time_left_seconds - elapsed)
         else:
             self.b_time_left_seconds = max(0, self.b_time_left_seconds - elapsed)
-
-        # ثبّت نقطة البداية الجديدة (لو استمر التشغيل)
         self.last_started_at = now
 
     def start(self, side: str):
-        """
-        تشغيل ساعة اللاعب المحدّد (A/B). لا تحفظ تلقائيًا.
-        """
         side = 'A' if side == 'A' else 'B'
-        # قبل التحويل، طبّق الاستهلاك على الحالة الحالية
         self._apply_elapsed()
         self.active_side = side
         self.is_running = True
         self.last_started_at = timezone.now()
 
     def stop(self):
-        """
-        إيقاف الساعة الحالية مع خصم الزمن المنقضي من اللاعب النشط. لا تحفظ تلقائيًا.
-        """
         self._apply_elapsed()
         self.is_running = False
         self.last_started_at = None
 
     def switch_after_answer(self):
-        """
-        المنطق المطلوب: عند إجابة اللاعب الذي عليه الدور → نوقف وقته ونبدأ وقت خصمه
-        من رصيده المتبقي.
-        """
-        # خصم وقت اللاعب الحالي وإيقافه
         self.stop()
-
-        # بدّل الدور
         next_side = 'B' if self.active_side == 'A' else 'A'
         self.active_side = next_side
-
-        # إذا عند الخصم وقت متبقّي > 0 شغّل ساعته
         if (next_side == 'A' and self.a_time_left_seconds > 0) or (next_side == 'B' and self.b_time_left_seconds > 0):
             self.is_running = True
             self.last_started_at = timezone.now()
         else:
-            # خصمه انتهى وقته — تبقى متوقفة (نقرّر السلوك لاحقًا)
             self.is_running = False
             self.last_started_at = None
 
     def reset_timers(self, seconds_each: int = 60, start_side: str = 'A'):
-        """
-        تهيئة سريعة قبل بداية الجولة (لكل لاعب نفس المدة).
-        """
         self.a_time_left_seconds = max(0, int(seconds_each))
         self.b_time_left_seconds = max(0, int(seconds_each))
         self.active_side = 'A' if start_side == 'A' else 'B'
@@ -815,61 +733,10 @@ class TimeGameProgress(models.Model):
         self.current_index = 1
 
 
+# =========================
+#  سجل لعب تحدّي الوقت + ربط جلسة/فئة
+# =========================
 
-# === NEW: فئات تحدّي الوقت ===
-class TimeCategory(models.Model):
-    name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(max_length=120, unique=True)
-    is_free_category = models.BooleanField(default=False)  # الفئات المجانية (تجربة)
-    order = models.PositiveIntegerField(default=1)
-    is_active = models.BooleanField(default=True)
-    cover_image = models.URLField(blank=True, default="")
-
-    class Meta:
-        ordering = ("order", "name")
-
-    def __str__(self):
-        return self.name
-
-    @property
-    def free_only(self):
-        # إن كانت فئة تجريبية: نتوقع أن فيها الحزمة 0 فقط
-        return self.is_free_category
-
-# ملاحظة: GamePackage موجود عندك. نحتاج فقط نضمن أنه يدعم game_type='time'
-# ونربطه بالفئات. إذا كان عندك FK باسم آخر، استبدله. هذا الحقل آمن إن كان nullable.
-class GamePackage(models.Model):
-    # ... حقولك الحالية ...
-    game_type = models.CharField(
-        max_length=20,
-        choices=(
-            ('letters','خلية الحروف'),
-            ('images','تحدي الصور'),
-            ('quiz','سؤال وجواب'),
-            ('time','تحدي الوقت'),  # 👈 تأكد أن هذا الاختيار موجود
-        ),
-        default='letters'
-    )
-    # ربط الفئة (خاص بتحدي الوقت)
-    time_category = models.ForeignKey(
-        'TimeCategory', null=True, blank=True,
-        on_delete=models.SET_NULL, related_name='time_packages'
-    )
-    # رقم الحزمة داخل الفئة (0 = المجانية)
-    package_number = models.PositiveIntegerField(default=1)
-
-    # ... بقيّة الحقول كما هي (price/discounted_price/is_free/is_active/description ...)
-    # تذكير: اجعل package_number فريدًا ضمن (game_type='time', time_category)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['game_type','time_category','package_number'],
-                name='uniq_timepkg_per_category_number'
-            )
-        ]
-
-# تتبع الحزم التي لعبها المستخدم لكل فئة (تاريخ دقيق)
 class TimePlayHistory(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     category = models.ForeignKey(TimeCategory, on_delete=models.CASCADE)
@@ -877,14 +744,25 @@ class TimePlayHistory(models.Model):
     played_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user','category','package')
+        unique_together = ('user', 'category', 'package')
         ordering = ('-played_at',)
+        verbose_name = "سجل لعب (تحدّي الوقت)"
+        verbose_name_plural = "سجل اللعب (تحدّي الوقت)"
 
-# الجلسة قد تحمل 8 فئات؛ هذا يربط الجلسة بكل فئة وحزمتها المختارة
+    def __str__(self):
+        return f"{self.user_id} | {self.category_id} | pkg#{self.package.package_number}"
+
+
 class TimeSessionPackage(models.Model):
-    session = models.ForeignKey('GameSession', on_delete=models.CASCADE, related_name='time_session_packages')
+    """يربط الجلسة بكل فئة والحزمة التي اختيرت لها (بعد الدفع)."""
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='time_session_packages')
     category = models.ForeignKey(TimeCategory, on_delete=models.PROTECT)
     package = models.ForeignKey(GamePackage, on_delete=models.PROTECT)
 
     class Meta:
-        unique_together = ('session','category')
+        unique_together = ('session', 'category')
+        verbose_name = "حزمة جلسة (تحدّي الوقت)"
+        verbose_name_plural = "حزم الجلسة (تحدّي الوقت)"
+
+    def __str__(self):
+        return f"{self.session_id} → {self.category.name} → pkg#{self.package.package_number}"
