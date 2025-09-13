@@ -1,0 +1,86 @@
+{% load static %}
+{% extends "admin/base_site.html" %}
+
+{% block title %}لوحة مالية — المدفوعات{% endblock %}
+
+{% block content %}
+  <div class="module" style="padding:16px 20px;">
+    <h2 style="margin:0 0 12px;">لوحة مالية — المدفوعات</h2>
+
+    <form method="get" class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;">
+        {% for field in form %}
+          <div>
+            <label style="display:block;color:#cbd5e1;margin-bottom:4px;">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div style="color:#ef4444;font-size:12px;">{{ field.errors }}</div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:10px;">
+        <button class="button" type="submit">تحديث</button>
+      </div>
+    </form>
+
+    <div style="display:flex;flex-wrap:wrap;gap:12px;margin:12px 0;">
+      {% for title, value in cards %}
+        <div style="flex:1;min-width:220px;margin:8px;padding:16px;border-radius:12px;background:#0b122022;border:1px solid #1f2937;box-shadow:0 1px 2px #0002;">
+          <div style="color:#93c5fd;font-weight:700;font-size:13px;margin-bottom:8px;">{{ title }}</div>
+          <div style="color:#0ea5e9;font-size:22px;font-weight:800;letter-spacing:0.3px;">{{ value }}</div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+      <h3 style="margin:6px 0;">تفصيل حسب طريقة الدفع (المكتمل)</h3>
+      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+        <thead style="background:#0f172a;color:#cbd5e1;">
+          <tr>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">الطريقة</th>
+            <th style="padding:10px 12px;text-align:center;border-bottom:1px solid #1f2937;">عدد العمليات</th>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">إجمالي المبالغ (SAR)</th>
+          </tr>
+        </thead>
+        <tbody style="color:#e2e8f0;">
+          {{ method_rows|safe }}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+      <h3 style="margin:6px 0;">أعلى المشترين (حسب المبلغ)</h3>
+      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+        <thead style="background:#0f172a;color:#cbd5e1;">
+          <tr>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المستخدم</th>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المبلغ (SAR)</th>
+          </tr>
+        </thead>
+        <tbody style="color:#e2e8f0;">
+          {{ buyers_rows|safe }}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="module" style="margin:12px 0;border-radius:12px;overflow:hidden;">
+      <h3 style="margin:6px 0;">مبالغ مقطوعة مضافة</h3>
+      <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+        <thead style="background:#0f172a;color:#cbd5e1;">
+          <tr>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المذكرة</th>
+            <th style="padding:10px 12px;text-align:right;border-bottom:1px solid #1f2937;">المبلغ (SAR)</th>
+          </tr>
+        </thead>
+        <tbody style="color:#e2e8f0;">
+          {{ one_time_rows|safe }}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:6px;color:#6b7280;font-size:12px;">
+      * الأرقام محسوبة للفترة من {{ d_from }} إلى {{ d_to }}.
+    </div>
+  </div>
+{% endblock %}
