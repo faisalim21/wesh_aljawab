@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+  .content { background:#0b1220; color:#e2e8f0; }
+  a, .button { text-decoration:none; }
+  .module { background:#0b1220; }
+  .breadcrumbs { display:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+  <div class="content">
+    {{ content|safe }}
+  </div>
+{% endblock %}
