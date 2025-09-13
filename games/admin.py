@@ -1378,10 +1378,11 @@ class TimeCategoryAdmin(admin.ModelAdmin):
         return _img_thumb(obj.cover_image, h=40)
     cover_preview.short_description = "غلاف"
 
-    def actions(self, obj):
+    def row_actions(self, obj):
         pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
         return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    actions.short_description = "إجراءات"
+    row_actions.short_description = "إجراءات"
+
 
     # لوحة فئات تحدّي الوقت (مع مقياس "الحزم المتبقية للمستخدم")
     def get_urls(self):
