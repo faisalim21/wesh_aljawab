@@ -894,6 +894,70 @@ def _img_thumb(url, h=56):
 
 @admin.register(TimeCategory)
 class TimeCategoryAdmin(admin.ModelAdmin):
+    # استبدلنا 'actions' بـ 'row_actions' وتعرّبّت العناوين
+    list_display = (
+        'name_col',          # الاسم
+        'is_free_col',       # فئة مجانية؟
+        'is_active_col',     # فعّالة؟
+        'order_col',         # الترتيب
+        'packages_count',    # عدد الحزم
+        'free_pkg_ok',       # حزمة التجربة (#0)
+        'cover_preview',     # الغلاف
+        'row_actions',       # إجراءات
+    )
+    list_filter  = ('is_free_category','is_active')
+    search_fields= ('name','slug')
+    ordering     = ('order','name')
+
+    # أعمدة بعناوين عربية
+    def name_col(self, obj):
+        return obj.name
+    name_col.short_description = "الاسم"
+
+    def is_free_col(self, obj):
+        return "نعم" if obj.is_free_category else "لا"
+    is_free_col.short_description = "فئة مجانية؟"
+
+    def is_active_col(self, obj):
+        return "نعم" if obj.is_active else "لا"
+    is_active_col.short_description = "فعّالة؟"
+
+    def order_col(self, obj):
+        return obj.order
+    order_col.short_description = "الترتيب"
+
+    def packages_count(self, obj):
+        return obj.time_packages.filter(game_type='time').count()
+    packages_count.short_description = "عدد الحزم"
+
+    def free_pkg_ok(self, obj):
+        if not obj.is_free_category:
+            return "—"
+        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
+    free_pkg_ok.short_description = "حزمة التجربة"
+
+    def cover_preview(self, obj):
+        if not getattr(obj, "cover_image", None):
+            return "—"
+        return _img_thumb(obj.cover_image, h=40)
+    cover_preview.short_description = "الغلاف"
+
+    # كان اسمها actions → سببت تعارض مع Django
+    def row_actions(self, obj):
+        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
+        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
+    row_actions.short_description = "إجراءات"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
+        ]
+        return custom + urls
+
+    # اترك dashboard_view كما هو عندك
+
     # عناوين عربية + استبدال actions بـ row_actions
     list_display = (
         'name_col',          # الاسم
