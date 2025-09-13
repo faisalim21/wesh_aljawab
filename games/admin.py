@@ -894,6 +894,131 @@ def _img_thumb(url, h=56):
 
 @admin.register(TimeCategory)
 class TimeCategoryAdmin(admin.ModelAdmin):
+    list_display  = (
+        'name_col',       # الاسم
+        'is_free_col',    # فئة مجانية؟
+        'is_active_col',  # فعّالة؟
+        'order_col',      # الترتيب
+        'packages_count', # عدد الحزم
+        'free_pkg_ok',    # حزمة التجربة
+        'cover_preview',  # الغلاف
+        'row_actions',    # إجراءات
+    )
+    list_filter   = (
+        ('is_free_category', admin.BooleanFieldListFilter),
+        ('is_active', admin.BooleanFieldListFilter),
+    )
+    search_fields = ('name', 'slug')
+    ordering      = ('order','name')
+
+    def name_col(self, obj): return obj.name
+    name_col.short_description = "الاسم"
+
+    def is_free_col(self, obj): return "نعم" if obj.is_free_category else "لا"
+    is_free_col.short_description = "فئة مجانية؟"
+
+    def is_active_col(self, obj): return "نعم" if obj.is_active else "لا"
+    is_active_col.short_description = "فعّالة؟"
+
+    def order_col(self, obj): return obj.order
+    order_col.short_description = "الترتيب"
+
+    def packages_count(self, obj):
+        return obj.time_packages.filter(game_type='time').count()
+    packages_count.short_description = "عدد الحزم"
+
+    def free_pkg_ok(self, obj):
+        if not obj.is_free_category:
+            return "—"
+        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
+    free_pkg_ok.short_description = "حزمة التجربة"
+
+    def cover_preview(self, obj):
+        if not getattr(obj, "cover_image", None):
+            return "—"
+        return _img_thumb(obj.cover_image, h=40)
+    cover_preview.short_description = "الغلاف"
+
+    # استخدم اسم مختلف تمامًا عن 'actions'
+    def row_actions(self, obj):
+        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
+        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
+    row_actions.short_description = "إجراءات"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
+        ]
+        return custom + urls
+
+    def dashboard_view(self, request):
+        user_id = request.GET.get("user_id", "").strip()
+        user_q  = request.GET.get("user", "").strip()
+
+        from django.contrib.auth import get_user_model
+        U = get_user_model()
+        user_obj = None
+        if user_id:
+            try:
+                user_obj = U.objects.get(pk=user_id)
+            except U.DoesNotExist:
+                user_obj = None
+        elif user_q:
+            user_obj = U.objects.filter(
+                Q(username__iexact=user_q) | Q(email__iexact=user_q) | Q(first_name__iexact=user_q)
+            ).first()
+
+        rows = []
+        cats = TimeCategory.objects.all().order_by('order','name').prefetch_related('time_packages')
+        for cat in cats:
+            total_pkgs = cat.time_packages.filter(game_type='time').count()
+            paid_pkgs  = cat.time_packages.filter(game_type='time').exclude(package_number=0).count()
+            free_ok = cat.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+            remaining_txt = "—"
+            if user_obj:
+                played = (TimePlayHistory.objects
+                          .filter(user=user_obj, category=cat)
+                          .exclude(package__package_number=0)
+                          .values('package_id').distinct().count())
+                remaining = max(0, paid_pkgs - played)
+                remaining_txt = f"{remaining} من {paid_pkgs}"
+            rows.append(
+                f"<tr>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{escape(cat.name)}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{_img_thumb(cat.cover_image, h=36) if cat.cover_image else '—'}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'نعم' if cat.is_active else 'لا'}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{total_pkgs}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'✅' if free_ok else '⚠️'}</td>"
+                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{remaining_txt}</td>"
+                f"</tr>"
+            )
+
+        user_badge = f"المستخدم: <b>{escape(getattr(user_obj,'username', '—'))}</b>" if user_obj else "لم يتم تحديد مستخدم"
+        html = f"""
+        <div style="padding:16px 20px;">
+          <h2 style="margin:0 0 10px;">⏱️ لوحة فئات تحدّي الوقت</h2>
+          <form method="get" style="margin:8px 0;">
+            <div class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;">
+              <div><label>المستخدم (ID)</label><input type="text" name="user_id" value="{escape(user_id)}" placeholder="رقم المستخدم" style="width:100%"></div>
+              <div><label>المستخدم (اسم/إيميل)</label><input type="text" name="user" value="{escape(user_q)}" placeholder="username أو email" style="width:100%"></div>
+              <div style="align-self:end;"><button class="button" style="width:100%;">تحديث</button></div>
+              <div style="align-self:end;color:#9ca3af;">{user_badge}</div>
+            </div>
+          </form>
+
+          <div style="margin:10px 0 14px;color:#94a3b8;font-size:13px;">
+            * الحزمة رقم <b>0</b> لكل فئة هي الحزمة <b>المجانية</b> (تظهر هنا على شكل ✅ إن كانت فعّالة).<br>
+            * الحزم المتبقية = جميع الحزم <b>المدفوعة</b> في الفئة ناقص الحزم التي لعبها هذا المستخدم (باستثناء #0).
+          </div>
+
+          {_listing_table(["الفئة","الغلاف","فعّالة؟","عدد الحزم","حزمة #0 نشطة","الحزم المتبقية (للمستخدم)"], rows)}
+        </div>
+        """
+        ctx = {**self.admin_site.each_context(request), "title": "فئات تحدّي الوقت", "content": mark_safe(html)}
+        return TemplateResponse(request, "admin/simple_box.html", ctx)
+
     # عرض الأعمدة في القائمة
     list_display  = (
         'name_col',       # الاسم
