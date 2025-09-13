@@ -29,8 +29,6 @@
     <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-    <!-- <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630"> -->
 
     {# ——— Twitter Card ——— #}
     <meta name="twitter:card" content="summary_large_image">
@@ -76,20 +74,270 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap');
         * { font-family: 'Tajawal', sans-serif; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; margin: 0; padding: 0; }
 
-        .hero-section { background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(6, 182, 212, 0.9)); padding: 100px 0; text-align: center; color: white; position: relative; overflow: hidden; }
-        .hero-section::before{
-            content:''; position:absolute; inset:0;
-            background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a"><stop offset="0" stop-color="%23ffffff" stop-opacity=".1"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><g opacity=".8"><circle fill="url(%23a)" cx="200" cy="200" r="180"/><circle fill="url(%23a)" cx="800" cy="800" r="180"/><circle fill="url(%23a)" cx="800" cy="200" r="180"/><circle fill="url(%23a)" cx="200" cy="800" r="180"/></g></svg>') center/cover;
-            z-index:1;
+        /* ========== البنر الثوري الجديد ========== */
+        .hero-section { 
+            background: linear-gradient(135deg, 
+                rgba(139, 92, 246, 0.95) 0%, 
+                rgba(6, 182, 212, 0.95) 25%,
+                rgba(16, 185, 129, 0.95) 50%,
+                rgba(245, 158, 11, 0.95) 75%,
+                rgba(139, 92, 246, 0.95) 100%
+            ); 
+            padding: 120px 0 100px; 
+            text-align: center; 
+            color: white; 
+            position: relative; 
+            overflow: hidden;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease-in-out infinite;
         }
-        .hero-content{ position:relative; z-index:2; }
-        .hero-title{ font-size:3.5rem; font-weight:700; margin-bottom:1rem; text-shadow:2px 2px 4px rgba(0,0,0,0.3); }
-        .hero-subtitle{ font-size:1.3rem; margin-bottom:2rem; opacity:.9; }
 
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 60% 40%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.05) 50%, transparent 70%);
+            z-index: 1;
+            animation: shimmer 6s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g opacity="0.6" filter="url(%23glow)"><polygon fill="rgba(255,255,255,0.1)" points="100,100 200,50 300,120 250,200 150,180"/><polygon fill="rgba(255,255,255,0.08)" points="700,200 850,150 900,280 800,320 650,290"/><polygon fill="rgba(255,255,255,0.12)" points="400,600 550,550 600,680 500,720 350,690"/><circle fill="rgba(255,255,255,0.1)" cx="150" cy="400" r="60"/><circle fill="rgba(255,255,255,0.08)" cx="850" cy="600" r="80"/></g></svg>') center/cover;
+            z-index: 2;
+            animation: geometryFloat 12s ease-in-out infinite;
+        }
+
+        @keyframes geometryFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+
+        .hero-content { 
+            position: relative; 
+            z-index: 10; 
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            animation: pulseGlow 3s ease-in-out infinite;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { 
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                           0 0 0 0 rgba(255, 255, 255, 0.4); 
+            }
+            50% { 
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 
+                           0 0 0 20px rgba(255, 255, 255, 0); 
+            }
+        }
+
+        .hero-title { 
+            font-size: 4.5rem; 
+            font-weight: 900; 
+            margin-bottom: 1.5rem; 
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            background: linear-gradient(45deg, #ffffff, #f0f9ff, #ffffff, #e0f2fe);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShine 4s ease-in-out infinite;
+            line-height: 1.1;
+            letter-spacing: -2px;
+        }
+
+        @keyframes textShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero-subtitle { 
+            font-size: 1.6rem; 
+            margin-bottom: 1rem; 
+            opacity: 0.95;
+            font-weight: 500;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        .hero-description {
+            font-size: 1.2rem; 
+            margin-bottom: 3rem; 
+            opacity: 0.9;
+            font-weight: 400;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            animation: fadeInUp 1s ease-out 0.7s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 18px 40px;
+            border-radius: 60px;
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.2rem;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.9s both;
+        }
+
+        .hero-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .hero-cta:hover::before {
+            left: 100%;
+        }
+
+        .hero-cta:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .hero-cta i {
+            font-size: 1.3rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+
+        /* الأشكال المتحركة المحسنة */
+        .floating-elements {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 3;
+        }
+
+        .floating-element {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .floating-element:nth-child(1) { 
+            width: 120px; height: 120px; 
+            top: 15%; left: 8%; 
+            animation: float1 8s ease-in-out infinite;
+        }
+        .floating-element:nth-child(2) { 
+            width: 80px; height: 80px; 
+            top: 70%; right: 12%; 
+            animation: float2 10s ease-in-out infinite reverse;
+        }
+        .floating-element:nth-child(3) { 
+            width: 150px; height: 150px; 
+            bottom: 25%; left: 15%; 
+            animation: float3 12s ease-in-out infinite;
+        }
+        .floating-element:nth-child(4) { 
+            width: 60px; height: 60px; 
+            top: 40%; right: 25%; 
+            animation: float1 6s ease-in-out infinite;
+        }
+        .floating-element:nth-child(5) { 
+            width: 100px; height: 100px; 
+            top: 60%; left: 40%; 
+            animation: float2 14s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+            25% { transform: translateY(-30px) translateX(20px) rotate(90deg); }
+            50% { transform: translateY(-15px) translateX(-10px) rotate(180deg); }
+            75% { transform: translateY(-40px) translateX(15px) rotate(270deg); }
+        }
+
+        @keyframes float2 {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1) rotate(0deg); }
+            33% { transform: translateY(-25px) translateX(-20px) scale(1.1) rotate(120deg); }
+            66% { transform: translateY(20px) translateX(25px) scale(0.9) rotate(240deg); }
+        }
+
+        @keyframes float3 {
+            0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
+            50% { transform: translateY(-35px) rotate(180deg) scale(1.2); }
+        }
+
+        /* باقي الستايلز كما هي */
         .games-section{ padding:80px 0; background:rgba(255,255,255,.95); backdrop-filter:blur(10px); }
         .section-title{ text-align:center; margin-bottom:60px; color:#2d3748; }
         .section-title h2{
@@ -119,7 +367,6 @@
             font-size:2.4rem; color:#fff; box-shadow:0 10px 20px rgba(139,92,246,.3);
             overflow:hidden;
         }
-        /* دعم الصورة داخل الأيقونة */
         .game-icon img{
             width:100%; height:100%; object-fit:cover; display:block; border-radius:20px;
         }
@@ -140,32 +387,32 @@
         .play-button.available{ background:linear-gradient(135deg,#8b5cf6,#06b6d4); color:#fff; }
         .play-button.available:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(139,92,246,.3); color:#fff; text-decoration:none; }
         .play-button.disabled{ background:#e2e8f0; color:#a0aec0; cursor:not-allowed; }
-
-        /* زر واتساب */
         .play-button.whatsapp{ background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; }
         .play-button.whatsapp:hover{ transform:translateY(-2px); box-shadow:0 10px 20px rgba(18,140,126,.25); color:#fff; text-decoration:none; }
-
-        .floating-shapes{ position:absolute; width:100%; height:100%; overflow:hidden; z-index:1; }
-        .shape{ position:absolute; background:rgba(255,255,255,.1); border-radius:50%; animation:float 6s ease-in-out infinite; }
-        .shape:nth-child(1){ width:60px; height:60px; top:20%; left:10%; animation-delay:0s; }
-        .shape:nth-child(2){ width:40px; height:40px; top:60%; right:10%; animation-delay:2s; }
-        .shape:nth-child(3){ width:80px; height:80px; bottom:20%; left:20%; animation-delay:4s; }
-        @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
 
         .stats-section{ background:linear-gradient(135deg,#1a202c,#2d3748); color:#fff; padding:60px 0; text-align:center; }
         .stat-item{ margin-bottom:2rem; }
         .stat-number{
             font-size:3rem; font-weight:700;
-            background:linear-gradient(135deg,#8b5cf6,#06b6د4);
+            background:linear-gradient(135deg,#8b5cf6,#06b6d4);
             -webkit-background-clip:text; -webkit-text-fill-color:transparent;
         }
         .stat-label{ font-size:1.1rem; color:#a0aec0; }
 
         @media (max-width:768px){
-            .hero-title{ font-size:2.5rem; }
-            .hero-subtitle{ font-size:1.1rem; }
+            .hero-title{ font-size:3rem; }
+            .hero-subtitle{ font-size:1.3rem; }
+            .hero-description{ font-size:1.1rem; }
+            .hero-cta{ padding:15px 30px; font-size:1.1rem; }
             .game-card{ margin-bottom:1.5rem; }
-            .game-icon{ width:180px; height:180px; } /* تكبير لطيف على الجوال */
+            .game-icon{ width:180px; height:180px; }
+        }
+
+        @media (max-width:576px){
+            .hero-title{ font-size:2.5rem; letter-spacing:-1px; }
+            .hero-subtitle{ font-size:1.2rem; }
+            .hero-description{ font-size:1rem; }
+            .hero-cta{ padding:12px 25px; font-size:1rem; }
         }
     </style>
 </head>
@@ -173,17 +420,40 @@
     {% include 'header.html' %}
 
     <section class="hero-section">
-        <div class="floating-shapes"><div class="shape"></div><div class="shape"></div><div class="shape"></div></div>
+        <div class="floating-elements">
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+            <div class="floating-element"></div>
+        </div>
+        
         <div class="hero-content">
             <div class="container">
+                <div class="hero-badge">
+                    <i class="fas fa-crown me-2"></i>
+                    منصة متقدمة بتقنيات حديثة
+                </div>
+                
                 <h1 class="hero-title">وش الجواب؟</h1>
-                <p class="hero-subtitle">منصة الألعاب التفاعلية </p>
-                <p class="hero-subtitle">اختبر ذكاءك، تحدى أصدقاءك، واستمتع بأفضل تجربة ألعاب </p>
+                
+                <p class="hero-subtitle">
+                    تجربة ألعاب لا مثيل لها بتقنيات متقدمة
+                </p>
+                
+                <p class="hero-description">
+                    اختبر ذكاءك، تحدى أصدقاءك، واستمتع بأفضل تجربة ألعاب ذكية مصممة خصيصاً لتمنحك لحظات لا تُنسى من المتعة والتحدي
+                </p>
+                
+                <a href="#games" class="hero-cta">
+                    <i class="fas fa-rocket"></i>
+                    ابدأ التحدي الآن
+                </a>
             </div>
         </div>
     </section>
 
-    <section class="games-section">
+    <section class="games-section" id="games">
         <div class="container">
             <div class="section-title">
                 <h2>اختر لعبتك المفضلة</h2>
@@ -241,7 +511,6 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="game-card">
                     <div class="game-icon" aria-label="تحدّي الوقت">
-                        <!-- استخدم صورة تناسب الكرونومتر/الوقت -->
                         <img src="https://i.imgur.com/1k1kU8z.jpeg" alt="تحدّي الوقت" loading="lazy" decoding="async">
                     </div>
                     <h3 class="game-title">تحدّي الوقت</h3>
@@ -366,6 +635,36 @@
                     }
                 }, 50);
             });
+
+            // تأثير النقر على CTA للانتقال السلس
+            const heroCtaBtn = document.querySelector('.hero-cta');
+            if (heroCtaBtn && heroCtaBtn.getAttribute('href') === '#games') {
+                heroCtaBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const gamesSection = document.getElementById('games');
+                    if (gamesSection) {
+                        gamesSection.scrollIntoView({ 
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            }
+
+            // تأثير التفاعل مع الماوس للبنر
+            const heroSection = document.querySelector('.hero-section');
+            if (heroSection) {
+                heroSection.addEventListener('mousemove', function(e) {
+                    const rect = heroSection.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const xPercent = (x / rect.width) * 100;
+                    const yPercent = (y / rect.height) * 100;
+                    
+                    heroSection.style.setProperty('--mouse-x', xPercent + '%');
+                    heroSection.style.setProperty('--mouse-y', yPercent + '%');
+                });
+            }
         });
     </script>
 </body>
