@@ -136,6 +136,124 @@ def time_home(request):
 @login_required
 def create_time_session(request):
     """
+    إنشاء جلسة (تحدّي الوقت) وفق نمطين:
+    1) جولة تجريبية (مجانية): 4 فئات بالضبط — يجب أن تكون كل الفئات من فئات free_category
+       ويتم ربط كل فئة بحزمة #0 فقط.
+    2) جولة مدفوعة: 8 فئات بالضبط — وجود أي فئة غير مجانية ⇒ تحويل لبوابة الدفع (سعر ثابت 20 ر.س للجولة كاملة).
+
+    ملاحظات:
+    - نتعامل بمرونة مع أسماء الحقول القادمة من الواجهة:
+      * selected_category_ids = "1,2,3" (CSV)
+      * category_ids[] أو category_ids = [1,2,3]
+    - نمنع المزج بين فئات مجانية ومدفوعة في نفس الطلب.
+    - نتحقق من "نفاد" الفئة للمستخدم (حسب TimePlayHistory) عبر _remaining_for كما كان سابقًا.
+    - في الحالة المدفوعة نخزن الاختيار مؤقتًا في session ونحوّل لبوابة الدفع، ثم تُستكمل في finalize_time_checkout.
+    """
+    if request.method != "POST":
+        return HttpResponseBadRequest("طريقة الطلب غير صحيحة")
+
+    if not TimeCategory:
+        return HttpResponseBadRequest("النظام غير مهيأ بعد (TimeCategory غير متاح).")
+
+    # ===== 1) قراءة القيم القادمة من الفورم بمرونة =====
+    raw_csv = (request.POST.get("selected_category_ids") or "").strip()
+    if raw_csv:
+        try:
+            cat_ids = [int(x) for x in raw_csv.split(",") if x.strip()]
+        except Exception:
+            return HttpResponseBadRequest("قائمة الفئات غير صالحة (CSV).")
+    else:
+        # دعم الأسماء القديمة/البديلة
+        lst = request.POST.getlist("category_ids[]") or request.POST.getlist("category_ids")
+        try:
+            cat_ids = [int(x) for x in lst if x]
+        except Exception:
+            return HttpResponseBadRequest("قائمة الفئات غير صالحة")
+
+    if not cat_ids:
+        return HttpResponseBadRequest("لم يتم اختيار أي فئة")
+
+    # (اختياري) bundle_size القادم من الواجهة للاستدلال على النمط
+    try:
+        requested_bundle_size = int(request.POST.get("bundle_size") or 0)
+    except Exception:
+        requested_bundle_size = 0
+
+    # ===== 2) جلب الفئات والتحقق من الفعالية =====
+    cats = list(TimeCategory.objects.filter(id__in=cat_ids, is_active=True))
+    if len(cats) != len(cat_ids):
+        return HttpResponseBadRequest("إحدى الفئات غير متاحة")
+
+    # منع المزج بين فئات مجانية ومدفوعة في نفس الطلب
+    has_free_cats = any(c.is_free_category for c in cats)
+    has_paid_cats = any(not c.is_free_category for c in cats)
+    if has_free_cats and has_paid_cats:
+        return HttpResponseBadRequest("لا يمكن المزج بين فئات مجانية وفئات مدفوعة في نفس الجولة")
+
+    # ===== 3) تحديد النمط (مجاني/مدفوع) + التحقق من عدد الفئات =====
+    fixed_price_sar = 20  # السعر الثابت للجولة المدفوعة كاملة
+
+    if has_paid_cats:
+        # جولة مدفوعة ⇒ يجب أن تكون 8 فئات بالضبط
+        if len(cats) != 8:
+            return HttpResponseBadRequest("يجب اختيار 8 فئات بالضبط للجولة المدفوعة")
+
+        # تحقق النفاد لكل فئة (كما كان سابقًا)
+        for c in cats:
+            if _remaining_for(request.user, c) <= 0:
+                return HttpResponseBadRequest(f"الفئة ({c.name}) نفدت حزمها لهذا الحساب")
+
+        # خزّن الاختيارات مؤقتًا ثم وجّه لبوابة الدفع (20 ر.س)
+        request.session['time_selected_category_ids'] = [c.id for c in cats]
+        try:
+            checkout_url = reverse('payments:create_time_checkout') + f"?amount={fixed_price_sar}"
+        except NoReverseMatch:
+            checkout_url = f"/payments/time-checkout/?amount={fixed_price_sar}"
+        return redirect(checkout_url)
+
+    # إلى هنا كل الفئات مجانية (is_free_category=True)
+    # ⇒ جولة تجريبية: يجب أن تكون 4 فئات بالضبط
+    if len(cats) != 4:
+        return HttpResponseBadRequest("يجب اختيار 4 فئات بالضبط لجولة التجربة المجانية")
+
+    # تحقق النفاد لكل فئة (إن أردت السماح بإعادة التجربة لنفس المستخدم، احذف هذا التحقق)
+    for c in cats:
+        if _remaining_for(request.user, c) <= 0:
+            return HttpResponseBadRequest(f"الفئة ({c.name}) نفدت حزمها المجانية لهذا الحساب")
+
+    # ===== 4) إنشاء الجلسة المجانية وربطها بحزمة #0 لكل فئة =====
+    if not (GamePackage and TimeSessionPackage):
+        return HttpResponseBadRequest("النظام غير مهيأ بعد (الحزم/الربط غير متاح).")
+
+    from django.db import transaction
+    with transaction.atomic():
+        session = GameSession.objects.create(
+            user=request.user,
+            game_type="time",
+            package=None,  # هذه الجلسة تحمل عدّة فئات؛ الربط يتم عبر TimeSessionPackage
+            team1_name="الفريق A",  # أسماء افتراضية — سيعدّلها المقدم لاحقًا
+            team2_name="الفريق B",
+            display_link=_gen_code(12),
+            contestants_link=_gen_code(12),
+            is_active=True,
+        )
+        # حزمة #0 (التجريبية) لكل فئة
+        for c in cats:
+            pkg0 = GamePackage.objects.filter(
+                game_type='time',
+                time_category=c,
+                is_active=True,
+                package_number=0,  # إلزام حزمة 0 للتجربة
+            ).first()
+            if not pkg0:
+                transaction.set_rollback(True)
+                return HttpResponseBadRequest(f"لا توجد حزمة تجريبية (#0) مفعّلة لفئة {c.name}")
+
+            TimeSessionPackage.objects.create(session=session, category=c, package=pkg0)
+
+    return redirect("games:time_host", session_id=session.id)
+
+    """
     إنشاء جلسة (تحدّي الوقت) بعد اختيار 8 فئات.
     التدفق:
     - يتحقق أن 8 فئات بالضبط وصلت (POST['category_ids[]']).
