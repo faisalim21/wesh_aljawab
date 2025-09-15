@@ -888,29 +888,29 @@ class ContestantAdmin(admin.ModelAdmin):
 
 # ========= تحدّي الوقت =========
 
+# ========= تحدّي الوقت =========
+
 def _img_thumb(url, h=56):
-    if not url: return "—"
-    return format_html('<img src="{}" style="height:{}px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>', escape(url), h)
+    if not url:
+        return "—"
+    return format_html(
+        '<img src="{}" style="height:{}px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>',
+        escape(url), h
+    )
 
 @admin.register(TimeCategory)
 class TimeCategoryAdmin(admin.ModelAdmin):
-    list_display  = (
-        'name_col',       # الاسم
-        'is_free_col',    # فئة مجانية؟
-        'is_active_col',  # فعّالة؟
-        'order_col',      # الترتيب
-        'packages_count', # عدد الحزم
-        'free_pkg_ok',    # حزمة التجربة
-        'cover_preview',  # الغلاف
-        'row_actions',    # إجراءات
+    # أعمدة القائمة
+    list_display = (
+        'name_col', 'is_free_col', 'is_active_col', 'order_col',
+        'packages_count', 'free_pkg_ok', 'cover_preview', 'row_actions',
     )
-    list_filter   = (
-        ('is_free_category', admin.BooleanFieldListFilter),
-        ('is_active', admin.BooleanFieldListFilter),
-    )
+    list_filter   = (('is_free_category', admin.BooleanFieldListFilter),
+                     ('is_active', admin.BooleanFieldListFilter))
     search_fields = ('name', 'slug')
-    ordering      = ('order','name')
+    ordering      = ('order', 'name')
 
+    # أعمدة بعناوين عربية
     def name_col(self, obj): return obj.name
     name_col.short_description = "الاسم"
 
@@ -940,20 +940,26 @@ class TimeCategoryAdmin(admin.ModelAdmin):
         return _img_thumb(obj.cover_image, h=40)
     cover_preview.short_description = "الغلاف"
 
-    # استخدم اسم مختلف تمامًا عن 'actions'
+    # زر سريع للانتقال إلى قائمة الحزم ضمن هذا التصنيف
     def row_actions(self, obj):
         pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
         return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
     row_actions.short_description = "إجراءات"
 
+    # صفحة معلومات/لوحة مبسطة للفئات
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
+            path("dashboard/", self.admin_site.admin_view(self.dashboard_view),
+                 name="games_timecategory_dashboard"),
         ]
         return custom + urls
 
     def dashboard_view(self, request):
+        """
+        تعرض كل الفئات + إن تم تمرير مستخدم (?user_id= أو ?user=اسم/إيميل)
+        تُظهر أيضًا "الحزم المدفوعة المتبقية" لهذا المستخدم في كل فئة.
+        """
         user_id = request.GET.get("user_id", "").strip()
         user_q  = request.GET.get("user", "").strip()
 
@@ -971,11 +977,12 @@ class TimeCategoryAdmin(admin.ModelAdmin):
             ).first()
 
         rows = []
-        cats = TimeCategory.objects.all().order_by('order','name').prefetch_related('time_packages')
+        cats = TimeCategory.objects.all().order_by('order', 'name').prefetch_related('time_packages')
         for cat in cats:
             total_pkgs = cat.time_packages.filter(game_type='time').count()
             paid_pkgs  = cat.time_packages.filter(game_type='time').exclude(package_number=0).count()
-            free_ok = cat.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+            free_ok    = cat.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
+
             remaining_txt = "—"
             if user_obj:
                 played = (TimePlayHistory.objects
@@ -984,6 +991,7 @@ class TimeCategoryAdmin(admin.ModelAdmin):
                           .values('package_id').distinct().count())
                 remaining = max(0, paid_pkgs - played)
                 remaining_txt = f"{remaining} من {paid_pkgs}"
+
             rows.append(
                 f"<tr>"
                 f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{escape(cat.name)}</td>"
@@ -1007,468 +1015,27 @@ class TimeCategoryAdmin(admin.ModelAdmin):
               <div style="align-self:end;color:#9ca3af;">{user_badge}</div>
             </div>
           </form>
-
           <div style="margin:10px 0 14px;color:#94a3b8;font-size:13px;">
             * الحزمة رقم <b>0</b> لكل فئة هي الحزمة <b>المجانية</b> (تظهر هنا على شكل ✅ إن كانت فعّالة).<br>
             * الحزم المتبقية = جميع الحزم <b>المدفوعة</b> في الفئة ناقص الحزم التي لعبها هذا المستخدم (باستثناء #0).
           </div>
-
           {_listing_table(["الفئة","الغلاف","فعّالة؟","عدد الحزم","حزمة #0 نشطة","الحزم المتبقية (للمستخدم)"], rows)}
         </div>
         """
-        ctx = {**self.admin_site.each_context(request), "title": "فئات تحدّي الوقت", "content": mark_safe(html)}
+        ctx = {**self.admin_site.each_context(request),
+               "title": "فئات تحدّي الوقت", "content": mark_safe(html)}
         return TemplateResponse(request, "admin/simple_box.html", ctx)
 
-    # عرض الأعمدة في القائمة
-    list_display  = (
-        'name_col',       # الاسم
-        'is_free_col',    # فئة مجانية؟
-        'is_active_col',  # فعّالة؟
-        'order_col',      # الترتيب
-        'packages_count', # عدد الحزم
-        'free_pkg_ok',    # حزمة التجربة
-        'cover_preview',  # الغلاف
-        'row_actions',    # إجراءات
-    )
 
-    # الفلاتر الجانبية (معربة)
-    list_filter   = (
-        ('is_free_category', admin.BooleanFieldListFilter),  # فئة مجانية؟
-        ('is_active', admin.BooleanFieldListFilter),         # حالة الفئة
-    )
-
-    # البحث
-    search_fields = ('name', 'slug')
-    ordering      = ('order','name')
-
-    # ==== أعمدة ====
-    def name_col(self, obj):
-        return obj.name
-    name_col.short_description = "الاسم"
-
-    def is_free_col(self, obj):
-        return "نعم" if obj.is_free_category else "لا"
-    is_free_col.short_description = "فئة مجانية؟"
-
-    def is_active_col(self, obj):
-        return "نعم" if obj.is_active else "لا"
-    is_active_col.short_description = "فعّالة؟"
-
-    def order_col(self, obj):
-        return obj.order
-    order_col.short_description = "الترتيب"
-
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
-
-    def free_pkg_ok(self, obj):
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
-
-    def cover_preview(self, obj):
-        if not getattr(obj, "cover_image", None):
-            return "—"
-        return _img_thumb(obj.cover_image, h=40)
-    cover_preview.short_description = "الغلاف"
-
-    # ==== زر الإجراءات ====
-    def row_actions(self, obj):
-        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    row_actions.short_description = "إجراءات"
-
-    # ==== روابط مخصصة ====
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
-        ]
-        return custom + urls
-
-    # ==== صفحة الداشبورد ====
-    def dashboard_view(self, request):
-        """
-        تعرض كل الفئات + لكل فئة:
-          - الاسم والغلاف والحالة
-          - عدد الحزم (الكلية) + تحقق حزمة #0 المجانية
-          - إن تم تمرير مستخدم (via ?user_id= أو ?user=اسم/إيميل) يعرض "الحزم المتبقية لهذا المستخدم"
-        """
-        user_id = request.GET.get("user_id", "").strip()
-        user_q  = request.GET.get("user", "").strip()
-
-        from django.contrib.auth import get_user_model
-        U = get_user_model()
-        user_obj = None
-        if user_id:
-            try:
-                user_obj = U.objects.get(pk=user_id)
-            except U.DoesNotExist:
-                user_obj = None
-        elif user_q:
-            user_obj = U.objects.filter(Q(username__iexact=user_q) | Q(email__iexact=user_q) | Q(first_name__iexact=user_q)).first()
-
-        rows = []
-        cats = TimeCategory.objects.all().order_by('order','name').prefetch_related('time_packages')
-        for cat in cats:
-            total_pkgs = cat.time_packages.filter(game_type='time').count()
-            paid_pkgs  = cat.time_packages.filter(game_type='time').exclude(package_number=0).count()
-            free_ok = cat.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-            remaining_txt = "—"
-            if user_obj:
-                played = TimePlayHistory.objects.filter(user=user_obj, category=cat).exclude(package__package_number=0).values('package_id').distinct().count()
-                remaining = max(0, paid_pkgs - played)
-                remaining_txt = f"{remaining} من {paid_pkgs}"
-            rows.append(
-                f"<tr>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{escape(cat.name)}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{_img_thumb(cat.cover_image, h=36) if cat.cover_image else '—'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'نعم' if cat.is_active else 'لا'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{total_pkgs}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'✅' if free_ok else '⚠️'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{remaining_txt}</td>"
-                f"</tr>"
-            )
-
-        user_badge = f"المستخدم: <b>{escape(getattr(user_obj,'username', '—'))}</b>" if user_obj else "لم يتم تحديد مستخدم"
-        html = f"""
-        <div style="padding:16px 20px;">
-          <h2 style="margin:0 0 10px;">⏱️ لوحة فئات تحدّي الوقت</h2>
-          <form method="get" style="margin:8px 0;">
-            <div class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;">
-              <div><label>المستخدم (ID)</label><input type="text" name="user_id" value="{escape(user_id)}" placeholder="رقم المستخدم" style="width:100%"></div>
-              <div><label>المستخدم (اسم/إيميل)</label><input type="text" name="user" value="{escape(user_q)}" placeholder="username أو email" style="width:100%"></div>
-              <div style="align-self:end;"><button class="button" style="width:100%;">تحديث</button></div>
-              <div style="align-self:end;color:#9ca3af;">{user_badge}</div>
-            </div>
-          </form>
-
-          <div style="margin:10px 0 14px;color:#94a3b8;font-size:13px;">
-            * الحزمة رقم <b>0</b> لكل فئة هي الحزمة <b>المجانية</b> (تظهر هنا على شكل ✅ إن كانت فعّالة).<br>
-            * الحزم المتبقية = جميع الحزم <b>المدفوعة</b> في الفئة ناقص الحزم التي لعبها هذا المستخدم (باستثناء #0).
-          </div>
-
-          {_listing_table(["الفئة","الغلاف","فعّالة؟","عدد الحزم","حزمة #0 نشطة","الحزم المتبقية (للمستخدم)"], rows)}
-        </div>
-        """
-        ctx = {**self.admin_site.each_context(request), "title": "فئات تحدّي الوقت", "content": mark_safe(html)}
-        return TemplateResponse(request, "admin/simple_box.html", ctx)
-
-    # استبدلنا 'actions' بـ 'row_actions' وتعرّبّت العناوين
-    list_display = (
-        'name_col',          # الاسم
-        'is_free_col',       # فئة مجانية؟
-        'is_active_col',     # فعّالة؟
-        'order_col',         # الترتيب
-        'packages_count',    # عدد الحزم
-        'free_pkg_ok',       # حزمة التجربة (#0)
-        'cover_preview',     # الغلاف
-        'row_actions',       # إجراءات
-    )
-    list_filter  = ('is_free_category','is_active')
-    search_fields= ('name','slug')
-    ordering     = ('order','name')
-
-    # أعمدة بعناوين عربية
-    def name_col(self, obj):
-        return obj.name
-    name_col.short_description = "الاسم"
-
-    def is_free_col(self, obj):
-        return "نعم" if obj.is_free_category else "لا"
-    is_free_col.short_description = "فئة مجانية؟"
-
-    def is_active_col(self, obj):
-        return "نعم" if obj.is_active else "لا"
-    is_active_col.short_description = "فعّالة؟"
-
-    def order_col(self, obj):
-        return obj.order
-    order_col.short_description = "الترتيب"
-
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
-
-    def free_pkg_ok(self, obj):
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
-
-    def cover_preview(self, obj):
-        if not getattr(obj, "cover_image", None):
-            return "—"
-        return _img_thumb(obj.cover_image, h=40)
-    cover_preview.short_description = "الغلاف"
-
-    # كان اسمها actions → سببت تعارض مع Django
-    def row_actions(self, obj):
-        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    row_actions.short_description = "إجراءات"
-
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
-        ]
-        return custom + urls
-
-    # اترك dashboard_view كما هو عندك
-
-    # عناوين عربية + استبدال actions بـ row_actions
-    list_display = (
-        'name_col',          # الاسم
-        'is_free_col',       # فئة مجانية؟
-        'is_active_col',     # فعّالة؟
-        'order_col',         # الترتيب
-        'packages_count',    # عدد الحزم
-        'free_pkg_ok',       # حزمة التجربة
-        'cover_preview',     # غلاف
-        'row_actions',       # إجراءات
-    )
-    list_filter  = ('is_free_category','is_active')
-    search_fields= ('name','slug')
-    ordering     = ('order','name')
-
-    # أعمدة بعناوين عربية (بدل عرض الحقول مباشرة)
-    def name_col(self, obj):
-        return obj.name
-    name_col.short_description = "الاسم"
-
-    def is_free_col(self, obj):
-        return "نعم" if obj.is_free_category else "لا"
-    is_free_col.short_description = "فئة مجانية؟"
-
-    def is_active_col(self, obj):
-        return "نعم" if obj.is_active else "لا"
-    is_active_col.short_description = "فعّالة؟"
-
-    def order_col(self, obj):
-        return obj.order
-    order_col.short_description = "الترتيب"
-
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
-
-    def free_pkg_ok(self, obj):
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
-
-    def cover_preview(self, obj):
-        if not getattr(obj, "cover_image", None):
-            return "—"
-        return _img_thumb(obj.cover_image, h=40)
-    cover_preview.short_description = "غلاف"
-
-    # ← كانت اسمها actions وتسبّب التضارب. غيّرناها إلى row_actions.
-    def row_actions(self, obj):
-        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    row_actions.short_description = "إجراءات"
-
-    # تبقى كما هي
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
-        ]
-        return custom + urls
-
-    def dashboard_view(self, request):
-        # ⚠️ الصق هنا نفس محتوى الدالة الموجود عندك بدون تغيير
-        # (كل منطق لوحة التحكم كما هو)
-        ...
-
-    # أعمدة مع عناوين عربية
-    list_display = (
-        'name_col',          # ← الاسم
-        'is_free_col',       # ← فئة مجانية؟
-        'is_active_col',     # ← فعّالة؟
-        'order_col',         # ← الترتيب
-        'packages_count',    # عدد الحزم
-        'free_pkg_ok',       # حزمة التجربة
-        'cover_preview',     # غلاف
-        'row_actions',       # إجراءات
-    )
-    list_filter  = ('is_free_category','is_active')
-    search_fields= ('name','slug')
-    ordering     = ('order','name')
-
-    # أعمدة عربية بدل حقول مباشرة
-    def name_col(self, obj): 
-        return obj.name
-    name_col.short_description = "الاسم"
-
-    def is_free_col(self, obj):
-        return "نعم" if obj.is_free_category else "لا"
-    is_free_col.short_description = "فئة مجانية؟"
-
-    def is_active_col(self, obj):
-        return "نعم" if obj.is_active else "لا"
-    is_active_col.short_description = "فعّالة؟"
-
-    def order_col(self, obj):
-        return obj.order
-    order_col.short_description = "الترتيب"
-
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
-
-    def free_pkg_ok(self, obj):
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
-
-    def cover_preview(self, obj):
-        if not getattr(obj, "cover_image", None):
-            return "—"
-        return _img_thumb(obj.cover_image, h=40)
-    cover_preview.short_description = "غلاف"
-
-    # مهم: لا نسميها actions عشان ما تكسر الأدمن
-    def row_actions(self, obj):
-        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    row_actions.short_description = "إجراءات"
-
-    # لوحة التحكم المخصصة كما هي
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
-        ]
-        return custom + urls
-
-    def dashboard_view(self, request):
-        # ... (اترك نفس الدالة اللي عندك كما هي تمامًا)
-        return super().dashboard_view(request)  # ← لو كانت الدالة أطول الصق محتواك الحالي كما هو
-
-    list_display = ('name_col','is_free_col','is_active_col','order_col','packages_count','free_pkg_ok','cover_preview','row_actions')
-    list_filter  = ('is_free_category','is_active')
-    search_fields= ('name','slug')
-    ordering     = ('order','name')
-
-    def packages_count(self, obj):
-        return obj.time_packages.filter(game_type='time').count()
-    packages_count.short_description = "عدد الحزم"
-
-    def free_pkg_ok(self, obj):
-        if not obj.is_free_category:
-            return "—"
-        ok = obj.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-        return "✅" if ok else "⚠️ لا توجد حزمة 0 فعّالة"
-    free_pkg_ok.short_description = "حزمة التجربة"
-
-    def cover_preview(self, obj):
-        if not getattr(obj, "cover_image", None):
-            return "—"
-        return _img_thumb(obj.cover_image, h=40)
-    cover_preview.short_description = "غلاف"
-
-    def row_actions(self, obj):
-        pkgs_url = reverse('admin:games_timepackage_changelist') + f'?time_category__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{pkgs_url}">📦 إدارة الحزم</a>')
-    row_actions.short_description = "إجراءات"
-
-
-    # لوحة فئات تحدّي الوقت (مع مقياس "الحزم المتبقية للمستخدم")
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("dashboard/", self.admin_site.admin_view(self.dashboard_view), name="games_timecategory_dashboard"),
-        ]
-        return custom + urls
-
-    def dashboard_view(self, request):
-        """
-        تعرض كل الفئات + لكل فئة:
-          - الاسم والغلاف والحالة
-          - عدد الحزم (الكلية) + تحقق حزمة #0 المجانية
-          - إن تم تمرير مستخدم (via ?user_id= أو ?user=اسم/إيميل) يعرض "الحزم المتبقية لهذا المستخدم"
-            المنطق: المتبقي = عدد الحزم المدفوعة في الفئة - عدد الحزم (غير #0) التي لعبها المستخدم في تلك الفئة (TimePlayHistory)
-        """
-        # تحديد المستخدم المطلوب اختياريًا
-        user_id = request.GET.get("user_id", "").strip()
-        user_q  = request.GET.get("user", "").strip()  # اسم/إيميل
-
-        from django.contrib.auth import get_user_model
-        U = get_user_model()
-        user_obj = None
-        if user_id:
-            try:
-                user_obj = U.objects.get(pk=user_id)
-            except U.DoesNotExist:
-                user_obj = None
-        elif user_q:
-            user_obj = U.objects.filter(Q(username__iexact=user_q) | Q(email__iexact=user_q) | Q(first_name__iexact=user_q)).first()
-
-        rows = []
-        cats = TimeCategory.objects.all().order_by('order','name').prefetch_related('time_packages')
-        for cat in cats:
-            total_pkgs = cat.time_packages.filter(game_type='time').count()
-            paid_pkgs  = cat.time_packages.filter(game_type='time').exclude(package_number=0).count()
-            free_ok = cat.time_packages.filter(game_type='time', package_number=0, is_active=True).exists()
-            remaining_txt = "—"
-            if user_obj:
-                played = TimePlayHistory.objects.filter(user=user_obj, category=cat).exclude(package__package_number=0).values('package_id').distinct().count()
-                remaining = max(0, paid_pkgs - played)
-                remaining_txt = f"{remaining} من {paid_pkgs}"
-            rows.append(
-                f"<tr>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{escape(cat.name)}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{_img_thumb(cat.cover_image, h=36) if cat.cover_image else '—'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'نعم' if cat.is_active else 'لا'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{total_pkgs}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{'✅' if free_ok else '⚠️'}</td>"
-                f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{remaining_txt}</td>"
-                f"</tr>"
-            )
-
-        user_badge = f"المستخدم: <b>{escape(getattr(user_obj,'username', '—'))}</b>" if user_obj else "لم يتم تحديد مستخدم"
-        html = f"""
-        <div style="padding:16px 20px;">
-          <h2 style="margin:0 0 10px;">⏱️ لوحة فئات تحدّي الوقت</h2>
-          <form method="get" style="margin:8px 0;">
-            <div class="module" style="padding:12px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:end;">
-              <div><label>user_id</label><input type="text" name="user_id" value="{escape(user_id)}" placeholder="ID" style="width:100%"></div>
-              <div><label>user (اسم/إيميل)</label><input type="text" name="user" value="{escape(user_q)}" placeholder="username أو email" style="width:100%"></div>
-              <div style="align-self:end;"><button class="button" style="width:100%;">تحديث</button></div>
-              <div style="align-self:end;color:#9ca3af;">{user_badge}</div>
-            </div>
-          </form>
-
-          <div style="margin:10px 0 14px;color:#94a3b8;font-size:13px;">
-            * الحزمة رقم <b>0</b> لكل فئة هي الحزمة <b>المجانية</b> (تظهر هنا على شكل ✅ إن كانت فعّالة).<br>
-            * الحزم المتبقية = جميع الحزم <b>المدفوعة</b> في الفئة ناقص الحزم التي لعبها هذا المستخدم (باستثناء #0).
-          </div>
-
-          {_listing_table(["الفئة","الغلاف","فعّالة؟","عدد الحزم","حزمة #0 نشطة","الحزم المتبقية (للمستخدم)"], rows)}
-        </div>
-        """
-        ctx = {**self.admin_site.each_context(request), "title": "فئات تحدّي الوقت", "content": mark_safe(html)}
-        return TemplateResponse(request, "admin/simple_box.html", ctx)
-
-# Proxy لإدارة حزم تحدّي الوقت عبر GamePackage
+# Proxy لإظهار حِزم تحدّي الوقت ككيان مستقل في الأدمن
 class TimePackage(GamePackage):
     class Meta:
         proxy = True
         verbose_name = "حزمة - تحدّي الوقت"
         verbose_name_plural = "حزم - تحدّي الوقت"
 
-# ===== تحدّي الوقت: ضبط عدد الألغاز ومنع تكرار order =====
+
+# حدّ/تحقق لألغاز الحزمة
 class TimeRiddleInlineFormSet(forms.models.BaseInlineFormSet):
     """
     - حد أقصى 80 لغزًا لكل حزمة.
@@ -1478,38 +1045,6 @@ class TimeRiddleInlineFormSet(forms.models.BaseInlineFormSet):
         super().clean()
         if any(self.errors):
             return
-
-        alive = []
-        orders = set()
-        dup_orders = set()
-
-        for form in self.forms:
-            if form.cleaned_data.get('DELETE'):
-                continue
-            if (not form.cleaned_data) and (not form.instance.pk):
-                continue
-            alive.append(form)
-            o = form.cleaned_data.get('order') or getattr(form.instance, 'order', None)
-            if o is not None:
-                if o in orders:
-                    dup_orders.add(o)
-                orders.add(o)
-
-        if len(alive) > 80:
-            raise forms.ValidationError("الحدّ الأقصى لعدد الألغاز في حزمة تحدّي الوقت هو 80 صورة.")
-
-        if dup_orders:
-            dup_s = ", ".join(str(x) for x in sorted(dup_orders))
-            raise forms.ValidationError(f"يوجد تكرار في (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
-
-    """
-    - حد أقصى 80 لغزًا لكل حزمة.
-    - يمنع تكرار order داخل نفس الحزمة.
-    """
-    def clean(self):
-        super().clean()
-        if any(self.errors):
-            return
         alive = []
         orders = set()
         dup_orders = set()
@@ -1530,38 +1065,12 @@ class TimeRiddleInlineFormSet(forms.models.BaseInlineFormSet):
             dup_s = ", ".join(str(x) for x in sorted(dup_orders))
             raise forms.ValidationError(f"يوجد تكرار في (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
 
-    """
-    - حد أقصى 40 لغزًا لكل حزمة.
-    - يمنع تكرار order داخل نفس الحزمة.
-    """
-    def clean(self):
-        super().clean()
-        if any(self.errors):
-            return
-        alive = []
-        orders = set()
-        dup_orders = set()
-        for form in self.forms:
-            if form.cleaned_data.get('DELETE'):
-                continue
-            if (not form.cleaned_data) and (not form.instance.pk):
-                continue
-            alive.append(form)
-            o = form.cleaned_data.get('order') or getattr(form.instance, 'order', None)
-            if o is not None:
-                if o in orders: dup_orders.add(o)
-                orders.add(o)
-        if len(alive) > 40:
-            raise forms.ValidationError("الحدّ الأقصى لعدد الألغاز في حزمة تحدّي الوقت هو 40 صورة.")
-        if dup_orders:
-            dup_s = ", ".join(str(x) for x in sorted(dup_orders))
-            raise forms.ValidationError(f"يوجد تكرار في (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
 
 class TimeRiddleInline(admin.TabularInline):
     model = TimeRiddle
     extra = 0
     formset = TimeRiddleInlineFormSet
-    fields = ('order','image_url','answer','hint','thumb_tag')
+    fields = ('order', 'image_url', 'answer', 'hint', 'thumb_tag')
     readonly_fields = ('thumb_tag',)
     ordering = ('order',)
 
@@ -1575,36 +1084,19 @@ class TimeRiddleInline(admin.TabularInline):
             field.help_text = "الإجابة تظهر للمقدّم فقط أثناء اللعب، ولا تظهر للمتسابقين."
         return field
 
-    model = TimeRiddle
-    extra = 0
-    formset = TimeRiddleInlineFormSet
-    fields = ('order','image_url','answer','hint','thumb_tag')
-    readonly_fields = ('thumb_tag',)
-    ordering = ('order',)
-    def thumb_tag(self, obj): return _img_thumb(getattr(obj, 'image_url', ''))
-    thumb_tag.short_description = "معاينة"
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        field = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if db_field.name == 'answer':
-            field.help_text = "الإجابة تظهر للمقدّم فقط أثناء اللعب، ولا تظهر للمتسابقين."
-        return field
 
 @admin.register(TimePackage)
 class TimePackageAdmin(admin.ModelAdmin):
-    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
-    list_filter  = ('is_active','is_free','time_category','created_at')
-    search_fields= ('package_number','description','time_category__name')
-    ordering     = ('time_category__order','time_category__name','package_number')
-    inlines      = [TimeRiddleInline]
-    fieldsets    = (
-        ('المعلومات الأساسية', {'fields': ('time_category','package_number','is_free','is_active')}),
-        ('التسعير/الوصف',     {'fields': (('original_price','discounted_price','price'),'description')}),
+    list_display  = ('pkg_ref', 'category_ref', 'is_free_icon',
+                     'status_badge', 'created_at', 'manage_riddles')
+    list_filter   = ('is_active', 'is_free', 'time_category', 'created_at')
+    search_fields = ('package_number', 'description', 'time_category__name')
+    ordering      = ('time_category__order', 'time_category__name', 'package_number')
+    inlines       = [TimeRiddleInline]
+    fieldsets     = (
+        ('المعلومات الأساسية', {'fields': ('time_category', 'package_number', 'is_free', 'is_active')}),
+        ('التسعير/الوصف',     {'fields': (('original_price','discounted_price','price'), 'description')}),
     )
-
-    # تأكيد نوع اللعبة
-    def save_model(self, request, obj, form, change):
-        obj.game_type = 'time'
-        super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
         return (super()
@@ -1612,9 +1104,13 @@ class TimePackageAdmin(admin.ModelAdmin):
                 .filter(game_type='time')
                 .select_related('time_category'))
 
-    # أعمدة العرض
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'time'
+        super().save_model(request, obj, form, change)
+
+    # أعمدة عرض
     def pkg_ref(self, obj):
-        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
+        tag = "مجانية" if (obj.is_free or obj.package_number == 0) else f"#{obj.package_number}"
         return format_html("<b>حزمة {}</b>", tag)
     pkg_ref.short_description = "الحزمة"
 
@@ -1627,31 +1123,36 @@ class TimePackageAdmin(admin.ModelAdmin):
     is_free_icon.short_description = "مجانية"
 
     def status_badge(self, obj):
-        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
+        return mark_safe(
+            f"<b style='color:{'green' if obj.is_active else 'red'};'>"
+            f"{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>"
+        )
     status_badge.short_description = "الحالة"
 
+    # زرَّان: عرض الألغاز + رفع ZIP
     def manage_riddles(self, obj):
-        riddles_url    = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
+        list_url       = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
         upload_zip_url = reverse('admin:games_timepackage_upload_zip', args=[obj.id])
         return mark_safe(
-            f'<a class="button" href="{riddles_url}"    style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
+            f'<a class="button" href="{list_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
             f'<a class="button" href="{upload_zip_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">📦 رفع ZIP</a>'
         )
     manage_riddles.short_description = "إجراءات"
 
-    # روابط مخصصة
+    # مسار صفحة الرفع
     def get_urls(self):
         urls = super().get_urls()
         custom = [
-            path("<uuid:pk>/upload-zip/", self.admin_site.admin_view(self.upload_time_zip_view), name="games_timepackage_upload_zip"),
+            path("<uuid:pk>/upload-zip/",
+                 self.admin_site.admin_view(self.upload_time_zip_view),
+                 name="games_timepackage_upload_zip"),
         ]
         return custom + urls
 
-    # صفحة رفع ZIP + المعالجة (Cloudinary)
+    # فيو رفع ZIP (Cloudinary إن وُجد أو MEDIA)
     def upload_time_zip_view(self, request, pk):
         package = get_object_or_404(GamePackage, pk=pk, game_type='time')
 
-        # صفحة الرفع
         if request.method != 'POST':
             ctx = {
                 **self.admin_site.each_context(request),
@@ -1665,17 +1166,17 @@ class TimePackageAdmin(admin.ModelAdmin):
                 "back_url": reverse('admin:games_timepackage_changelist'),
                 "help_rows": [
                     "ارفع ملف ZIP يحتوي على صور اللغز لهذا التصنيف.",
-                    "اسم كل ملف صورة سيُستخدم تلقائيًا كإجابة (بدون الامتداد). مثال: 'السعودية.jpg' → الإجابة: 'السعودية'.",
-                    "الحد الأقصى للحزمة: 80 لغز.",
-                    "لو أردت استبدال الألغاز الحالية، فعّل خيار الحذف قبل الرفع.",
+                    "اسم كل ملف يُستخدم كإجابة (بدون الامتداد): مثال السعودية.jpg → الإجابة: السعودية.",
+                    "الحد الأقصى لعدد الألغاز في الحزمة: 80.",
+                    "لو أردت الاستبدال، فعّل خيار الحذف قبل الرفع.",
                 ],
-                "extra_note": "يدعم: jpg, jpeg, png, webp, gif, bmp. وإن لم يوجد امتداد سنحاول التعرف على الصورة تلقائيًا.",
+                "extra_note": "يدعم: jpg, jpeg, png, webp, gif, bmp. وإن لم يوجد امتداد نحاول التعرف تلقائيًا.",
                 "submit_label": "رفع الملف",
                 "replace_label": "حذف الألغاز الحالية قبل الاستيراد",
             }
             return TemplateResponse(request, "admin/import_csv.html", ctx)
 
-        # POST: المعالجة
+        # POST
         file = request.FILES.get('file')
         replace_existing = bool(request.POST.get('replace'))
 
@@ -1690,7 +1191,7 @@ class TimePackageAdmin(admin.ModelAdmin):
         from django.core.files.base import ContentFile
         from django.core.files.storage import default_storage
 
-        # Cloudinary لو متوفّر (نستخدم الإعدادات من settings.py/.env)
+        # Cloudinary إن توافرت
         use_cloudinary = False
         uploader = None
         try:
@@ -1704,7 +1205,6 @@ class TimePackageAdmin(admin.ModelAdmin):
 
         def _normalize_name(name: str) -> str:
             name = os.path.basename(name)
-            # إصلاح أسماء غير UTF-8 في بعض ملفات zip
             try:
                 name.encode('utf-8')
             except Exception:
@@ -1717,12 +1217,12 @@ class TimePackageAdmin(admin.ModelAdmin):
         def _answer_from_filename(fname: str) -> str:
             base, _ext = os.path.splitext(fname)
             base = base.replace('_', ' ').replace('-', ' ').strip()
-            return " ".join(base.split())  # يبقي العربية كما هي
+            return " ".join(base.split())
 
         def _is_image_bytes(data: bytes) -> bool:
             return bool(imghdr.what(None, h=data))
 
-        # حد أقصى 80
+        # تحقق الحد الأقصى
         current_count = package.time_riddles.count()
         max_allowed   = 80
         can_add       = max(0, max_allowed - current_count)
@@ -1753,7 +1253,6 @@ class TimePackageAdmin(admin.ModelAdmin):
                     ext_norm = (ext or "").lower()
 
                     data = zf.read(zinfo)
-
                     is_image = (ext_norm in ALLOWED_EXTS) or _is_image_bytes(data)
                     if not is_image:
                         skipped += 1
@@ -1761,7 +1260,6 @@ class TimePackageAdmin(admin.ModelAdmin):
                             notes.append(f"تخطي «{raw_name}»: ليس ملف صورة مدعوم.")
                         continue
 
-                    # الرفع
                     try:
                         if use_cloudinary and uploader:
                             up = uploader.upload(
@@ -1772,7 +1270,6 @@ class TimePackageAdmin(admin.ModelAdmin):
                             )
                             image_url = up.get('secure_url') or up.get('url')
                         else:
-                            # تخزين محلي (MEDIA)
                             safe_name = raw_name
                             base, ext0 = os.path.splitext(safe_name)
                             idx = 1
@@ -1785,13 +1282,13 @@ class TimePackageAdmin(admin.ModelAdmin):
                             from django.conf import settings
                             media_url = getattr(settings, 'MEDIA_URL', '/media/')
                             image_url = media_url.rstrip('/') + '/' + saved_path.lstrip('/')
+
                     except Exception as e:
                         failed += 1
                         if len(notes) < 5:
                             notes.append(f"فشل رفع «{raw_name}»: {e}")
                         continue
 
-                    # الإجابة من اسم الملف (بدون الامتداد)
                     answer = _answer_from_filename(raw_name)
 
                     try:
@@ -1815,7 +1312,6 @@ class TimePackageAdmin(admin.ModelAdmin):
             messages.error(request, f"حدث خطأ أثناء قراءة الملف: {e}")
             return HttpResponseRedirect(request.path)
 
-        # رسائل مختصرة
         if added and not (failed or skipped):
             messages.success(request, f"تم رفع {added} صورة بنجاح وإضافتها كلغاز.")
         else:
@@ -1828,290 +1324,6 @@ class TimePackageAdmin(admin.ModelAdmin):
 
         return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
 
-    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
-    list_filter = ('is_active','is_free','time_category','created_at')
-    search_fields = ('package_number','description','time_category__name')
-    ordering = ('time_category__order','time_category__name','package_number')
-    inlines = [TimeRiddleInline]
-    fieldsets = (
-        ('المعلومات الأساسية', {'fields': ('time_category','package_number','is_free','is_active')}),
-        ('التسعير/الوصف', {'fields': (('original_price','discounted_price','price'),'description')}),
-    )
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(game_type='time').select_related('time_category')
-
-    def save_model(self, request, obj, form, change):
-        obj.game_type = 'time'
-        super().save_model(request, obj, form, change)
-
-    def pkg_ref(self, obj):
-        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
-        return format_html("<b>حزمة {}</b>", tag)
-    pkg_ref.short_description = "الحزمة"
-
-    def category_ref(self, obj):
-        return obj.time_category.name if obj.time_category else "—"
-    category_ref.short_description = "التصنيف"
-
-    def is_free_icon(self, obj):
-        return "✅" if (obj.is_free or obj.package_number == 0) else "—"
-    is_free_icon.short_description = "مجانية"
-
-    def status_badge(self, obj):
-        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
-    status_badge.short_description = "الحالة"
-
-    def manage_riddles(self, obj):
-        list_url = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
-        upload_zip_url = reverse('admin:games_timepackage_upload_zip', args=[obj.id])
-        return mark_safe(
-            f'<a class="button" href="{list_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
-            f'<a class="button" href="{upload_zip_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">📦 رفع ZIP</a>'
-        )
-    manage_riddles.short_description = "إجراءات"
-
-    # ----------------- روابط مخصصة -----------------
-    def get_urls(self):
-        urls = super().get_urls()
-        custom = [
-            path("<uuid:pk>/upload-zip/", self.admin_site.admin_view(self.upload_time_zip_view), name="games_timepackage_upload_zip"),
-        ]
-        return custom + urls
-
-    # ----------------- فيو رفع ZIP -----------------
-    def upload_time_zip_view(self, request, pk):
-        package = get_object_or_404(GamePackage, pk=pk, game_type='time')
-
-        # GET: صفحة بسيطة لإرفاق الملف (نستخدم نفس قالب الاستيراد العام)
-        if request.method != 'POST':
-            ctx = {
-                **self.admin_site.each_context(request),
-                "opts": self.model._meta,
-                "title": f"رفع ملف ZIP للصور — {package.time_category.name if package.time_category else 'تصنيف'} / حزمة {package.package_number}",
-                "package": package,
-                "accept": ".zip",
-                "download_template_url": "",
-                "export_url": "",
-                "change_url": reverse('admin:games_timepackage_change', args=[package.id]),
-                "back_url": reverse('admin:games_timepackage_changelist'),
-                "help_rows": [
-                    "ارفع ملف ZIP يحتوي على صور اللغز لهذا التصنيف.",
-                    "اسم كل ملف صورة سيُستخدم تلقائيًا كإجابة (بدون الامتداد). مثال: 'السعودية.jpg' → الإجابة: 'السعودية'.",
-                    "الحد الأقصى لعدد الألغاز في الحزمة هو 80.",
-                    "لو أردت استبدال الألغاز الحالية، فعّل خيار الحذف قبل الرفع.",
-                ],
-                "extra_note": "يدعم الامتدادات الشائعة: jpg, jpeg, png, webp, gif, bmp. وإذا لم يكن للملف امتداد نحاول التعرف عليه تلقائيًا (إن أمكن).",
-                "submit_label": "رفع الملف",
-                "replace_label": "حذف الألغاز الحالية قبل الاستيراد",
-            }
-            return TemplateResponse(request, "admin/import_csv.html", ctx)
-
-        # POST: المعالجة
-        file = request.FILES.get('file')
-        replace_existing = bool(request.POST.get('replace'))
-
-        if not file:
-            messages.error(request, "يرجى اختيار ملف ZIP.")
-            return HttpResponseRedirect(request.path)
-
-        # اختياري: حذف الألغاز الحالية
-        if replace_existing:
-            package.time_riddles.all().delete()
-
-        import os, io, zipfile, imghdr
-        from django.core.files.base import ContentFile
-        from django.core.files.storage import default_storage
-
-        # حاول استخدام Cloudinary إن توفر
-        use_cloudinary = False
-        uploader = None
-        try:
-            import cloudinary.uploader as _uploader
-            uploader = _uploader
-            use_cloudinary = True
-        except Exception:
-            use_cloudinary = False
-
-        # أدوات
-        ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
-        def _normalize_name(name: str) -> str:
-            # basename + إزالة المسارات + محاولة إصلاح ترميز zip قديم
-            name = os.path.basename(name)
-            # zip قد يكون cp437؛ لو ظهر ترميز غريب نحاول إصلاحه
-            try:
-                name.encode('utf-8')  # لو اشتغلت فهي UTF-8 أصلاً
-            except Exception:
-                try:
-                    name = name.encode('cp437').decode('utf-8', 'ignore')
-                except Exception:
-                    name = name.encode('latin1', 'ignore').decode('utf-8', 'ignore')
-            return name
-
-        def _answer_from_filename(fname: str) -> str:
-            base, _ext = os.path.splitext(fname)
-            # استبدال الشرطات/الشرطات السفلية بمسافة — ونخلي العربية كما هي
-            base = base.replace('_', ' ').replace('-', ' ').strip()
-            # لو فيه فراغات/حروف زائدة ننظف
-            base = " ".join(base.split())
-            return base
-
-        def _is_image_bytes(data: bytes) -> bool:
-            # محاولة التعرف إن كان صورة لو ما فيه امتداد
-            kind = imghdr.what(None, h=data)
-            return bool(kind)
-
-        # حدّ 80
-        current_count = package.time_riddles.count()
-        max_allowed = 80
-        can_add = max(0, max_allowed - current_count)
-        if can_add <= 0:
-            messages.error(request, f"هذه الحزمة وصلت الحد الأقصى ({max_allowed}) من الألغاز.")
-            return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
-
-        # نحتاج TimeRiddle
-        from .models import TimeRiddle as _TimeRiddle
-
-        # ترتيب بدء من أكبر الموجود + 1
-        start_order = (package.time_riddles.aggregate(Max('order'))['order__max'] or 0) + 1
-
-        added, skipped, failed = 0, 0, 0
-        skipped_reasons = []
-
-        try:
-            with zipfile.ZipFile(file) as zf:
-                # نلفّ كل العناصر بالترتيب
-                for zinfo in zf.infolist():
-                    if added >= can_add:
-                        skipped += 1
-                        skipped_reasons.append("تخطّي الباقي: وصلنا للحد الأقصى 80.")
-                        break
-                    if zinfo.is_dir():
-                        continue
-
-                    raw_name = _normalize_name(zinfo.filename)
-                    if not raw_name:
-                        continue
-
-                    _, ext = os.path.splitext(raw_name)
-                    ext_norm = (ext or "").lower()
-
-                    data = zf.read(zinfo)
-
-                    # تأكد أنه صورة
-                    is_image = False
-                    if ext_norm in ALLOWED_EXTS:
-                        is_image = True
-                    else:
-                        # محاولة التعرف من البايتات (بدون امتداد)
-                        if _is_image_bytes(data):
-                            is_image = True
-
-                    if not is_image:
-                        skipped += 1
-                        if len(skipped_reasons) < 5:
-                            skipped_reasons.append(f"تخطي «{raw_name}»: ليس ملف صورة مدعوم.")
-                        continue
-
-                    # رفع الصورة: Cloudinary أو التخزين الافتراضي
-                    try:
-                        if use_cloudinary and uploader:
-                            # نترك الاسم كما هو (قد يحتوي عربي)
-                            up = uploader.upload(io.BytesIO(data), folder=f"wesh/time/{package.id}", public_id=None, resource_type="image")
-                            image_url = up.get('secure_url') or up.get('url')
-                        else:
-                            # تخزين محلي في media
-                            safe_name = raw_name
-                            # نتأكد عدم التضارب
-                            base, ext0 = os.path.splitext(safe_name)
-                            idx = 1
-                            path = f"time_riddles/{package.id}/{safe_name}"
-                            while default_storage.exists(path):
-                                safe_name = f"{base}_{idx}{ext0}"
-                                path = f"time_riddles/{package.id}/{safe_name}"
-                                idx += 1
-                            saved_path = default_storage.save(path, ContentFile(data))
-                            from django.conf import settings
-                            media_url = getattr(settings, 'MEDIA_URL', '/media/')
-                            image_url = media_url.rstrip('/') + '/' + saved_path.lstrip('/')
-                    except Exception as e:
-                        failed += 1
-                        if len(skipped_reasons) < 5:
-                            skipped_reasons.append(f"فشل رفع «{raw_name}»: {e}")
-                        continue
-
-                    # استنباط الإجابة من اسم الملف (بدون الامتداد)
-                    answer = _answer_from_filename(raw_name)
-
-                    # إنشاء اللغز
-                    try:
-                        _TimeRiddle.objects.create(
-                            package=package,
-                            order=start_order + added,
-                            image_url=image_url,
-                            answer=answer,
-                            hint=""
-                        )
-                        added += 1
-                    except Exception as e:
-                        failed += 1
-                        if len(skipped_reasons) < 5:
-                            skipped_reasons.append(f"فشل إنشاء سجل «{raw_name}»: {e}")
-
-        except zipfile.BadZipFile:
-            messages.error(request, "الملف ليس ZIP صالحًا.")
-            return HttpResponseRedirect(request.path)
-        except Exception as e:
-            messages.error(request, f"حدث خطأ أثناء قراءة الملف: {e}")
-            return HttpResponseRedirect(request.path)
-
-        # رسائل
-        if added and not (failed or skipped):
-            messages.success(request, f"تم رفع {added} صورة بنجاح وإضافتها كلغاز.")
-        else:
-            msg_parts = [f"تمت إضافة {added} لغز."]
-            if skipped:
-                msg_parts.append(f"تخطي {skipped} عنصر.")
-            if failed:
-                msg_parts.append(f"فشل {failed} عنصر.")
-            if skipped_reasons:
-                msg_parts.append("ملاحظات: " + " | ".join(skipped_reasons))
-            level = messages.WARNING if (skipped or failed) else messages.SUCCESS
-            messages.add_message(request, level, " ".join(msg_parts))
-
-        # الرجوع لصفحة تفاصيل الحزمة
-        return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
-
-    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
-    list_filter = ('is_active','is_free','time_category','created_at')
-    search_fields = ('package_number','description','time_category__name')
-    ordering = ('time_category__order','time_category__name','package_number')
-    inlines = [TimeRiddleInline]
-    fieldsets = (
-        ('المعلومات الأساسية', {'fields': ('time_category','package_number','is_free','is_active')}),
-        ('التسعير/الوصف', {'fields': (('original_price','discounted_price','price'),'description')}),
-    )
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(game_type='time').select_related('time_category')
-    def save_model(self, request, obj, form, change):
-        obj.game_type = 'time'
-        super().save_model(request, obj, form, change)
-    def pkg_ref(self, obj):
-        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
-        return format_html("<b>حزمة {}</b>", tag)
-    pkg_ref.short_description = "الحزمة"
-    def category_ref(self, obj):
-        return obj.time_category.name if obj.time_category else "—"
-    category_ref.short_description = "التصنيف"
-    def is_free_icon(self, obj): return "✅" if (obj.is_free or obj.package_number == 0) else "—"
-    is_free_icon.short_description = "مجانية"
-    def status_badge(self, obj):
-        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
-    status_badge.short_description = "الحالة"
-    def manage_riddles(self, obj):
-        url = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
-        return mark_safe(f'<a class="button" href="{url}">🖼️ ألغاز الحزمة</a>')
-    manage_riddles.short_description = "ألغاز"
 
 @admin.register(TimeRiddle)
 class TimeRiddleAdmin(admin.ModelAdmin):
@@ -2120,19 +1332,28 @@ class TimeRiddleAdmin(admin.ModelAdmin):
     list_filter   = ('package__time_category', 'package__is_active', 'created_at')
     search_fields = ('answer', 'hint', 'package__package_number', 'package__time_category__name')
     ordering      = ('package__time_category__order', 'package__package_number', 'order')
+
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('package', 'package__time_category').filter(package__game_type='time')
+        return (super()
+                .get_queryset(request)
+                .select_related('package', 'package__time_category')
+                .filter(package__game_type='time'))
+
     def package_ref(self, obj):
         cat = obj.package.time_category.name if (obj.package and obj.package.time_category) else "—"
         num = obj.package.package_number if obj.package else "—"
         tag = "مجانية" if (obj.package and (obj.package.is_free or obj.package.package_number == 0)) else f"#{num}"
         return format_html("<b>{} / حزمة {}</b>", cat, tag)
     package_ref.short_description = "التصنيف/الحزمة"
+
     def hint_short(self, obj): return (obj.hint or '')[:40]
     hint_short.short_description = "تلميح"
+
     def thumb(self, obj):
-        if not obj.image_url: return "—"
-        return format_html('<img src="{}" style="height:48px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>', escape(obj.image_url))
+        if not obj.image_url:
+            return "—"
+        return format_html('<img src="{}" style="height:48px;border-radius:6px;border:1px solid #ddd;" alt="thumb"/>',
+                           escape(obj.image_url))
     thumb.short_description = "معاينة"
 
 # ========= تحسينات عامة لواجهة الأدمن =========
