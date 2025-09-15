@@ -1468,7 +1468,68 @@ class TimePackage(GamePackage):
         verbose_name = "حزمة - تحدّي الوقت"
         verbose_name_plural = "حزم - تحدّي الوقت"
 
+# ===== تحدّي الوقت: ضبط عدد الألغاز ومنع تكرار order =====
 class TimeRiddleInlineFormSet(forms.models.BaseInlineFormSet):
+    """
+    - حد أقصى 80 لغزًا لكل حزمة.
+    - يمنع تكرار order داخل نفس الحزمة.
+    """
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+
+        alive = []
+        orders = set()
+        dup_orders = set()
+
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE'):
+                continue
+            if (not form.cleaned_data) and (not form.instance.pk):
+                continue
+            alive.append(form)
+            o = form.cleaned_data.get('order') or getattr(form.instance, 'order', None)
+            if o is not None:
+                if o in orders:
+                    dup_orders.add(o)
+                orders.add(o)
+
+        if len(alive) > 80:
+            raise forms.ValidationError("الحدّ الأقصى لعدد الألغاز في حزمة تحدّي الوقت هو 80 صورة.")
+
+        if dup_orders:
+            dup_s = ", ".join(str(x) for x in sorted(dup_orders))
+            raise forms.ValidationError(f"يوجد تكرار في (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
+
+    """
+    - حد أقصى 80 لغزًا لكل حزمة.
+    - يمنع تكرار order داخل نفس الحزمة.
+    """
+    def clean(self):
+        super().clean()
+        if any(self.errors):
+            return
+        alive = []
+        orders = set()
+        dup_orders = set()
+        for form in self.forms:
+            if form.cleaned_data.get('DELETE'):
+                continue
+            if (not form.cleaned_data) and (not form.instance.pk):
+                continue
+            alive.append(form)
+            o = form.cleaned_data.get('order') or getattr(form.instance, 'order', None)
+            if o is not None:
+                if o in orders:
+                    dup_orders.add(o)
+                orders.add(o)
+        if len(alive) > 80:
+            raise forms.ValidationError("الحدّ الأقصى لعدد الألغاز في حزمة تحدّي الوقت هو 80 صورة.")
+        if dup_orders:
+            dup_s = ", ".join(str(x) for x in sorted(dup_orders))
+            raise forms.ValidationError(f"يوجد تكرار في (الترتيب): {dup_s}. اجعل كل ترتيب فريدًا داخل الحزمة.")
+
     """
     - حد أقصى 40 لغزًا لكل حزمة.
     - يمنع تكرار order داخل نفس الحزمة.
@@ -1503,6 +1564,23 @@ class TimeRiddleInline(admin.TabularInline):
     fields = ('order','image_url','answer','hint','thumb_tag')
     readonly_fields = ('thumb_tag',)
     ordering = ('order',)
+
+    def thumb_tag(self, obj):
+        return _img_thumb(getattr(obj, 'image_url', ''))
+    thumb_tag.short_description = "معاينة"
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        field = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if db_field.name == 'answer':
+            field.help_text = "الإجابة تظهر للمقدّم فقط أثناء اللعب، ولا تظهر للمتسابقين."
+        return field
+
+    model = TimeRiddle
+    extra = 0
+    formset = TimeRiddleInlineFormSet
+    fields = ('order','image_url','answer','hint','thumb_tag')
+    readonly_fields = ('thumb_tag',)
+    ordering = ('order',)
     def thumb_tag(self, obj): return _img_thumb(getattr(obj, 'image_url', ''))
     thumb_tag.short_description = "معاينة"
     def formfield_for_dbfield(self, db_field, request, **kwargs):
@@ -1513,6 +1591,497 @@ class TimeRiddleInline(admin.TabularInline):
 
 @admin.register(TimePackage)
 class TimePackageAdmin(admin.ModelAdmin):
+    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
+    list_filter  = ('is_active','is_free','time_category','created_at')
+    search_fields= ('package_number','description','time_category__name')
+    ordering     = ('time_category__order','time_category__name','package_number')
+    inlines      = [TimeRiddleInline]
+    fieldsets    = (
+        ('المعلومات الأساسية', {'fields': ('time_category','package_number','is_free','is_active')}),
+        ('التسعير/الوصف',     {'fields': (('original_price','discounted_price','price'),'description')}),
+    )
+
+    # تأكيد نوع اللعبة
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'time'
+        super().save_model(request, obj, form, change)
+
+    def get_queryset(self, request):
+        return (super()
+                .get_queryset(request)
+                .filter(game_type='time')
+                .select_related('time_category'))
+
+    # أعمدة العرض
+    def pkg_ref(self, obj):
+        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
+        return format_html("<b>حزمة {}</b>", tag)
+    pkg_ref.short_description = "الحزمة"
+
+    def category_ref(self, obj):
+        return obj.time_category.name if obj.time_category else "—"
+    category_ref.short_description = "التصنيف"
+
+    def is_free_icon(self, obj):
+        return "✅" if (obj.is_free or obj.package_number == 0) else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
+    status_badge.short_description = "الحالة"
+
+    def manage_riddles(self, obj):
+        riddles_url    = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
+        upload_zip_url = reverse('admin:games_timepackage_upload_zip', args=[obj.id])
+        return mark_safe(
+            f'<a class="button" href="{riddles_url}"    style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
+            f'<a class="button" href="{upload_zip_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">📦 رفع ZIP</a>'
+        )
+    manage_riddles.short_description = "إجراءات"
+
+    # روابط مخصصة
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("<uuid:pk>/upload-zip/", self.admin_site.admin_view(self.upload_time_zip_view), name="games_timepackage_upload_zip"),
+        ]
+        return custom + urls
+
+    # صفحة رفع ZIP + المعالجة (Cloudinary)
+    def upload_time_zip_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='time')
+
+        # صفحة الرفع
+        if request.method != 'POST':
+            ctx = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "title": f"رفع ملف ZIP للصور — {package.time_category.name if package.time_category else 'تصنيف'} / حزمة {package.package_number}",
+                "package": package,
+                "accept": ".zip",
+                "download_template_url": "",
+                "export_url": "",
+                "change_url": reverse('admin:games_timepackage_change', args=[package.id]),
+                "back_url": reverse('admin:games_timepackage_changelist'),
+                "help_rows": [
+                    "ارفع ملف ZIP يحتوي على صور اللغز لهذا التصنيف.",
+                    "اسم كل ملف صورة سيُستخدم تلقائيًا كإجابة (بدون الامتداد). مثال: 'السعودية.jpg' → الإجابة: 'السعودية'.",
+                    "الحد الأقصى للحزمة: 80 لغز.",
+                    "لو أردت استبدال الألغاز الحالية، فعّل خيار الحذف قبل الرفع.",
+                ],
+                "extra_note": "يدعم: jpg, jpeg, png, webp, gif, bmp. وإن لم يوجد امتداد سنحاول التعرف على الصورة تلقائيًا.",
+                "submit_label": "رفع الملف",
+                "replace_label": "حذف الألغاز الحالية قبل الاستيراد",
+            }
+            return TemplateResponse(request, "admin/import_csv.html", ctx)
+
+        # POST: المعالجة
+        file = request.FILES.get('file')
+        replace_existing = bool(request.POST.get('replace'))
+
+        if not file:
+            messages.error(request, "يرجى اختيار ملف ZIP.")
+            return HttpResponseRedirect(request.path)
+
+        if replace_existing:
+            package.time_riddles.all().delete()
+
+        import os, io, zipfile, imghdr
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+
+        # Cloudinary لو متوفّر (نستخدم الإعدادات من settings.py/.env)
+        use_cloudinary = False
+        uploader = None
+        try:
+            import cloudinary.uploader as _uploader
+            uploader = _uploader
+            use_cloudinary = True
+        except Exception:
+            use_cloudinary = False
+
+        ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+
+        def _normalize_name(name: str) -> str:
+            name = os.path.basename(name)
+            # إصلاح أسماء غير UTF-8 في بعض ملفات zip
+            try:
+                name.encode('utf-8')
+            except Exception:
+                try:
+                    name = name.encode('cp437').decode('utf-8', 'ignore')
+                except Exception:
+                    name = name.encode('latin1', 'ignore').decode('utf-8', 'ignore')
+            return name
+
+        def _answer_from_filename(fname: str) -> str:
+            base, _ext = os.path.splitext(fname)
+            base = base.replace('_', ' ').replace('-', ' ').strip()
+            return " ".join(base.split())  # يبقي العربية كما هي
+
+        def _is_image_bytes(data: bytes) -> bool:
+            return bool(imghdr.what(None, h=data))
+
+        # حد أقصى 80
+        current_count = package.time_riddles.count()
+        max_allowed   = 80
+        can_add       = max(0, max_allowed - current_count)
+        if can_add <= 0:
+            messages.error(request, f"هذه الحزمة وصلت الحد الأقصى ({max_allowed}) من الألغاز.")
+            return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
+
+        start_order = (package.time_riddles.aggregate(Max('order'))['order__max'] or 0) + 1
+
+        added = skipped = failed = 0
+        notes = []
+
+        try:
+            with zipfile.ZipFile(file) as zf:
+                for zinfo in zf.infolist():
+                    if added >= can_add:
+                        skipped += 1
+                        notes.append("تخطي الباقي: وصلنا للحد الأقصى 80.")
+                        break
+                    if zinfo.is_dir():
+                        continue
+
+                    raw_name = _normalize_name(zinfo.filename)
+                    if not raw_name:
+                        continue
+
+                    _, ext = os.path.splitext(raw_name)
+                    ext_norm = (ext or "").lower()
+
+                    data = zf.read(zinfo)
+
+                    is_image = (ext_norm in ALLOWED_EXTS) or _is_image_bytes(data)
+                    if not is_image:
+                        skipped += 1
+                        if len(notes) < 5:
+                            notes.append(f"تخطي «{raw_name}»: ليس ملف صورة مدعوم.")
+                        continue
+
+                    # الرفع
+                    try:
+                        if use_cloudinary and uploader:
+                            up = uploader.upload(
+                                io.BytesIO(data),
+                                folder=f"wesh/time/{package.id}",
+                                public_id=None,
+                                resource_type="image",
+                            )
+                            image_url = up.get('secure_url') or up.get('url')
+                        else:
+                            # تخزين محلي (MEDIA)
+                            safe_name = raw_name
+                            base, ext0 = os.path.splitext(safe_name)
+                            idx = 1
+                            path = f"time_riddles/{package.id}/{safe_name}"
+                            while default_storage.exists(path):
+                                safe_name = f"{base}_{idx}{ext0}"
+                                path = f"time_riddles/{package.id}/{safe_name}"
+                                idx += 1
+                            saved_path = default_storage.save(path, ContentFile(data))
+                            from django.conf import settings
+                            media_url = getattr(settings, 'MEDIA_URL', '/media/')
+                            image_url = media_url.rstrip('/') + '/' + saved_path.lstrip('/')
+                    except Exception as e:
+                        failed += 1
+                        if len(notes) < 5:
+                            notes.append(f"فشل رفع «{raw_name}»: {e}")
+                        continue
+
+                    # الإجابة من اسم الملف (بدون الامتداد)
+                    answer = _answer_from_filename(raw_name)
+
+                    try:
+                        TimeRiddle.objects.create(
+                            package=package,
+                            order=start_order + added,
+                            image_url=image_url,
+                            answer=answer,
+                            hint=""
+                        )
+                        added += 1
+                    except Exception as e:
+                        failed += 1
+                        if len(notes) < 5:
+                            notes.append(f"فشل إنشاء سجل «{raw_name}»: {e}")
+
+        except zipfile.BadZipFile:
+            messages.error(request, "الملف ليس ZIP صالحًا.")
+            return HttpResponseRedirect(request.path)
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء قراءة الملف: {e}")
+            return HttpResponseRedirect(request.path)
+
+        # رسائل مختصرة
+        if added and not (failed or skipped):
+            messages.success(request, f"تم رفع {added} صورة بنجاح وإضافتها كلغاز.")
+        else:
+            parts = [f"تمت إضافة {added} لغز."]
+            if skipped: parts.append(f"تخطي {skipped} عنصر.")
+            if failed:  parts.append(f"فشل {failed} عنصر.")
+            if notes:   parts.append("ملاحظات: " + " | ".join(notes))
+            level = messages.WARNING if (skipped or failed) else messages.SUCCESS
+            messages.add_message(request, level, " ".join(parts))
+
+        return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
+
+    list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
+    list_filter = ('is_active','is_free','time_category','created_at')
+    search_fields = ('package_number','description','time_category__name')
+    ordering = ('time_category__order','time_category__name','package_number')
+    inlines = [TimeRiddleInline]
+    fieldsets = (
+        ('المعلومات الأساسية', {'fields': ('time_category','package_number','is_free','is_active')}),
+        ('التسعير/الوصف', {'fields': (('original_price','discounted_price','price'),'description')}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='time').select_related('time_category')
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'time'
+        super().save_model(request, obj, form, change)
+
+    def pkg_ref(self, obj):
+        tag = "مجانية" if obj.is_free or obj.package_number == 0 else f"#{obj.package_number}"
+        return format_html("<b>حزمة {}</b>", tag)
+    pkg_ref.short_description = "الحزمة"
+
+    def category_ref(self, obj):
+        return obj.time_category.name if obj.time_category else "—"
+    category_ref.short_description = "التصنيف"
+
+    def is_free_icon(self, obj):
+        return "✅" if (obj.is_free or obj.package_number == 0) else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return mark_safe(f"<b style='color:{'green' if obj.is_active else 'red'};'>{'فعّالة' if obj.is_active else 'غير فعّالة'}</b>")
+    status_badge.short_description = "الحالة"
+
+    def manage_riddles(self, obj):
+        list_url = reverse('admin:games_timeriddle_changelist') + f'?package__id__exact={obj.id}'
+        upload_zip_url = reverse('admin:games_timepackage_upload_zip', args=[obj.id])
+        return mark_safe(
+            f'<a class="button" href="{list_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
+            f'<a class="button" href="{upload_zip_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">📦 رفع ZIP</a>'
+        )
+    manage_riddles.short_description = "إجراءات"
+
+    # ----------------- روابط مخصصة -----------------
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("<uuid:pk>/upload-zip/", self.admin_site.admin_view(self.upload_time_zip_view), name="games_timepackage_upload_zip"),
+        ]
+        return custom + urls
+
+    # ----------------- فيو رفع ZIP -----------------
+    def upload_time_zip_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='time')
+
+        # GET: صفحة بسيطة لإرفاق الملف (نستخدم نفس قالب الاستيراد العام)
+        if request.method != 'POST':
+            ctx = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "title": f"رفع ملف ZIP للصور — {package.time_category.name if package.time_category else 'تصنيف'} / حزمة {package.package_number}",
+                "package": package,
+                "accept": ".zip",
+                "download_template_url": "",
+                "export_url": "",
+                "change_url": reverse('admin:games_timepackage_change', args=[package.id]),
+                "back_url": reverse('admin:games_timepackage_changelist'),
+                "help_rows": [
+                    "ارفع ملف ZIP يحتوي على صور اللغز لهذا التصنيف.",
+                    "اسم كل ملف صورة سيُستخدم تلقائيًا كإجابة (بدون الامتداد). مثال: 'السعودية.jpg' → الإجابة: 'السعودية'.",
+                    "الحد الأقصى لعدد الألغاز في الحزمة هو 80.",
+                    "لو أردت استبدال الألغاز الحالية، فعّل خيار الحذف قبل الرفع.",
+                ],
+                "extra_note": "يدعم الامتدادات الشائعة: jpg, jpeg, png, webp, gif, bmp. وإذا لم يكن للملف امتداد نحاول التعرف عليه تلقائيًا (إن أمكن).",
+                "submit_label": "رفع الملف",
+                "replace_label": "حذف الألغاز الحالية قبل الاستيراد",
+            }
+            return TemplateResponse(request, "admin/import_csv.html", ctx)
+
+        # POST: المعالجة
+        file = request.FILES.get('file')
+        replace_existing = bool(request.POST.get('replace'))
+
+        if not file:
+            messages.error(request, "يرجى اختيار ملف ZIP.")
+            return HttpResponseRedirect(request.path)
+
+        # اختياري: حذف الألغاز الحالية
+        if replace_existing:
+            package.time_riddles.all().delete()
+
+        import os, io, zipfile, imghdr
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+
+        # حاول استخدام Cloudinary إن توفر
+        use_cloudinary = False
+        uploader = None
+        try:
+            import cloudinary.uploader as _uploader
+            uploader = _uploader
+            use_cloudinary = True
+        except Exception:
+            use_cloudinary = False
+
+        # أدوات
+        ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+        def _normalize_name(name: str) -> str:
+            # basename + إزالة المسارات + محاولة إصلاح ترميز zip قديم
+            name = os.path.basename(name)
+            # zip قد يكون cp437؛ لو ظهر ترميز غريب نحاول إصلاحه
+            try:
+                name.encode('utf-8')  # لو اشتغلت فهي UTF-8 أصلاً
+            except Exception:
+                try:
+                    name = name.encode('cp437').decode('utf-8', 'ignore')
+                except Exception:
+                    name = name.encode('latin1', 'ignore').decode('utf-8', 'ignore')
+            return name
+
+        def _answer_from_filename(fname: str) -> str:
+            base, _ext = os.path.splitext(fname)
+            # استبدال الشرطات/الشرطات السفلية بمسافة — ونخلي العربية كما هي
+            base = base.replace('_', ' ').replace('-', ' ').strip()
+            # لو فيه فراغات/حروف زائدة ننظف
+            base = " ".join(base.split())
+            return base
+
+        def _is_image_bytes(data: bytes) -> bool:
+            # محاولة التعرف إن كان صورة لو ما فيه امتداد
+            kind = imghdr.what(None, h=data)
+            return bool(kind)
+
+        # حدّ 80
+        current_count = package.time_riddles.count()
+        max_allowed = 80
+        can_add = max(0, max_allowed - current_count)
+        if can_add <= 0:
+            messages.error(request, f"هذه الحزمة وصلت الحد الأقصى ({max_allowed}) من الألغاز.")
+            return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
+
+        # نحتاج TimeRiddle
+        from .models import TimeRiddle as _TimeRiddle
+
+        # ترتيب بدء من أكبر الموجود + 1
+        start_order = (package.time_riddles.aggregate(Max('order'))['order__max'] or 0) + 1
+
+        added, skipped, failed = 0, 0, 0
+        skipped_reasons = []
+
+        try:
+            with zipfile.ZipFile(file) as zf:
+                # نلفّ كل العناصر بالترتيب
+                for zinfo in zf.infolist():
+                    if added >= can_add:
+                        skipped += 1
+                        skipped_reasons.append("تخطّي الباقي: وصلنا للحد الأقصى 80.")
+                        break
+                    if zinfo.is_dir():
+                        continue
+
+                    raw_name = _normalize_name(zinfo.filename)
+                    if not raw_name:
+                        continue
+
+                    _, ext = os.path.splitext(raw_name)
+                    ext_norm = (ext or "").lower()
+
+                    data = zf.read(zinfo)
+
+                    # تأكد أنه صورة
+                    is_image = False
+                    if ext_norm in ALLOWED_EXTS:
+                        is_image = True
+                    else:
+                        # محاولة التعرف من البايتات (بدون امتداد)
+                        if _is_image_bytes(data):
+                            is_image = True
+
+                    if not is_image:
+                        skipped += 1
+                        if len(skipped_reasons) < 5:
+                            skipped_reasons.append(f"تخطي «{raw_name}»: ليس ملف صورة مدعوم.")
+                        continue
+
+                    # رفع الصورة: Cloudinary أو التخزين الافتراضي
+                    try:
+                        if use_cloudinary and uploader:
+                            # نترك الاسم كما هو (قد يحتوي عربي)
+                            up = uploader.upload(io.BytesIO(data), folder=f"wesh/time/{package.id}", public_id=None, resource_type="image")
+                            image_url = up.get('secure_url') or up.get('url')
+                        else:
+                            # تخزين محلي في media
+                            safe_name = raw_name
+                            # نتأكد عدم التضارب
+                            base, ext0 = os.path.splitext(safe_name)
+                            idx = 1
+                            path = f"time_riddles/{package.id}/{safe_name}"
+                            while default_storage.exists(path):
+                                safe_name = f"{base}_{idx}{ext0}"
+                                path = f"time_riddles/{package.id}/{safe_name}"
+                                idx += 1
+                            saved_path = default_storage.save(path, ContentFile(data))
+                            from django.conf import settings
+                            media_url = getattr(settings, 'MEDIA_URL', '/media/')
+                            image_url = media_url.rstrip('/') + '/' + saved_path.lstrip('/')
+                    except Exception as e:
+                        failed += 1
+                        if len(skipped_reasons) < 5:
+                            skipped_reasons.append(f"فشل رفع «{raw_name}»: {e}")
+                        continue
+
+                    # استنباط الإجابة من اسم الملف (بدون الامتداد)
+                    answer = _answer_from_filename(raw_name)
+
+                    # إنشاء اللغز
+                    try:
+                        _TimeRiddle.objects.create(
+                            package=package,
+                            order=start_order + added,
+                            image_url=image_url,
+                            answer=answer,
+                            hint=""
+                        )
+                        added += 1
+                    except Exception as e:
+                        failed += 1
+                        if len(skipped_reasons) < 5:
+                            skipped_reasons.append(f"فشل إنشاء سجل «{raw_name}»: {e}")
+
+        except zipfile.BadZipFile:
+            messages.error(request, "الملف ليس ZIP صالحًا.")
+            return HttpResponseRedirect(request.path)
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء قراءة الملف: {e}")
+            return HttpResponseRedirect(request.path)
+
+        # رسائل
+        if added and not (failed or skipped):
+            messages.success(request, f"تم رفع {added} صورة بنجاح وإضافتها كلغاز.")
+        else:
+            msg_parts = [f"تمت إضافة {added} لغز."]
+            if skipped:
+                msg_parts.append(f"تخطي {skipped} عنصر.")
+            if failed:
+                msg_parts.append(f"فشل {failed} عنصر.")
+            if skipped_reasons:
+                msg_parts.append("ملاحظات: " + " | ".join(skipped_reasons))
+            level = messages.WARNING if (skipped or failed) else messages.SUCCESS
+            messages.add_message(request, level, " ".join(msg_parts))
+
+        # الرجوع لصفحة تفاصيل الحزمة
+        return HttpResponseRedirect(reverse('admin:games_timepackage_change', args=[package.id]))
+
     list_display = ('pkg_ref','category_ref','is_free_icon','status_badge','created_at','manage_riddles')
     list_filter = ('is_active','is_free','time_category','created_at')
     search_fields = ('package_number','description','time_category__name')
