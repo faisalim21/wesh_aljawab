@@ -338,11 +338,6 @@
                      data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
                     شراء
                   </a>
-                  {% if used_before_ids and package.id in used_before_ids %}
-                    <div class="note-line">
-                      سبق لك استخدام هذه الحزمة — إن أردت اللعب مرة أخرى ستحتاج لشرائها مجددًا.
-                    </div>
-                  {% endif %}
                 {% endif %}
               </div>
 

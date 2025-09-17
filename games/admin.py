@@ -415,7 +415,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
         if replace_existing:
             package.letters_questions.all().delete()
 
-        # util: normalize
+        # ===== أدوات التطبيع/التحويل =====
         import re, unicodedata
         try:
             import openpyxl
@@ -424,100 +424,173 @@ class LettersPackageAdmin(admin.ModelAdmin):
             HAS_OPENPYXL = False
 
         ARABIC_INDIC = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+        _TATWEEL = "\u0640"
+        _LRM_RLM = {"\u200f", "\u200e"}
+        # لا نحذف U+0654 (Hamza Above) حتى لا نفسد "رئيسي/رئيسي"
+        _STRIPPABLE_DIACRITICS = {
+            "\u064b", "\u064c", "\u064d",  # تنوين
+            "\u064e", "\u064f", "\u0650",  # فتحة/ضمة/كسرة
+            "\u0651", "\u0652",            # شدة/سكون
+            "\u0653",                      # مد
+        }
 
         def strip_diacritics(s: str) -> str:
-            s = s.replace("\u0640", "")  # TATWEEL
-            norm = unicodedata.normalize('NFD', s)
-            return "".join(ch for ch in norm if unicodedata.category(ch) != 'Mn')
+            """إزالة التشكيل الشائع + التطويل + محارف الاتجاه الخفية، مع الإبقاء على U+0654."""
+            out = []
+            for ch in s or "":
+                if ch == _TATWEEL or ch in _LRM_RLM:
+                    continue
+                if ch in _STRIPPABLE_DIACRITICS:
+                    continue
+                out.append(ch)
+            return "".join(out)
+
+        def _clean_spaces(s: str) -> str:
+            # توحيد الفواصل/الشرطات لمسافة واحدة
+            s = re.sub(r"[\/\-]", " ", s)
+            s = re.sub(r"\s+", " ", s)
+            return s.strip()
 
         def normalize_qtype(raw):
+            """توحيد (نوع السؤال) إلى one of: main | alt1..alt4"""
             if raw is None:
                 return None
             s = str(raw).strip()
             if not s:
                 return None
+
             s = s.replace("\u200f", "").replace("\u200e", "")
             s = strip_diacritics(s)
             s = s.translate(ARABIC_INDIC)
-            s = re.sub(r"\s+", " ", s).lower().strip()
+            s = _clean_spaces(s).lower()
+
+            # إزالة "ال" من البداية لتوافق "البديل"
             s_wo_al = s[2:] if s.startswith("ال") else s
             candidates = {s, s_wo_al}
+
+            # خرائط مباشرة موسّعة
             direct_map = {
-                "main":"main","رئيسي":"main","اساسي":"main","أساسي":"main","رئيس":"main",
-                "alt1":"alt1","alt 1":"alt1","بديل1":"alt1","بديل 1":"alt1","بديل اول":"alt1","بديل أول":"alt1",
-                "alt2":"alt2","alt 2":"alt2","بديل2":"alt2","بديل 2":"alt2","بديل ثاني":"alt2","بديل الثاني":"alt2",
-                "alt3":"alt3","alt 3":"alt3","بديل3":"alt3","بديل 3":"alt3","بديل ثالث":"alt3","بديل الثالث":"alt3",
-                "alt4":"alt4","alt 4":"alt4","بديل4":"alt4","بديل 4":"alt4","بديل رابع":"alt4","بديل الرابع":"alt4",
+                # main
+                "main": "main",
+                "رئيسي": "main", "رئيسي": "main", "اساسي": "main", "أساسي": "main", "رئيس": "main",
+                # alt1..4 + صيغ شائعة
+                "alt1": "alt1", "alt 1": "alt1", "بديل1": "alt1", "بديل 1": "alt1", "بديل اول": "alt1", "بديل أول": "alt1",
+                "alt2": "alt2", "alt 2": "alt2", "بديل2": "alt2", "بديل 2": "alt2", "بديل ثاني": "alt2", "بديل الثاني": "alt2",
+                "alt3": "alt3", "alt 3": "alt3", "بديل3": "alt3", "بديل 3": "alt3", "بديل ثالث": "alt3", "بديل الثالث": "alt3",
+                "alt4": "alt4", "alt 4": "alt4", "بديل4": "alt4", "بديل 4": "alt4", "بديل رابع": "alt4", "بديل الرابع": "alt4",
             }
+
+            # أضف متغيّرات بعد استبدال الشرطات/السلاش
+            for c in list(candidates):
+                candidates.add(_clean_spaces(c.replace("-", " ").replace("/", " ")))
+
             for c in candidates:
                 if c in direct_map:
                     return direct_map[c]
+
+            # "بديل 1..4"
             for c in candidates:
                 m = re.match(r"^(?:ال)?بديل\s*([1-4])$", c)
-                if m: return f"alt{m.group(1)}"
-            ordinal_map = {"اول":"1","أول":"1","ثاني":"2","ثالث":"3","رابع":"4"}
+                if m:
+                    return f"alt{m.group(1)}"
+
+            # "بديل أول/ثاني/ثالث/رابع"
+            ordinal_map = {"اول": "1", "أول": "1", "ثاني": "2", "ثالث": "3", "رابع": "4"}
             for c in candidates:
                 for ord_, num in ordinal_map.items():
                     if re.match(rf"^(?:ال)?بديل\s*{ord_}$", c):
                         return f"alt{num}"
-            m = re.match(r"^alt\s*([1-4])$", s)
-            if m: return f"alt{m.group(1)}"
+
+            # "alt 1..4"
+            for c in candidates:
+                m = re.match(r"^alt\s*([1-4])$", c)
+                if m:
+                    return f"alt{m.group(1)}"
+
             return None
 
         added = 0
         failed_rows = 0
         failed_examples = []
+        blank_rows = 0
 
         def upsert_row(letter, qtype_raw, question, answer, category):
-            nonlocal added, failed_rows, failed_examples
+            nonlocal added, failed_rows, failed_examples, blank_rows
+            # تجاهل الصفوف الفارغة تمامًا
+            if not any([letter, qtype_raw, question, answer, category]):
+                blank_rows += 1
+                return
+
             qtype = normalize_qtype(qtype_raw)
             if not qtype:
                 failed_rows += 1
                 if len(failed_examples) < 5:
                     failed_examples.append(f"[الحرف={letter!s}, النوع='{qtype_raw!s}']")
                 return
+
             LettersGameQuestion.objects.update_or_create(
-                package=package, letter=str(letter).strip(), question_type=qtype,
-                defaults={'question': question or '', 'answer': answer or '', 'category': category or ''})
+                package=package,
+                letter=str(letter or "").strip(),
+                question_type=qtype,
+                defaults={
+                    'question': (question or '').strip(),
+                    'answer':   (answer   or '').strip(),
+                    'category': (category or '').strip()
+                }
+            )
             added += 1
 
         try:
             name = file.name.lower()
+
             if name.endswith('.csv'):
                 decoded = file.read().decode('utf-8-sig', errors='ignore')
                 reader = csv.reader(io.StringIO(decoded))
-                next(reader, None)
+                next(reader, None)  # تخطّي الهيدر
                 for row in reader:
                     if not row or len(row) < 5:
                         failed_rows += 1
                         continue
-                    letter, qtype_raw, question, answer, category = [(str(x).strip() if x is not None else '') for x in row[:5]]
+                    letter, qtype_raw, question, answer, category = [
+                        (str(x).strip() if x is not None else '') for x in row[:5]
+                    ]
                     upsert_row(letter, qtype_raw, question, answer, category)
 
             elif name.endswith(('.xlsx', '.xlsm', '.xltx', '.xltm')):
                 if not HAS_OPENPYXL:
                     messages.error(request, "openpyxl غير مثبت. ثبّت الحزمة لاستخدام ملفات Excel.")
                     return HttpResponseRedirect(request.path)
+
                 wb = openpyxl.load_workbook(file, data_only=True)
                 sh = wb.active
                 for row in sh.iter_rows(min_row=2, values_only=True):
                     if not row or len(row) < 5:
                         failed_rows += 1
                         continue
-                    letter, qtype_raw, question, answer, category = [(str(x).strip() if x is not None else '') for x in row[:5]]
+                    letter, qtype_raw, question, answer, category = [
+                        (str(x).strip() if x is not None else '') for x in row[:5]
+                    ]
                     upsert_row(letter, qtype_raw, question, answer, category)
             else:
                 messages.error(request, "نوع الملف غير مدعوم. ارفع CSV أو Excel.")
                 return HttpResponseRedirect(request.path)
 
-            if failed_rows and not added:
+            # رسائل النتيجة
+            if added == 0 and failed_rows > 0:
                 msg = "لم يتم التعرف على أي صف. تفقد عمود (نوع السؤال)."
-                if failed_examples: msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
+                if failed_examples:
+                    msg += " أمثلة متجاهلة: " + ", ".join(failed_examples)
                 messages.error(request, msg)
-            elif failed_rows:
-                msg = f"تمت إضافة/تحديث {added} سؤال. تم تجاهل {failed_rows} صف بسبب نوع سؤال غير مفهوم."
-                if failed_examples: msg += " أمثلة: " + ", ".join(failed_examples)
-                messages.warning(request, msg)
+            elif failed_rows > 0 or blank_rows > 0:
+                parts = [f"تمت إضافة/تحديث {added} سؤال."]
+                if failed_rows:
+                    p = f"تجاهل {failed_rows} صف بسبب (نوع سؤال) غير مفهوم"
+                    if failed_examples:
+                        p += " — أمثلة: " + ", ".join(failed_examples)
+                    parts.append(p)
+                if blank_rows:
+                    parts.append(f"تم تخطي {blank_rows} صف فارغ.")
+                messages.warning(request, " ".join(parts))
             else:
                 messages.success(request, f"تم إضافة/تحديث {added} سؤال.")
 
@@ -526,6 +599,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
         except Exception as e:
             messages.error(request, f"خطأ أثناء الرفع: {e}")
             return HttpResponseRedirect(request.path)
+
 
     def download_letters_template_view(self, request):
         # CSV بسيط (متوافق دائمًا)
