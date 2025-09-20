@@ -670,6 +670,7 @@ class ImagesPackageAdmin(admin.ModelAdmin):
     actions = (action_mark_active, action_mark_inactive, action_export_csv)
     ordering = ('package_number',)
     inlines = [PictureRiddleInline]
+
     fieldsets = (
         ('المعلومات الأساسية', {
             'fields': (
@@ -680,41 +681,284 @@ class ImagesPackageAdmin(admin.ModelAdmin):
         }),
         ('المحتوى', {'fields': ('description',)}),
     )
+
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(game_type='images').annotate(_rcount=Count('picture_riddles'))
-    def package_info(self, obj): return f"حزمة {obj.package_number}"
+        return (super()
+                .get_queryset(request)
+                .filter(game_type='images')
+                .annotate(_rcount=Count('picture_riddles')))
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package_number}"
     package_info.short_description = "الرقم"
+
     def riddles_count_badge(self, obj):
         cnt = getattr(obj, '_rcount', 0)
         limit = getattr(obj, 'picture_limit', (10 if obj.is_free else 22))
-        if cnt == 0: color, icon = '#94a3b8','—'
-        elif cnt > limit: color, icon = '#ef4444','⚠️'
-        elif cnt == limit: color, icon = '#10b981','✅'
-        else: color, icon = '#f59e0b','🧩'
+        if cnt == 0:
+            color, icon = '#94a3b8','—'
+        elif cnt > limit:
+            color, icon = '#ef4444','⚠️'
+        elif cnt == limit:
+            color, icon = '#10b981','✅'
+        else:
+            color, icon = '#f59e0b','🧩'
         return format_html('<span style="color:{};font-weight:700;">{} {}/{} </span>', color, icon, cnt, limit)
     riddles_count_badge.short_description = "ألغاز الحزمة"
+
     def price_info(self, obj):
-        if obj.is_free: return "🆓 مجانية"
+        if obj.is_free:
+            return "🆓 مجانية"
         if getattr(obj, 'has_discount', False):
             return format_html('<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → <b style="color:#0ea5e9;">{} ﷼</b>', obj.original_price, obj.discounted_price)
         return f"💰 {obj.price} ريال"
     price_info.short_description = "السعر"
-    def is_free_icon(self, obj): return "✅" if obj.is_free else "—"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
     is_free_icon.short_description = "مجانية"
+
     def status_badge(self, obj):
         return format_html('<b style="color:{};">{}</b>', 'green' if obj.is_active else 'red', 'فعّالة' if obj.is_active else 'غير فعّالة')
     status_badge.short_description = "الحالة"
+
     def generic_actions(self, obj):
-        list_url = reverse('admin:games_pictureriddle_changelist') + f'?package__id__exact={obj.id}'
-        add_url  = reverse('admin:games_pictureriddle_add') + f'?package={obj.id}'
+        list_url   = reverse('admin:games_pictureriddle_changelist') + f'?package__id__exact={obj.id}'
+        add_url    = reverse('admin:games_pictureriddle_add') + f'?package={obj.id}'
+        upload_zip = reverse('admin:games_imagespackage_upload_zip', args=[obj.id])
         return mark_safe(
-            f'<a class="button" href="{list_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
-            f'<a class="button" href="{add_url}"  style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;">➕ إضافة لغز</a>'
+            f'<a class="button" href="{list_url}"   style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">🖼️ عرض الألغاز</a>'
+            f'<a class="button" href="{add_url}"    style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;margin-left:6px;">➕ إضافة لغز</a>'
+            f'<a class="button" href="{upload_zip}" style="background:#a78bfa;color:#0b1220;padding:4px 8px;border-radius:6px;">📦 رفع ZIP</a>'
         )
     generic_actions.short_description = "إجراءات"
+
     def save_model(self, request, obj, form, change):
         obj.game_type = 'images'
         super().save_model(request, obj, form, change)
+
+    # -------- روابط مخصصة (رفع ZIP) --------
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path("<uuid:pk>/upload-zip/", self.admin_site.admin_view(self.upload_images_zip_view), name="games_imagespackage_upload_zip"),
+        ]
+        return custom + urls
+
+    def upload_images_zip_view(self, request, pk):
+        """
+        يرفع ملف ZIP، يحمّل الصور إلى Cloudinary (إن توفر) أو التخزين المحلي،
+        ثم ينشئ PictureRiddle مع استخراج الإجابة والتلميح من اسم الملف.
+        صيغ اسم الملف المدعومة لاستخراج التلميح (اختياري):
+          - الإجابة__التلميح.jpg        ← شرطان سفليّان
+          - الإجابة -- التلميح.jpg      ← شرطتان
+          - الإجابة - التلميح.jpg       ← شرطة واحدة تفصل بمسافات
+          - الإجابة (التلميح).jpg       ← بين أقواس
+          - الإجابة [التلميح].jpg       ← بين معقوفين
+        إذا لم يوجد تلميح، نتركه فارغًا.
+        """
+        package = get_object_or_404(GamePackage, pk=pk, game_type='images')
+
+        # GET: صفحة رفع
+        if request.method != 'POST':
+            ctx = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "title": f"رفع ملف ZIP للصور — حزمة الصور {package.package_number}",
+                "package": package,
+                "accept": ".zip",
+                "download_template_url": "",
+                "export_url": "",
+                "change_url": reverse('admin:games_imagespackage_change', args=[package.id]),
+                "back_url": reverse('admin:games_imagespackage_changelist'),
+                "help_rows": [
+                    "ارفع ملف ZIP يحتوي على صور ألغاز هذه الحزمة.",
+                    "الإجابة تُستخرج من اسم الملف بدون الامتداد.",
+                    "لإضافة تلميح اختياري، استخدم إحدى الصيغ: الإجابة__التلميح | الإجابة - التلميح | الإجابة (التلميح) | الإجابة [التلميح].",
+                    "سيتم احترام حد الحزمة (مجانية: 10 / مدفوعة: 22) أو picture_limit إن وُجد.",
+                ],
+                "extra_note": "يدعم: jpg, jpeg, png, webp, gif, bmp. وسنحاول التعرف حتى لو لم يوجد امتداد.",
+                "submit_label": "رفع الملف",
+                "replace_label": "حذف الألغاز الحالية قبل الاستيراد",
+            }
+            return TemplateResponse(request, "admin/import_csv.html", ctx)
+
+        # POST: معالجة الملف
+        file = request.FILES.get('file')
+        replace_existing = bool(request.POST.get('replace'))
+
+        if not file:
+            messages.error(request, "يرجى اختيار ملف ZIP.")
+            return HttpResponseRedirect(request.path)
+
+        if replace_existing:
+            package.picture_riddles.all().delete()
+
+        import os, io, zipfile, imghdr, re
+        from django.core.files.base import ContentFile
+        from django.core.files.storage import default_storage
+
+        # Cloudinary إن توفّر
+        use_cloudinary = False
+        uploader = None
+        try:
+            import cloudinary.uploader as _uploader
+            uploader = _uploader
+            use_cloudinary = True
+        except Exception:
+            use_cloudinary = False
+
+        ALLOWED_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp'}
+
+        def _normalize_name(name: str) -> str:
+            name = os.path.basename(name)
+            try:
+                name.encode('utf-8')
+            except Exception:
+                try:
+                    name = name.encode('cp437').decode('utf-8', 'ignore')
+                except Exception:
+                    name = name.encode('latin1', 'ignore').decode('utf-8', 'ignore')
+            return name
+
+        def _split_answer_hint(stem: str):
+            """
+            يحوّل اسم الملف (بدون الامتداد) إلى (answer, hint)
+            أمثلة:
+              "ألمانيا__أوروبا" → ("ألمانيا","أوروبا")
+              "تويوتا - يابانية" → ("تويوتا","يابانية")
+              "برج_إيفل (باريس)" → ("برج إيفل","باريس")
+              "بي إم دبليو" → ("بي إم دبليو","")
+            """
+            s = stem.strip()
+            s = re.sub(r"[_]+", " ", s).strip()  # تحوير _ إلى مسافة (للإجابة بشكل أجمل)
+            # 1) __
+            if "__" in s:
+                a, h = s.split("__", 1)
+                return a.strip(), h.strip()
+            # 2) -- (بمسافات أو بدون)
+            if " -- " in s:
+                a, h = s.split(" -- ", 1)
+                return a.strip(), h.strip()
+            # 3) " - " (شرطة ومسافات)
+            if " - " in s:
+                a, h = s.split(" - ", 1)
+                return a.strip(), h.strip()
+            # 4) بين أقواس/معقوفين
+            m = re.match(r"^(.*?)[\s]*\((.+)\)$", s)
+            if m:
+                return m.group(1).strip(), m.group(2).strip()
+            m = re.match(r"^(.*?)[\s]*\[(.+)\]$", s)
+            if m:
+                return m.group(1).strip(), m.group(2).strip()
+            return s, ""  # لا يوجد تلميح
+
+        def _is_image_bytes(data: bytes) -> bool:
+            return bool(imghdr.what(None, h=data))
+
+        # حد الحزمة
+        current_count = package.picture_riddles.count()
+        limit = getattr(package, 'picture_limit', (10 if package.is_free else 22))
+        can_add = max(0, limit - current_count)
+        if can_add <= 0:
+            messages.error(request, f"هذه الحزمة وصلت الحد الأقصى ({limit}) من الألغاز.")
+            return HttpResponseRedirect(reverse('admin:games_imagespackage_change', args=[package.id]))
+
+        start_order = (package.picture_riddles.aggregate(Max('order'))['order__max'] or 0) + 1
+
+        added = skipped = failed = 0
+        notes = []
+
+        try:
+            with zipfile.ZipFile(file) as zf:
+                for zinfo in zf.infolist():
+                    if added >= can_add:
+                        skipped += 1
+                        notes.append(f"تخطّي الباقي: وصلنا للحد {limit}.")
+                        break
+                    if zinfo.is_dir():
+                        continue
+
+                    raw_name = _normalize_name(zinfo.filename)
+                    if not raw_name:
+                        continue
+
+                    stem, ext = os.path.splitext(raw_name)
+                    data = zf.read(zinfo)
+
+                    # تأكيد صورة
+                    is_image = (ext.lower() in ALLOWED_EXTS) or _is_image_bytes(data)
+                    if not is_image:
+                        skipped += 1
+                        if len(notes) < 5:
+                            notes.append(f"تخطي «{raw_name}»: ليس ملف صورة مدعوم.")
+                        continue
+
+                    # ارفع (Cloudinary أو media)
+                    try:
+                        if use_cloudinary and uploader:
+                            up = uploader.upload(
+                                io.BytesIO(data),
+                                folder=f"wesh/images/{package.id}",
+                                public_id=None,
+                                resource_type="image",
+                            )
+                            image_url = up.get('secure_url') or up.get('url')
+                        else:
+                            safe_name = raw_name
+                            base, ext0 = os.path.splitext(safe_name)
+                            idx = 1
+                            path = f"picture_riddles/{package.id}/{safe_name}"
+                            while default_storage.exists(path):
+                                safe_name = f"{base}_{idx}{ext0}"
+                                path = f"picture_riddles/{package.id}/{safe_name}"
+                                idx += 1
+                            saved_path = default_storage.save(path, ContentFile(data))
+                            from django.conf import settings
+                            media_url = getattr(settings, 'MEDIA_URL', '/media/')
+                            image_url = media_url.rstrip('/') + '/' + saved_path.lstrip('/')
+                    except Exception as e:
+                        failed += 1
+                        if len(notes) < 5:
+                            notes.append(f"فشل رفع «{raw_name}»: {e}")
+                        continue
+
+                    # استخرج الإجابة/التلميح من الاسم
+                    answer, hint = _split_answer_hint(stem)
+
+                    try:
+                        PictureRiddle.objects.create(
+                            package=package,
+                            order=start_order + added,
+                            image_url=image_url,
+                            answer=answer,
+                            hint=hint,
+                        )
+                        added += 1
+                    except Exception as e:
+                        failed += 1
+                        if len(notes) < 5:
+                            notes.append(f"فشل إنشاء سجل «{raw_name}»: {e}")
+
+        except zipfile.BadZipFile:
+            messages.error(request, "الملف ليس ZIP صالحًا.")
+            return HttpResponseRedirect(request.path)
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء قراءة الملف: {e}")
+            return HttpResponseRedirect(request.path)
+
+        # الرسالة النهائية
+        if added and not (failed or skipped):
+            messages.success(request, f"تم رفع {added} صورة بنجاح وإضافتها كلغاز.")
+        else:
+            parts = [f"تمت إضافة {added} لغز."]
+            if skipped: parts.append(f"تخطي {skipped} عنصر.")
+            if failed:  parts.append(f"فشل {failed} عنصر.")
+            if notes:   parts.append("ملاحظات: " + " | ".join(notes))
+            level = messages.WARNING if (skipped or failed) else messages.SUCCESS
+            messages.add_message(request, level, " ".join(parts))
+
+        return HttpResponseRedirect(reverse('admin:games_imagespackage_change', args=[package.id]))
 
 # ========= Admin: حِزم سؤال وجواب =========
 
