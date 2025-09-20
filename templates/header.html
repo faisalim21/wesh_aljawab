@@ -135,26 +135,62 @@
       transform:rotate(-45deg) translate(6px, -6px); 
     }
 
-    /* Mobile */
+    /* Mobile - تحسين التأثيرات السلسة */
     @media (max-width: 991.98px){
       .navbar-collapse{
         background:rgba(255,255,255,.97);
         border-radius:14px; padding:1rem; margin-top:.75rem;
         box-shadow:0 10px 25px rgba(0,0,0,.1);
+        /* تأثير الانسدال السلس من الأعلى */
+        max-height:0;
+        overflow:hidden;
+        opacity:0;
+        transform:translateY(-20px);
+        transition:all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
+      .navbar-collapse.show{
+        max-height:500px;
+        opacity:1;
+        transform:translateY(0);
+      }
+      
       .nav-link{ color:#2d3748!important; }
       .nav-link:hover{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#8b5cf6!important; }
       .nav-link.active{ background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12)); color:#8b5cf6!important; }
 
       .user-menu{ background:linear-gradient(135deg, rgba(139,92,246,.08), rgba(6,182,212,.08)); color:#2d3748!important; border-radius:10px; }
       .user-menu .user-name{ max-width:18ch; }
-      .dropdown-menu.show{
-        display:block!important; position:static!important; transform:none!important;
-        box-shadow:none!important; border:none!important; background:transparent!important;
-        margin:.5rem 0 0 0!important; padding:0!important;
+      
+      /* تحسين قائمة الألعاب المنسدلة في الجوال */
+      .dropdown-menu{
+        position:static!important; 
+        transform:none!important;
+        box-shadow:none!important; 
+        border:none!important; 
+        background:transparent!important;
+        margin:.5rem 0 0 0!important; 
+        padding:0!important;
+        max-height:0;
+        overflow:hidden;
+        opacity:0;
+        transition:all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       }
+      .dropdown-menu.show{
+        display:block!important;
+        max-height:300px;
+        opacity:1;
+      }
+      
       .dropdown-item{
-        background:rgba(139,92,246,.05)!important; margin:.25rem 0; border-radius:8px; color:#2d3748!important;
+        background:rgba(139,92,246,.05)!important; 
+        margin:.25rem 0; 
+        border-radius:8px; 
+        color:#2d3748!important;
+        transform:translateX(10px);
+        transition:all 0.2s ease;
+      }
+      .dropdown-menu.show .dropdown-item{
+        transform:translateX(0);
       }
       .dropdown-item:hover{
         background:linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.12))!important;
@@ -319,10 +355,9 @@
     });
   })();
 
-  // ===== إصلاح نهائي للهامبرغر -> X =====
+  // ===== تحسين الهامبرغر مع تأثير سلس =====
   if(toggler && navCollapse){
     
-    // التحكم المباشر في الهامبرغر بدون Bootstrap
     toggler.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -330,13 +365,21 @@
       const isExpanded = toggler.getAttribute('aria-expanded') === 'true';
       
       if(isExpanded) {
-        // إغلاق القائمة
+        // إغلاق القائمة بتأثير سلس
         navCollapse.classList.remove('show');
         toggler.setAttribute('aria-expanded', 'false');
       } else {
-        // فتح القائمة  
+        // فتح القائمة بتأثير سلس
         navCollapse.classList.add('show');
         toggler.setAttribute('aria-expanded', 'true');
+        
+        // تأثير تأخير للعناصر في الجوال
+        if(window.innerWidth <= 991) {
+          const dropdownItems = navCollapse.querySelectorAll('.dropdown-item');
+          dropdownItems.forEach((item, index) => {
+            item.style.transitionDelay = `${index * 0.05}s`;
+          });
+        }
       }
     });
 
@@ -393,7 +436,7 @@
   function refreshHover(){ unbindDesktopHover(); if(isDesktop()) bindDesktopHover(); }
   refreshHover(); window.addEventListener('resize', refreshHover, { passive:true });
 
-  // Mobile dropdown: one open at a time
+  // ===== تحسين قائمة الألعاب في الجوال مع تأثير سلس =====
   document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
     toggle.addEventListener('click', function(e){
       if(window.innerWidth <= 991){
@@ -402,12 +445,31 @@
         const menu = dd?.querySelector('.dropdown-menu');
         if(!dd || !menu) return;
 
+        // إغلاق القوائم الأخرى
         document.querySelectorAll('.dropdown-menu.show').forEach(other=>{
-          if(other !== menu){ other.classList.remove('show'); other.closest('.dropdown')?.classList.remove('show'); }
+          if(other !== menu){ 
+            other.classList.remove('show'); 
+            other.closest('.dropdown')?.classList.remove('show'); 
+          }
         });
 
-        dd.classList.toggle('show'); menu.classList.toggle('show');
-        this.setAttribute('aria-expanded', menu.classList.contains('show'));
+        // تبديل حالة القائمة الحالية
+        const isShowing = menu.classList.contains('show');
+        if(isShowing) {
+          menu.classList.remove('show');
+          dd.classList.remove('show');
+          this.setAttribute('aria-expanded', 'false');
+        } else {
+          menu.classList.add('show');
+          dd.classList.add('show');
+          this.setAttribute('aria-expanded', 'true');
+          
+          // تأثير تأخير للعناصر
+          const items = menu.querySelectorAll('.dropdown-item');
+          items.forEach((item, index) => {
+            item.style.transitionDelay = `${index * 0.1}s`;
+          });
+        }
       }
     });
   });
