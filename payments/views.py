@@ -230,6 +230,7 @@ def rajhi_direct_init(request):
         "trackid":       trackid,
         "responseURL":   f"{base_cb}/payments/rajhi/callback/success/",
         "errorURL":      f"{base_cb}/payments/rajhi/callback/fail/",
+
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          (str(txn.id) if txn else ""),  # نخزن id المعاملة - يفيد بالمطابقة
         "udf3":          "",
@@ -444,6 +445,7 @@ def rajhi_checkout(request):
         "trackid":       trackid,
         "responseURL":   f"{base_cb}/payments/rajhi/callback/success/",
         "errorURL":      f"{base_cb}/payments/rajhi/callback/fail/",
+
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          "",
         "udf3":          "",
