@@ -6,23 +6,27 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.db import IntegrityError, transaction as db_txn
+from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
+import logging
 import os
 
 from games.models import GamePackage, UserPurchase
 from .models import Transaction, PaymentMethod, FakePaymentGateway, Invoice
 from accounts.models import UserActivity
 
-# ✅ توحيد التشفير على AES-CBC (IV ثابت)
+# ✅ توحيد التشفير على AES/3DES عبر rajhi_crypto (الافتراضي الآن AES في الإعدادات المقترحة)
 from .rajhi_crypto import encrypt_trandata, decrypt_trandata
+
+logger = logging.getLogger("payments.views")
 
 # بوابات الراجحي
 GATEWAY_URL_PROD = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
-GATEWAY_URL_UAT  = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"  # ✅ صحيح
+GATEWAY_URL_UAT  = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
 
 
 def payments_home(request):
@@ -83,8 +87,8 @@ def purchase_package(request, package_id):
                     activity_type='package_purchased',
                     description=f'شراء حزمة {package.get_game_type_display()} - حزمة {package.package_number}'
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to log UserActivity after fake gateway success: %s", e)
 
             messages.success(request, 'تم الشراء بنجاح! يمكنك الآن اللعب 🎉')
             return redirect('games:letters_home')
@@ -168,7 +172,7 @@ def rajhi_test(request):
 # =========================
 def rajhi_direct_init(request):
     """
-    إرسال id + password + trandata(AES-CBC) إلى بوابة الراجحي.
+    إرسال id + password + trandata(AES/3DES) إلى بوابة الراجحي.
     يدعم ?env=uat لاختيار UAT حتى لو DEBUG=False
     ويدعم ?pkg=<uuid> لإنشاء Transaction مربوط بالحزمة قبل التحويل.
     """
@@ -211,14 +215,12 @@ def rajhi_direct_init(request):
                     payment_method=None, status='pending', notes=f"trackid={trackid}"
                 )
         except GamePackage.DoesNotExist:
-            pass
+            logger.warning("rajhi_direct_init: package not found or inactive: %s", pkg_id)
 
     # استخدم دومين عام إن توفر، واحرص أن يكون HTTPS
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
         base_cb = "https://" + base_cb[len("http://"):]
-
-
 
     trandata_pairs = {
         "action":        "1",
@@ -249,7 +251,7 @@ def rajhi_direct_init(request):
             f"trandata_hex_len={len(trandata_enc_hex)}"
         ),
     }
-    print("RAJHI_INIT_DEBUG => len", {"len": len(trandata_enc_hex)})
+    logger.debug("RAJHI_INIT: prepared trandata length=%s env=%s", len(trandata_enc_hex), "UAT" if use_uat else "PROD")
     return render(request, "payments/rajhi_direct_init.html", context)
 
 
@@ -269,12 +271,26 @@ def _extract_trandata(request):
         return plain, params
     except Exception as e:
         # لا نُظهر السرّيات للمستخدم
-        print("RAJHI_CALLBACK_DECRYPT_ERR:", repr(e))
+        logger.error("RAJHI_CALLBACK_DECRYPT_ERR: %s", repr(e))
         return None, {}
+
+
+def _parse_decimal_safe(v: str) -> Decimal | None:
+    try:
+        return Decimal(str(v))
+    except (InvalidOperation, TypeError, ValueError):
+        return None
 
 
 @csrf_exempt
 def rajhi_callback_success(request):
+    """
+    مسار نجاح من الراجحي. يطبّق:
+      - فك trandata والتحقق منها
+      - idempotency عبر قفل صف المعاملة select_for_update
+      - التحقق من المبلغ amt يطابق قيمة المعاملة
+      - إتمام المعاملة وإنشاء UserPurchase وتسجيل UserActivity داخل atomic()
+    """
     plain, params = _extract_trandata(request)
     if not params:
         return HttpResponseBadRequest("Missing/invalid trandata")
@@ -284,49 +300,112 @@ def rajhi_callback_success(request):
     trackid   = params.get("trackid") or ""
     udf1_user = params.get("udf1") or ""
     udf2_txn  = params.get("udf2") or ""  # transaction.id لو أرسلناه
+    amt_str   = params.get("amt") or params.get("amount") or ""
+    amt_dec   = _parse_decimal_safe(amt_str)
 
     # نحاول الوصول للمعاملة بدقة أعلى
-    txn = None
+    txn_qs = None
     if udf2_txn:
-        txn = Transaction.objects.filter(id=udf2_txn).first()
-    if not txn and udf1_user.isdigit():
-        txn = Transaction.objects.filter(user_id=int(udf1_user)).order_by('-created_at').first()
+        txn_qs = Transaction.objects.filter(id=udf2_txn)
+    elif udf1_user.isdigit():
+        txn_qs = Transaction.objects.filter(user_id=int(udf1_user)).order_by('-created_at')
+    else:
+        txn_qs = Transaction.objects.none()
 
-    if txn:
-        if result in ("CAPTURED", "APPROVED", "SUCCESS"):
-            txn.status = 'completed'
-            txn.completed_at = timezone.now()
-            txn.gateway_transaction_id = paymentid or txn.gateway_transaction_id
-            txn.gateway_response = params
-            txn.save(update_fields=['status','completed_at','gateway_transaction_id','gateway_response'])
-        else:
+    if not txn_qs.exists():
+        logger.error("Callback success: transaction not found. udf2=%s udf1=%s trackid=%s", udf2_txn, udf1_user, trackid)
+        return HttpResponse("Transaction not found", status=200)
+
+    with db_txn.atomic():
+        # قفل السجل لتجنّب السباق
+        txn = txn_qs.select_for_update().first()
+
+        # idempotency: إن كانت مكتملة مسبقًا لا نعيد المعالجة
+        if txn.status == 'completed':
+            logger.info("Callback success: idempotent hit (already completed). txn=%s", txn.id)
+            return HttpResponse("Already completed", status=200)
+
+        # تحقّق من النتيجة
+        if result not in ("CAPTURED", "APPROVED", "SUCCESS", "SUCCESSFUL"):
             txn.status = 'failed'
             txn.failure_reason = params.get("errorText") or params.get("error") or "Transaction not approved"
             txn.gateway_response = params
-            txn.save(update_fields=['status','failure_reason','gateway_response'])
+            txn.save(update_fields=['status', 'failure_reason', 'gateway_response', 'updated_at'])
+            logger.warning("Callback success endpoint with non-success result=%s txn=%s", result, txn.id)
+            return HttpResponse("Not approved", status=200)
+
+        # تحقّق من المبلغ (إن توفر)
+        if amt_dec is not None and txn.amount is not None and amt_dec != txn.amount:
+            txn.status = 'failed'
+            txn.failure_reason = f"Amount mismatch: got {amt_dec} expected {txn.amount}"
+            txn.gateway_response = params
+            txn.save(update_fields=['status', 'failure_reason', 'gateway_response', 'updated_at'])
+            logger.error("Amount mismatch: txn=%s amt_cb=%s amt_txn=%s", txn.id, amt_dec, txn.amount)
+            return HttpResponse("Amount mismatch", status=200)
+
+        # تحديث حالة المعاملة
+        txn.status = 'completed'
+        txn.completed_at = timezone.now()
+        if paymentid:
+            txn.gateway_transaction_id = paymentid
+        txn.gateway_response = params
+        txn.save(update_fields=['status', 'completed_at', 'gateway_transaction_id', 'gateway_response', 'updated_at'])
+
+        # إنشاء UserPurchase بأمان (idempotent)
+        try:
+            UserPurchase.objects.get_or_create(user=txn.user, package=txn.package)
+        except IntegrityError:
+            # قد يكون تم إنشاؤه بالفعل بسبب قيود unique على الشراء النشط
+            pass
+
+        # تسجيل نشاط المستخدم
+        try:
+            UserActivity.objects.create(
+                user=txn.user,
+                activity_type='package_purchased',
+                description=f'شراء حزمة {txn.package.get_game_type_display()} - حزمة {txn.package.package_number}'
+            )
+        except Exception as e:
+            logger.warning("Failed to log UserActivity on success callback: %s", e)
 
     return HttpResponse("Rajhi callback (success).", status=200)
 
 
 @csrf_exempt
 def rajhi_callback_fail(request):
+    """
+    مسار الفشل/الإلغاء من الراجحي.
+    يحدّث حالة المعاملة إلى failed (idempotent) ويخزّن سبب الفشل.
+    """
     plain, params = _extract_trandata(request)
     udf1_user = (params.get("udf1") or "")
     udf2_txn  = (params.get("udf2") or "")
 
     try:
-        txn = None
+        txn_qs = None
         if udf2_txn:
-            txn = Transaction.objects.filter(id=udf2_txn).first()
-        if not txn and udf1_user.isdigit():
-            txn = Transaction.objects.filter(user_id=int(udf1_user)).order_by('-created_at').first()
-        if txn:
+            txn_qs = Transaction.objects.filter(id=udf2_txn)
+        elif udf1_user.isdigit():
+            txn_qs = Transaction.objects.filter(user_id=int(udf1_user)).order_by('-created_at')
+        else:
+            txn_qs = Transaction.objects.none()
+
+        if not txn_qs.exists():
+            logger.error("Callback fail: transaction not found. udf2=%s udf1=%s", udf2_txn, udf1_user)
+            return HttpResponse("Transaction not found", status=200)
+
+        with db_txn.atomic():
+            txn = txn_qs.select_for_update().first()
+            if txn.status == 'completed':
+                logger.info("Callback fail received but txn already completed. txn=%s", txn.id)
+                return HttpResponse("Already completed", status=200)
+
             txn.status = 'failed'
             txn.failure_reason = (params.get("errorText") or params.get("error") or "User canceled/failed")
             txn.gateway_response = params
-            txn.save(update_fields=['status','failure_reason','gateway_response'])
-    except Exception:
-        pass
+            txn.save(update_fields=['status', 'failure_reason', 'gateway_response', 'updated_at'])
+    except Exception as e:
+        logger.error("Callback fail processing error: %s", e)
 
     return HttpResponse("Rajhi callback (fail).", status=200)
 
@@ -356,8 +435,6 @@ def rajhi_checkout(request):
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
         base_cb = "https://" + base_cb[len("http://"):]
-
-
 
     trandata_pairs = {
         "action":        "1",

@@ -268,6 +268,7 @@ LOGGING = {
         'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
         'accounts': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
         'games': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
+        'payments': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},  # جديد
     },
 }
 
@@ -293,7 +294,6 @@ RAJHI_CONFIG = {
     "TERMINAL_ID":          config("RAJHI_TERMINAL_ID"),
     "TRANSPORTAL_ID":       config("RAJHI_TRANSPORTAL_ID"),
     "TRANSPORTAL_PASSWORD": config("RAJHI_TRANSPORTAL_PASSWORD"),
-    "RESOURCE_FILE":        os.path.join(BASE_DIR, config("RAJHI_RESOURCE_FILE")),
+    "RESOURCE_FILE":        _resource_path,                  # ← تم تعديلها لاستخدام المسار المحسوب
     "RESOURCE_KEY":         config("RAJHI_RESOURCE_KEY", default=""),
 }
-
