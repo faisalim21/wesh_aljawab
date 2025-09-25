@@ -197,7 +197,7 @@ def rajhi_direct_init(request):
     use_uat = (request.GET.get("env", "").lower() == "uat") or settings.DEBUG
     action_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
 
-    # قيم
+    # قيم مبدئية
     amount  = (request.GET.get("amt") or "3.00").strip()
     trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
 
@@ -207,7 +207,7 @@ def rajhi_direct_init(request):
     if pkg_id:
         try:
             pkg = GamePackage.objects.get(id=pkg_id, is_active=True)
-            # لو ما مررت amt نأخذ سعر الحزمة
+            # لو ما مررت amt نأخذ السعر الفعّال للحزمة
             amount = f"{pkg.effective_price:.2f}"
             if request.user.is_authenticated:
                 txn = Transaction.objects.create(
@@ -222,21 +222,34 @@ def rajhi_direct_init(request):
     if base_cb.startswith("http://"):
         base_cb = "https://" + base_cb[len("http://"):]
 
+    # روابط الرجوع
+    success_url = f"{base_cb}/payments/rajhi/callback/success/"
+    fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
+
+    # نحط مفاتيح الرجوع بالشكلين لضمان التوافق (Case-Sensitive differences)
     trandata_pairs = {
         "action":        "1",
         "amt":           amount,
         "currencycode":  "682",
         "langid":        "AR",
         "trackid":       trackid,
-        "responseURL":   f"{base_cb}/payments/rajhi/callback/success/",
-        "errorURL":      f"{base_cb}/payments/rajhi/callback/fail/",
 
+        # الشكل بالحروف الصغيرة (شائع في وثائق قديمة/جديدة)
+        "responseURL":   success_url,
+        "errorURL":      fail_url,
+
+        # والشكل بالحروف الكبيرة لأول حرف (مطلوب في بعض الإصدارات)
+        "ResponseURL":   success_url,
+        "ErrorURL":      fail_url,
+
+        # UDFs
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          (str(txn.id) if txn else ""),  # نخزن id المعاملة - يفيد بالمطابقة
         "udf3":          "",
         "udf4":          "",
         "udf5":          "",
     }
+
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     context = {
@@ -254,7 +267,6 @@ def rajhi_direct_init(request):
     }
     logger.debug("RAJHI_INIT: prepared trandata length=%s env=%s", len(trandata_enc_hex), "UAT" if use_uat else "PROD")
     return render(request, "payments/rajhi_direct_init.html", context)
-
 
 # =========================
 #  نقاط الرجوع (Callback) — مع فك تشفير trandata
@@ -416,15 +428,17 @@ def rajhi_callback_fail(request):
 # =========================
 def rajhi_checkout(request):
     """
-    صفحة عرض زر "ادفع الآن" لكن تُرسل trandata الموحّدة (بدل تمرير الحقول الخام).
+    صفحة عرض زر "ادفع الآن" لكن تُرسل trandata الموحّدة.
     """
     cfg = settings.RAJHI_CONFIG
     tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
     tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
+    action_url = GATEWAY_URL_PROD if not settings.DEBUG else GATEWAY_URL_UAT
+
     if not tranportal_id or not tranportal_password:
         return render(request, "payments/rajhi_checkout.html", {
-            "action_url": GATEWAY_URL_PROD if not settings.DEBUG else GATEWAY_URL_UAT,
+            "action_url": action_url,
             "id": tranportal_id, "password": tranportal_password, "trandata": "",
             "debug": True, "debug_plain": "التهيئة ناقصة (tranportal id/password)."
         })
@@ -432,10 +446,12 @@ def rajhi_checkout(request):
     amount  = (request.GET.get("amt") or "3.00").strip()
     trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
 
-    # استخدم دومين عام إن توفر، واحرص أن يكون HTTPS
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
         base_cb = "https://" + base_cb[len("http://"):]
+
+    success_url = f"{base_cb}/payments/rajhi/callback/success/"
+    fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
     trandata_pairs = {
         "action":        "1",
@@ -443,8 +459,12 @@ def rajhi_checkout(request):
         "currencycode":  "682",
         "langid":        "AR",
         "trackid":       trackid,
-        "responseURL":   f"{base_cb}/payments/rajhi/callback/success/",
-        "errorURL":      f"{base_cb}/payments/rajhi/callback/fail/",
+
+        # كلا الشكلين لضمان عدم ظهور Missing error url
+        "responseURL":   success_url,
+        "errorURL":      fail_url,
+        "ResponseURL":   success_url,
+        "ErrorURL":      fail_url,
 
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          "",
@@ -455,7 +475,7 @@ def rajhi_checkout(request):
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     return render(request, "payments/rajhi_checkout.html", {
-        "action_url": GATEWAY_URL_PROD if not settings.DEBUG else GATEWAY_URL_UAT,
+        "action_url": action_url,
         "id": tranportal_id,
         "password": tranportal_password,
         "trandata": trandata_enc_hex,
