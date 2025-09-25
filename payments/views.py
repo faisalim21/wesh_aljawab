@@ -6,12 +6,12 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
 from django.utils import timezone
 from django.db import IntegrityError, transaction as db_txn
-from django.db.models import F
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
 
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
+from uuid import UUID
 import logging
 import os
 
@@ -19,7 +19,7 @@ from games.models import GamePackage, UserPurchase
 from .models import Transaction, PaymentMethod, FakePaymentGateway, Invoice
 from accounts.models import UserActivity
 
-# ✅ توحيد التشفير على AES/3DES عبر rajhi_crypto (الافتراضي الآن AES في الإعدادات المقترحة)
+# تشفير trandata عبر rajhi_crypto (يُحدد الخوارزمية من المتغيرات: RAJHI_TRANDATA_ALGO = 3DES/AES)
 from .rajhi_crypto import encrypt_trandata, decrypt_trandata
 
 logger = logging.getLogger("payments.views")
@@ -37,8 +37,7 @@ def payments_home(request):
 @login_required
 def purchase_package(request, package_id):
     """
-    شراء حزمة (ما زال يستخدم بوابة وهمية لأغراض التطوير).
-    لاحقًا يمكن تحويله لتدفق الراجحي بنفس منطق rajhi_direct_init.
+    شراء حزمة (بوابة وهمية للتطوير). لاحقًا يمكن تحويله لتدفق الراجحي.
     """
     package = get_object_or_404(GamePackage, id=package_id, is_active=True)
 
@@ -50,7 +49,7 @@ def purchase_package(request, package_id):
         user=request.user, package=package, is_completed=False
     ).first()
     if existing_purchase:
-        messages.warning(request, 'لديك هذه الحزمة بالفعل!')
+        messages.warning(request, 'لديك هذه الحزمة بالفعل.')
         return redirect('games:letters_home')
 
     payment_methods = PaymentMethod.objects.filter(is_active=True)
@@ -90,10 +89,10 @@ def purchase_package(request, package_id):
             except Exception as e:
                 logger.warning("Failed to log UserActivity after fake gateway success: %s", e)
 
-            messages.success(request, 'تم الشراء بنجاح! يمكنك الآن اللعب 🎉')
+            messages.success(request, 'تم الشراء بنجاح! يمكنك الآن اللعب.')
             return redirect('games:letters_home')
         else:
-            messages.error(request, 'فشل في عملية الدفع، يرجى المحاولة مرة أخرى')
+            messages.error(request, 'فشل في عملية الدفع، يرجى المحاولة مرة أخرى.')
             return redirect('payments:cancel')
 
     return render(request, 'payments/purchase.html', {
@@ -170,32 +169,20 @@ def rajhi_test(request):
 # =========================
 #  تدفّق التهيئة المباشر (المعتمد)
 # =========================
-
-قال ChatGPT:
-
-أها 👍 واضحة.
-المشكلة عندك إنك نسخت الكود مع النص الشارح اللي فوقه (مكتوب بالعربي وفيه شرطة طويلة — U+2014)، وهذا مش بايثون 😅.
-
-Django لما يقرأ الملف views.py يطيح بـ:
-
-SyntaxError: invalid character '—'
-
-الحل
-
-لا تنسخ الشرح، انسخ فقط الكود نفسه من داخل def rajhi_direct_init(...): إلى آخر return render(...).
-
-يعني ملفك views.py لازم يحتوي بالشكل هذا:
-
 def rajhi_direct_init(request):
     """
     تهيئة الدفع وإرسال (id/password/trandata) إلى بوابة الراجحي.
-    ...
+    يدعم:
+      - ?env=uat لاختيار UAT (وإلا الإنتاج)
+      - ?pkg=<uuid> لربط العملية بحزمة قبل التحويل (واجب أن تكون فعّالة)
+      - ?amt=<decimal> لتجاوز السعر، وإلا يؤخذ من الحزمة (effective_price)
+      - ?debug=1 لعرض القيم وعدم الإرسال تلقائياً
     """
-    from uuid import UUID
     cfg = settings.RAJHI_CONFIG
     tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
     tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
+    # تحقق من الإعدادات الأساسية
     if not tranportal_id or not tranportal_password:
         debug_text = (
             "ERROR: Missing config:\n"
@@ -209,30 +196,34 @@ def rajhi_direct_init(request):
             "debug": True, "debug_plain": debug_text,
         })
 
-    # اختيار البيئة
+    # اختيار البيئة (UAT أثناء التطوير أو عند تمرير env=uat)
     use_uat = (request.GET.get("env", "").lower() == "uat") or settings.DEBUG
     action_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
 
+    # قيم أساسية
     amount  = (request.GET.get("amt") or "").strip()
     trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
 
+    # (اختياري) ربط بحزمة، مع تحقّق UUID مبكّر لتفادي 500
     pkg = None
     txn = None
     pkg_id = (request.GET.get("pkg") or "").strip()
     if pkg_id:
         try:
-            UUID(pkg_id)
+            UUID(pkg_id)  # يتحقق من الصيغة فقط
         except Exception:
             pkg_id = ""
         else:
             pkg = get_object_or_404(GamePackage, id=pkg_id, is_active=True)
 
+    # لو لم تُمرَّر amt وأرفقنا حزمة، استخدم السعر الفعّال
     if not amount:
         if pkg:
             amount = f"{pkg.effective_price:.2f}"
         else:
-            amount = "3.00"
+            amount = "3.00"  # قيمة افتراضية للتجربة
 
+    # أنشئ Transaction قبل التحويل (لو المستخدم مسجّل وحزمة موجودة)
     if request.user.is_authenticated and pkg:
         txn = Transaction.objects.create(
             user=request.user,
@@ -243,28 +234,32 @@ def rajhi_direct_init(request):
             notes=f"trackid={trackid}",
         )
 
+    # أبنِ الدومين الأساس للـ callback، وافرِض HTTPS
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
-        base_cb = "https://" + base_cb[len("http://"):]
+        base_cb = "https://" + base_cb[len("http://"):]  # فرض HTTPS دائماً
 
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
+    # بوابة الراجحي تتوقع الحروف بالشكل التالي تماماً (Case-Sensitive)
     trandata_pairs = {
-        "action":       "1",
-        "amt":          amount,
-        "currencycode": "682",
-        "langid":       "AR",
-        "trackid":      trackid,
-        "ResponseURL":  success_url,
-        "ErrorURL":     fail_url,
-        "udf1":         str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":         (str(txn.id) if txn else ""),
-        "udf3":         "",
-        "udf4":         "",
-        "udf5":         "",
+        "action":        "1",
+        "amt":           amount,
+        "currencycode":  "682",
+        "langid":        "AR",
+        "trackid":       trackid,
+        "ResponseURL":   success_url,   # الصيغة الصحيحة
+        "ErrorURL":      fail_url,      # الصيغة الصحيحة
+        # UDFs
+        "udf1":          str(request.user.id) if request.user.is_authenticated else "",
+        "udf2":          (str(txn.id) if txn else ""),
+        "udf3":          "",
+        "udf4":          "",
+        "udf5":          "",
     }
 
+    # التشفير يتم عبر rajhi_crypto بحسب RAJHI_TRANDATA_ALGO (يفضّل 3DES في UAT)
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     context = {
@@ -282,6 +277,8 @@ def rajhi_direct_init(request):
     }
     return render(request, "payments/rajhi_direct_init.html", context)
 
+
+# =========================
 #  نقاط الرجوع (Callback) — مع فك تشفير trandata
 # =========================
 def _extract_trandata(request):
@@ -330,7 +327,6 @@ def rajhi_callback_success(request):
     amt_dec   = _parse_decimal_safe(amt_str)
 
     # نحاول الوصول للمعاملة بدقة أعلى
-    txn_qs = None
     if udf2_txn:
         txn_qs = Transaction.objects.filter(id=udf2_txn)
     elif udf1_user.isdigit():
@@ -381,7 +377,6 @@ def rajhi_callback_success(request):
         try:
             UserPurchase.objects.get_or_create(user=txn.user, package=txn.package)
         except IntegrityError:
-            # قد يكون تم إنشاؤه بالفعل بسبب قيود unique على الشراء النشط
             pass
 
         # تسجيل نشاط المستخدم
@@ -408,7 +403,6 @@ def rajhi_callback_fail(request):
     udf2_txn  = (params.get("udf2") or "")
 
     try:
-        txn_qs = None
         if udf2_txn:
             txn_qs = Transaction.objects.filter(id=udf2_txn)
         elif udf1_user.isdigit():
@@ -437,7 +431,7 @@ def rajhi_callback_fail(request):
 
 
 # =========================
-#  صفحة تجربة قديمة (تم تحويلها لتستخدم trandata أيضًا)
+#  صفحة تجربة قديمة (ارسال trandata)
 # =========================
 def rajhi_checkout(request):
     """
@@ -466,20 +460,18 @@ def rajhi_checkout(request):
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-    # داخل rajhi_direct_init و rajhi_checkout
     trandata_pairs = {
         "action":        "1",
         "amt":           amount,
         "currencycode":  "682",
         "langid":        "AR",
         "trackid":       trackid,
-
-        # ✅ الصحيح حسب مستند الراجحي
+        # الصيغة الصحيحة حسب المستند
         "ResponseURL":   success_url,
         "ErrorURL":      fail_url,
-
+        # لا نرسل udf2 هنا لأنه لا يوجد Transaction مُسبق
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":          (str(txn.id) if txn else ""),
+        "udf2":          "",
         "udf3":          "",
         "udf4":          "",
         "udf5":          "",
