@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <title>بدء دفع الراجحي</title>
+  <meta name="referrer" content="no-referrer">
+</head>
+<body>
+  <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
+
+  <form id="payForm" method="post" action="{{ gateway_url }}">
+    <!-- لإرضاء كل الإصدارات نرسل الاسمين معًا -->
+    <input type="hidden" name="id" value="{{ id }}">
+    <input type="hidden" name="tranportalId" value="{{ id }}">
+    <input type="hidden" name="password" value="{{ password }}">
+    <input type="hidden" name="trandata" value="{{ trandata }}">
+  </form>
+
+  {% if debug %}
+    <!-- في وضع التصحيح لا نرسل تلقائيًا: اعرض القيم للتأكد واضغط إرسال -->
+    <pre style="white-space:pre-wrap;direction:ltr">
+gateway={{ gateway_url }}
+id={{ id }}
+password=********
+trandata_len={{ trandata|length }}
+{{ debug_plain|safe }}
+    </pre>
+    <button onclick="document.getElementById('payForm').submit()">إرسال يدويًا الآن</button>
+  {% else %}
+    <script>document.getElementById('payForm').submit();</script>
+  {% endif %}
+</body>
+</html>

@@ -280,3 +280,20 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 else:
     SECURE_SSL_REDIRECT = False
+
+# ===== Al Rajhi config (robust resource path) =====
+_resource_env = config("RAJHI_RESOURCE_FILE", default="")
+if _resource_env:
+    _resource_path = _resource_env if os.path.isabs(_resource_env) else os.path.join(BASE_DIR, _resource_env)
+else:
+    _resource_path = ""
+
+RAJHI_CONFIG = {
+    "MERCHANT_ID":          config("RAJHI_MERCHANT_ID"),
+    "TERMINAL_ID":          config("RAJHI_TERMINAL_ID"),
+    "TRANSPORTAL_ID":       config("RAJHI_TRANSPORTAL_ID"),
+    "TRANSPORTAL_PASSWORD": config("RAJHI_TRANSPORTAL_PASSWORD"),
+    "RESOURCE_FILE":        os.path.join(BASE_DIR, config("RAJHI_RESOURCE_FILE")),
+    "RESOURCE_KEY":         config("RAJHI_RESOURCE_KEY", default=""),
+}
+

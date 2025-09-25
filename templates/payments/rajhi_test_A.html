@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>اختبار الراجحي (بسيط)</title></head>
+<body>
+  <h3>اختبار مباشر</h3>
+  <form method="post" action="https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit">
+    <input type="hidden" name="id" value="{{ id }}">
+    <input type="hidden" name="password" value="{{ password }}">
+    <input type="hidden" name="trandata" value="{{ trandata }}">
+    <button type="submit">ادفع الآن</button>
+  </form>
+</body>
+</html>
