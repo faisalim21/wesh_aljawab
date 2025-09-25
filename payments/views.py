@@ -234,21 +234,17 @@ def rajhi_direct_init(request):
         "langid":        "AR",
         "trackid":       trackid,
 
-        # الشكل بالحروف الصغيرة (شائع في وثائق قديمة/جديدة)
-        "responseURL":   success_url,
-        "errorURL":      fail_url,
-
-        # والشكل بالحروف الكبيرة لأول حرف (مطلوب في بعض الإصدارات)
+        # ✅ الصحيح حسب مستند الراجحي
         "ResponseURL":   success_url,
         "ErrorURL":      fail_url,
 
-        # UDFs
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":          (str(txn.id) if txn else ""),  # نخزن id المعاملة - يفيد بالمطابقة
+        "udf2":          (str(txn.id) if txn else ""),
         "udf3":          "",
         "udf4":          "",
         "udf5":          "",
     }
+
 
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
@@ -453,6 +449,7 @@ def rajhi_checkout(request):
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
+    # داخل rajhi_direct_init و rajhi_checkout
     trandata_pairs = {
         "action":        "1",
         "amt":           amount,
@@ -460,18 +457,17 @@ def rajhi_checkout(request):
         "langid":        "AR",
         "trackid":       trackid,
 
-        # كلا الشكلين لضمان عدم ظهور Missing error url
-        "responseURL":   success_url,
-        "errorURL":      fail_url,
+        # ✅ الصحيح حسب مستند الراجحي
         "ResponseURL":   success_url,
         "ErrorURL":      fail_url,
 
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":          "",
+        "udf2":          (str(txn.id) if txn else ""),
         "udf3":          "",
         "udf4":          "",
         "udf5":          "",
     }
+
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     return render(request, "payments/rajhi_checkout.html", {
