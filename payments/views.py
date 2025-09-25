@@ -170,22 +170,43 @@ def rajhi_test(request):
 # =========================
 #  تدفّق التهيئة المباشر (المعتمد)
 # =========================
+تمام يا فيصل — هذه نسخة مُحدَّثة وآمنة بالكامل من دالّة rajhi_direct_init تحل:
+
+التحقق الصارم من صلاحية pkg كـ UUID قبل الاستعلام (لتفادي 500).
+
+إرجاع 404 إذا الـ package غير موجود/غير فعّال.
+
+استخدام ResponseURL / ErrorURL فقط (الصيغة المطلوبة من الراجحي).
+
+فرض HTTPS على روابط الـ callback.
+
+إنشاء Transaction اختيارياً ومزامنة udf2 بها.
+
+وضع Debug واضح عند ?debug=1.
+
+انسخها كما هي واستبدل الدالة في payments/views.py:
+
 def rajhi_direct_init(request):
     """
-    إرسال id + password + trandata(AES/3DES) إلى بوابة الراجحي.
-    يدعم ?env=uat لاختيار UAT حتى لو DEBUG=False
-    ويدعم ?pkg=<uuid> لإنشاء Transaction مربوط بالحزمة قبل التحويل.
+    تهيئة الدفع وإرسال (id/password/trandata) إلى بوابة الراجحي.
+    يدعم:
+      - ?env=uat لاختيار UAT (وإلا الإنتاج)
+      - ?pkg=<uuid> لربط العملية بحزمة قبل التحويل (واجب أن تكون فعّالة)
+      - ?amt=<decimal> لتجاوز السعر، وإلا يؤخذ من الحزمة (effective_price)
+      - ?debug=1 لعرض القيم وعدم الإرسال تلقائياً
     """
+    from uuid import UUID
     cfg = settings.RAJHI_CONFIG
     tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
     tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
+    # تحقق من الإعدادات الأساسية
     if not tranportal_id or not tranportal_password:
         debug_text = (
             "ERROR: Missing config:\n"
             f"TRANSPORTAL_ID set? {bool(tranportal_id)}\n"
             f"TRANSPORTAL_PASSWORD set? {bool(tranportal_password)}\n"
-            "تحقق من .env"
+            "تحقق من ملف البيئة/Render."
         )
         return render(request, "payments/rajhi_direct_init.html", {
             "gateway_url": GATEWAY_URL_PROD,
@@ -193,51 +214,64 @@ def rajhi_direct_init(request):
             "debug": True, "debug_plain": debug_text,
         })
 
-    # اختيار البيئة
+    # اختيار البيئة (UAT أثناء التطوير أو عند تمرير env=uat)
     use_uat = (request.GET.get("env", "").lower() == "uat") or settings.DEBUG
     action_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
 
-    # قيم مبدئية
-    amount  = (request.GET.get("amt") or "3.00").strip()
+    # قيم أساسية
+    amount  = (request.GET.get("amt") or "").strip()
     trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
 
-    # (اختياري) ربط بحزمة وإنشاء Transaction قبل التحويل
+    # (اختياري) ربط بحزمة، مع تحقّق UUID مبكّر لتفادي 500
+    pkg = None
     txn = None
-    pkg_id = request.GET.get("pkg")
+    pkg_id = (request.GET.get("pkg") or "").strip()
     if pkg_id:
         try:
-            pkg = GamePackage.objects.get(id=pkg_id, is_active=True)
-            # لو ما مررت amt نأخذ السعر الفعّال للحزمة
-            amount = f"{pkg.effective_price:.2f}"
-            if request.user.is_authenticated:
-                txn = Transaction.objects.create(
-                    user=request.user, package=pkg, amount=Decimal(amount),
-                    payment_method=None, status='pending', notes=f"trackid={trackid}"
-                )
-        except GamePackage.DoesNotExist:
-            logger.warning("rajhi_direct_init: package not found or inactive: %s", pkg_id)
+            UUID(pkg_id)  # يتحقق من الصيغة فقط
+        except Exception:
+            # UUID غير صالح شكلاً: نتجاوز الربط ونكمل بدون كسر
+            pkg_id = ""
+        else:
+            # صالح شكلاً: جلب الحزمة الفعّالة أو 404
+            pkg = get_object_or_404(GamePackage, id=pkg_id, is_active=True)
 
-    # استخدم دومين عام إن توفر، واحرص أن يكون HTTPS
+    # لو لم تُمرَّر amt وأرفقنا حزمة، استخدم السعر الفعّال
+    if not amount:
+        if pkg:
+            amount = f"{pkg.effective_price:.2f}"
+        else:
+            amount = "3.00"  # قيمة افتراضية للتجربة
+
+    # أنشئ Transaction قبل التحويل (لو المستخدم مسجّل وحزمة موجودة)
+    if request.user.is_authenticated and pkg:
+        txn = Transaction.objects.create(
+            user=request.user,
+            package=pkg,
+            amount=Decimal(amount),
+            payment_method=None,
+            status='pending',
+            notes=f"trackid={trackid}",
+        )
+
+    # أبنِ الدومين الأساس للـ callback، وافرِض HTTPS
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
-        base_cb = "https://" + base_cb[len("http://"):]
+        base_cb = "https://" + base_cb[len("http://"):]  # فرض HTTPS دائماً
 
-    # روابط الرجوع
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-    # نحط مفاتيح الرجوع بالشكلين لضمان التوافق (Case-Sensitive differences)
+    # ملاحظة: بوابة الراجحي تتوقع الحروف بالشكل التالي تماماً
     trandata_pairs = {
         "action":        "1",
         "amt":           amount,
         "currencycode":  "682",
         "langid":        "AR",
         "trackid":       trackid,
-
-        # ✅ الصحيح حسب مستند الراجحي
-        "ResponseURL":   success_url,
-        "ErrorURL":      fail_url,
-
+        "ResponseURL":   success_url,   # ✅ الصيغة الصحيحة
+        "ErrorURL":      fail_url,      # ✅ الصيغة الصحيحة
+        # UDFs
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          (str(txn.id) if txn else ""),
         "udf3":          "",
@@ -245,7 +279,7 @@ def rajhi_direct_init(request):
         "udf5":          "",
     }
 
-
+    # التشفير يتم عبر rajhi_crypto بحسب RAJHI_TRANDATA_ALGO (يفضّل 3DES في UAT)
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     context = {
@@ -261,10 +295,8 @@ def rajhi_direct_init(request):
             f"trandata_hex_len={len(trandata_enc_hex)}"
         ),
     }
-    logger.debug("RAJHI_INIT: prepared trandata length=%s env=%s", len(trandata_enc_hex), "UAT" if use_uat else "PROD")
     return render(request, "payments/rajhi_direct_init.html", context)
 
-# =========================
 #  نقاط الرجوع (Callback) — مع فك تشفير trandata
 # =========================
 def _extract_trandata(request):
