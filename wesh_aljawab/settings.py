@@ -289,13 +289,22 @@ if _resource_env:
 else:
     _resource_path = ""
 
+# ===== Rajhi PG (TEMP – hardcoded for connectivity test) =====
 RAJHI_CONFIG = {
-    "MERCHANT_ID":          config("RAJHI_MERCHANT_ID"),
-    "TERMINAL_ID":          config("RAJHI_TERMINAL_ID"),
-    "TRANSPORTAL_ID":       config("RAJHI_TRANSPORTAL_ID"),
-    "TRANSPORTAL_PASSWORD": config("RAJHI_TRANSPORTAL_PASSWORD"),
-    "RESOURCE_FILE":        _resource_path,
-    "RESOURCE_KEY":         config("RAJHI_RESOURCE_KEY", default=""),
-    "TRANDATA_ALGO":        config("RAJHI_TRANDATA_ALGO", default="AES"),
-    "KEY_FORMAT":           config("RAJHI_KEY_FORMAT", default="HEX"),
+    # من لوحة الراجحي (View Plugin Details)
+    "MERCHANT_ID": "600002487",
+    "TERMINAL_ID": "PG342700",
+    "TRANSPORTAL_ID": "Ir468Wy1ELn5Lhe",
+    "TRANSPORTAL_PASSWORD": "!#vY8Lt!3rAA59w",
+
+    # خوارزمية وتنسيق المفتاح كما نستخدم في الكود
+    "TRANDATA_ALGO": "3DES",   # اختبر 3DES أولاً
+    "KEY_FORMAT": "HEX",
+
+    # **المفتاح الصحيح**: جرّب هذا أولاً
+    "RESOURCE_FILE": "",  # اتركه فاضيًا الآن
+    "RESOURCE_KEY": "52589155606252589155606252589155",
+
+    # لو فشل الاختبار الأول، بدّل للسطر التالي وأعد الاختبار:
+    # "RESOURCE_KEY": "52589155607952589155607952589155",
 }
