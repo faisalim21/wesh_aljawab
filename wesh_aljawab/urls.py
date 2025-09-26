@@ -1,22 +1,38 @@
+# wesh_aljawab/urls.py
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+from django.shortcuts import render
+from django.views.generic import TemplateView
 
-from django.urls import path
-from . import views
-
-app_name = "payments"
+def home_view(request):
+    """الصفحة الرئيسية"""
+    return render(request, 'home.html')
 
 urlpatterns = [
-    # صفحات الدفع العادية
-    path("", views.payments_home, name="home"),
-    path("purchase/<uuid:package_id>/", views.purchase_package, name="purchase"),
-    path("success/", views.payment_success, name="success"),
-    path("cancel/", views.payment_cancel, name="cancel"),
-    path("history/", views.transaction_history, name="history"),
-    path("invoice/<int:transaction_id>/", views.invoice_view, name="invoice"),
+    path('admin/', admin.site.urls),
 
-    # 🔍 صفحات الراجحي
-    path("rajhi/test/", views.rajhi_test, name="rajhi_test"),              # ← أضف هذا
-    path("rajhi/direct-init/", views.rajhi_direct_init, name="rajhi_direct_init"),
-    path("rajhi/callback/success/", views.rajhi_callback_success, name="rajhi_callback_success"),
-    path("rajhi/callback/fail/", views.rajhi_callback_fail, name="rajhi_callback_fail"),
-    path("rajhi/checkout/", views.rajhi_checkout, name="rajhi_checkout"),
+    # الصفحة الرئيسية
+    path('', home_view, name='home'),
+
+    # الألعاب
+    path('games/', include(('games.urls', 'games'), namespace='games')),
+
+    # الحسابات
+    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
+
+    # صفحات ثابتة
+    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
+    path("returns/", TemplateView.as_view(template_name="returns.html"), name="returns"),
+
+    # المدفوعات (مهم يكون namespace = 'payments')
+    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
 ]
+
+# ملفات الوسائط والستاتيك في وضع التطوير فقط
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # لو مفعّل STATICFILES_DIRS (قائمة)، خذ أول مسار (يكفي للتطوير)
+    if getattr(settings, "STATICFILES_DIRS", None):
+        urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
