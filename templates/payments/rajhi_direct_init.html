@@ -9,8 +9,8 @@
   <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
 
 <form id="payForm" method="post" action="{{ gateway_url }}">
-  <input type="hidden" name="id" value="{{ id }}">           <!-- TranportalId -->
-  <input type="hidden" name="password" value="{{ password }}"> <!-- TranportalPassword -->
+  <input type="hidden" name="TranportalId" value="{{ id }}">
+  <input type="hidden" name="TranportalPassword" value="{{ password }}">
   <input type="hidden" name="trandata" value="{{ trandata }}"> <!-- البيانات المشفرة -->
 </form>
 
