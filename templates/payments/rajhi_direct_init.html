@@ -8,25 +8,23 @@
 <body>
   <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
 
-  <form id="payForm" method="post" action="{{ gateway_url }}">
-    <!-- إرسال البيانات كما هو مطلوب من بوابة الراجحي -->
-    <input type="hidden" name="TranportalId" value="{{ id }}">
-    <input type="hidden" name="TranportalPassword" value="{{ password }}">
-    <input type="hidden" name="trandata" value="{{ trandata }}">
-  </form>
+<form id="payForm" method="post" action="{{ gateway_url }}">
+  <input type="hidden" name="id" value="{{ id }}">           <!-- TranportalId -->
+  <input type="hidden" name="password" value="{{ password }}"> <!-- TranportalPassword -->
+  <input type="hidden" name="trandata" value="{{ trandata }}"> <!-- البيانات المشفرة -->
+</form>
 
-  {% if debug %}
-    <!-- في وضع التصحيح لا نرسل تلقائيًا: اعرض القيم للتأكد واضغط إرسال -->
-    <pre style="white-space:pre-wrap;direction:ltr">
+{% if debug %}
+<pre style="white-space:pre-wrap;direction:ltr">
 gateway={{ gateway_url }}
-TranportalId={{ id }}
-TranportalPassword=********
+id={{ id }}
+password=********
 trandata_len={{ trandata|length }}
 {{ debug_plain|safe }}
-    </pre>
-    <button onclick="document.getElementById('payForm').submit()">إرسال يدويًا الآن</button>
-  {% else %}
-    <script>document.getElementById('payForm').submit();</script>
-  {% endif %}
+</pre>
+<button onclick="document.getElementById('payForm').submit()">إرسال يدويًا الآن</button>
+{% else %}
+<script>document.getElementById('payForm').submit();</script>
+{% endif %}
 </body>
 </html>
