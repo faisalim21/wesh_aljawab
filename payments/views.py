@@ -159,11 +159,12 @@ def rajhi_test(request):
         "RESOURCE_FILE_EXISTS": resource_exists,
         "RESOURCE_KEY_SET": bool((cfg.get("RESOURCE_KEY") or "").strip()),
     }
-    return JsonResponse({
+    return render(request, "payments/test.html", {
         "ok": len(missing) == 0 and (resource_exists or bool(cfg.get("RESOURCE_KEY"))),
         "missing_keys": missing,
         "config_preview": safe_cfg,
     })
+
 
 
 # =========================
