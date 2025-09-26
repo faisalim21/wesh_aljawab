@@ -55,9 +55,18 @@ def _pad_8(b: bytes) -> bytes:
 # ===== بناء/تفكيك QueryString =====
 def _build_qs(params: Dict[str, str]) -> str:
     """
-    يبني QueryString بترميز القيم فقط (كما هو شائع مع بوابات الدفع).
+    يبني QueryString بالحفاظ على Case-Sensitive للمفاتيح (ResponseURL, ErrorURL, ...)
+    مع ترميز القيم فقط.
     """
-    return urllib.parse.urlencode(params, quote_via=urllib.parse.quote, doseq=True)
+    parts = []
+    for k, v in params.items():
+        if v is None or v == "":
+            continue
+        # Encode القيمة فقط
+        v_enc = urllib.parse.quote(str(v), safe="")
+        parts.append(f"{k}={v_enc}")
+    return "&".join(parts)
+
 
 # ===== قراءة المفتاح =====
 def _read_key_text() -> str:
