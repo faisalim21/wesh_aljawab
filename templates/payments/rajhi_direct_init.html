@@ -9,17 +9,24 @@
   <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
 
   <form id="payForm" method="post" action="{{ gateway_url }}">
-    <!-- الحقول يجب أن تكون بنفس أسماء الراجحي -->
+    <!-- نرسل كل الصيغ لضمان التوافق -->
+    <!-- Tranportal ID -->
+    <input type="hidden" name="id" value="{{ id }}">
     <input type="hidden" name="TranportalId" value="{{ id }}">
+    <input type="hidden" name="tranportalId" value="{{ id }}">
+    <!-- Tranportal Password -->
+    <input type="hidden" name="password" value="{{ password }}">
     <input type="hidden" name="TranportalPassword" value="{{ password }}">
+    <input type="hidden" name="tranportalPassword" value="{{ password }}">
+    <!-- trandata -->
     <input type="hidden" name="trandata" value="{{ trandata }}">
   </form>
 
   {% if debug %}
   <pre style="white-space:pre-wrap;direction:ltr">
 gateway={{ gateway_url }}
-TranportalId={{ id }}
-TranportalPassword=********
+id/TranportalId/tranportalId all set to: {{ id }}
+password/TranportalPassword/tranportalPassword set (hidden)
 trandata_len={{ trandata|length }}
 {{ debug_plain|safe }}
   </pre>
