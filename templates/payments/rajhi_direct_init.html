@@ -9,12 +9,13 @@
   <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
 
   <form id="payForm" method="post" action="{{ gateway_url }}">
-    <!-- لإرضاء كل الإصدارات نرسل الاسمين معًا -->
     <input type="hidden" name="id" value="{{ id }}">
-    <input type="hidden" name="tranportalId" value="{{ id }}">
     <input type="hidden" name="password" value="{{ password }}">
     <input type="hidden" name="trandata" value="{{ trandata }}">
+    <input type="hidden" name="responseURL" value="{{ response_url }}">
+    <input type="hidden" name="errorURL" value="{{ error_url }}">
   </form>
+
 
   {% if debug %}
     <!-- في وضع التصحيح لا نرسل تلقائيًا: اعرض القيم للتأكد واضغط إرسال -->

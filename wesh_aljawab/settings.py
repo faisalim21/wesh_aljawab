@@ -294,6 +294,8 @@ RAJHI_CONFIG = {
     "TERMINAL_ID":          config("RAJHI_TERMINAL_ID"),
     "TRANSPORTAL_ID":       config("RAJHI_TRANSPORTAL_ID"),
     "TRANSPORTAL_PASSWORD": config("RAJHI_TRANSPORTAL_PASSWORD"),
-    "RESOURCE_FILE":        _resource_path,                  # ← تم تعديلها لاستخدام المسار المحسوب
+    "RESOURCE_FILE":        _resource_path,
     "RESOURCE_KEY":         config("RAJHI_RESOURCE_KEY", default=""),
+    "TRANDATA_ALGO":        config("RAJHI_TRANDATA_ALGO", default="AES"),
+    "KEY_FORMAT":           config("RAJHI_KEY_FORMAT", default="HEX"),
 }
