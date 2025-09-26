@@ -461,24 +461,26 @@ def rajhi_checkout(request):
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-    trandata_pairs = {
-        "action":        "1",
-        "amt":           amount,
-        "currencycode":  "682",
-        "langid":        "AR",
-        "trackid":       trackid,
-        # الصيغة الصحيحة حسب المستند
-        "ResponseURL":   success_url,
-        "ErrorURL":      fail_url,
-        # لا نرسل udf2 هنا لأنه لا يوجد Transaction مُسبق
-        "udf1":          str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":          "",
-        "udf3":          "",
-        "udf4":          "",
-        "udf5":          "",
-    }
+    trandata_pairs = [
+        ("action", "1"),
+        ("amt", amount),
+        ("currencycode", "682"),
+        ("langid", "AR"),
+        ("trackid", trackid),
+        ("ResponseURL", success_url),
+        ("ErrorURL", fail_url),
+        ("udf1", str(request.user.id) if request.user.is_authenticated else ""),
+        ("udf2", str(txn.id) if txn else ""),
+        ("udf3", ""),
+        ("udf4", ""),
+        ("udf5", ""),
+    ]
 
-    trandata_enc_hex = encrypt_trandata(trandata_pairs)
+    # حولها إلى str مرتب (مهم جدًا للراجحي)
+    trandata_str = "&".join(f"{k}={v}" for k,v in trandata_pairs)
+
+    trandata_enc_hex = encrypt_trandata(trandata_str)
+
 
     return render(request, "payments/rajhi_checkout.html", {
         "action_url": action_url,
