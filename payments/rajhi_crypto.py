@@ -10,12 +10,13 @@ from __future__ import annotations
     1) settings.RAJHI_CONFIG["RESOURCE_FILE"] إن كان يشير لملف موجود
     2) أو settings.RAJHI_CONFIG["RESOURCE_KEY"] / env[RAJHI_RESOURCE_KEY]
 - تحديد تنسيق المفتاح عبر env: RAJHI_KEY_FORMAT ∈ {"HEX","TEXT"} (الافتراضي HEX لأن مفاتيح الراجحي عادة تزوَّد كـ Hex)
-- تبادل البيانات يتم كسلسلة QueryString (URL-Encoded للقيم) قبل التشفير
+- ملاحظة مهمة:
+    قيم ResponseURL / ErrorURL وغيرها تُمرَّر داخل trandata كسلسلة عادية (بدون URL-encoding).
+    أي تشفير/ترميز للقيم داخل trandata قد يؤدي لأخطاء مثل IPAY0100001 (Missing error url).
 """
 
 import os
 import binascii
-import urllib.parse
 import logging
 from typing import Dict, Tuple
 
@@ -53,18 +54,30 @@ def _pad_8(b: bytes) -> bytes:
     return b + bytes([pad]) * pad
 
 # ===== بناء/تفكيك QueryString =====
-def _build_qs(params: Dict[str, str]) -> str:
+def _build_plain_qs(params: Dict[str, str]) -> str:
     """
-    يبني QueryString بالحفاظ على Case-Sensitive للمفاتيح (ResponseURL, ErrorURL, ...)
-    مع ترميز القيم فقط.
+    يبني نص trandata بدون أي URL-encoding للقيم.
+    نحافظ على الترتيب الذي تتوقعه البوابة، ونضمن وجود udf1..udf5 حتى لو كانت فارغة.
     """
+    ordered_keys = [
+        "action", "amt", "currencycode", "langid", "trackid",
+        "ResponseURL", "ErrorURL", "udf1", "udf2", "udf3", "udf4", "udf5",
+    ]
+
     parts = []
+    used = set()
+
+    for k in ordered_keys:
+        v = params.get(k, "")
+        parts.append(f"{k}={'' if v is None else str(v)}")
+        used.add(k)
+
+    # أي مفاتيح إضافية (إن وُجدت) تُلحق في النهاية بنفس الصيغة
     for k, v in params.items():
-        if v is None or v == "":
+        if k in used:
             continue
-        # Encode القيمة فقط
-        v_enc = urllib.parse.quote(str(v), safe="")
-        parts.append(f"{k}={v_enc}")
+        parts.append(f"{k}={'' if v is None else str(v)}")
+
     return "&".join(parts)
 
 
@@ -118,7 +131,7 @@ def _get_aes_key() -> bytes:
     return key
 
 def _encrypt_aes(params: Dict[str, str]) -> str:
-    plain = _build_qs(params).encode("utf-8")
+    plain = _build_plain_qs(params).encode("utf-8")
     key = _get_aes_key()
     cipher = AES.new(key, AES.MODE_CBC, _AES_IV)
     ct = cipher.encrypt(_pad_16(plain))
@@ -152,7 +165,7 @@ def _get_3des_key() -> bytes:
     return DES3.adjust_key_parity(raw)
 
 def _encrypt_3des(params: Dict[str, str]) -> str:
-    plain = _build_qs(params).encode("utf-8")
+    plain = _build_plain_qs(params).encode("utf-8")
     key = _get_3des_key()
     cipher = DES3.new(key, DES3.MODE_ECB)
     ct = cipher.encrypt(_pad_8(plain))
@@ -191,7 +204,10 @@ def decrypt_trandata(enc_hex: str) -> Tuple[str, Dict[str, str]]:
     for fn in (_decrypt_aes, _decrypt_3des):
         try:
             qs = fn(enc_hex)
-            pairs = urllib.parse.parse_qsl(qs, keep_blank_values=True)
+            # parse_qsl يستطيع قراءة النص ما دام لا توجد & داخل القيم نفسها.
+            # روابط الـ callback لا تحتوي & أو ?، لذا القراءة آمنة هنا.
+            from urllib.parse import parse_qsl
+            pairs = parse_qsl(qs, keep_blank_values=True)
             return qs, dict(pairs)
         except Exception as e:
             last_err = e
