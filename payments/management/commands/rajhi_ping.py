@@ -1,3 +1,4 @@
+# payments/management/commands/rajhi_ping.py
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from urllib.parse import urlencode
@@ -24,8 +25,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **opts):
         cfg = settings.RAJHI_CONFIG
-        tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
-        tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
+        # استخدم الحقول التاريخية لمسار Servlet: id/password
+        merchant_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
+        merchant_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
         use_uat = bool(opts.get("uat"))
         gateway_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
@@ -37,15 +39,15 @@ class Command(BaseCommand):
         success_url = f"{base_cb}/payments/rajhi/callback/success/"
         fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-        # IMPORTANT: keys are case-sensitive for Servlet
+        # داخل trandata: الأسماء Case-Sensitive لمسار Servlet
         trandata_pairs = {
             "action":       "1",
             "amt":          str(opts["amount"]),
             "currencycode": "682",
             "langid":       "AR",
             "trackid":      "PINGTEST",
-            "ResponseURL":  success_url,  # داخل trandata (R كبيرة)
-            "ErrorURL":     fail_url,     # داخل trandata (E كبيرة)
+            "ResponseURL":  success_url,  # R كبيرة
+            "ErrorURL":     fail_url,     # E كبيرة
             "udf1":         "",
             "udf2":         "",
             "udf3":         "",
@@ -58,28 +60,33 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"trandata_plain={urlencode(trandata_pairs)}"))
         self.stdout.write(self.style.SUCCESS(f"trandata_hex_len={len(enc)}"))
 
-        if not tranportal_id or not tranportal_password:
+        if not merchant_id or not merchant_password:
             self.stdout.write(self.style.ERROR("Missing TRANSPORTAL_ID / TRANSPORTAL_PASSWORD; NOT posting."))
             return
 
         if not HAS_REQUESTS:
             self.stdout.write(self.style.WARNING("requests غير مثبتة؛ سأتوقف عند بناء البيانات فقط."))
             self.stdout.write(
-                f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, "
-                f"trandata=<HEX {len(enc)}>, ResponseURL, ErrorURL"
+                f"POST fields would be: id={merchant_id}, password=******, "
+                f"trandata=<HEX {len(enc)}>, ResponseURL/ErrorURL + responseURL/errorURL"
             )
             return
 
         try:
-            # نرسل أيضاً الروابط كحقول POST علوية (خارج trandata)
-            resp = requests.post(gateway_url, data={
-                "tranportalId": tranportal_id,
-                "tranportalPassword": tranportal_password,
+            # مهم: نرسل روابط العودة كحقول POST علوية بحالتي الأحرف (احتياط)
+            # وكذلك نستعمل حقول Servlet التاريخية: id/password
+            post_data = {
+                "id": merchant_id,
+                "password": merchant_password,
                 "trandata": enc,
-                "ResponseURL": success_url,  # حقول علوية مطلوبة من البوابة (R/E كبيرة)
+                # علويًّا: كلا الحالتين تحسّبًا لاختلافات البوابة
+                "ResponseURL": success_url,
                 "ErrorURL": fail_url,
-            }, timeout=20)
+                "responseURL": success_url,
+                "errorURL": fail_url,
+            }
+            resp = requests.post(gateway_url, data=post_data, timeout=20)
             self.stdout.write(self.style.SUCCESS(f"POST status={resp.status_code}"))
-            self.stdout.write(resp.text[:800])
+            self.stdout.write(resp.text[:1200])
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"POST failed: {e}"))
