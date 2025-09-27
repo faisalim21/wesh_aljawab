@@ -194,6 +194,7 @@ def rajhi_direct_init(request):
         return render(request, "payments/rajhi_direct_init.html", {
             "gateway_url": GATEWAY_URL_PROD,
             "id": tranportal_id, "password": tranportal_password, "trandata": "",
+            "response_url": "", "error_url": "",
             "debug": True, "debug_plain": debug_text,
         })
 
@@ -250,8 +251,8 @@ def rajhi_direct_init(request):
         "currencycode":  "682",
         "langid":        "AR",
         "trackid":       trackid,
-        "ResponseURL":   success_url,   # الصيغة الصحيحة
-        "ErrorURL":      fail_url,      # الصيغة الصحيحة
+        "responseURL":   success_url,   # lowercase داخل trandata
+        "errorURL":      fail_url,      # lowercase داخل trandata
         # UDFs
         "udf1":          str(request.user.id) if request.user.is_authenticated else "",
         "udf2":          (str(txn.id) if txn else ""),
@@ -260,7 +261,7 @@ def rajhi_direct_init(request):
         "udf5":          "",
     }
 
-    # التشفير يتم عبر rajhi_crypto بحسب RAJHI_TRANDATA_ALGO (يفضّل 3DES في UAT)
+    # التشفير يتم عبر rajhi_crypto بحسب RAJHI_TRANDATA_ALGO
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     context = {
@@ -268,6 +269,9 @@ def rajhi_direct_init(request):
         "id": tranportal_id,
         "password": tranportal_password,
         "trandata": trandata_enc_hex,
+        # نرسل أيضاً الروابط كحقول POST علوية في الفورم
+        "response_url": success_url,
+        "error_url": fail_url,
         "debug": request.GET.get("debug") == "1",
         "debug_plain": (
             f"env={'UAT' if use_uat else 'PROD'}\n"

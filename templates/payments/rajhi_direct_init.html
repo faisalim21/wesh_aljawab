@@ -8,11 +8,15 @@
 <body>
   <p>جارٍ تجهيز التحويل لبوابة الراجحي…</p>
 
-  <!-- مهم: استخدم فقط tranportalId / tranportalPassword بدون أي أسماء بديلة -->
+  <!-- مهم: استخدم فقط tranportalId / tranportalPassword -->
   <form id="payForm" method="post" action="{{ gateway_url }}">
     <input type="hidden" name="tranportalId" value="{{ id }}">
     <input type="hidden" name="tranportalPassword" value="{{ password }}">
     <input type="hidden" name="trandata" value="{{ trandata }}">
+
+    <!-- أيضاً أرسل الروابط كحقول POST علوية (خارج trandata) -->
+    <input type="hidden" name="responseURL" value="{{ response_url }}">
+    <input type="hidden" name="errorURL" value="{{ error_url }}">
   </form>
 
   {% if debug %}
@@ -21,6 +25,8 @@ gateway={{ gateway_url }}
 tranportalId={{ id }}
 tranportalPassword=********
 trandata_len={{ trandata|length }}
+responseURL={{ response_url }}
+errorURL={{ error_url }}
 {{ debug_plain|safe }}
     </pre>
     <button onclick="document.getElementById('payForm').submit()">إرسال يدويًا الآن</button>

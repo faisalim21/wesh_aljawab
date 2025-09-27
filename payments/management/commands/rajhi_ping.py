@@ -33,14 +33,15 @@ class Command(BaseCommand):
         success_url = f"{base_cb}/payments/rajhi/callback/success/"
         fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
+        # IMPORTANT: keys are case-sensitive and expected as below
         trandata_pairs = {
             "action": "1",
             "amt": str(opts["amount"]),
             "currencycode": "682",
             "langid": "AR",
             "trackid": "PINGTEST",
-            "responseURL": success_url,  # ← lowercase key
-            "errorURL": fail_url,        # ← lowercase key
+            "responseURL": success_url,  # داخل trandata
+            "errorURL": fail_url,        # داخل trandata
             "udf1": "",
             "udf2": "",
             "udf3": "",
@@ -58,14 +59,17 @@ class Command(BaseCommand):
 
         if not HAS_REQUESTS:
             self.stdout.write(self.style.WARNING("requests غير مثبتة؛ سأتوقف عند بناء البيانات فقط."))
-            self.stdout.write(f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, trandata=<HEX {len(enc)}>")
+            self.stdout.write(f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, trandata=<HEX {len(enc)}>, responseURL, errorURL")
             return
 
         try:
+            # أيضاً نرسل responseURL/errorURL كحقول POST علوية (خارج trandata)
             resp = requests.post(GATEWAY_URL, data={
-                "tranportalId": tranportal_id,            # ← key as expected by Rajhi
-                "tranportalPassword": tranportal_password, # ← key as expected by Rajhi
+                "tranportalId": tranportal_id,
+                "tranportalPassword": tranportal_password,
                 "trandata": enc,
+                "responseURL": success_url,   # حقول علوية مطلوبة من البوابة
+                "errorURL": fail_url,         # حقول علوية مطلوبة من البوابة
             }, timeout=20)
             self.stdout.write(self.style.SUCCESS(f"POST status={resp.status_code}"))
             self.stdout.write(resp.text[:500])
