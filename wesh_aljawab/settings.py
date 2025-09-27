@@ -261,14 +261,14 @@ LOGGING = {
     },
     'handlers': {
         'file': {'level': 'INFO','class': 'logging.FileHandler','filename': LOG_DIR / 'django.log','formatter': 'verbose'},
-        'console': {'level': 'INFO', 'class': 'logging.StreamHandler', 'formatter': 'simple'},
+        'console': {'level': 'INFO', 'class': 'StreamHandler', 'formatter': 'simple'},
     },
     'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
     'loggers': {
         'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
         'accounts': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
         'games': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
-        'payments': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},  # جديد
+        'payments': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
     },
 }
 
@@ -290,7 +290,6 @@ else:
     _resource_path = ""
 
 # ===== Rajhi PG (TEMP – hardcoded for connectivity test) =====
-# ===== Rajhi PG (TEMP – hardcoded for connectivity test) =====
 RAJHI_CONFIG = {
     # من لوحة الراجحي (View Plugin Details)
     "MERCHANT_ID": "600002487",
@@ -298,11 +297,11 @@ RAJHI_CONFIG = {
     "TRANSPORTAL_ID": "Ir468Wy1ELn5Lhe",
     "TRANSPORTAL_PASSWORD": "!#vY8Lt!3rAA59w",
 
-    # ✅ استخدم AES (يوصي بها الراجحي) والـ KEY بصيغة HEX
+    # ✅ استخدم AES رسميًا
     "TRANDATA_ALGO": "AES",
     "KEY_FORMAT": "HEX",
 
-    # مفتاح AES (HEX بطول 16 بايت = 32 hex chars) — كما زوّدتني
+    # ✅ RESOURCE KEY من شاشة البنك (Hex بطول 32)
     "RESOURCE_FILE": "",
-    "RESOURCE_KEY": "52589155606252589155606252589155",
+    "RESOURCE_KEY": "4D5992BBB4378611C683B19EDB11742",
 }
