@@ -252,23 +252,42 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='وش الجواب <no
 # ============== 📊 التسجيل ==============
 LOG_DIR = BASE_DIR / 'logs'
 LOG_DIR.mkdir(exist_ok=True)
+
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}', 'style': '{'},
-        'simple': {'format': '{levelname} {message}', 'style': '{'},
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
     },
-    'handlers': {
-        'file': {'level': 'INFO','class': 'logging.FileHandler','filename': LOG_DIR / 'django.log','formatter': 'verbose'},
-        'console': {'level': 'INFO', 'class': 'StreamHandler', 'formatter': 'simple'},
+    "handlers": {
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "django.log",
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "INFO",
+            "class": "logging.StreamHandler",  # ← الاسم الصحيح
+            "formatter": "simple",
+        },
     },
-    'root': {'handlers': ['console', 'file'], 'level': 'INFO'},
-    'loggers': {
-        'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
-        'accounts': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
-        'games': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
-        'payments': {'handlers': ['console', 'file'], 'level': 'DEBUG', 'propagate': False},
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {"handlers": ["console", "file"], "level": "INFO", "propagate": False},
+        "accounts": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
+        "games": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
+        "payments": {"handlers": ["console", "file"], "level": "DEBUG", "propagate": False},
     },
 }
 
