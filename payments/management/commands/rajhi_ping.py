@@ -1,4 +1,3 @@
-# payments/management/commands/rajhi_ping.py
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from urllib.parse import urlencode
@@ -40,8 +39,8 @@ class Command(BaseCommand):
             "currencycode": "682",
             "langid": "AR",
             "trackid": "PINGTEST",
-            "ResponseURL": success_url,
-            "ErrorURL": fail_url,
+            "responseURL": success_url,  # ← lowercase key
+            "errorURL": fail_url,        # ← lowercase key
             "udf1": "",
             "udf2": "",
             "udf3": "",
@@ -59,13 +58,13 @@ class Command(BaseCommand):
 
         if not HAS_REQUESTS:
             self.stdout.write(self.style.WARNING("requests غير مثبتة؛ سأتوقف عند بناء البيانات فقط."))
-            self.stdout.write(f"POST fields would be: id={tranportal_id}, password=******, trandata=<HEX {len(enc)}>")
+            self.stdout.write(f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, trandata=<HEX {len(enc)}>")
             return
 
         try:
             resp = requests.post(GATEWAY_URL, data={
-                "id": tranportal_id,
-                "password": tranportal_password,
+                "tranportalId": tranportal_id,            # ← key as expected by Rajhi
+                "tranportalPassword": tranportal_password, # ← key as expected by Rajhi
                 "trandata": enc,
             }, timeout=20)
             self.stdout.write(self.style.SUCCESS(f"POST status={resp.status_code}"))
