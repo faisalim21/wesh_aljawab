@@ -1,4 +1,3 @@
-# payments/management/commands/rajhi_ping.py
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from urllib.parse import urlencode
@@ -68,19 +67,21 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("requests غير مثبتة؛ سأتوقف عند بناء البيانات فقط."))
             self.stdout.write(
                 f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, "
-                f"trandata=<HEX {len(enc)}>, ResponseURL/ErrorURL (top-level too)"
+                f"trandata=<HEX {len(enc)}>, ResponseURL/ErrorURL + responseURL/errorURL"
             )
             return
 
         try:
-            # مهم: نرسل روابط العودة كحقول POST علوية أيضاً
+            # مهم: نرسل روابط العودة كحقول POST علوية بكل حالات الأحرف الممكنة
             post_data = {
                 "tranportalId": tranportal_id,
                 "tranportalPassword": tranportal_password,
                 "trandata": enc,
-                # احتياطاً نرسلها علويّاً أيضاً
+                # علويًّا: كل الصيغ لتفادي اختلافات السيرفلت/الإصدارات
                 "ResponseURL": success_url,
                 "ErrorURL": fail_url,
+                "responseURL": success_url,
+                "errorURL": fail_url,
             }
             resp = requests.post(gateway_url, data=post_data, timeout=20)
             self.stdout.write(self.style.SUCCESS(f"POST status={resp.status_code}"))
