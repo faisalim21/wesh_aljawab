@@ -12,7 +12,8 @@ except Exception:
 
 from payments.rajhi_crypto import encrypt_trandata
 
-GATEWAY_URL = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
+GATEWAY_URL_PROD = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
+GATEWAY_URL_UAT  = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
 
 class Command(BaseCommand):
     help = "Ping Al Rajhi gateway with a minimal init request and print diagnostics."
@@ -26,52 +27,59 @@ class Command(BaseCommand):
         tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
         tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
+        use_uat = bool(opts.get("uat"))
+        gateway_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
+
         base_cb = (os.environ.get("PUBLIC_BASE_URL") or "").rstrip("/")
         if not base_cb:
-            base_cb = "https://wesh-aljawab.onrender.com"  # fallback معقول
+            base_cb = "https://wesh-aljawab.onrender.com"  # fallback
 
         success_url = f"{base_cb}/payments/rajhi/callback/success/"
         fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-        # IMPORTANT: keys are case-sensitive and expected as below
+        # IMPORTANT: keys are case-sensitive for Servlet
         trandata_pairs = {
-            "action": "1",
-            "amt": str(opts["amount"]),
+            "action":       "1",
+            "amt":          str(opts["amount"]),
             "currencycode": "682",
-            "langid": "AR",
-            "trackid": "PINGTEST",
-            "responseURL": success_url,  # داخل trandata
-            "errorURL": fail_url,        # داخل trandata
-            "udf1": "",
-            "udf2": "",
-            "udf3": "",
-            "udf4": "",
-            "udf5": "",
+            "langid":       "AR",
+            "trackid":      "PINGTEST",
+            "ResponseURL":  success_url,  # داخل trandata (R كبيرة)
+            "ErrorURL":     fail_url,     # داخل trandata (E كبيرة)
+            "udf1":         "",
+            "udf2":         "",
+            "udf3":         "",
+            "udf4":         "",
+            "udf5":         "",
         }
 
         enc = encrypt_trandata(trandata_pairs)
+        self.stdout.write(self.style.SUCCESS(f"gateway={'UAT' if use_uat else 'PROD'}"))
         self.stdout.write(self.style.SUCCESS(f"trandata_plain={urlencode(trandata_pairs)}"))
         self.stdout.write(self.style.SUCCESS(f"trandata_hex_len={len(enc)}"))
 
         if not tranportal_id or not tranportal_password:
-            self.stdout.write(self.style.ERROR("Missing id/password; NOT posting."))
+            self.stdout.write(self.style.ERROR("Missing TRANSPORTAL_ID / TRANSPORTAL_PASSWORD; NOT posting."))
             return
 
         if not HAS_REQUESTS:
             self.stdout.write(self.style.WARNING("requests غير مثبتة؛ سأتوقف عند بناء البيانات فقط."))
-            self.stdout.write(f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, trandata=<HEX {len(enc)}>, responseURL, errorURL")
+            self.stdout.write(
+                f"POST fields would be: tranportalId={tranportal_id}, tranportalPassword=******, "
+                f"trandata=<HEX {len(enc)}>, ResponseURL, ErrorURL"
+            )
             return
 
         try:
-            # أيضاً نرسل responseURL/errorURL كحقول POST علوية (خارج trandata)
-            resp = requests.post(GATEWAY_URL, data={
+            # نرسل أيضاً الروابط كحقول POST علوية (خارج trandata)
+            resp = requests.post(gateway_url, data={
                 "tranportalId": tranportal_id,
                 "tranportalPassword": tranportal_password,
                 "trandata": enc,
-                "responseURL": success_url,   # حقول علوية مطلوبة من البوابة
-                "errorURL": fail_url,         # حقول علوية مطلوبة من البوابة
+                "ResponseURL": success_url,  # حقول علوية مطلوبة من البوابة (R/E كبيرة)
+                "ErrorURL": fail_url,
             }, timeout=20)
             self.stdout.write(self.style.SUCCESS(f"POST status={resp.status_code}"))
-            self.stdout.write(resp.text[:500])
+            self.stdout.write(resp.text[:800])
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"POST failed: {e}"))

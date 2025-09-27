@@ -170,26 +170,54 @@ def rajhi_test(request):
 # =========================
 #  تدفّق التهيئة المباشر (المعتمد)
 # =========================
+from django.conf import settings
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse, HttpResponseBadRequest
+from django.utils import timezone
+from django.db import IntegrityError, transaction as db_txn
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.crypto import get_random_string
+
+from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode
+from uuid import UUID
+import logging
+import os
+
+from games.models import GamePackage, UserPurchase
+from .models import Transaction, PaymentMethod, FakePaymentGateway, Invoice
+from accounts.models import UserActivity
+
+from .rajhi_crypto import encrypt_trandata, decrypt_trandata
+
+logger = logging.getLogger("payments.views")
+
+GATEWAY_URL_PROD = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
+GATEWAY_URL_UAT  = "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
+
 def rajhi_direct_init(request):
     """
-    تهيئة الدفع وإرسال (id/password/trandata) إلى بوابة الراجحي.
+    تهيئة الدفع لمسار Servlet التاريخي (PaymentInitHTTPServlet):
+      - POST: tranportalId / tranportalPassword / trandata (+ ResponseURL / ErrorURL كحقول POST علوية)
+      - داخل trandata: ResponseURL / ErrorURL (Case-Sensitive)
     يدعم:
       - ?env=uat لاختيار UAT (وإلا الإنتاج)
-      - ?pkg=<uuid> لربط العملية بحزمة قبل التحويل (واجب أن تكون فعّالة)
-      - ?amt=<decimal> لتجاوز السعر، وإلا يؤخذ من الحزمة (effective_price)
+      - ?pkg=<uuid> ربط العملية بحزمة فعّالة
+      - ?amt=<decimal> تجاوز السعر (وإلا يأخذ effective_price)
       - ?debug=1 لعرض القيم وعدم الإرسال تلقائياً
     """
     cfg = settings.RAJHI_CONFIG
     tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
     tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
-    # تحقق من الإعدادات الأساسية
     if not tranportal_id or not tranportal_password:
         debug_text = (
             "ERROR: Missing config:\n"
             f"TRANSPORTAL_ID set? {bool(tranportal_id)}\n"
             f"TRANSPORTAL_PASSWORD set? {bool(tranportal_password)}\n"
-            "تحقق من ملف البيئة/Render."
+            "تحقق من متغيرات البيئة/Render."
         )
         return render(request, "payments/rajhi_direct_init.html", {
             "gateway_url": GATEWAY_URL_PROD,
@@ -198,7 +226,7 @@ def rajhi_direct_init(request):
             "debug": True, "debug_plain": debug_text,
         })
 
-    # اختيار البيئة (UAT أثناء التطوير أو عند تمرير env=uat)
+    # اختيار البيئة
     use_uat = (request.GET.get("env", "").lower() == "uat") or settings.DEBUG
     action_url = GATEWAY_URL_UAT if use_uat else GATEWAY_URL_PROD
 
@@ -206,26 +234,24 @@ def rajhi_direct_init(request):
     amount  = (request.GET.get("amt") or "").strip()
     trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
 
-    # (اختياري) ربط بحزمة، مع تحقّق UUID مبكّر لتفادي 500
+    # (اختياري) ربط بحزمة
     pkg = None
     txn = None
     pkg_id = (request.GET.get("pkg") or "").strip()
     if pkg_id:
         try:
-            UUID(pkg_id)  # يتحقق من الصيغة فقط
+            UUID(pkg_id)
         except Exception:
             pkg_id = ""
         else:
             pkg = get_object_or_404(GamePackage, id=pkg_id, is_active=True)
 
-    # لو لم تُمرَّر amt وأرفقنا حزمة، استخدم السعر الفعّال
     if not amount:
         if pkg:
             amount = f"{pkg.effective_price:.2f}"
         else:
-            amount = "3.00"  # قيمة افتراضية للتجربة
+            amount = "3.00"
 
-    # أنشئ Transaction قبل التحويل (لو المستخدم مسجّل وحزمة موجودة)
     if request.user.is_authenticated and pkg:
         txn = Transaction.objects.create(
             user=request.user,
@@ -236,32 +262,30 @@ def rajhi_direct_init(request):
             notes=f"trackid={trackid}",
         )
 
-    # أبنِ الدومين الأساس للـ callback، وافرِض HTTPS
+    # بناء روابط الرجوع + فرض HTTPS
     base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
     if base_cb.startswith("http://"):
-        base_cb = "https://" + base_cb[len("http://"):]  # فرض HTTPS دائماً
+        base_cb = "https://" + base_cb[len("http://"):]
 
     success_url = f"{base_cb}/payments/rajhi/callback/success/"
     fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
 
-    # بوابة الراجحي تتوقع الحروف بالشكل التالي تماماً (Case-Sensitive)
+    # مفاتيح Case-Sensitive لمسار Servlet
     trandata_pairs = {
-        "action":        "1",
-        "amt":           amount,
-        "currencycode":  "682",
-        "langid":        "AR",
-        "trackid":       trackid,
-        "responseURL":   success_url,   # lowercase داخل trandata
-        "errorURL":      fail_url,      # lowercase داخل trandata
-        # UDFs
-        "udf1":          str(request.user.id) if request.user.is_authenticated else "",
-        "udf2":          (str(txn.id) if txn else ""),
-        "udf3":          "",
-        "udf4":          "",
-        "udf5":          "",
+        "action":       "1",
+        "amt":          amount,
+        "currencycode": "682",
+        "langid":       "AR",
+        "trackid":      trackid,
+        "ResponseURL":  success_url,   # R كبيرة
+        "ErrorURL":     fail_url,      # E كبيرة
+        "udf1":         str(request.user.id) if request.user.is_authenticated else "",
+        "udf2":         (str(txn.id) if txn else ""),
+        "udf3":         "",
+        "udf4":         "",
+        "udf5":         "",
     }
 
-    # التشفير يتم عبر rajhi_crypto بحسب RAJHI_TRANDATA_ALGO
     trandata_enc_hex = encrypt_trandata(trandata_pairs)
 
     context = {
@@ -269,7 +293,7 @@ def rajhi_direct_init(request):
         "id": tranportal_id,
         "password": tranportal_password,
         "trandata": trandata_enc_hex,
-        # نرسل أيضاً الروابط كحقول POST علوية في الفورم
+        # سنرسل هذه أيضاً كحقول POST علوية
         "response_url": success_url,
         "error_url": fail_url,
         "debug": request.GET.get("debug") == "1",
@@ -281,7 +305,6 @@ def rajhi_direct_init(request):
         ),
     }
     return render(request, "payments/rajhi_direct_init.html", context)
-
 
 # =========================
 #  نقاط الرجوع (Callback) — مع فك تشفير trandata
