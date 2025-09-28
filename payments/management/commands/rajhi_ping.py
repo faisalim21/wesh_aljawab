@@ -26,7 +26,7 @@ def _get_base_url() -> str:
 
 
 class Command(BaseCommand):
-    help = "Ping Al Rajhi PG with proper trandata composition (AES)."
+    help = "Ping Al Rajhi PG (hosted checkout) with proper payload."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -35,29 +35,18 @@ class Command(BaseCommand):
             default=3.00,
             help="Amount to test with (e.g. 3.00)",
         )
-        parser.add_argument(
-            "--env",
-            type=str,
-            default="prod",
-            choices=["prod", "uat"],
-            help="Which gateway to hit (prod|uat). Default: prod",
-        )
 
-    GATEWAYS = {
-        "prod": "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet",
-        "uat":  "https://uat3ds.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet",
-    }
+    # ✅ حسب دعم الراجحي: استخدم hosted.htm
+    GATEWAY_URL = "https://securepayments.alrajhibank.com.sa/pg/hosted.htm"
 
     def handle(self, *args, **options):
         amount = options["amount"]
-        env = options["env"].lower()
-        gateway = self.GATEWAYS.get(env, self.GATEWAYS["prod"])
 
         cfg = getattr(settings, "RAJHI_CONFIG", {})
         transportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
         transportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
-        if not all([transportal_id, transportal_password]):
+        if not transportal_id or not transportal_password:
             self.stderr.write(
                 self.style.ERROR("RAJHI_CONFIG ناقصة: TRANSPORTAL_ID / TRANSPORTAL_PASSWORD")
             )
@@ -71,11 +60,11 @@ class Command(BaseCommand):
         track_id = f"{int(time.time() * 1000)}{uuid.uuid4().hex[:4]}"
         amount_str = f"{amount:.2f}"
 
-        # ✅ داخل trandata (مع responseURL و errorURL)
+        # داخل trandata: الحقول الأساسية فقط
         trandata_pairs = {
             "action": "1",
             "amt": amount_str,
-            "currencyCode": "682",
+            "currencycode": "682",  # SAR
             "langid": "AR",
             "trackid": track_id,
             "udf1": "",
@@ -85,14 +74,14 @@ class Command(BaseCommand):
             "udf5": "",
         }
 
-        # تشفير trandata
         enc = encrypt_trandata(trandata_pairs)
 
-        self.stdout.write(f"gateway={env.upper()}")
+        self.stdout.write("gateway=HOSTED.HTM")
         self.stdout.write(f"trandata_plain={trandata_pairs}")
         self.stdout.write(f"trandata_hex_len={len(enc)}")
 
-        # ✅ POST payload يحتوي فقط id + password + trandata
+        # ✅ حسب التكامل الشائع مع hosted.htm:
+        # نرسل id/password/trandata + responseURL/errorURL خارج التشفير
         payload = {
             "id": transportal_id,
             "password": transportal_password,
@@ -101,14 +90,17 @@ class Command(BaseCommand):
             "errorURL": error_url,
         }
 
-        # اطبع الديباج قبل الإرسال
-        self.stdout.write("=== DEBUG Payload ===")
-        for k, v in payload.items():
-            self.stdout.write(f"{k}={v}")
-        self.stdout.write("=====================")
+        # طباعة للتشخيص قبل الإرسال (بدون كشف أسرار إضافية)
+        self.stdout.write("=== DEBUG Payload (keys) ===")
+        self.stdout.write(f"id={payload['id']}")
+        self.stdout.write(f"password={'*' * len(payload['password'])}")
+        self.stdout.write(f"trandata={payload['trandata'][:64]}... (len={len(payload['trandata'])})")
+        self.stdout.write(f"responseURL={payload['responseURL']}")
+        self.stdout.write(f"errorURL={payload['errorURL']}")
+        self.stdout.write("============================")
 
         try:
-            resp = requests.post(gateway, data=payload, timeout=30)
+            resp = requests.post(self.GATEWAY_URL, data=payload, timeout=30)
             self.stdout.write(f"POST status={resp.status_code}")
             body = (resp.text or "").strip()
             self.stdout.write(body[:2000])  # اطبع أول 2000 حرف للتشخيص
