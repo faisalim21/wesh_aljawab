@@ -216,40 +216,34 @@ def games_home(request):
         'quiz_available': False,
     })
 
-from django.shortcuts import render
+from datetime import timedelta
 from django.utils import timezone
-from games.models import GamePackage, GameSession
-from payments.models import Transaction
+from django.db.models import Q
+from django.shortcuts import render
 
-
-
-
+from .models import LettersPackage, LettersSession
+from payments.models import Purchase  # عدّل المسار إذا كان مختلفاً
 
 def letters_game_home(request):
     """
     صفحة اختيار الحزم لخلية الحروف:
     - أعلى الصفحة: الحزمة المجانية (إن وُجدت ومفعّلة).
-    - تحتها: حزم منوّعة (سكرول أفقي)، ثم حزم رياضية (سكرول أفقي).
-    - زر 'ابدأ اللعب' يظهر فقط إذا لدى المستخدم شراء صالح خلال 72 ساعة لهذه الحزمة.
-    - زر 'شراء' دائماً متاح حتى لو سبق له اللعب (لا منع).
-    - شارة 'سبق لك لعب هذه الحزمة' مجرد تذكير بصري.
+    - تحتها: منوّعة ثم رياضية (سكرول).
+    - 'ابدأ اللعب' يظهر فقط لو عنده شراء صالح خلال 72 ساعة.
+    - 'شراء' دائمًا متاح (حتى لو سبق لعبها)، وشارة 'سبق لك لعب هذه الحزمة' للتذكير فقط.
     """
-
-    # ===== 1) الحزمة المجانية =====
-    # نفترض أن الحزمة المجانية: is_free=True و is_active=True و game_type='letters'
+    # الحزمة المجانية
     free_package = (
         LettersPackage.objects.filter(
             is_free=True, is_active=True, game_type='letters'
         ).order_by('-id').first()
     )
 
-    # حالة الجلسة المجانية الحالية (إن أردت إظهار "ارجع إلى جلستك")
     free_active_session = None
     free_session_eligible = False
     free_session_message = ""
 
     if request.user.is_authenticated and free_package:
-        # جلسة مجانية حالية لم تُكمل (host = المستخدم)
         free_active_session = LettersSession.objects.filter(
             package=free_package,
             host=request.user,
@@ -257,14 +251,10 @@ def letters_game_home(request):
             is_completed=False
         ).order_by('-id').first()
 
-        # منطق الأهلية للجلسة المجانية:
-        # مسموح جلسة مجانية واحدة "جديدة" إذا لا توجد جلسة مجانية سارية للمستخدم على نفس الحزمة.
         free_session_eligible = free_active_session is None
         if not free_session_eligible:
             free_session_message = "لديك جلسة مجانية سارية. ارجع لها أو أكملها أولًا."
         else:
-            # ممكن يكون عندك شرط إضافي (مرة واحدة لكل مستخدم).
-            # مثال: منع تكرار الجلسة المجانية إذا سبق أنشأ أي جلسة مجانية لهذه الحزمة.
             had_free_before = LettersSession.objects.filter(
                 package=free_package,
                 host=request.user
@@ -272,27 +262,20 @@ def letters_game_home(request):
             if had_free_before:
                 free_session_eligible = False
                 free_session_message = "لقد استخدمت الجلسة المجانية الخاصة بك."
-            else:
-                free_session_message = ""
 
-    # ===== 2) الحزم المدفوعة – مصنفة =====
-    # نعرض فقط الحزم المفعلة للعبة الحروف (بدون المجانية)
+    # الحزم المدفوعة حسب التصنيف
     paid_qs = LettersPackage.objects.filter(
         is_active=True, is_free=False, game_type='letters'
     )
-
-    # ترتيب داخل كل تصنيف حسب رقم الحزمة تصاعدي (كما طلبت)
     paid_packages_mixed = paid_qs.filter(question_theme='mixed').order_by('package_number')
     paid_packages_sports = paid_qs.filter(question_theme='sports').order_by('package_number')
 
-    # ===== 3) مشتريات المستخدم الصالحة خلال 72 ساعة =====
+    # مشتريات المستخدم الصالحة (72 ساعة)
     valid_ids = set()
     used_before_ids = set()
 
     if request.user.is_authenticated:
-        # حالات الدفع الناجحة لديك (عدّل قائمة الحالات إن لزم)
-        success_statuses = ['paid', 'succeeded', 'success']
-
+        success_statuses = ['paid', 'succeeded', 'success']  # عدّلها إن لزم
         valid_ids = set(
             Purchase.objects.filter(
                 user=request.user,
@@ -301,9 +284,6 @@ def letters_game_home(request):
                 created_at__gte=timezone.now() - timedelta(hours=72),
             ).values_list('package_id', flat=True)
         )
-
-        # سبق لعبها: أي جلسة (مجانية أو مدفوعة) على هذه الحزم
-        # ملاحظة: لا نستعمل "user" في LettersSession حتى لا نقع بالخطأ السابق
         used_before_ids = set(
             LettersSession.objects.filter(
                 Q(purchase__user=request.user) | Q(host=request.user)
@@ -311,22 +291,17 @@ def letters_game_home(request):
         )
 
     context = {
-        # أعلى الصفحة
         'free_package': free_package,
         'free_active_session': free_active_session,
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
-
-        # التصنيفات
         'paid_packages_mixed': paid_packages_mixed,
         'paid_packages_sports': paid_packages_sports,
-
-        # حالات المستخدم
-        'user_purchases': valid_ids,    # IDs حزم يمكنه "ابدأ اللعب" لها
-        'used_before_ids': used_before_ids,  # IDs لعرض شارة "سبق لك لعبها"
+        'user_purchases': valid_ids,
+        'used_before_ids': used_before_ids,
     }
-
     return render(request, 'games/letters/packages.html', context)
+
 
 @require_http_methods(["POST"])
 def create_letters_session(request):
