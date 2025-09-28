@@ -75,11 +75,9 @@ class Command(BaseCommand):
         trandata_pairs = {
             "action": "1",
             "amt": amount_str,
-            "currencyCode": "682",   # ← C كابيتال
+            "currencyCode": "682",
             "langid": "AR",
             "trackid": track_id,
-            "responseURL": success_url,
-            "errorURL": error_url,
             "udf1": "",
             "udf2": "",
             "udf3": "",
@@ -99,6 +97,8 @@ class Command(BaseCommand):
             "id": transportal_id,
             "password": transportal_password,
             "trandata": enc,
+            "responseURL": success_url,
+            "errorURL": error_url,
         }
 
         # اطبع الديباج قبل الإرسال
