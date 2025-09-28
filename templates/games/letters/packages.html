@@ -18,20 +18,16 @@
     {# ——— Canonical ——— #}
     <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
 
-    {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
+    {# ——— Open Graph ——— #}
     <meta property="og:locale" content="ar_SA">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="وش الجواب">
     <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
     <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-    {# غيّر الصورة لكل صفحة عبر المتغير page_og_image إن وُجد #}
     <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
     <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-    {# يفضّل استخدام أبعاد 1200x630 #}
-    <!-- <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630"> -->
 
     {# ——— Twitter Card ——— #}
     <meta name="twitter:card" content="summary_large_image">
@@ -46,40 +42,9 @@
     <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
     <link rel="mask-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" color="#4f46e5">
-    {# لو عندك manifest حقيقي فعّله #}
-    {# <link rel="manifest" href="{% static 'site.webmanifest' %}"> #}
-
-    {# ——— تحسينات أداء الخطوط (اختياري) ——— #}
-    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    {# لو بتثبت خط Tajawal عالميًا، حمّله هنا #}
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet"> -->
-
-    {# ——— JSON-LD (اختياري لتحسين SEO) ——— #}
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "name": "وش الجواب",
-      "url": "https://wesh-aljawab.onrender.com/",
-      "inLanguage": "ar",
-      "publisher": {
-        "@type": "Organization",
-        "name": "وش الجواب",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-        }
-      }
-    }
-    </script>
-
-    {# ——— مساحة لتجاوزات/إضافات خاصة بكل صفحة عند الحاجة ——— #}
-    {% block meta_overrides %}{% endblock %}
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <!-- خط أيقونة الريال السعودي -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
@@ -92,15 +57,12 @@
       --ok:#22c55e; --primary:#8b5cf6; --cyan:#06b6d4;
       --muted:#64748b; --ink:#1f2937;
     }
-
     body{
       background:linear-gradient(135deg,var(--bg1) 0%,var(--bg2) 100%);
       font-family:'Tajawal',sans-serif;color:var(--ink);
       min-height:100vh;margin:0;padding:0;
     }
-
     .packages-section{background:rgba(255,255,255,.96);padding:64px 0;}
-
     .section-title{text-align:center;margin-bottom:36px;}
     .section-title h2{
       font-size:2.2rem;font-weight:800;
@@ -110,34 +72,20 @@
     }
     .section-title p{color:#475569;margin:0}
 
-    /* شبكة مرتبة متجاوبة (للبطاقات العمودية العامة) */
-    .packages-grid{
-      display:grid;
-      grid-template-columns:repeat(12,1fr);
-      gap:16px;
-    }
+    .packages-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
     .pkg-col{grid-column:span 12;}
     @media (min-width:768px){ .pkg-col{grid-column:span 6;} .packages-grid{gap:18px;} }
     @media (min-width:992px){ .pkg-col{grid-column:span 4;} }
 
-    /* صفوف أفقية قابلة للتمرير (للتصنيفَين) */
-    .scroll-row{
-      display:flex; gap:16px; overflow-x:auto; padding-bottom:8px; scrollbar-width:thin;
-    }
+    /* صفوف أفقية قابلة للتمرير للتصنيفات */
+    .scroll-row{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;scrollbar-width:thin}
     .scroll-row::-webkit-scrollbar{height:10px}
     .scroll-row::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:999px}
     .scroll-row::-webkit-scrollbar-track{background:#eef2ff;border-radius:999px}
-    .scroll-row .pkg-col{
-      flex:0 0 85%; max-width:85%;
-    }
-    @media (min-width:576px){
-      .scroll-row .pkg-col{flex:0 0 48%; max-width:48%;}
-    }
-    @media (min-width:992px){
-      .scroll-row .pkg-col{flex:0 0 31%; max-width:31%;}
-    }
+    .scroll-row .pkg-col{flex:0 0 85%;max-width:85%}
+    @media (min-width:576px){ .scroll-row .pkg-col{flex:0 0 48%;max-width:48%} }
+    @media (min-width:992px){ .scroll-row .pkg-col{flex:0 0 31%;max-width:31%} }
 
-    /* الكارت */
     .package-card{
       background:#fff;border-radius:18px;padding:1.25rem 1.25rem 1rem;margin:0;
       border:1px solid var(--cardBorder);
@@ -148,94 +96,37 @@
     .pkg-head{min-height:52px;display:flex;align-items:center;justify-content:center;gap:.5rem;}
     .package-title{font-size:1.15rem;font-weight:800;text-align:center;margin:0;}
     .pkg-meta{min-height:34px;display:flex;justify-content:center;align-items:center;margin-top:.25rem;}
-
     .theme-badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.8rem;font-weight:800}
-    .theme-mixed{background:var(--mixBg);color:var(--mixText);border:1px solid var(--mixBorder);}
-    .theme-sports{background:var(--sprBg);color:var(--sprText);border:1px solid var(--sprBorder);}
+    .theme-mixed{background:var(--mixBg);color:var(--mixText);border:1px solid var(--mixBorder)}
+    .theme-sports{background:var(--sprBg);color:var(--sprText);border:1px solid var(--sprBorder)}
     .theme-tip{cursor:help;border-bottom:1px dotted currentColor}
-
-    /* الوصف */
     .pkg-desc-wrap{margin-top:.5rem;}
-    .pkg-desc{
-      color:var(--muted);text-align:center;margin:0;
-      display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden;
-    }
+    .pkg-desc{color:var(--muted);text-align:center;margin:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
     .pkg-desc.expanded{-webkit-line-clamp:unset;}
     .toggle-desc{font-weight:800}
-
-    /* إبراز بطاقة المجاني */
-    .free-card{
-      border:2px dashed var(--ok);
-      background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 60%);
-      box-shadow:0 14px 28px rgba(34,197,94,.14);
-      padding:1.25rem;
-    }
-    .free-ribbon{
-      position:absolute;top:10px;left:-8px;background:var(--ok);color:#fff;
-      padding:6px 12px;border-radius:0 10px 10px 0;font-weight:900;font-size:.9rem;
-      box-shadow:0 6px 16px rgba(34,197,94,.35);
-    }
-
-    /* الأسعار + أيقونة الريال */
+    .free-card{border:2px dashed var(--ok);background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 60%);box-shadow:0 14px 28px rgba(34,197,94,.14);padding:1.25rem}
+    .free-ribbon{position:absolute;top:10px;left:-8px;background:var(--ok);color:#fff;padding:6px 12px;border-radius:0 10px 10px 0;font-weight:900;font-size:.9rem;box-shadow:0 6px 16px rgba(34,197,94,.35)}
     .pkg-pricing{margin-top:.4rem;}
     .price-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0;}
-    .price-new{
-      font-weight:900;font-size:1.15rem; color:#0ea5e9;
-      display:flex;align-items:center;gap:6px;
-    }
-    .price-old{
-      color:#94a3b8; text-decoration: line-through; font-weight:700;
-      display:flex;align-items:center;gap:6px;
-    }
-    .save-badge{
-      display:inline-flex;align-items:center;gap:6px;
-      background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;
-      font-weight:800;border-radius:999px;padding:3px 10px;font-size:.8rem;
-    }
+    .price-new{font-weight:900;font-size:1.15rem;color:#0ea5e9;display:flex;align-items:center;gap:6px;}
+    .price-old{color:#94a3b8;text-decoration:line-through;font-weight:700;display:flex;align-items:center;gap:6px;}
+    .save-badge{display:inline-flex;align-items:center;gap:6px;background:#ecfeff;color:#0369a1;border:1px solid #7dd3fc;font-weight:800;border-radius:999px;padding:3px 10px;font-size:.8rem}
     .save-badge i{color:#0284c7}
-
-    .trust-row{
-      display:flex;align-items:center;justify-content:center;gap:12px;
-      color:#0f172a;font-weight:700;font-size:.9rem;margin-top:.35rem;
-    }
-    .trust-row .pill{
-      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-      background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
-    }
-
-    /* زر اللعب/الشراء */
+    .trust-row{display:flex;align-items:center;justify-content:center;gap:12px;color:#0f172a;font-weight:700;font-size:.9rem;margin-top:.35rem}
+    .trust-row .pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#f8fafc;border:1px solid #e2e8f0;color:#334155}
     .pkg-actions{margin-top:auto;}
-    .btn-play{
-      display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
-      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;
-      transition:.3s;text-decoration:none;text-align:center;position:relative;
-    }
+    .btn-play{display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
+      color:#fff;padding:11px;border:none;border-radius:14px;font-size:1rem;font-weight:800;transition:.3s;text-decoration:none;text-align:center;position:relative;}
     .btn-play:hover{box-shadow:0 10px 20px rgba(139,92,246,.25);color:#fff;}
     .btn-play:disabled{background:#e2e8f0 !important;color:#94a3b8 !important;cursor:not-allowed;}
     .loading-spinner{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
     .spinner{border:2px solid #f3f3f3;border-top:2px solid #fff;border-radius:50%;width:18px;height:18px;animation:spin 1s linear infinite;}
-    @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);} }
-
+    @keyframes spin{to{transform:rotate(360deg)}}
     .note-line{font-size:.85rem;color:#9a3412;text-align:center;margin-top:.5rem}
-
-    /* شارة سبق الاستخدام */
-    .used-before{
-      position:absolute; top:10px; right:10px; z-index:2;
-      background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
-      padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem;
-      display:flex; align-items:center; gap:6px;
-    }
-
-    /* عناوين الأقسام (تحسين بسيط) */
-    .subsection-title{
-      display:flex; align-items:center; justify-content:space-between;
-      margin:24px 0 12px;
-    }
-    .subsection-title h3{
-      margin:0; font-weight:900; font-size:1.2rem;
-      color:#0f172a;
-    }
-    .subsection-title small{ color:#64748b; }
+    .used-before{position:absolute;top:10px;right:10px;z-index:2;background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;padding:6px 10px;border-radius:10px;font-weight:800;font-size:.8rem;display:flex;align-items:center;gap:6px;}
+    .subsection-title{display:flex;align-items:center;justify-content:space-between;margin:24px 0 12px;}
+    .subsection-title h3{margin:0;font-weight:900;font-size:1.2rem;color:#0f172a;}
+    .subsection-title small{color:#64748b;}
   </style>
 </head>
 <body>
@@ -252,8 +143,8 @@
     {% endif %}
   </div>
 
-  <!-- فورم مخفي مركزي لإرسال الطلبات -->
-  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
+  <!-- فورم الإرسال: يفتح في تبويب جديد -->
+  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" target="_blank" style="display:none">
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
     <button type="submit" id="hiddenSubmitBtn" style="display:none">Submit</button>
@@ -267,7 +158,6 @@
       </div>
 
       <div class="packages-grid">
-
         {% if free_package %}
           <!-- بطاقة المجاني -->
           <div class="pkg-col">
@@ -300,23 +190,17 @@
 
               <div class="pkg-actions">
                 {% if request.user.is_authenticated %}
-
-                  {# ✅ عند وجود جلسة مجانية سارية لنفس الحزمة: أعرض زر الرجوع للجلسة #}
                   {% if free_active_session %}
-                    <a href="{% url 'games:letters_session' free_active_session.id %}" class="btn-play" id="freeBtn">
+                    <a href="{% url 'games:letters_session' free_active_session.id %}" class="btn-play" id="freeBtn" target="_blank" rel="noopener">
                       <span class="btn-text">ارجع إلى جلستك المجانية</span>
                       <div class="loading-spinner"><div class="spinner"></div></div>
                     </a>
-
-                  {# مؤهل لإنشاء جلسة مجانية جديدة #}
                   {% elif free_session_eligible %}
                     <button type="button" class="btn-play" id="freeBtn"
                             onclick="createFreeSession('{{ free_package.id }}')">
                       <span class="btn-text">ابدأ الجولة المجانية</span>
                       <div class="loading-spinner"><div class="spinner"></div></div>
                     </button>
-
-                  {# غير مؤهل ولا توجد جلسة سارية #}
                   {% else %}
                     <button type="button" class="btn-play" id="freeBtn" disabled>
                       <span class="btn-text">غير متاح</span>
@@ -326,7 +210,6 @@
                       {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
                     </div>
                   {% endif %}
-
                 {% else %}
                   <a class="btn btn-outline-primary w-100 mt-1"
                     href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
@@ -337,10 +220,9 @@
             </div>
           </div>
         {% endif %}
+      </div>
 
-      </div> <!-- /packages-grid -->
-
-      {# ====== القسم 1: حزم الأسئلة المنوعة (غير sports) ====== #}
+      {# ====== أسئلة منوعة ====== #}
       {% if paid_packages_mixed %}
         <div class="subsection-title mt-4">
           <h3>🧩 أسئلة منوعة</h3>
@@ -350,58 +232,38 @@
           {% for package in paid_packages_mixed %}
             <div class="pkg-col">
               <div class="package-card">
-
                 {% if used_before_ids and package.id in used_before_ids %}
                   <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
                 {% endif %}
-
                 <div class="pkg-head">
                   <div class="package-title">حزمة رقم {{ package.package_number }}</div>
                 </div>
-
                 <div class="pkg-meta">
-                  {% if package.question_theme %}
-                    <span class="theme-badge theme-mixed theme-tip" title="أسئلة منوعة">
-                      نوع الأسئلة: {{ package.get_question_theme_display }}
-                    </span>
-                  {% endif %}
+                  <span class="theme-badge theme-mixed theme-tip" title="أسئلة منوعة">
+                    نوع الأسئلة: {{ package.get_question_theme_display }}
+                  </span>
                 </div>
 
-                <!-- عرض السعر/الخصم -->
                 <div class="pkg-pricing">
                   {% if package.has_discount %}
                     <div class="price-wrap">
-                      <div class="price-new">
-                        <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
-                      <div class="price-old">
-                        <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
+                      <div class="price-new"><span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
+                      <div class="price-old"><span class="val val-old">{{ package.original_price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
                     </div>
                     <div class="text-center">
-                      <span class="save-badge"
-                            data-orig="{{ package.original_price }}"
-                            data-disc="{{ package.discounted_price }}">
-                        <i class="fa-solid fa-tag"></i>
-                        وفّر <b class="save-pct">—</b>
+                      <span class="save-badge" data-orig="{{ package.original_price }}" data-disc="{{ package.discounted_price }}">
+                        <i class="fa-solid fa-tag"></i> وفّر <b class="save-pct">—</b>
                       </span>
                     </div>
                   {% else %}
                     <div class="price-wrap">
-                      <div class="price-new">
-                        <span class="val">{{ package.price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
+                      <div class="price-new"><span class="val">{{ package.price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
                     </div>
                   {% endif %}
                 </div>
 
                 {% if package.description %}
-                  <div class="pkg-desc-wrap">
-                    <p class="pkg-desc">{{ package.description }}</p>
-                  </div>
+                  <div class="pkg-desc-wrap"><p class="pkg-desc">{{ package.description }}</p></div>
                 {% endif %}
 
                 <div class="trust-row">
@@ -416,21 +278,20 @@
                     </button>
                   {% else %}
                     <a class="btn-play purchase-link"
-                      href="{% url 'payments:purchase' package.id %}"
-                      data-package-id="{{ package.id }}"
-                      data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                       href="{% url 'payments:purchase' package.id %}"
+                       data-package-id="{{ package.id }}"
+                       data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
                       شراء
                     </a>
                   {% endif %}
                 </div>
-
               </div>
             </div>
           {% endfor %}
         </div>
       {% endif %}
 
-      {# ====== القسم 2: حزم الأسئلة الرياضية (sports) ====== #}
+      {# ====== أسئلة رياضية ====== #}
       {% if paid_packages_sports %}
         <div class="subsection-title mt-4">
           <h3>🏅 أسئلة رياضية</h3>
@@ -440,58 +301,38 @@
           {% for package in paid_packages_sports %}
             <div class="pkg-col">
               <div class="package-card">
-
                 {% if used_before_ids and package.id in used_before_ids %}
                   <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
                 {% endif %}
-
                 <div class="pkg-head">
                   <div class="package-title">حزمة رقم {{ package.package_number }}</div>
                 </div>
-
                 <div class="pkg-meta">
-                  {% if package.question_theme %}
-                    <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
-                      نوع الأسئلة: {{ package.get_question_theme_display }}
-                    </span>
-                  {% endif %}
+                  <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
+                    نوع الأسئلة: {{ package.get_question_theme_display }}
+                  </span>
                 </div>
 
-                <!-- عرض السعر/الخصم -->
                 <div class="pkg-pricing">
                   {% if package.has_discount %}
                     <div class="price-wrap">
-                      <div class="price-new">
-                        <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
-                      <div class="price-old">
-                        <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
+                      <div class="price-new"><span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
+                      <div class="price-old"><span class="val val-old">{{ package.original_price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
                     </div>
                     <div class="text-center">
-                      <span class="save-badge"
-                            data-orig="{{ package.original_price }}"
-                            data-disc="{{ package.discounted_price }}">
-                        <i class="fa-solid fa-tag"></i>
-                        وفّر <b class="save-pct">—</b>
+                      <span class="save-badge" data-orig="{{ package.original_price }}" data-disc="{{ package.discounted_price }}">
+                        <i class="fa-solid fa-tag"></i> وفّر <b class="save-pct">—</b>
                       </span>
                     </div>
                   {% else %}
                     <div class="price-wrap">
-                      <div class="price-new">
-                        <span class="val">{{ package.price|floatformat:0 }}</span>
-                        <span class="icon-saudi_riyal"></span>
-                      </div>
+                      <div class="price-new"><span class="val">{{ package.price|floatformat:0 }}</span><span class="icon-saudi_riyal"></span></div>
                     </div>
                   {% endif %}
                 </div>
 
                 {% if package.description %}
-                  <div class="pkg-desc-wrap">
-                    <p class="pkg-desc">{{ package.description }}</p>
-                  </div>
+                  <div class="pkg-desc-wrap"><p class="pkg-desc">{{ package.description }}</p></div>
                 {% endif %}
 
                 <div class="trust-row">
@@ -506,14 +347,13 @@
                     </button>
                   {% else %}
                     <a class="btn-play purchase-link"
-                      href="{% url 'payments:purchase' package.id %}"
-                      data-package-id="{{ package.id }}"
-                      data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                       href="{% url 'payments:purchase' package.id %}"
+                       data-package-id="{{ package.id }}"
+                       data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
                       شراء
                     </a>
                   {% endif %}
                 </div>
-
               </div>
             </div>
           {% endfor %}
@@ -535,19 +375,18 @@
 
       let sessionLocked = false;
 
-      // حساب نسبة التوفير وإظهارها
+      // نسبة التوفير
       (function computeSavings(){
         document.querySelectorAll('.save-badge').forEach(el=>{
           const o = parseFloat(el.getAttribute('data-orig') || '0');
           const d = parseFloat(el.getAttribute('data-disc') || '0');
           const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
-          const txt = pct>0 ? pct + '%' : 'خصم';
           const tgt = el.querySelector('.save-pct');
-          if (tgt) tgt.textContent = txt;
+          if (tgt) tgt.textContent = pct>0 ? pct + '%' : 'خصم';
         });
       })();
 
-      // تنبيه عند محاولة شراء حزمة سبق استخدامها
+      // تنبيه لطيف عند محاولة شراء حزمة سبق لعبها (لا يمنع الشراء)
       document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
         a.addEventListener('click', (ev)=>{
           const ok = confirm('تنبيه: سبق لك لعب هذه الحزمة.\nإذا كنت ترغب باللعب مرة أخرى، أكمل عملية الشراء.');
@@ -555,7 +394,7 @@
         });
       });
 
-      // إنشاء جلسة مدفوعة/مشتراة (التحقق الحقيقي في الباك-إند)
+      // إنشاء جلسة مدفوعة/مشتراة
       window.createLettersSession = function(packageId) {
         if (!IS_AUTH) {
           window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
@@ -581,6 +420,7 @@
         }, 10000);
 
         try {
+          // الفورم لديه target="_blank" لفتح الجلسة في تبويب جديد
           submitBtn ? submitBtn.click() : form.submit();
           clearTimeout(timeoutId);
         } catch (e) {
@@ -591,7 +431,7 @@
         }
       };
 
-      // إنشاء جلسة المجاني مع فحص أهلية لحظي من الـAPI
+      // إنشاء جلسة المجاني بعد تحقق أهلية
       window.createFreeSession = async function(packageId) {
         if (!IS_AUTH) {
           window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
@@ -614,9 +454,7 @@
             alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
             return;
           }
-        } catch {
-          // في حال فشل الشبكة: نسمح بالمحاولة (الفيو سيؤكد المنع إن وُجد)
-        }
+        } catch {}
 
         sessionLocked = true;
 
@@ -644,7 +482,6 @@
       };
 
       function showLoading(packageId, show) {
-        // يوضح اللودر على الزر الموافق لهذا packageId فقط
         const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
         btns.forEach((btn) => {
           const text = btn.querySelector('.btn-text');
@@ -657,7 +494,6 @@
         });
       }
 
-      // في حال الرجوع من bf-cache
       window.addEventListener('pageshow', (e) => {
         if (e.persisted) sessionLocked = false;
       });

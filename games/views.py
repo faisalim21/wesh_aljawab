@@ -223,105 +223,95 @@ from payments.models import Transaction
 
 def letters_game_home(request):
     """
-    صفحة اختيار حزم خلية الحروف:
-    - المجانية أولاً.
-    - الحزم المدفوعة تُقسم لفئتين: mixed (منوعة) و sports (رياضية) ويُرتّب كل قسم برقم الحزمة.
-    - نحافظ على المفاتيح القديمة في الـcontext حتى لا يتأثر القالب.
+    صفحة اختيار الحزم لخلية الحروف.
+    - أعلى الصفحة: الجولة المجانية (إن وُجدت).
+    - ثم صف أُفقي لأسئلة منوعة.
+    - ثم صف أُفقي لأسئلة رياضية.
+    - إبراز "سبق لك لعب هذه الحزمة" لا يمنع الشراء.
+    - زر ابدأ اللعب يفتح تبويب جديد (تعديل في القالب).
     """
     user = request.user if request.user.is_authenticated else None
 
-    # الحزمة المجانية (نفس المنطق القديم)
-    free_package = (
-        GamePackage.objects
-        .filter(game_type='letters', is_active=True, is_free=True)
-        .order_by('package_number', 'created_at')
-        .first()
+    # كل الحزم النشطة للـ letters
+    base_qs = GamePackage.objects.filter(is_active=True, game_type='letters')
+
+    # المجاني (أول واحد فقط)
+    free_package = base_qs.filter(is_free=True).order_by('package_number').first()
+
+    # المدفوعة (مقسّمة حسب التصنيف)
+    paid_qs = base_qs.filter(is_free=False)
+
+    # التصنيف المنوّع (mixed)
+    paid_packages_mixed = list(
+        paid_qs.filter(Q(question_theme='mixed') | Q(question_theme__isnull=True))
+               .order_by('package_number')
     )
 
-    # الحزم المدفوعة الأساسية (نفس اسم المتغير القديم إن وُجد في القالب)
-    paid_packages = (
-        GamePackage.objects
-        .filter(game_type='letters', is_active=True, is_free=False)
-        .order_by('package_number')
+    # التصنيف الرياضي (sports)
+    paid_packages_sports = list(
+        paid_qs.filter(question_theme='sports')
+               .order_by('package_number')
     )
 
-    # ✨ الجديد فقط: تفريع حسب التصنيف بقيم الحقل الداخلية (مش العربية)
-    # ملاحظة: القيم الداخلية المتوقعة: 'mixed' و 'sports'
-    paid_packages_mixed = paid_packages.filter(question_theme='mixed')
-    paid_packages_sports = paid_packages.filter(question_theme='sports')
-
-    # شارة "سبق لك لعبها" — نعتمد على جلسات المستخدم السابقة كمضيف
+    # سبق له اللعب (لإظهار الشارة فقط) — نعتمد host (وليس user) كما هو موجود في جلساتك
     used_before_ids = set()
-    if user:
-        used_before_ids = set(
-            GameSession.objects
-            .filter(host=user, game_type='letters')
-            .exclude(package__isnull=True)
-            .values_list('package_id', flat=True)
-        )
-
-    # الحزم التي اشتراها المستخدم (اختياري لإظهار "ابدأ اللعب")
-    user_purchases = set()
-    if user:
-        user_purchases = set(
-            Transaction.objects
-            .filter(
-                user=user,
-                status='completed',
-                package__game_type='letters'
-            )
-            .values_list('package_id', flat=True)
-        )
-
-    # أهلية الجلسة المجانية (نحافظ على المفاتيح المستخدمة في القالب)
     free_active_session = None
-    free_session_eligible = True
-    free_session_message = ""
+    free_session_eligible = False
+    free_session_message = None
 
-    if user and free_package:
-        # هل لديه جلسة مجانية سارية لهذه الحزمة؟
-        free_active_session = (
-            GameSession.objects
-            .filter(host=user, game_type='letters', package=free_package, is_active=True)
-            .order_by('-created_at')
-            .first()
+    if user:
+        # أي جلسة سابقة لهذا المستخدم على خلية الحروف
+        used_before_ids = set(
+            GameSession.objects.filter(host=user, game_type='letters')
+                               .values_list('package_id', flat=True)
         )
-        # إن لم تكن هناك جلسة فعّالة نترك الأهلية True (المنع الحقيقي يحصل في الـAPI)
-        if free_active_session is None:
-            free_session_eligible = True
-        else:
-            free_session_eligible = False
-            free_session_message = "لديك جلسة مجانية حالية — يمكنك الرجوع لها."
+
+        # جلسة مجانية سارية (إن وُجدت)
+        if free_package:
+            free_active_session = (
+                GameSession.objects.filter(
+                    host=user, game_type='letters', package=free_package, is_active=True
+                )
+                .order_by('-created_at')
+                .first()
+            )
+
+            # أهلية الجلسة المجانية:
+            # نعتبره غير مؤهل إذا سبق أن أنشأ جلسة مجانية بأي وقت
+            # (الفيو الخاص بالإنشاء والـAPI سيؤكد أيضاً)
+            has_ever_used_free = GameSession.objects.filter(
+                host=user, game_type='letters', package=free_package
+            ).exists()
+
+            free_session_eligible = not has_ever_used_free and (free_active_session is None)
+            if not free_session_eligible and free_active_session is None:
+                free_session_message = 'لقد استخدمت الجلسة المجانية الخاصة بك.'
+
+    # ⚠️ مهم:
+    # لا نضع كل المشتريات السابقة في user_purchases حتى لا يظهر "ابدأ اللعب" بالغلط.
+    # اتركها فارغة أو عبّها منطقياً من مكان الدفع عندما تكون الميزة فعّالة فعلاً.
+    user_purchases = set()
 
     context = {
-        # عناوين/ميتا
-        "page_title": "خلية الحروف — اختر الحزمة",
+        'page_title': 'اختر الحزمة — خلية الحروف',
+        'page_description': 'ابدأ التحدي الآن واختر إحدى الحزم التالية للعب خلية الحروف',
 
-        # كما كان سابقًا
-        "free_package": free_package,
-        "paid_packages": paid_packages,
+        'free_package': free_package,
+        'free_active_session': free_active_session,
+        'free_session_eligible': free_session_eligible,
+        'free_session_message': free_session_message,
 
-        # القائمتان اللتان يعتمد عليهما القالب الحالي
-        "paid_packages_mixed": paid_packages_mixed,
-        "paid_packages_sports": paid_packages_sports,
+        # صفوف أفقية حسب التصنيف
+        'paid_packages_mixed': paid_packages_mixed,
+        'paid_packages_sports': paid_packages_sports,
 
-        # بيانات مساعدة للقالب
-        "used_before_ids": used_before_ids,
-        "user_purchases": user_purchases,
+        # للإبراز فقط
+        'used_before_ids': used_before_ids,
 
-        # المجاني
-        "free_active_session": free_active_session,
-        "free_session_eligible": free_session_eligible,
-        "free_session_message": free_session_message,
+        # لا تُظهر "ابدأ اللعب" إلا عند توفر حق فعلي
+        'user_purchases': user_purchases,
     }
-
-    return render(
-        request,
-        "games/letters/packages.html",
-        context,
-        content_type="text/html; charset=utf-8",
-    )
-
+    return render(request, 'games/letters/packages.html', context)
 @require_http_methods(["POST"])
 def create_letters_session(request):
     """
