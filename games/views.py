@@ -216,15 +216,21 @@ def games_home(request):
         'quiz_available': False,
     })
 
+from django.shortcuts import render
+from django.utils import timezone
+from games.models import GamePackage, GameSession
+from payments.models import Transaction
+
 def letters_game_home(request):
     """
-    الصفحة الرئيسية لحزم خلية الحروف:
-    - الجولة التجريبية المجانية أولاً.
-    - الحزم المدفوعة تُقسم لفئتين (متنوعة / رياضية) كل واحدة في سطر بسكرول جانبي.
+    صفحة اختيار حزم خلية الحروف:
+    - المجانية أولاً.
+    - الحزم المدفوعة تُقسم لفئتين: mixed (منوعة) و sports (رياضية) ويُرتّب كل قسم برقم الحزمة.
+    - نحافظ على المفاتيح القديمة في الـcontext حتى لا يتأثر القالب.
     """
     user = request.user if request.user.is_authenticated else None
 
-    # الحزمة المجانية
+    # الحزمة المجانية (نفس المنطق القديم)
     free_package = (
         GamePackage.objects
         .filter(game_type='letters', is_active=True, is_free=True)
@@ -232,21 +238,19 @@ def letters_game_home(request):
         .first()
     )
 
-    # الحزم المدفوعة: متنوعة
-    paid_packages_mixed = (
+    # الحزم المدفوعة الأساسية (نفس اسم المتغير القديم إن وُجد في القالب)
+    paid_packages = (
         GamePackage.objects
-        .filter(game_type='letters', is_active=True, is_free=False, question_theme='متنوعة')
+        .filter(game_type='letters', is_active=True, is_free=False)
         .order_by('package_number')
     )
 
-    # الحزم المدفوعة: رياضية
-    paid_packages_sports = (
-        GamePackage.objects
-        .filter(game_type='letters', is_active=True, is_free=False, question_theme='رياضية')
-        .order_by('package_number')
-    )
+    # ✨ الجديد فقط: تفريع حسب التصنيف بقيم الحقل الداخلية (مش العربية)
+    # ملاحظة: القيم الداخلية المتوقعة: 'mixed' و 'sports'
+    paid_packages_mixed = paid_packages.filter(question_theme='mixed')
+    paid_packages_sports = paid_packages.filter(question_theme='sports')
 
-    # شارة "سبق لك لعبها"
+    # شارة "سبق لك لعبها" — نعتمد على جلسات المستخدم السابقة كمضيف
     used_before_ids = set()
     if user:
         used_before_ids = set(
@@ -256,21 +260,67 @@ def letters_game_home(request):
             .values_list('package_id', flat=True)
         )
 
+    # الحزم التي اشتراها المستخدم (اختياري لإظهار "ابدأ اللعب")
+    user_purchases = set()
+    if user:
+        user_purchases = set(
+            Transaction.objects
+            .filter(
+                user=user,
+                status='completed',
+                package__game_type='letters'
+            )
+            .values_list('package_id', flat=True)
+        )
+
+    # أهلية الجلسة المجانية (نحافظ على المفاتيح المستخدمة في القالب)
+    free_active_session = None
+    free_session_eligible = True
+    free_session_message = ""
+
+    if user and free_package:
+        # هل لديه جلسة مجانية سارية لهذه الحزمة؟
+        free_active_session = (
+            GameSession.objects
+            .filter(host=user, game_type='letters', package=free_package, is_active=True)
+            .order_by('-created_at')
+            .first()
+        )
+        # إن لم تكن هناك جلسة فعّالة نترك الأهلية True (المنع الحقيقي يحصل في الـAPI)
+        if free_active_session is None:
+            free_session_eligible = True
+        else:
+            free_session_eligible = False
+            free_session_message = "لديك جلسة مجانية حالية — يمكنك الرجوع لها."
+
     context = {
+        # عناوين/ميتا
         "page_title": "خلية الحروف — اختر الحزمة",
+
+        # كما كان سابقًا
         "free_package": free_package,
+        "paid_packages": paid_packages,
+
+        # القائمتان اللتان يعتمد عليهما القالب الحالي
         "paid_packages_mixed": paid_packages_mixed,
         "paid_packages_sports": paid_packages_sports,
+
+        # بيانات مساعدة للقالب
         "used_before_ids": used_before_ids,
-        # لو عندك user_purchases في مكان آخر لا تنسه
+        "user_purchases": user_purchases,
+
+        # المجاني
+        "free_active_session": free_active_session,
+        "free_session_eligible": free_session_eligible,
+        "free_session_message": free_session_message,
     }
+
     return render(
         request,
         "games/letters/packages.html",
         context,
         content_type="text/html; charset=utf-8",
     )
-
 
 @require_http_methods(["POST"])
 def create_letters_session(request):
