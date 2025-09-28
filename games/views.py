@@ -224,60 +224,6 @@ from payments.models import Transaction
 
 
 
-def _resolve_paid_packages_for_user(user):
-    """
-    ترجع set لِـ package_id التي يملكها المستخدم شراء صالح لها (72 ساعة) للعبة letters.
-    أولاً: نحاول القراءة من payments.Purchase بحقوله إن وُجدت.
-    احتياطًا: لو فشل الاستيراد/الفلترة، نستخدم جلسات أنشِئت خلال 72 ساعة بنفس الغرض.
-    """
-    if not user or not user.is_authenticated:
-        return set()
-
-    now = timezone.now()
-    cutoff = now - timedelta(hours=72)
-
-    # محاولة استخدام purchases
-    try:
-        from payments.models import Purchase  # قد يختلف الاسم لديك؛ هنا الأكثر شيوعًا
-
-        # معرفة الحقول المتاحة ديناميكيًا لتجنّب كسر الاستعلام
-        field_names = {f.name for f in Purchase._meta.get_fields()}
-
-        filters = {
-            'user': user,
-            'package__game_type': 'letters',
-        }
-
-        # شائع: is_paid / status / is_refunded
-        if 'is_paid' in field_names:
-            filters['is_paid'] = True
-        if 'status' in field_names:
-            # نجرب مجموعة حالات منطقية للمدفوع
-            filters['status__in'] = ['paid', 'success', 'completed']
-        if 'is_refunded' in field_names:
-            filters['is_refunded'] = False
-
-        qs = Purchase.objects.filter(**filters)
-
-        # صلاحية 72 ساعة
-        if 'expires_at' in field_names:
-            qs = qs.filter(expires_at__gt=now)
-        elif 'valid_until' in field_names:
-            qs = qs.filter(valid_until__gt=now)
-        elif 'created_at' in field_names:
-            qs = qs.filter(created_at__gte=cutoff)
-
-        return set(qs.values_list('package_id', flat=True))
-
-    except Exception:
-        # احتياطي: اعتبر وجود جلسة مدفوعة (غير مجانية) خلال 72 ساعة كشراء صالح
-        sess_qs = GameSession.objects.filter(
-            host=user,
-            game_type='letters',
-            package__is_free=False,
-            created_at__gte=cutoff,
-        )
-        return set(sess_qs.values_list('package_id', flat=True))
 
 def letters_game_home(request):
     """
@@ -316,29 +262,42 @@ def letters_game_home(request):
     free_session_message = None
 
     if user:
-        used_before_ids = set(
-            GameSession.objects.filter(host=user, game_type='letters')
-                               .values_list('package_id', flat=True)
-        )
-
-        if free_package:
-            free_active_session = (
-                GameSession.objects.filter(
-                    host=user, game_type='letters',
-                    package=free_package, is_active=True
-                ).order_by('-created_at').first()
+            # أي جلسة سابقة للحزم لعرض الشارة فقط
+            used_before_ids = set(
+                GameSession.objects.filter(host=user, game_type='letters')
+                                   .values_list('package_id', flat=True)
             )
 
-            # أهلية المجاني: لم يستخدمه من قبل ولا توجد جلسة مجانية سارية
-            has_ever_used_free = GameSession.objects.filter(
-                host=user, game_type='letters', package=free_package
-            ).exists()
-            free_session_eligible = (not has_ever_used_free) and (free_active_session is None)
-            if not free_session_eligible and free_active_session is None:
-                free_session_message = 'لقد استخدمت الجلسة المجانية الخاصة بك.'
+            if free_package:
+                free_active_session = (
+                    GameSession.objects.filter(
+                        host=user, game_type='letters',
+                        package=free_package, is_active=True
+                    ).order_by('-created_at').first()
+                )
 
-    # ✅ تحديد الحزم التي لديه المستخدم شراء صالح لها (لإظهار زر "ابدأ اللعب")
-    user_purchases = _resolve_paid_packages_for_user(user)
+                # أهلية المجاني: لم يستخدمه من قبل ولا توجد جلسة مجانية سارية
+                has_ever_used_free = GameSession.objects.filter(
+                    host=user, game_type='letters', package=free_package
+                ).exists()
+                free_session_eligible = (not has_ever_used_free) and (free_active_session is None)
+                if not free_session_eligible and free_active_session is None:
+                    free_session_message = 'لقد استخدمت الجلسة المجانية الخاصة بك.'
+
+    # ✅ الحزم التي يملكها المستخدم حالياً (شراء نشط لم تنتهِ صلاحيته) — مباشرة من UserPurchase
+    now = timezone.now()
+    if user:
+        user_purchases = set(
+            UserPurchase.objects.filter(
+                user=user,
+                package__game_type='letters',
+                is_completed=False  # الشراء ما زال فعال/قيد الاستخدام
+            ).filter(
+                Q(expires_at__isnull=True) | Q(expires_at__gt=now)
+            ).values_list('package_id', flat=True)
+        )
+    else:
+        user_purchases = set()
 
     context = {
         'page_title': 'اختر الحزمة — خلية الحروف',
@@ -353,10 +312,9 @@ def letters_game_home(request):
         'paid_packages_sports': paid_packages_sports,
 
         'used_before_ids': used_before_ids,
-        'user_purchases': user_purchases,  # ← هذا الذي يعتمد عليه القالب لعرض "ابدأ اللعب"
+        'user_purchases': user_purchases,  # ← القالب يعتمد عليه لإظهار "ابدأ اللعب"
     }
     return render(request, 'games/letters/packages.html', context)
-
 
 
 @require_http_methods(["POST"])
