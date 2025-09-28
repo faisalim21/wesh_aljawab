@@ -224,6 +224,33 @@ from django.shortcuts import render
 from .models import LettersPackage, LettersSession
 from payments.models import Purchase  # عدّل المسار إذا كان مختلفاً
 
+
+
+def _get_model(app_label: str, model_name_candidates):
+    """
+    نحاول جلب الموديل بالأسماء المحتملة.
+    يعيد الكلاس أو يرفع ValueError برسالة واضحة فيها الأسماء المتاحة.
+    """
+    if isinstance(model_name_candidates, str):
+        model_name_candidates = [model_name_candidates]
+
+    for name in model_name_candidates:
+        try:
+            m = apps.get_model(app_label, name)
+            if m is not None:
+                return m
+        except Exception:
+            pass
+
+    # لو ما وجدناه، نطبع قائمة الموديلات المتاحة لمساعدة التصحيح
+    all_models = sorted([m.__name__ for m in apps.get_app_config(app_label).get_models()])
+    raise ValueError(
+        f"لم أستطع العثور على أي من الأسماء {model_name_candidates} داخل تطبيق '{app_label}'. "
+        f"الأسماء المتاحة في هذا التطبيق: {all_models}"
+    )
+
+
+    
 def letters_game_home(request):
     """
     صفحة اختيار الحزم لخلية الحروف:
