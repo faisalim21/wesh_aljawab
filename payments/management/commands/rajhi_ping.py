@@ -102,13 +102,17 @@ class Command(BaseCommand):
             "errorURL": error_url,
         }
 
+        # ✅ اطبع القيم قبل الإرسال
+        self.stdout.write("=== DEBUG Payload ===")
+        for k, v in payload.items():
+            self.stdout.write(f"{k}={v}")
+        self.stdout.write("=====================")
+
         try:
             resp = requests.post(gateway, data=payload, timeout=30)
             self.stdout.write(f"POST status={resp.status_code}")
             body = (resp.text or "").strip()
-            self.stdout.write(body[:2000])  # اطبع أول 2000 حرف للتشخيص
+            self.stdout.write(body[:2000])
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"POST error: {e}"))
             sys.exit(1)
-
-        self.stdout.write(self.style.SUCCESS("Done."))
