@@ -110,7 +110,7 @@
     }
     .section-title p{color:#475569;margin:0}
 
-    /* شبكة مرتبة متجاوبة */
+    /* شبكة مرتبة متجاوبة (للبطاقات العمودية العامة) */
     .packages-grid{
       display:grid;
       grid-template-columns:repeat(12,1fr);
@@ -120,7 +120,24 @@
     @media (min-width:768px){ .pkg-col{grid-column:span 6;} .packages-grid{gap:18px;} }
     @media (min-width:992px){ .pkg-col{grid-column:span 4;} }
 
-    /* الكارت مرن بارتفاع متساوٍ */
+    /* صفوف أفقية قابلة للتمرير (للتصنيفَين) */
+    .scroll-row{
+      display:flex; gap:16px; overflow-x:auto; padding-bottom:8px; scrollbar-width:thin;
+    }
+    .scroll-row::-webkit-scrollbar{height:10px}
+    .scroll-row::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:999px}
+    .scroll-row::-webkit-scrollbar-track{background:#eef2ff;border-radius:999px}
+    .scroll-row .pkg-col{
+      flex:0 0 85%; max-width:85%;
+    }
+    @media (min-width:576px){
+      .scroll-row .pkg-col{flex:0 0 48%; max-width:48%;}
+    }
+    @media (min-width:992px){
+      .scroll-row .pkg-col{flex:0 0 31%; max-width:31%;}
+    }
+
+    /* الكارت */
     .package-card{
       background:#fff;border-radius:18px;padding:1.25rem 1.25rem 1rem;margin:0;
       border:1px solid var(--cardBorder);
@@ -137,7 +154,7 @@
     .theme-sports{background:var(--sprBg);color:var(--sprText);border:1px solid var(--sprBorder);}
     .theme-tip{cursor:help;border-bottom:1px dotted currentColor}
 
-    /* الوصف: يلتقط 3 أسطر ويمكن توسيعه */
+    /* الوصف */
     .pkg-desc-wrap{margin-top:.5rem;}
     .pkg-desc{
       color:var(--muted);text-align:center;margin:0;
@@ -159,7 +176,7 @@
       box-shadow:0 6px 16px rgba(34,197,94,.35);
     }
 
-    /* الأسعار الحديثة + أيقونة الريال */
+    /* الأسعار + أيقونة الريال */
     .pkg-pricing{margin-top:.4rem;}
     .price-wrap{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0;}
     .price-new{
@@ -186,7 +203,7 @@
       background:#f8fafc;border:1px solid #e2e8f0;color:#334155;
     }
 
-    /* زر اللعب/الشراء في أسفل الكارت دومًا */
+    /* زر اللعب/الشراء */
     .pkg-actions{margin-top:auto;}
     .btn-play{
       display:block;width:100%;background:linear-gradient(135deg,var(--primary),var(--cyan));
@@ -201,13 +218,24 @@
 
     .note-line{font-size:.85rem;color:#9a3412;text-align:center;margin-top:.5rem}
 
-    /* شريط سبق الاستخدام */
+    /* شارة سبق الاستخدام */
     .used-before{
       position:absolute; top:10px; right:10px; z-index:2;
       background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
       padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem;
       display:flex; align-items:center; gap:6px;
     }
+
+    /* عناوين الأقسام (تحسين بسيط) */
+    .subsection-title{
+      display:flex; align-items:center; justify-content:space-between;
+      margin:24px 0 12px;
+    }
+    .subsection-title h3{
+      margin:0; font-weight:900; font-size:1.2rem;
+      color:#0f172a;
+    }
+    .subsection-title small{ color:#64748b; }
   </style>
 </head>
 <body>
@@ -310,94 +338,188 @@
           </div>
         {% endif %}
 
-        {% for package in paid_packages %}
-          <div class="pkg-col">
-            <div class="package-card">
+      </div> <!-- /packages-grid -->
 
-              {% if used_before_ids and package.id in used_before_ids %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
-              {% endif %}
+      {# ====== القسم 1: حزم الأسئلة المنوعة (غير sports) ====== #}
+      {% if paid_packages_mixed %}
+        <div class="subsection-title mt-4">
+          <h3>🧩 أسئلة منوعة</h3>
+          <small>ترتيب حسب رقم الحزمة</small>
+        </div>
+        <div class="scroll-row" role="region" aria-label="حزم الأسئلة المنوعة">
+          {% for package in paid_packages_mixed %}
+            <div class="pkg-col">
+              <div class="package-card">
 
-              <div class="pkg-head">
-                <div class="package-title">حزمة رقم {{ package.package_number }}</div>
-              </div>
+                {% if used_before_ids and package.id in used_before_ids %}
+                  <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+                {% endif %}
 
-              <div class="pkg-meta">
-                {% if package.question_theme %}
-                  {% if package.question_theme == 'sports' %}
-                    <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
-                      نوع الأسئلة: {{ package.get_question_theme_display }}
-                    </span>
-                  {% else %}
+                <div class="pkg-head">
+                  <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+                </div>
+
+                <div class="pkg-meta">
+                  {% if package.question_theme %}
                     <span class="theme-badge theme-mixed theme-tip" title="أسئلة منوعة">
                       نوع الأسئلة: {{ package.get_question_theme_display }}
                     </span>
                   {% endif %}
-                {% endif %}
-              </div>
-
-              <!-- عرض السعر/الخصم مع أيقونة الريال -->
-              <div class="pkg-pricing">
-                {% if package.has_discount %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                    <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
-                  <div class="text-center">
-                    <span class="save-badge"
-                          data-orig="{{ package.original_price }}"
-                          data-disc="{{ package.discounted_price }}">
-                      <i class="fa-solid fa-tag"></i>
-                      وفّر <b class="save-pct">—</b>
-                    </span>
-                  </div>
-                {% else %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:0 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
-                {% endif %}
-              </div>
-
-              {% if package.description %}
-                <div class="pkg-desc-wrap">
-                  <p class="pkg-desc">{{ package.description }}</p>
                 </div>
-              {% endif %}
 
-              <div class="trust-row">
-                <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
-              </div>
+                <!-- عرض السعر/الخصم -->
+                <div class="pkg-pricing">
+                  {% if package.has_discount %}
+                    <div class="price-wrap">
+                      <div class="price-new">
+                        <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                      <div class="price-old">
+                        <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <span class="save-badge"
+                            data-orig="{{ package.original_price }}"
+                            data-disc="{{ package.discounted_price }}">
+                        <i class="fa-solid fa-tag"></i>
+                        وفّر <b class="save-pct">—</b>
+                      </span>
+                    </div>
+                  {% else %}
+                    <div class="price-wrap">
+                      <div class="price-new">
+                        <span class="val">{{ package.price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
 
-              <div class="pkg-actions">
-                {% if user_purchases and package.id in user_purchases %}
-                  <button type="button" class="btn-play" onclick="createLettersSession('{{ package.id }}')">
-                    <span class="btn-text">ابدأ اللعب</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
-                {% else %}
-                  <a class="btn-play purchase-link"
-                     href="{% url 'payments:purchase' package.id %}"
-                     data-package-id="{{ package.id }}"
-                     data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
-                    شراء
-                  </a>
+                {% if package.description %}
+                  <div class="pkg-desc-wrap">
+                    <p class="pkg-desc">{{ package.description }}</p>
+                  </div>
                 {% endif %}
+
+                <div class="trust-row">
+                  <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
+                </div>
+
+                <div class="pkg-actions">
+                  {% if user_purchases and package.id in user_purchases %}
+                    <button type="button" class="btn-play" onclick="createLettersSession('{{ package.id }}')">
+                      <span class="btn-text">ابدأ اللعب</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                  {% else %}
+                    <a class="btn-play purchase-link"
+                      href="{% url 'payments:purchase' package.id %}"
+                      data-package-id="{{ package.id }}"
+                      data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                      شراء
+                    </a>
+                  {% endif %}
+                </div>
+
               </div>
-
             </div>
-          </div>
-        {% endfor %}
+          {% endfor %}
+        </div>
+      {% endif %}
 
-      </div>
+      {# ====== القسم 2: حزم الأسئلة الرياضية (sports) ====== #}
+      {% if paid_packages_sports %}
+        <div class="subsection-title mt-4">
+          <h3>🏅 أسئلة رياضية</h3>
+          <small>ترتيب حسب رقم الحزمة</small>
+        </div>
+        <div class="scroll-row" role="region" aria-label="حزم الأسئلة الرياضية">
+          {% for package in paid_packages_sports %}
+            <div class="pkg-col">
+              <div class="package-card">
+
+                {% if used_before_ids and package.id in used_before_ids %}
+                  <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+                {% endif %}
+
+                <div class="pkg-head">
+                  <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+                </div>
+
+                <div class="pkg-meta">
+                  {% if package.question_theme %}
+                    <span class="theme-badge theme-sports theme-tip" title="أسئلة ذات طابع رياضي">
+                      نوع الأسئلة: {{ package.get_question_theme_display }}
+                    </span>
+                  {% endif %}
+                </div>
+
+                <!-- عرض السعر/الخصم -->
+                <div class="pkg-pricing">
+                  {% if package.has_discount %}
+                    <div class="price-wrap">
+                      <div class="price-new">
+                        <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                      <div class="price-old">
+                        <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                    </div>
+                    <div class="text-center">
+                      <span class="save-badge"
+                            data-orig="{{ package.original_price }}"
+                            data-disc="{{ package.discounted_price }}">
+                        <i class="fa-solid fa-tag"></i>
+                        وفّر <b class="save-pct">—</b>
+                      </span>
+                    </div>
+                  {% else %}
+                    <div class="price-wrap">
+                      <div class="price-new">
+                        <span class="val">{{ package.price|floatformat:0 }}</span>
+                        <span class="icon-saudi_riyal"></span>
+                      </div>
+                    </div>
+                  {% endif %}
+                </div>
+
+                {% if package.description %}
+                  <div class="pkg-desc-wrap">
+                    <p class="pkg-desc">{{ package.description }}</p>
+                  </div>
+                {% endif %}
+
+                <div class="trust-row">
+                  <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة من الشراء</span>
+                </div>
+
+                <div class="pkg-actions">
+                  {% if user_purchases and package.id in user_purchases %}
+                    <button type="button" class="btn-play" onclick="createLettersSession('{{ package.id }}')">
+                      <span class="btn-text">ابدأ اللعب</span>
+                      <div class="loading-spinner"><div class="spinner"></div></div>
+                    </button>
+                  {% else %}
+                    <a class="btn-play purchase-link"
+                      href="{% url 'payments:purchase' package.id %}"
+                      data-package-id="{{ package.id }}"
+                      data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                      شراء
+                    </a>
+                  {% endif %}
+                </div>
+
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
     </div>
   </section>
 
@@ -424,7 +546,6 @@
           if (tgt) tgt.textContent = txt;
         });
       })();
-
 
       // تنبيه عند محاولة شراء حزمة سبق استخدامها
       document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
