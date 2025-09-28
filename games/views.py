@@ -218,7 +218,7 @@ def games_home(request):
 
 def letters_game_home(request):
     """
-    الصفحة الرئيسية لحزم "خلية الحروف":
+    الصفحة الرئيسية لحزم خلية الحروف:
     - الجولة التجريبية المجانية أولاً.
     - الحزم المدفوعة تُقسم لفئتين (متنوعة / رياضية) كل واحدة في سطر بسكرول جانبي.
     """
@@ -232,13 +232,15 @@ def letters_game_home(request):
         .first()
     )
 
-    # الحزم المدفوعة مقسمة حسب التصنيف
-    diverse_packages = (
+    # الحزم المدفوعة: متنوعة
+    paid_packages_mixed = (
         GamePackage.objects
         .filter(game_type='letters', is_active=True, is_free=False, question_theme='متنوعة')
         .order_by('package_number')
     )
-    sports_packages = (
+
+    # الحزم المدفوعة: رياضية
+    paid_packages_sports = (
         GamePackage.objects
         .filter(game_type='letters', is_active=True, is_free=False, question_theme='رياضية')
         .order_by('package_number')
@@ -257,9 +259,10 @@ def letters_game_home(request):
     context = {
         "page_title": "خلية الحروف — اختر الحزمة",
         "free_package": free_package,
-        "diverse_packages": diverse_packages,  # متنوعة
-        "sports_packages": sports_packages,    # رياضية
+        "paid_packages_mixed": paid_packages_mixed,
+        "paid_packages_sports": paid_packages_sports,
         "used_before_ids": used_before_ids,
+        # لو عندك user_purchases في مكان آخر لا تنسه
     }
     return render(
         request,
@@ -267,6 +270,7 @@ def letters_game_home(request):
         context,
         content_type="text/html; charset=utf-8",
     )
+
 
 @require_http_methods(["POST"])
 def create_letters_session(request):
