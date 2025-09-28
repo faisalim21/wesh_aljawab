@@ -218,94 +218,48 @@ def games_home(request):
 
 def letters_game_home(request):
     """
-    الصفحة الرئيسية لحزم "خلية الحروف".
-    - تُظهر الحزمة المجانية (إن وُجدت) + الحزم المدفوعة.
-    - تمييز الحزم التي سبق لعبها.
-    - إن كان للمستخدم جلسة مجانية سارية تُعرض له وصلة الرجوع.
-    - إصلاح الاستعلامات لتستخدم الحقل host بدلاً من user.
+    الصفحة الرئيسية لحزم "خلية الحروف":
+    - الجولة التجريبية المجانية أولاً.
+    - الحزم المدفوعة تُقسم لفئتين (متنوعة / رياضية) كل واحدة في سطر بسكرول جانبي.
     """
     user = request.user if request.user.is_authenticated else None
 
-    # --- الحزم ---
+    # الحزمة المجانية
     free_package = (
         GamePackage.objects
         .filter(game_type='letters', is_active=True, is_free=True)
         .order_by('package_number', 'created_at')
         .first()
     )
-    paid_packages = (
+
+    # الحزم المدفوعة مقسمة حسب التصنيف
+    diverse_packages = (
         GamePackage.objects
-        .filter(game_type='letters', is_active=True, is_free=False)
-        .order_by('package_number', 'created_at')
+        .filter(game_type='letters', is_active=True, is_free=False, question_theme='متنوعة')
+        .order_by('package_number')
+    )
+    sports_packages = (
+        GamePackage.objects
+        .filter(game_type='letters', is_active=True, is_free=False, question_theme='رياضية')
+        .order_by('package_number')
     )
 
-    # --- حالات سابقة/جلسات المستخدم ---
+    # شارة "سبق لك لعبها"
     used_before_ids = set()
-    user_purchases = set()          # الحزم التي يمكن "ابدأ اللعب" لها فورًا (جلسة مدفوعة سارية)
-    free_active_session = None      # جلسة مجانية سارية (≤ 1 ساعة)
-    free_session_eligible = True    # يحق له إنشاء جلسة مجانية جديدة؟
-    free_session_message = ""       # رسالة توضيحية عند عدم الأهلية
-
     if user:
-        # جميع جلسات "خلية الحروف" لهذا المضيف
-        sessions_qs = GameSession.objects.filter(host=user, game_type='letters')
-
-        # الحزم التي سبق لعبها (لإظهار شارة "سبق لك لعب هذه الحزمة")
         used_before_ids = set(
-            sessions_qs.exclude(package__isnull=True).values_list('package_id', flat=True)
+            GameSession.objects
+            .filter(host=user, game_type='letters')
+            .exclude(package__isnull=True)
+            .values_list('package_id', flat=True)
         )
-
-        # إيجاد جلسة مجانية سارية والحرص على عدم اعتبار المنتهية كسارية
-        if free_package:
-            last_free = (
-                sessions_qs
-                .filter(package=free_package, is_active=True)
-                .order_by('-created_at')
-                .first()
-            )
-            if last_free:
-                free_expiry = last_free.created_at + timedelta(hours=1)
-                if timezone.now() < free_expiry:
-                    free_active_session = last_free
-                else:
-                    # إنتهت: نطفيها بهدوء كي لا تُحسب كسارية وتسبّب منع شراء/إنشاء
-                    if last_free.is_active:
-                        last_free.is_active = False
-                        last_free.save(update_fields=['is_active'])
-
-        # الأهلية للجلسة المجانية: لا توجد جلسة مجانية سارية حاليًا
-        free_session_eligible = (free_active_session is None)
-        if not free_session_eligible:
-            free_session_message = "لديك جلسة مجانية سارية حاليًا — ادخل عليها أو انتظر انتهاء صلاحيتها."
-
-        # الحزم المدفوعة التي يحق له "ابدأ اللعب" عليها مباشرة (جلسة مدفوعة نشطة وغير منتهية)
-        # ملاحظة: لا نمنع الشراء مجددًا في أي مكان — فقط نحدد متى نظهر زر "ابدأ اللعب".
-        active_paid_sessions = (
-            sessions_qs
-            .filter(package__isnull=False, package__is_free=False, is_active=True)
-            .select_related('package')
-            .order_by('-created_at')
-        )
-        now = timezone.now()
-        for sess in active_paid_sessions:
-            expiry = sess.created_at + timedelta(hours=72)
-            if now < expiry:
-                user_purchases.add(sess.package_id)
-            else:
-                # إطفاء الجلسة المنتهية لتفادي لبس المنع مستقبلاً
-                if sess.is_active:
-                    sess.is_active = False
-                    sess.save(update_fields=['is_active'])
 
     context = {
         "page_title": "خلية الحروف — اختر الحزمة",
         "free_package": free_package,
-        "paid_packages": paid_packages,
-        "used_before_ids": used_before_ids,             # لإظهار الشارة الذهبية
-        "user_purchases": user_purchases,               # لإظهار "ابدأ اللعب" بدل "شراء"
-        "free_active_session": free_active_session,     # زر "ارجع إلى جلستك المجانية"
-        "free_session_eligible": free_session_eligible, # تفعيل زر "ابدأ الجولة المجانية"
-        "free_session_message": free_session_message,   # ملاحظة عند عدم الأهلية
+        "diverse_packages": diverse_packages,  # متنوعة
+        "sports_packages": sports_packages,    # رياضية
+        "used_before_ids": used_before_ids,
     }
     return render(
         request,
@@ -313,6 +267,7 @@ def letters_game_home(request):
         context,
         content_type="text/html; charset=utf-8",
     )
+
 @require_http_methods(["POST"])
 def create_letters_session(request):
     """
