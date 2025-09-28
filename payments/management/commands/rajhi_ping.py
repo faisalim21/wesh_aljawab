@@ -6,7 +6,6 @@ import os
 import sys
 import time
 import uuid
-import urllib.parse
 import requests
 
 from django.core.management.base import BaseCommand
@@ -17,7 +16,7 @@ from payments.rajhi_crypto import encrypt_trandata
 
 def _get_base_url() -> str:
     """
-    نحاول أخذ الدومين من ENV، أو من الإعدادات، أو نستخدم الدومين الإفتراضي.
+    يحاول أخذ الدومين من ENV أو من الإعدادات، وإلا يرجع دومين الإنتاج.
     """
     return (
         os.environ.get("BASE_URL")
@@ -72,13 +71,15 @@ class Command(BaseCommand):
         track_id = f"{int(time.time() * 1000)}{uuid.uuid4().hex[:4]}"
         amount_str = f"{amount:.2f}"
 
-        # داخل trandata (بدون id/password/responseURL/errorURL)
+        # ✅ داخل trandata (مع responseURL و errorURL)
         trandata_pairs = {
             "action": "1",
             "amt": amount_str,
-            "currencycode": "682",
+            "currencyCode": "682",   # ← C كابيتال
             "langid": "AR",
             "trackid": track_id,
+            "responseURL": success_url,
+            "errorURL": error_url,
             "udf1": "",
             "udf2": "",
             "udf3": "",
@@ -93,16 +94,14 @@ class Command(BaseCommand):
         self.stdout.write(f"trandata_plain={trandata_pairs}")
         self.stdout.write(f"trandata_hex_len={len(enc)}")
 
-        # POST payload: Tranportal ID + Password + trandata + URLs
+        # ✅ POST payload يحتوي فقط id + password + trandata
         payload = {
             "id": transportal_id,
             "password": transportal_password,
             "trandata": enc,
-            "responseURL": success_url,
-            "errorURL": error_url,
         }
 
-        # ✅ اطبع القيم قبل الإرسال
+        # اطبع الديباج قبل الإرسال
         self.stdout.write("=== DEBUG Payload ===")
         for k, v in payload.items():
             self.stdout.write(f"{k}={v}")
@@ -112,7 +111,9 @@ class Command(BaseCommand):
             resp = requests.post(gateway, data=payload, timeout=30)
             self.stdout.write(f"POST status={resp.status_code}")
             body = (resp.text or "").strip()
-            self.stdout.write(body[:2000])
+            self.stdout.write(body[:2000])  # اطبع أول 2000 حرف للتشخيص
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"POST error: {e}"))
             sys.exit(1)
+
+        self.stdout.write(self.style.SUCCESS("Done."))
