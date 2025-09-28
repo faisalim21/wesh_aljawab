@@ -247,9 +247,9 @@ def create_time_session(request):
     from django.db import transaction
     with transaction.atomic():
         session = GameSession.objects.create(
-            host=request.user,            # ← استبدال user بـ host
+            host=request.user,           # ← بدّلنا من user إلى host
             game_type="time",
-            package=None,  # جلسة متعددة الحزم
+            package=None,                # جلسة متعددة الحزم
             team1_name="الفريق A",
             team2_name="الفريق B",
             display_link=_gen_code(12),
@@ -294,7 +294,7 @@ def finalize_time_checkout(request):
     from django.db import transaction
     with transaction.atomic():
         session = GameSession.objects.create(
-            host=request.user,            # ← استبدال user بـ host
+            host=request.user,          # ← بدّلنا من user إلى host
             game_type="time",
             package=None,
             team1_name="الفريق A",
@@ -333,7 +333,7 @@ def api_time_update_team_names(request):
     session = get_object_or_404(GameSession, id=session_id, game_type="time")
 
     # صلاحية: المالك (host) أو موظف
-    if not (request.user.is_staff or (session.host_id == request.user.id)):  # ← host بدل user
+    if not (request.user.is_staff or (session.host_id == request.user.id)):  # ← استبدال user بـ host
         return JsonResponse({"success": False, "detail": "permission_denied"}, status=403)
 
     if _is_session_expired(session) or not session.is_active:
