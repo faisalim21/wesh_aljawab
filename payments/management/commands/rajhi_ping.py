@@ -1,3 +1,4 @@
+# payments/management/commands/rajhi_ping.py
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
@@ -16,8 +17,7 @@ from payments.rajhi_crypto import encrypt_trandata
 
 def _get_base_url() -> str:
     """
-    نحاول أخذ الدومين من الـ ENV، ثم من الإعدادات إن وُجدت،
-    وإلا نستخدم دومين الإنتاج لديك.
+    نحاول أخذ الدومين من ENV، أو من الإعدادات، أو نستخدم الدومين الإفتراضي.
     """
     return (
         os.environ.get("BASE_URL")
@@ -27,7 +27,7 @@ def _get_base_url() -> str:
 
 
 class Command(BaseCommand):
-    help = "Ping Al Rajhi PG (creates a hosted payment init) with proper trandata composition."
+    help = "Ping Al Rajhi PG with proper trandata composition (AES)."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -44,10 +44,9 @@ class Command(BaseCommand):
             help="Which gateway to hit (prod|uat). Default: prod",
         )
 
-    # خرائط بوابة الراجحي
     GATEWAYS = {
         "prod": "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet",
-        "uat": "https://uat3ds.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet",
+        "uat":  "https://uat3ds.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet",
     }
 
     def handle(self, *args, **options):
@@ -56,31 +55,30 @@ class Command(BaseCommand):
         gateway = self.GATEWAYS.get(env, self.GATEWAYS["prod"])
 
         cfg = getattr(settings, "RAJHI_CONFIG", {})
-        merchant_id = cfg.get("MERCHANT_ID")
-        terminal_id = cfg.get("TERMINAL_ID")
-        transportal_id = cfg.get("TRANSPORTAL_ID")
-        transportal_password = cfg.get("TRANSPORTAL_PASSWORD")
+        transportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
+        transportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
 
-        if not all([merchant_id, terminal_id, transportal_id, transportal_password]):
-            self.stderr.write(self.style.ERROR("RAJHI_CONFIG ناقصة. تحقق من: MERCHANT_ID/TERMINAL_ID/TRANSPORTAL_ID/TRANSPORTAL_PASSWORD"))
+        if not all([transportal_id, transportal_password]):
+            self.stderr.write(
+                self.style.ERROR("RAJHI_CONFIG ناقصة: TRANSPORTAL_ID / TRANSPORTAL_PASSWORD")
+            )
             sys.exit(1)
 
         base_url = _get_base_url()
-        success_url = urllib.parse.urljoin(base_url + "/", "payments/rajhi/callback/success/")
-        error_url = urllib.parse.urljoin(base_url + "/", "payments/rajhi/callback/fail/")
+        success_url = f"{base_url}/payments/rajhi/callback/success/"
+        error_url   = f"{base_url}/payments/rajhi/callback/fail/"
 
-        # نبني trandata فقط بالحقول الأساسية (بدون الروابط)
-        track_id = f"{int(time.time()*1000)}{uuid.uuid4().hex[:4]}"
+        # trackid مميز
+        track_id = f"{int(time.time() * 1000)}{uuid.uuid4().hex[:4]}"
         amount_str = f"{amount:.2f}"
 
+        # داخل trandata (بدون id/password/responseURL/errorURL)
         trandata_pairs = {
-            # IMPORTANT: أسماء الحقول حساسة للبوابة
             "action": "1",
             "amt": amount_str,
             "currencycode": "682",
             "langid": "AR",
             "trackid": track_id,
-            # UDFs اختيارية
             "udf1": "",
             "udf2": "",
             "udf3": "",
@@ -88,31 +86,29 @@ class Command(BaseCommand):
             "udf5": "",
         }
 
-        # تشفير trandata (AES حسب إعداداتك)
+        # تشفير trandata
         enc = encrypt_trandata(trandata_pairs)
+
         self.stdout.write(f"gateway={env.upper()}")
-        plain_str = "&".join([f"{k}={urllib.parse.quote(v, safe='')}" for k, v in trandata_pairs.items() if v is not None])
-        self.stdout.write(f"trandata_plain={plain_str}")
+        self.stdout.write(f"trandata_plain={trandata_pairs}")
         self.stdout.write(f"trandata_hex_len={len(enc)}")
 
-        # IMPORTANT: الروابط تُرسل خارج trandata
+        # POST payload: Tranportal ID + Password + trandata + URLs
         payload = {
             "id": transportal_id,
             "password": transportal_password,
             "trandata": enc,
-            "responseURL": success_url,  # خارج التشفير
-            "errorURL": error_url,       # خارج التشفير
+            "responseURL": success_url,
+            "errorURL": error_url,
         }
 
-        # إرسال الطلب
         try:
             resp = requests.post(gateway, data=payload, timeout=30)
+            self.stdout.write(f"POST status={resp.status_code}")
+            body = (resp.text or "").strip()
+            self.stdout.write(body[:2000])  # اطبع أول 2000 حرف للتشخيص
         except Exception as e:
             self.stderr.write(self.style.ERROR(f"POST error: {e}"))
             sys.exit(1)
 
-        self.stdout.write(f"POST status={resp.status_code}")
-        # نطبع جزء من الاستجابة للتشخيص
-        body = (resp.text or "").strip()
-        self.stdout.write(body[:2000])
         self.stdout.write(self.style.SUCCESS("Done."))
