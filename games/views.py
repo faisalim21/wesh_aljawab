@@ -222,10 +222,35 @@ from django.utils import timezone
 from django.db.models import Q
 from django.shortcuts import render
 
-from .models import LettersPackage, LettersSession
-from payments.models import Purchase  # عدّل المسار إذا كان مختلفاً
 
+from functools import lru_cache
+from django.apps import apps
+from django.core.exceptions import ImproperlyConfigured
 
+@lru_cache(maxsize=None)
+def _pick_model(app_label: str, candidates: tuple[str, ...]):
+    """
+    يرجّع أول موديل موجود من بين الأسماء المرشّحة.
+    يرفع رسالة واضحة لو ما لقى أي اسم.
+    """
+    for name in candidates:
+        try:
+            m = apps.get_model(app_label, name)
+            if m is not None:
+                return m
+        except LookupError:
+            continue
+
+    # أسماء الموديلات المتاحة في هذا التطبيق (للتشخيص)
+    available = [m.__name__ for m in apps.get_app_config(app_label).get_models()]
+    raise ImproperlyConfigured(
+        f"لم يتم العثور على أي من الأسماء {candidates} داخل '{app_label}'. "
+        f"الموديلات المتاحة: {available}"
+    )
+
+# ✅ عرّف الموديلات التي تحتاجها هنا بأسماء مرشّحة (حط البدائل المحتملة)
+LettersPackage = _pick_model("games", ("LettersPackage", "LetterPackage", "LettersPkg"))
+LettersSession = _pick_model("games", ("LettersSession", "LetterSession", "LettersGameSession"))
 
 def _get_model(app_label: str, model_name_candidates):
     """
