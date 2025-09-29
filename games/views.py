@@ -12,7 +12,6 @@ from django.db.models import Q
 from django.core.cache import cache
 from .models import PictureRiddle, PictureGameProgress
 from django.apps import apps
-from django.core.exceptions import LookupError
 from datetime import timedelta
 import json
 import logging
