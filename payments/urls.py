@@ -14,6 +14,7 @@ urlpatterns = [
 
     # اختبار وضبط
     path("rajhi/test/", views.rajhi_test, name="rajhi_test"),
+    path("rajhi/direct/init/", views.rajhi_direct_init, name="rajhi_direct_init"),
 
     # ✅ خطوة Hosted (REST)
     path("rajhi/hosted/start/<uuid:package_id>/", views.rajhi_hosted_start, name="rajhi_hosted_start"),
