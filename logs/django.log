@@ -501,3 +501,7 @@ INFO 2025-09-25 19:54:53,960 server 16580 3920 HTTP/2 support not enabled (insta
 INFO 2025-09-25 19:54:53,961 server 16580 3920 Configuring endpoint tcp:port=8000:interface=127.0.0.1
 INFO 2025-09-25 19:54:53,963 server 16580 3920 Listening on TCP address 127.0.0.1:8000
 INFO 2025-09-25 19:54:58,566 runserver 16580 3920 [mHTTP GET /payments/rajhi/direct-init/?env=uat&amt=3.00&debug=1 200 [0.27, 127.0.0.1:49257][0m
+INFO 2025-09-30 22:14:21,110 autoreload 23168 21912 Watching for file changes with StatReloader
+INFO 2025-09-30 22:14:26,831 server 23168 25300 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+INFO 2025-09-30 22:14:26,832 server 23168 25300 Configuring endpoint tcp:port=8000:interface=127.0.0.1
+INFO 2025-09-30 22:14:26,833 server 23168 25300 Listening on TCP address 127.0.0.1:8000

@@ -8,6 +8,10 @@ from django.utils import timezone
 from django.db import IntegrityError, transaction as db_txn
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
+# payments/views.py  (أضِف الاستيرادين دول أعلى الملف)
+import json
+import requests
+from urllib.parse import urljoin
 
 from decimal import Decimal, InvalidOperation
 from urllib.parse import urlencode
@@ -445,3 +449,133 @@ def rajhi_checkout(request):
         "debug": request.GET.get("debug") == "1",
         "debug_plain": f"env={'UAT' if use_uat else 'PROD'}\ntrackid={trackid}\ntrandata_plain={trandata_pairs}\ntrandata_hex_len={len(trandata_enc_hex)}",
     })
+
+
+@login_required
+def rajhi_hosted_start(request, package_id):
+    """
+    خطوة Hosted (REST):
+    - يبني trandata (AES-CBC) بالقيم المطلوبة
+    - يرسل JSON إلى /pg/payment/hosted.htm
+    - يعيد توجيه المستخدم إلى paymentpage.htm?PaymentID=...
+    """
+    package = get_object_or_404(GamePackage, id=package_id, is_active=True)
+    if package.is_free:
+        messages.info(request, "هذه حزمة مجانية — لا حاجة للدفع.")
+        return redirect("games:letters_home")
+
+    # منع شراء نشط مكرر
+    existing = UserPurchase.objects.filter(user=request.user, package=package, is_completed=False).first()
+    if existing:
+        messages.warning(request, "لديك هذه الحزمة بالفعل.")
+        return redirect("games:letters_home")
+
+    cfg = getattr(settings, "RAJHI_CONFIG", {})
+    tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
+    tranportal_pw = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
+    if not tranportal_id or not tranportal_pw:
+        messages.error(request, "إعدادات بوابة الراجحي ناقصة (TRANSPORTAL_ID / PASSWORD).")
+        return redirect("payments:cancel")
+
+    # روابط رجوع مطلقة وبروتوكول HTTPS
+    base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri("/").rstrip("/")).rstrip("/")
+    if base_cb.startswith("http://"):
+        base_cb = "https://" + base_cb[len("http://"):]
+    success_url = urljoin(base_cb + "/", "payments/rajhi/callback/success/")
+    fail_url    = urljoin(base_cb + "/", "payments/rajhi/callback/fail/")
+
+    # أنشئ Transaction معلّقة
+    txn = Transaction.objects.create(
+        user=request.user,
+        package=package,
+        amount=package.price,
+        payment_method=PaymentMethod.objects.filter(is_active=True).first(),
+        status="pending",
+        notes="Hosted-Init",
+    )
+
+    # trackid قصير كما يفضّله مزوّد البوابة
+    trackid = get_random_string(12, allowed_chars="0123456789")
+
+    # ⚠️ المفاتيح داخل trandata بالقيم/حالة الأحرف المطلوبة في الدليل
+    trandata_pairs = {
+        "id":           tranportal_id,          # داخل التشفير
+        "password":     tranportal_pw,          # داخل التشفير
+        "action":       "1",                    # 1 = Purchase
+        "currencyCode": "682",                  # SAR
+        "responseURL":  success_url,            # داخل التشفير
+        "errorURL":     fail_url,               # داخل التشفير
+        "trackId":      trackid,
+        "amt":          f"{package.price:.2f}",
+        "langid":       "AR",
+        # تمرير مراجع اختيارية
+        "udf1": str(request.user.id),
+        "udf2": str(txn.id),   # نربط ردّ الراجحي بالمعاملة
+        "udf3": "",
+        "udf4": "",
+        "udf5": "",
+    }
+
+    try:
+        trandata_hex = encrypt_trandata(trandata_pairs)
+    except Exception as e:
+        logger.error("encrypt_trandata failed: %s", e)
+        messages.error(request, "تعذر تجهيز بيانات الدفع.")
+        return redirect("payments:cancel")
+
+    # Endpoint الرسمي للـ Hosted (REST)
+    endpoint = "https://securepayments.alrajhibank.com.sa/pg/payment/hosted.htm"
+    payload = [{
+        "id": tranportal_id,
+        "trandata": trandata_hex,
+        "responseURL": success_url,
+        "errorURL": fail_url,
+    }]
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json, text/html;q=0.8",
+    }
+
+    try:
+        resp = requests.post(endpoint, data=json.dumps(payload), headers=headers, timeout=30, verify=True)
+    except requests.RequestException as e:
+        logger.error("Hosted POST error: %s", e)
+        messages.error(request, "تعذر الوصول لبوابة الدفع.")
+        return redirect("payments:cancel")
+
+    if resp.status_code != 200 or not resp.text.strip():
+        logger.error("Hosted bad status/body: %s %s", resp.status_code, resp.text[:200])
+        messages.error(request, "استجابة غير متوقعة من بوابة الدفع.")
+        return redirect("payments:cancel")
+
+    try:
+        data = resp.json()
+        rec = data[0] if isinstance(data, list) and data else {}
+    except Exception:
+        logger.warning("Hosted non-JSON response: %s", resp.text[:400])
+        messages.error(request, "صيغة الرد غير متوقعة.")
+        return redirect("payments:cancel")
+
+    status = str(rec.get("status", "")).strip()
+    result = str(rec.get("result", "")).strip()
+
+    # مثال نجاح: "<PAYMENTID>:https://securepayments.alrajhibank.com.sa/pg/paymentpage.htm"
+    if status == "1" and ":" in result:
+        payment_id, base_url = result.split(":", 1)
+        payment_id = payment_id.strip()
+        redirect_url = f"{base_url.strip()}?PaymentID={payment_id}"
+
+        # نحفظ بعض التفاصيل للتشخيص
+        txn.gateway_transaction_id = payment_id
+        txn.gateway_response = {"init_status": status, "init_result": result}
+        txn.save(update_fields=["gateway_transaction_id", "gateway_response", "updated_at"])
+
+        return redirect(redirect_url)
+
+    # فشل
+    logger.error("Hosted init failed: status=%s result=%s", status, result)
+    txn.status = "failed"
+    txn.failure_reason = f"Hosted init failed: {status} {result}"
+    txn.save(update_fields=["status", "failure_reason", "updated_at"])
+    messages.error(request, "فشلت تهيئة عملية الدفع. حاول لاحقًا.")
+    return redirect("payments:cancel")
