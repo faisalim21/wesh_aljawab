@@ -18,6 +18,9 @@ urlpatterns = [
 
     # ✅ خطوة Hosted (REST)
     path("rajhi/hosted/start/<uuid:package_id>/", views.rajhi_hosted_start, name="rajhi_hosted_start"),
+    path("rajhi/hosted/start/<uuid:package_id>/", views.rajhi_hosted_start, name="rajhi_hosted_start"),
+    path("rajhi/callback/success/", views.rajhi_callback_success, name="rajhi_callback_success"),
+    path("rajhi/callback/fail/", views.rajhi_callback_fail, name="rajhi_callback_fail"),
 
     # نقاط الرجوع
     path("rajhi/callback/success/", views.rajhi_callback_success, name="rajhi_callback_success"),
