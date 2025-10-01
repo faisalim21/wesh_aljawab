@@ -9,6 +9,7 @@ from django.db import IntegrityError, transaction as db_txn
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.crypto import get_random_string
 # payments/views.py  (أضِف الاستيرادين دول أعلى الملف)
+
 import json
 import requests
 from urllib.parse import urljoin
@@ -397,65 +398,26 @@ def rajhi_callback_fail(request):
 # =========================
 def rajhi_checkout(request):
     """
-    صفحة اختبار: إرسال trandata مع Tranportal ID/Password للبوابة.
+    [Deprecated] هذا المسار كان لتجربة الـ servlet القديم.
+    نحوله الآن لتدفّق REST الصحيح.
+    استخدم: /payments/rajhi/hosted/start/<package_uuid>/
     """
-    cfg = settings.RAJHI_CONFIG
-    tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
-    tranportal_password = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
+    pkg = request.GET.get("pkg")
+    if pkg:
+        # إعادة توجيه إلى التدفّق الصحيح (Hosted REST)
+        return redirect("payments:rajhi_hosted_start", package_id=pkg)
+    return HttpResponseBadRequest("Legacy endpoint disabled. Use /payments/rajhi/hosted/start/<package_id>/")
 
-    # اختيار البيئة: UAT عند ?env=uat أو إذا كان DEBUG
-    use_uat = (request.GET.get("env", "").lower() == "uat") or settings.DEBUG
-    action_url = (
-        "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
-        if not use_uat else
-        "https://securepayments.alrajhibank.com.sa/pg/servlet/PaymentInitHTTPServlet?param=paymentInit"
-    )
-
-    amount  = (request.GET.get("amt") or "3.00").strip()
-    trackid = (request.GET.get("t") or get_random_string(12, allowed_chars="0123456789")).strip()
-
-    # روابط الرجوع
-    base_cb = (os.environ.get("PUBLIC_BASE_URL") or request.build_absolute_uri('/').rstrip('/')).rstrip('/')
-    if base_cb.startswith("http://"):
-        base_cb = "https://" + base_cb[len("http://"):]
-    success_url = f"{base_cb}/payments/rajhi/callback/success/"
-    fail_url    = f"{base_cb}/payments/rajhi/callback/fail/"
-
-    # مهم: إدخال Tranportal ID + Password داخل trandata
-    trandata_pairs = {
-        "id":          tranportal_id,
-        "password":    tranportal_password,
-        "action":      "1",
-        "amt":         amount,
-        "currencyCode": "682",   # ← انتبه لحالة الأحرف
-        "langid":      "AR",
-        "trackid":     trackid,
-        "responseURL": success_url,  # ← انتبه لحالة الأحرف
-        "errorURL":    fail_url,     # ← انتبه لحالة الأحرف
-        "udf1": str(request.user.id) if request.user.is_authenticated else "",
-        "udf2": "",
-        "udf3": "",
-        "udf4": "",
-        "udf5": "",
-    }
-
-    trandata_enc_hex = encrypt_trandata(trandata_pairs)
-
-    return render(request, "payments/rajhi_checkout.html", {
-        "action_url": action_url,
-        "id": tranportal_id,
-        "password": tranportal_password,
-        "trandata": trandata_enc_hex,
-        "debug": request.GET.get("debug") == "1",
-        "debug_plain": f"env={'UAT' if use_uat else 'PROD'}\ntrackid={trackid}\ntrandata_plain={trandata_pairs}\ntrandata_hex_len={len(trandata_enc_hex)}",
-    })
-
+# أعلى الملف (لو ما أضفتها قبل)
+import json
+import requests
+from urllib.parse import urljoin
 
 @login_required
 def rajhi_hosted_start(request, package_id):
     """
-    خطوة Hosted (REST):
-    - يبني trandata (AES-CBC) بالقيم المطلوبة
+    REST Hosted flow:
+    - يبني trandata (AES-CBC) بالقيم المطلوبة من الدليل
     - يرسل JSON إلى /pg/payment/hosted.htm
     - يعيد توجيه المستخدم إلى paymentpage.htm?PaymentID=...
     """
@@ -468,13 +430,22 @@ def rajhi_hosted_start(request, package_id):
     existing = UserPurchase.objects.filter(user=request.user, package=package, is_completed=False).first()
     if existing:
         messages.warning(request, "لديك هذه الحزمة بالفعل.")
-        return redirect("games:letters_home")
+    # إنشاء Transaction مبدئية (pending)
+    payment_method = PaymentMethod.objects.filter(is_active=True).first()
+    txn = Transaction.objects.create(
+        user=request.user,
+        package=package,
+        amount=package.price,
+        payment_method=payment_method,
+        status="pending",
+        notes="Hosted-Init",
+    )
 
     cfg = getattr(settings, "RAJHI_CONFIG", {})
     tranportal_id = (cfg.get("TRANSPORTAL_ID") or "").strip()
     tranportal_pw = (cfg.get("TRANSPORTAL_PASSWORD") or "").strip()
     if not tranportal_id or not tranportal_pw:
-        messages.error(request, "إعدادات بوابة الراجحي ناقصة (TRANSPORTAL_ID / PASSWORD).")
+        messages.error(request, "إعدادات بوابة الراجحي ناقصة.")
         return redirect("payments:cancel")
 
     # روابط رجوع مطلقة وبروتوكول HTTPS
@@ -484,36 +455,23 @@ def rajhi_hosted_start(request, package_id):
     success_url = urljoin(base_cb + "/", "payments/rajhi/callback/success/")
     fail_url    = urljoin(base_cb + "/", "payments/rajhi/callback/fail/")
 
-    # أنشئ Transaction معلّقة
-    txn = Transaction.objects.create(
-        user=request.user,
-        package=package,
-        amount=package.price,
-        payment_method=PaymentMethod.objects.filter(is_active=True).first(),
-        status="pending",
-        notes="Hosted-Init",
-    )
-
-    # trackid قصير كما يفضّله مزوّد البوابة
+    # trackId قصير كما في العينة
     trackid = get_random_string(12, allowed_chars="0123456789")
 
-    # ⚠️ المفاتيح داخل trandata بالقيم/حالة الأحرف المطلوبة في الدليل
+    # ⚠️ الأسماء حسب REST Hosted من الدليل/الإيميل
     trandata_pairs = {
-        "id":           tranportal_id,          # داخل التشفير
-        "password":     tranportal_pw,          # داخل التشفير
-        "action":       "1",                    # 1 = Purchase
-        "currencyCode": "682",                  # SAR
-        "responseURL":  success_url,            # داخل التشفير
-        "errorURL":     fail_url,               # داخل التشفير
-        "trackId":      trackid,
+        "id":           tranportal_id,
+        "password":     tranportal_pw,
+        "action":       "1",
+        "currencyCode": "682",            # C كبيرة
+        "errorURL":     fail_url,         # e صغيرة
+        "responseURL":  success_url,      # r صغيرة
+        "trackId":      trackid,          # I كبيرة
         "amt":          f"{package.price:.2f}",
         "langid":       "AR",
-        # تمرير مراجع اختيارية
         "udf1": str(request.user.id),
-        "udf2": str(txn.id),   # نربط ردّ الراجحي بالمعاملة
-        "udf3": "",
-        "udf4": "",
-        "udf5": "",
+        "udf2": str(txn.id),              # ربط الرد بالمعاملة
+        "udf3": "", "udf4": "", "udf5": "",
     }
 
     try:
@@ -523,7 +481,6 @@ def rajhi_hosted_start(request, package_id):
         messages.error(request, "تعذر تجهيز بيانات الدفع.")
         return redirect("payments:cancel")
 
-    # Endpoint الرسمي للـ Hosted (REST)
     endpoint = "https://securepayments.alrajhibank.com.sa/pg/payment/hosted.htm"
     payload = [{
         "id": tranportal_id,
@@ -531,10 +488,7 @@ def rajhi_hosted_start(request, package_id):
         "responseURL": success_url,
         "errorURL": fail_url,
     }]
-    headers = {
-        "Content-Type": "application/json",
-        "Accept": "application/json, text/html;q=0.8",
-    }
+    headers = {"Content-Type": "application/json", "Accept": "application/json, text/html;q=0.8"}
 
     try:
         resp = requests.post(endpoint, data=json.dumps(payload), headers=headers, timeout=30, verify=True)
@@ -543,7 +497,7 @@ def rajhi_hosted_start(request, package_id):
         messages.error(request, "تعذر الوصول لبوابة الدفع.")
         return redirect("payments:cancel")
 
-    if resp.status_code != 200 or not resp.text.strip():
+    if resp.status_code != 200 or not (resp.text or "").strip():
         logger.error("Hosted bad status/body: %s %s", resp.status_code, resp.text[:200])
         messages.error(request, "استجابة غير متوقعة من بوابة الدفع.")
         return redirect("payments:cancel")
@@ -559,13 +513,12 @@ def rajhi_hosted_start(request, package_id):
     status = str(rec.get("status", "")).strip()
     result = str(rec.get("result", "")).strip()
 
-    # مثال نجاح: "<PAYMENTID>:https://securepayments.alrajhibank.com.sa/pg/paymentpage.htm"
+    # نجاح متوقّع: "<PAYMENTID>:https://.../paymentpage.htm"
     if status == "1" and ":" in result:
         payment_id, base_url = result.split(":", 1)
         payment_id = payment_id.strip()
         redirect_url = f"{base_url.strip()}?PaymentID={payment_id}"
 
-        # نحفظ بعض التفاصيل للتشخيص
         txn.gateway_transaction_id = payment_id
         txn.gateway_response = {"init_status": status, "init_result": result}
         txn.save(update_fields=["gateway_transaction_id", "gateway_response", "updated_at"])
@@ -577,5 +530,5 @@ def rajhi_hosted_start(request, package_id):
     txn.status = "failed"
     txn.failure_reason = f"Hosted init failed: {status} {result}"
     txn.save(update_fields=["status", "failure_reason", "updated_at"])
-    messages.error(request, "فشلت تهيئة عملية الدفع. حاول لاحقًا.")
+    messages.error(request, "فشلت تهيئة عملية الدفع.")
     return redirect("payments:cancel")

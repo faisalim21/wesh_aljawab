@@ -7,6 +7,9 @@ from django.urls import reverse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.utils import timezone
+from games.models import UserPurchase, GameSession  # ← إضافة UserPurchase (و GameSession إن احتجته بالأسفل)
+
 from django.db import transaction, IntegrityError
 from django.db.models import Q
 from django.core.cache import cache
@@ -328,15 +331,16 @@ def letters_game_home(request):
     used_before_ids = set()
 
     if request.user.is_authenticated:
-        success_statuses = ['paid', 'succeeded', 'success']  # عدّلها إن لزم
+        # مشتريات المستخدم الفعّالة (غير مكتملة ولم تنتهِ صلاحيتها)
         valid_ids = set(
-            Purchase.objects.filter(
+            UserPurchase.objects.filter(
                 user=request.user,
-                game_type='letters',
-                status__in=success_statuses,
-                created_at__gte=timezone.now() - timedelta(hours=72),
+                package__game_type='letters',
+                is_completed=False,
+                expires_at__gte=timezone.now(),   # أو استخدم computed_expires_at لو كانت None
             ).values_list('package_id', flat=True)
         )
+
         used_before_ids = set(
             LettersSession.objects.filter(
                 Q(purchase__user=request.user) | Q(host=request.user)

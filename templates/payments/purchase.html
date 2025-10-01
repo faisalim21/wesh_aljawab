@@ -12,32 +12,49 @@
 
     <div class="card shadow-sm">
       <div class="card-body">
-        <h2 class="h5 mb-2">{{ package.get_game_type_display }} — حزمة رقم {{ package.package_number }}</h2>
+        <h2 class="h5 mb-2">
+          {{ package.get_game_type_display }} — حزمة رقم {{ package.package_number }}
+        </h2>
+
         <p class="text-muted mb-1">السعر:
           {% if package.has_discount %}
-            <del class="text-danger">{{ package.original_price }} ريال</del>
-            <strong>{{ package.discounted_price }} ريال</strong>
+            <del class="text-danger">{{ package.original_price }} ر.س</del>
+            <strong>{{ package.discounted_price }} ر.س</strong>
           {% else %}
-            <strong>{{ package.price }} ريال</strong>
+            <strong>{{ package.price }} ر.س</strong>
           {% endif %}
         </p>
-        <p class="mb-3">{{ package.description|default:"" }}</p>
+
+        {% if package.description %}
+          <p class="mb-3">{{ package.description }}</p>
+        {% endif %}
 
         <form method="post" class="row gy-2">
           {% csrf_token %}
           <div class="col-12">
-            <label for="payment_method" class="form-label">اختر وسيلة الدفع</label>
+            <label for="payment_method" class="form-label">اختر وسيلة الدفع (للاختبار الوهمي)</label>
             <select id="payment_method" name="payment_method" class="form-select" required>
               {% for m in payment_methods %}
-                <option value="{{ m.id }}">{{ m.name_ar }}{% if m.processing_fee and m.processing_fee > 0 %} (+{{ m.processing_fee }} ر.س رسوم){% endif %}</option>
+                <option value="{{ m.id }}">
+                  {{ m.name_ar }}{% if m.processing_fee and m.processing_fee > 0 %} (+{{ m.processing_fee }} ر.س رسوم){% endif %}
+                </option>
               {% empty %}
                 <option disabled>لا توجد وسائل دفع مفعّلة</option>
               {% endfor %}
             </select>
           </div>
-          <div class="col-12 d-flex gap-2">
-            <button type="submit" class="btn btn-primary">ادفع الآن (بوابة وهمية)</button>
-            <a class="btn btn-outline-secondary" href="{% url 'payments:rajhi_direct_init' %}?env=uat&pkg={{ package.id }}">تجربة الراجحي (UAT)</a>
+
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <!-- البوابة الوهمية (تدفق الاختبار القديم عبر POST) -->
+            <button type="submit" class="btn btn-secondary">
+              ادفع الآن (بوابة وهمية)
+            </button>
+
+            <!-- الراجحي — REST Hosted الصحيح -->
+            <a class="btn btn-primary"
+               href="{% url 'payments:rajhi_hosted_start' package.id %}">
+              ادفع عبر الراجحي (Hosted)
+            </a>
           </div>
         </form>
 
