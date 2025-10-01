@@ -308,19 +308,20 @@ if _resource_env:
 else:
     _resource_path = ""
 
-# ===== Rajhi PG (TEMP – hardcoded for connectivity test) =====
+# ===== Rajhi PG (Hosted REST) =====
 RAJHI_CONFIG = {
     # من لوحة الراجحي (View Plugin Details)
-    "MERCHANT_ID": "600002487",
-    "TERMINAL_ID": "PG342700",
-    "TRANSPORTAL_ID": "Ir468Wy1ELn5Lhe",
-    "TRANSPORTAL_PASSWORD": "!#vY8Lt!3rAA59w",
+    "MERCHANT_ID":          config("RAJHI_MERCHANT_ID",          default="600002487"),
+    "TERMINAL_ID":          config("RAJHI_TERMINAL_ID",          default="PG342700"),
+    "TRANSPORTAL_ID":       config("RAJHI_TRANSPORTAL_ID",       default="Ir468Wy1ELn5Lhe"),
+    "TRANSPORTAL_PASSWORD": config("RAJHI_TRANSPORTAL_PASSWORD", default="!#vY8Lt!3rAA59w"),
 
-    # ✅ استخدم AES رسميًا
-    "TRANDATA_ALGO": "AES",
-    "KEY_FORMAT": "HEX",
+    # التشفير (مطابق للدليل: AES-CBC) + تنسيق المفتاح
+    "TRANDATA_ALGO": config("RAJHI_TRANDATA_ALGO", default="AES"),
+    "KEY_FORMAT":    config("RAJHI_KEY_FORMAT",    default="HEX"),
 
-    # ✅ RESOURCE KEY من شاشة البنك (Hex بطول 32)
-    "RESOURCE_FILE": "",
-    "RESOURCE_KEY": "52589155607952589155607952589155",
+    # مفتاح المصدر:
+    # لو RAJHI_RESOURCE_FILE يشير لملف موجود سيُستخدم، وإلا سيُستخدم RESOURCE_KEY.
+    "RESOURCE_FILE": _resource_path,
+    "RESOURCE_KEY":  config("RAJHI_RESOURCE_KEY", default="52589155607952589155607952589155"),
 }
