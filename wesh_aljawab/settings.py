@@ -313,20 +313,13 @@ else:
 # حالياً: نستخدم القيم مباشرة من ملف "Plugin Details" بدون .env للسهولة في الاختبار
 
 RAJHI_CONFIG = {
-    # من لوحة التحكم (Plugin Details)
     "MERCHANT_ID": "600002487",
     "TERMINAL_ID": "PG342700",
     "TRANSPORTAL_ID": "Ir468Wy1ELn5Lhe",
     "TRANSPORTAL_PASSWORD": "!#vY8Lt!3rAA59w",
-
-    # الخوارزمية الموصى بها حسب دليل REST v1.24
-    "TRANDATA_ALGO": "AES",   # الافتراضي AES
-    "KEY_FORMAT": "HEX",      # عادةً Hex، جرّب TEXT إذا فشل
-
-    # مفاتيح التشفير (نختار واحد منها للاختبار)
-    # ملاحظة: الطول يجب أن يكون 16 أو 24 أو 32 بايت بعد التحويل من HEX
-    "RESOURCE_KEY": "52589155606252589155606252589155",   # Terminal Resourcekey
-    # \"RESOURCE_KEY": "52589155607952589155607952589155", # Terminal Resource Key 2 (بديل)
-    "RESOURCE_FILE": "",  # غير مستخدم حالياً
+    "TRANDATA_ALGO": "AES",
+    "KEY_FORMAT": "HEX",
+    "RESOURCE_KEY": "52589155606252589155606252589155",
+    "RESOURCE_FILE": "",
 }
 
