@@ -1,15 +1,6 @@
 # payments/utils_rajhi.py
 from __future__ import annotations
 import json
-
-"""
-أداة تشفير trandata الخاصة بتكامل Bank-Hosted (حسب ملف ARB/Neoleap PDF).
-- AES-CBC IV = b"PGKEYENCDECIVSPC"
-- مفتاح التشفير يُقرأ من settings.RAJHI_CONFIG أو متغيرات البيئة.
-- ترتيب ومفاتيح الحقول داخل trandata يجب أن تكون EXACT:
-  id,password,action,currencyCode,errorURL,responseURL,trackId,amt,langid,udf1..udf5
-"""
-
 import os
 from typing import Dict, Iterable
 from django.conf import settings
@@ -20,7 +11,8 @@ try:
 except Exception as e:
     raise ImproperlyConfigured("PyCryptodome مطلوب: pip install pycryptodome") from e
 
-_IV = b"PGKEYENCDECIVSPC"  # ثابت من الدليل
+
+_IV = b"PGKEYENCDECIVSPC"  # IV ثابت حسب دليل Neoleap/ARB
 _BLOCK = 16
 
 
@@ -32,7 +24,7 @@ def _pkcs7_pad(data: bytes, block: int = _BLOCK) -> bytes:
 def _read_key_text() -> str:
     cfg = getattr(settings, "RAJHI_CONFIG", {}) or {}
 
-    # من ملف
+    # ملف resource (لو موجود)
     path = (cfg.get("RESOURCE_FILE") or "").strip()
     if path:
         try:
@@ -43,7 +35,7 @@ def _read_key_text() -> str:
         except Exception:
             pass
 
-    # من الإعداد/البيئة
+    # من config أو env
     txt = (cfg.get("RESOURCE_KEY") or os.environ.get("RAJHI_RESOURCE_KEY") or "").strip()
     if not txt:
         raise ImproperlyConfigured("RESOURCE_KEY/RAJHI_RESOURCE_KEY غير موجود.")
@@ -61,7 +53,7 @@ def _get_aes_key() -> bytes:
             key = bytes.fromhex(key_text)
         except Exception as e:
             raise ImproperlyConfigured("RESOURCE_KEY بصيغة HEX غير صالح.") from e
-    else:  # TEXT
+    else:
         key = key_text.encode("utf-8")
 
     if len(key) not in (16, 24, 32):
@@ -69,45 +61,51 @@ def _get_aes_key() -> bytes:
     return key
 
 
-def _ordered_json_for_hosted(pairs: Dict[str, str]) -> str:
-    """
-    يبني JSON String EXACT للبوابة (Bank-Hosted) بالترتيب المطلوب.
-    يضمن وجود udf1..udf5.
-    """
+def _ordered_items_for_hosted(pairs: Dict[str, str]) -> Iterable[tuple[str, str]]:
     order = [
         "id", "password", "action", "currencyCode",
         "errorURL", "responseURL", "trackId", "amt", "langid",
         "udf1", "udf2", "udf3", "udf4", "udf5",
     ]
-
-    # الحقول الإلزامية
-    required = ["id", "password", "action", "currencyCode", "errorURL", "responseURL", "trackId", "amt"]
+    required = ["id", "password", "action", "currencyCode",
+                "errorURL", "responseURL", "trackId", "amt", "langid"]
     missing = [k for k in required if (pairs.get(k) is None or str(pairs.get(k)) == "")]
     if missing:
         raise ImproperlyConfigured(f"حقول ناقصة في trandata (hosted): {', '.join(missing)}")
 
-    # تأكد من وجود UDFs
     for udf in ("udf1", "udf2", "udf3", "udf4", "udf5"):
         pairs.setdefault(udf, "")
 
-    # نرتب المفاتيح
-    ordered_dict = {k: str(pairs.get(k, "")) for k in order}
+    for k in order:
+        yield k, "" if pairs.get(k) is None else str(pairs.get(k))
 
-    # أي مفاتيح إضافية يضيفها المطوّر تُلحق في النهاية
+    used = set(order)
     for k, v in pairs.items():
-        if k not in order:
-            ordered_dict[k] = "" if v is None else str(v)
+        if k not in used:
+            yield k, "" if v is None else str(v)
 
-    # البوابة تتوقع Array من Object (لاحظ القوسين [])
-    return json.dumps([ordered_dict], ensure_ascii=False, separators=(",", ":"))
+
+def _build_plain_json(pairs: Dict[str, str]) -> str:
+    """
+    يبني plain JSON بالصيغة الصحيحة (Object {} فقط، بدون [])
+    """
+    ordered = {k: v for k, v in _ordered_items_for_hosted(pairs)}
+    return json.dumps(ordered, ensure_ascii=False)
 
 
 def encrypt_trandata_hosted(trandata_pairs: Dict[str, str]) -> str:
     """
-    يُشفّر نص trandata (كـ JSON String) باستخدام AES-CBC ويرجع HEX Uppercase.
+    يُشفّر plain JSON باستخدام AES-CBC و يرجع HEX Uppercase
     """
-    plain_json = _ordered_json_for_hosted(trandata_pairs).encode("utf-8")
+    plain_json = _build_plain_json(trandata_pairs).encode("utf-8")
     key = _get_aes_key()
     cipher = AES.new(key, AES.MODE_CBC, _IV)
     ct = cipher.encrypt(_pkcs7_pad(plain_json))
     return ct.hex().upper()
+
+
+# لتسهيل الاختبار في shell
+def get_plain_and_encrypted(trandata_pairs: Dict[str, str]) -> tuple[str, str]:
+    plain = _build_plain_json(trandata_pairs)
+    enc = encrypt_trandata_hosted(trandata_pairs)
+    return plain, enc
