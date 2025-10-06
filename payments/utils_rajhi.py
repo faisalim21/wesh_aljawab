@@ -1,5 +1,6 @@
 # payments/utils_rajhi.py
 from __future__ import annotations
+import json
 
 """
 أداة تشفير trandata الخاصة بتكامل Bank-Hosted (حسب ملف ARB/Neoleap PDF).
@@ -29,12 +30,6 @@ def _pkcs7_pad(data: bytes, block: int = _BLOCK) -> bytes:
 
 
 def _read_key_text() -> str:
-    """
-    يحاول قراءة المفتاح كنص من:
-      - settings.RAJHI_CONFIG["RESOURCE_FILE"] (إن كان ملفًا موجودًا)
-      - أو settings.RAJHI_CONFIG["RESOURCE_KEY"]
-      - أو env["RAJHI_RESOURCE_KEY"]
-    """
     cfg = getattr(settings, "RAJHI_CONFIG", {}) or {}
 
     # من ملف
@@ -46,7 +41,6 @@ def _read_key_text() -> str:
                 if txt:
                     return txt
         except Exception:
-            # نتابع للمصادر الأخرى
             pass
 
     # من الإعداد/البيئة
@@ -57,11 +51,6 @@ def _read_key_text() -> str:
 
 
 def _get_aes_key() -> bytes:
-    """
-    يرجّع مفتاح AES كـ bytes.
-    KEY_FORMAT يُقرأ من:
-      - env["RAJHI_KEY_FORMAT"] أو settings.RAJHI_CONFIG["KEY_FORMAT"] (الافتراضي HEX)
-    """
     key_text = _read_key_text()
     fmt = (os.environ.get("RAJHI_KEY_FORMAT")
            or (getattr(settings, "RAJHI_CONFIG", {}) or {}).get("KEY_FORMAT")
@@ -80,10 +69,10 @@ def _get_aes_key() -> bytes:
     return key
 
 
-def _ordered_items_for_hosted(pairs: Dict[str, str]) -> Iterable[tuple[str, str]]:
+def _ordered_json_for_hosted(pairs: Dict[str, str]) -> str:
     """
-    يبني الترتيب EXACT للبوابة (Bank-Hosted) ويضمن وجود udf1..udf5.
-    ملاحظة: لا نعمل URL-encoding للقيم.
+    يبني JSON String EXACT للبوابة (Bank-Hosted) بالترتيب المطلوب.
+    يضمن وجود udf1..udf5.
     """
     order = [
         "id", "password", "action", "currencyCode",
@@ -91,36 +80,34 @@ def _ordered_items_for_hosted(pairs: Dict[str, str]) -> Iterable[tuple[str, str]
         "udf1", "udf2", "udf3", "udf4", "udf5",
     ]
 
-    # تحقّق من الحقول الإلزامية
-    required = ["id", "password", "action", "currencyCode", "errorURL", "responseURL", "trackId", "amt", "langid"]
+    # الحقول الإلزامية
+    required = ["id", "password", "action", "currencyCode", "errorURL", "responseURL", "trackId", "amt"]
     missing = [k for k in required if (pairs.get(k) is None or str(pairs.get(k)) == "")]
     if missing:
         raise ImproperlyConfigured(f"حقول ناقصة في trandata (hosted): {', '.join(missing)}")
 
-    # اضمن وجود UDFs فارغة إن لم تُرسل
+    # تأكد من وجود UDFs
     for udf in ("udf1", "udf2", "udf3", "udf4", "udf5"):
         pairs.setdefault(udf, "")
 
-    for k in order:
-        yield k, "" if pairs.get(k) is None else str(pairs.get(k))
+    # نرتب المفاتيح
+    ordered_dict = {k: str(pairs.get(k, "")) for k in order}
 
-    # أي مفاتيح إضافية يضيفها المطوّر تُلحق في النهاية (اختياري)
-    used = set(order)
+    # أي مفاتيح إضافية يضيفها المطوّر تُلحق في النهاية
     for k, v in pairs.items():
-        if k not in used:
-            yield k, "" if v is None else str(v)
+        if k not in order:
+            ordered_dict[k] = "" if v is None else str(v)
 
-
-def _build_qs_hosted(pairs: Dict[str, str]) -> str:
-    return "&".join(f"{k}={v}" for k, v in _ordered_items_for_hosted(pairs))
+    # البوابة تتوقع Array من Object (لاحظ القوسين [])
+    return json.dumps([ordered_dict], ensure_ascii=False, separators=(",", ":"))
 
 
 def encrypt_trandata_hosted(trandata_pairs: Dict[str, str]) -> str:
     """
-    يُشفّر نص trandata (بالترتيب والمفاتيح EXACT كما في الدليل) باستخدام AES-CBC ويفرجع HEX Uppercase.
+    يُشفّر نص trandata (كـ JSON String) باستخدام AES-CBC ويرجع HEX Uppercase.
     """
-    plain_qs = _build_qs_hosted(trandata_pairs).encode("utf-8")
+    plain_json = _ordered_json_for_hosted(trandata_pairs).encode("utf-8")
     key = _get_aes_key()
     cipher = AES.new(key, AES.MODE_CBC, _IV)
-    ct = cipher.encrypt(_pkcs7_pad(plain_qs))
+    ct = cipher.encrypt(_pkcs7_pad(plain_json))
     return ct.hex().upper()
