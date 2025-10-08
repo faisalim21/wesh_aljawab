@@ -10,6 +10,7 @@ from games.models import GamePackage, UserPurchase
 from .utils_rajhi import encrypt_trandata, decrypt_trandata
 from django.urls import reverse
 from .utils_rajhi import get_trandata_encrypted  # تأكد أن هذه الدالة موجودة وتشفّر البيانات
+from django.http import HttpResponse
 
 logger = logging.getLogger(__name__)
 
@@ -119,3 +120,11 @@ def payment_webhook(request):
             logger.error("Webhook create UserPurchase failed: %s", e)
 
     return JsonResponse({"status": "1"})
+
+
+
+def payment_success(request):
+    return HttpResponse("✅ تم الدفع بنجاح")
+
+def payment_failure(request):
+    return HttpResponse("❌ فشل الدفع")

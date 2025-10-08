@@ -1,9 +1,10 @@
-# payments/urls.py
 from django.urls import path
 from . import views
 
+app_name = "payments"
+
 urlpatterns = [
     path("create/<uuid:package_id>/", views.create_payment, name="create_payment"),
-    path("return/", views.payment_return, name="payment_return"),
-    path("webhook/", views.payment_webhook, name="payment_webhook"),
+    path("success/", views.payment_success, name="success"),
+    path("failure/", views.payment_failure, name="failure"),
 ]
