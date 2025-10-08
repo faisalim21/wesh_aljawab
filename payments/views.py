@@ -50,10 +50,16 @@ def create_payment(request, package_id):
         logger.debug("Response status: %s", r.status_code)
         logger.debug("Response text: %s", r.text)
 
-        if r.status_code == 200 and "https" in r.text:
-            return redirect(r.text.strip())
+        if r.status_code == 200:
+            logger.debug("Bank response: %s", r.text)
+            if "https" in r.text:
+                return redirect(r.text.strip())
+            else:
+                return HttpResponse("رد البنك غير متوقع: " + r.text, status=500)
+        else:
+            logger.error("Bank error %s: %s", r.status_code, r.text)
+            return HttpResponse(f"فشل من البوابة (Status {r.status_code})", status=500)
 
-        return HttpResponse("فشل الاتصال ببوابة الدفع", status=500)
 
     except Exception as e:
         logger.exception("Unexpected error in create_payment")
