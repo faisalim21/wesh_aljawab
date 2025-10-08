@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ package }}</h2>
+<p>السعر: {{ package.effective_price }} ريال</p>
+<a href="{% url 'create_payment' package.id %}" class="btn btn-success">ادفع الآن</a>
+{% endblock %}
