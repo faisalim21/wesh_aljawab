@@ -57,3 +57,5 @@ def decrypt_trandata(cipher_hex: str) -> Dict:
     # decoded هنا string على شكل key=value&key2=value2 → نحوله dict
     parsed = dict(urllib.parse.parse_qsl(decoded))
     return parsed
+
+get_trandata_encrypted = encrypt_trandata
