@@ -1,5 +1,4 @@
 # payments/utils_rajhi.py
-import json
 import logging
 import binascii
 import urllib.parse
@@ -36,14 +35,14 @@ def _get_key() -> bytes:
 
 def encrypt_trandata(data: Dict) -> str:
     """
-    الخطوات حسب الدليل:
-    1. JSON → URL-encode
-    2. AES/CBC/PKCS5 + IV ثابت
-    3. تحويل HEX upper-case
+    1. dict → query string (key=value&key2=value2)
+    2. URL encode للنص كامل
+    3. AES/CBC/PKCS5 باستخدام مفتاح و IV ثابت
+    4. HEX upper-case
     """
     key = _get_key()
-    plain = json.dumps(data, separators=(",", ":"), ensure_ascii=False)
-    encoded = urllib.parse.quote(plain, safe="")
+    query = urllib.parse.urlencode(data)  # key=value&key2=value2
+    encoded = urllib.parse.quote(query, safe="")  # URL encode
     cipher = AES.new(key, AES.MODE_CBC, iv=IV)
     ct = cipher.encrypt(pad(encoded.encode("utf-8"), BLOCK_SIZE))
     return binascii.hexlify(ct).upper().decode("ascii")
@@ -55,8 +54,6 @@ def decrypt_trandata(cipher_hex: str) -> Dict:
     cipher = AES.new(key, AES.MODE_CBC, iv=IV)
     plain = unpad(cipher.decrypt(cipher_bytes), BLOCK_SIZE).decode("utf-8")
     decoded = urllib.parse.unquote(plain)
-    try:
-        return json.loads(decoded)
-    except Exception as e:
-        logger.error("Failed to parse decrypted trandata: %s", e)
-        raise
+    # decoded هنا string على شكل key=value&key2=value2 → نحوله dict
+    parsed = dict(urllib.parse.parse_qsl(decoded))
+    return parsed

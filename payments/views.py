@@ -8,56 +8,56 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from games.models import GamePackage, UserPurchase
 from .utils_rajhi import encrypt_trandata, decrypt_trandata
+from django.urls import reverse
+from .utils_rajhi import get_trandata_encrypted  # تأكد أن هذه الدالة موجودة وتشفّر البيانات
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://securepayments.alrajhibank.com.sa/PGMerchantPayment"
-
-@login_required
 def create_payment(request, package_id):
-    """بناء جلسة دفع وتحويل العميل لبوابة الراجحي"""
+    """إنشاء طلب دفع وتحويل العميل إلى صفحة بوابة الراجحي"""
     try:
-        package = GamePackage.objects.get(pk=package_id, is_active=True)
-    except GamePackage.DoesNotExist:
-        return HttpResponseBadRequest("الحزمة غير موجودة.")
+        # ===== بيانات الطلب =====
+        response_url = request.build_absolute_uri(reverse("payments:success"))
+        error_url = request.build_absolute_uri(reverse("payments:failure"))
 
-    amount = str(package.effective_price)
-    track_id = f"{request.user.id}-{package.id}"
+        trandata_plain = {
+            "id": settings.RAJHI_CONFIG["TRANSPORTAL_ID"],
+            "password": settings.RAJHI_CONFIG["TRANSPORTAL_PASSWORD"],
+            "action": "1",  # Purchase
+            "currencyCode": "682",  # SAR
+            "amt": "10.00",  # للتجربة، عدلها حسب package.effective_price
+            "responseURL": response_url,
+            "errorURL": error_url,
+            "trackId": "TEST12345",
+        }
 
-    plain = {
-        "id": settings.RAJHI_CONFIG["TRANSPORTAL_ID"],
-        "password": settings.RAJHI_CONFIG["TRANSPORTAL_PASSWORD"],
-        "action": "1",  # عملية شراء
-        "currencyCode": "682",
-        "amt": amount,
-        "trackId": track_id,
-        "responseURL": request.build_absolute_uri("/payments/return/"),
-        "errorURL": request.build_absolute_uri("/payments/return/"),
-        "udf1": str(request.user.id),
-        "udf2": str(package.id),
-    }
+        # ===== تشفير البيانات =====
+        encrypted_trandata = get_trandata_encrypted(trandata_plain)
 
-    trandata = encrypt_trandata(plain)
-    payload = {
-        "id": settings.RAJHI_CONFIG["TRANSPORTAL_ID"],
-        "trandata": trandata,
-        "responseURL": plain["responseURL"],
-        "errorURL": plain["errorURL"],
-    }
+        payload = {
+            "id": settings.RAJHI_CONFIG["TRANSPORTAL_ID"],
+            "trandata": encrypted_trandata,
+            "responseURL": response_url,
+            "errorURL": error_url,
+        }
 
-    # نطلب Session من الراجحي
-    r = requests.post(API_URL, data=payload, timeout=20)
-    if r.status_code != 200:
-        logger.error("AlRajhi error: %s", r.text)
-        return HttpResponse("فشل الاتصال ببوابة الدفع.", status=500)
+        API_URL = "https://securepayments.alrajhibank.com.sa/PGMerchantPayment"
 
-    resp = r.json()
-    if resp.get("status") != "1":
-        logger.error("AlRajhi reject: %s", resp)
-        return HttpResponse("فشل إنشاء الدفع.", status=400)
+        logger.debug("Sending payload to AlRajhi: %s", payload)
 
-    payment_url = resp["result"].split(":")[1]
-    return redirect(payment_url)
+        r = requests.post(API_URL, data=payload, timeout=20, verify=True)
+
+        logger.debug("Response status: %s", r.status_code)
+        logger.debug("Response text: %s", r.text)
+
+        if r.status_code == 200 and "https" in r.text:
+            return redirect(r.text.strip())
+
+        return HttpResponse("فشل الاتصال ببوابة الدفع", status=500)
+
+    except Exception as e:
+        logger.exception("Unexpected error in create_payment")
+        return HttpResponse("خطأ داخلي في الدفع", status=500)
 
 
 @csrf_exempt
