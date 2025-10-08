@@ -11,7 +11,7 @@ from .utils_rajhi import encrypt_trandata, decrypt_trandata
 
 logger = logging.getLogger(__name__)
 
-API_URL = "https://securepayments.alrajhibank.com.sa/PGMerchantPaymentService/MerchantPayment"
+API_URL = "https://securepayments.alrajhibank.com.sa/PGMerchantPayment"
 
 @login_required
 def create_payment(request, package_id):
