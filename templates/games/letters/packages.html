@@ -27,7 +27,7 @@
     .section-title h2{
       font-size:2rem;font-weight:900;margin:0;
       background:linear-gradient(135deg,var(--primary),var(--cyan));
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      -webkit-background-clip-webkit-background-clip:text;-webkit-text-fill-color:transparent;
     }
     .section-title p{color:#475569}
 
@@ -140,7 +140,7 @@
                   <a class="btn-play" href="{% url 'games:create_letters_session' %}?package_id={{ package.id }}" target="_blank" rel="noopener">ابدأ اللعب</a>
                 {% else %}
                   <!-- دائمًا اسمح بالشراء -->
-                  <a class="btn-play" href="{% url 'payments:purchase' package.id %}">شراء</a>
+                  <a class="btn-play" href="{% url 'payments:create_payment' package.id %}">شراء</a>
                 {% endif %}
               </div>
             </div>
@@ -172,7 +172,7 @@
                 {% if user_purchases and package.id in user_purchases %}
                   <a class="btn-play" href="{% url 'games:create_letters_session' %}?package_id={{ package.id }}" target="_blank" rel="noopener">ابدأ اللعب</a>
                 {% else %}
-                  <a class="btn-play" href="{% url 'payments:purchase' package.id %}">شراء</a>
+                  <a class="btn-play" href="{% url 'payments:create_payment' package.id %}">شراء</a>
                 {% endif %}
               </div>
             </div>
