@@ -304,11 +304,6 @@
             <ul class="dropdown-menu custom-dropdown user-dropdown" role="menu" aria-labelledby="userDropdown">
               <li class="px-3 py-2"><small class="text-muted d-block">{{ user.email }}</small></li>
               <li><hr class="dropdown-divider" /></li>
-              <li role="none">
-                <a class="dropdown-item" href="{% url 'payments:history' %}" role="menuitem">
-                  <i class="fas fa-credit-card me-2" aria-hidden="true"></i> مشترياتي
-                </a>
-              </li>
               <li><hr class="dropdown-divider" /></li>
               <li role="none">
                 <a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}" role="menuitem">
