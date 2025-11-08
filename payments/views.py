@@ -12,10 +12,14 @@ logger = logging.getLogger(__name__)
 @login_required
 @transaction.atomic
 def create_payment(request, package_id):
+    """
+    دفع وهمي — يعمل لجميع الألعاب:
+    Letters / Images / Time / Quiz
+    """
     try:
         package = get_object_or_404(GamePackage, id=package_id)
 
-        # هل عنده شراء غير منتهي؟
+        # هل لديه شراء ساري لنفس الحزمة؟
         existing = UserPurchase.objects.filter(
             user=request.user,
             package=package,
@@ -23,7 +27,7 @@ def create_payment(request, package_id):
         ).first()
 
         if existing:
-            messages.info(request, "✅ لديك وصول نشط لهذه الحزمة مسبقًا.")
+            messages.info(request, "✅ الحزمة مفعلة لديك مسبقًا.")
         else:
             expiry_time = timezone.now() + timezone.timedelta(hours=72)
             UserPurchase.objects.create(
@@ -31,27 +35,28 @@ def create_payment(request, package_id):
                 package=package,
                 expires_at=expiry_time
             )
-            messages.success(request, "🎉 تم تفعيل الحزمة بنجاح لمدة 72 ساعة!")
+            messages.success(
+                request,
+                f"🎉 تم تفعيل الحزمة! صالحة حتى {expiry_time.strftime('%Y-%m-%d %H:%M')}"
+            )
 
-        # ✅ توجيه حسب نوع اللعبة
-        if package.game_type == 'letters':
+        # ✅ نرجّع حسب نوع اللعبة
+        if package.game_type == "letters":
             return redirect("games:create_letters_session")
 
-        elif package.game_type == 'images':
+        elif package.game_type == "images":
             return redirect("games:create_images_session")
 
-        elif package.game_type == 'time':
-            return redirect("games:time_home")  # لو عندك صفحة تحدّي الوقت
+        elif package.game_type == "time":
+            return redirect("games:time_home")
 
-        elif package.game_type == 'quiz':
-            return redirect("games:quiz_home")  # لو عندك صفحة الأسئلة
+        elif package.game_type == "quiz":
+            return redirect("games:quiz_home")
 
-        else:
-            messages.warning(request, "⚠️ نوع اللعبة غير معروف.")
-            return redirect("games:letters_home")
+        # fallback احتياطي
+        return redirect("games:home")
 
     except Exception as e:
-        logger.error(f"Fake payment failed: {e}", exc_info=True)
-        messages.error(request, "⚠️ حدث خطأ أثناء تجهيز الشراء. حاول لاحقًا.")
-        return redirect("games:letters_home")
-
+        logger.error(f"[FakePayment] ERROR: {e}", exc_info=True)
+        messages.error(request, "⚠️ حدث خطأ أثناء الدفع. حاول مرة أخرى.")
+        return redirect("games:home")
