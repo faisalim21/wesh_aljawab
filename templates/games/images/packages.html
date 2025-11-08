@@ -200,7 +200,10 @@
   </div>
 
   <!-- فورم مخفي لإنشاء جلسة تحدي الصور -->
-  <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}" style="display:none">
+  <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}"
+      target="_blank"
+      style="display:none">
+
     {% csrf_token %}
     <input type="hidden" name="package_id" id="imagesPkgId">
     <button type="submit" id="hiddenSubmitBtnImg" style="display:none">Submit</button>
