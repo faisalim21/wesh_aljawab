@@ -13,49 +13,329 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg1:#667eea; --bg2:#764ba2;
-      --cardBorder: rgba(139,92,246,.14);
-      --mixBg:#e0e7ff; --mixText:#4338ca; --mixBorder:#a5b4fc;
-      --sprBg:#dcfce7; --sprText:#166534; --sprBorder:#86efac;
-      --ok:#22c55e; --primary:#8b5cf6; --cyan:#06b6d4;
-      --muted:#64748b; --ink:#1f2937;
+    :root {
+      --primary: #8b5cf6;
+      --cyan: #06b6d4;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --bg-dark: #667eea;
+      --bg-darker: #764ba2;
+      --card-border: rgba(139,92,246,.12);
+      --mix-bg: #e0e7ff;
+      --mix-text: #4338ca;
+      --mix-border: #a5b4fc;
+      --spr-bg: #dcfce7;
+      --spr-text: #166534;
+      --spr-border: #86efac;
+      --muted: #64748b;
+      --text: #1f2937;
+      --radius: 18px;
+      --transition: .35s cubic-bezier(.25,.8,.25,1);
+      --shadow-md: 0 12px 24px rgba(0,0,0,.12);
+      --shadow-lg: 0 20px 40px rgba(0,0,0,.15);
     }
-    body{background:linear-gradient(135deg,var(--bg1),var(--bg2));font-family:'Tajawal',sans-serif}
-    .packages-section{background:#fff; border-radius:24px; margin:24px auto; padding:32px 16px; max-width:1200px}
 
-    .section-title h2{
-      font-size:2rem;font-weight:900;margin:0;
-      background:linear-gradient(135deg,var(--primary),var(--cyan));
-      -webkit-background-clip-webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    * {
+      font-family: 'Tajawal', sans-serif;
     }
-    .section-title p{color:#475569}
 
-    .scroll-row{display:flex; gap:16px; overflow-x:auto; padding-bottom:8px}
-    .scroll-row::-webkit-scrollbar{height:10px}
-    .scroll-row::-webkit-scrollbar-thumb{background:#c7d2fe;border-radius:999px}
-    .scroll-row::-webkit-scrollbar-track{background:#eef2ff;border-radius:999px}
-
-    .pkg{min-width:280px; max-width:320px; flex:0 0 auto}
-    .cardx{
-      background:#fff;border:1px solid var(--cardBorder);border-radius:18px;padding:16px;position:relative;
-      box-shadow:0 14px 32px rgba(0,0,0,.08);height:100%;
+    body {
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
     }
-    .cardx.free{border:2px dashed var(--ok); background:linear-gradient(180deg,#f0fdf4, #fff 60%)}
-    .ribbon{position:absolute; top:10px; left:-8px; background:var(--ok); color:#fff; padding:6px 12px;
-      border-radius:0 10px 10px 0; font-weight:900; box-shadow:0 6px 16px rgba(34,197,94,.35)}
-    .used-before{position:absolute; top:10px; right:10px; background:#fff7ed; color:#9a3412; border:1px solid #fed7aa;
-      padding:6px 10px; border-radius:10px; font-weight:800; font-size:.8rem; display:flex; gap:6px; align-items:center}
 
-    .title{font-weight:900; font-size:1.1rem; text-align:center}
-    .badge-mix{background:var(--mixBg); color:var(--mixText); border:1px solid var(--mixBorder); border-radius:999px; padding:.25rem .6rem; font-weight:800}
-    .badge-spr{background:var(--sprBg); color:var(--sprText); border:1px solid var(--sprBorder); border-radius:999px; padding:.25rem .6rem; font-weight:800}
-
-    .btn-play{
-      display:block; width:100%; text-align:center; color:#fff; font-weight:900; border:none;
-      background:linear-gradient(135deg,var(--primary),var(--cyan)); border-radius:14px; padding:10px; text-decoration:none;
+    .packages-section {
+      background: rgba(255,255,255,.97);
+      border-radius: 28px;
+      margin: 40px auto;
+      padding: 60px 32px;
+      max-width: 1200px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.12);
     }
-    .btn-play:hover{color:#fff; box-shadow:0 10px 20px rgba(139,92,246,.25)}
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .section-title h2 {
+      font-size: 2.6rem;
+      font-weight: 900;
+      margin: 0 0 1rem;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    .section-title p {
+      color: var(--muted);
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 500;
+    }
+
+    .scroll-row {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .scroll-row::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .scroll-row::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      border-radius: 999px;
+      transition: var(--transition);
+    }
+
+    .scroll-row::-webkit-scrollbar-track {
+      background: rgba(139,92,246,.08);
+      border-radius: 999px;
+    }
+
+    .pkg {
+      min-width: 300px;
+      max-width: 340px;
+      flex: 0 0 auto;
+    }
+
+    .cardx {
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      box-shadow: var(--shadow-md);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      overflow: hidden;
+    }
+
+    .cardx::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      transform: scaleX(0);
+      transition: transform var(--transition);
+      transform-origin: right;
+    }
+
+    .cardx:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(139,92,246,.2);
+    }
+
+    .cardx:hover::before {
+      transform: scaleX(1);
+      transform-origin: right;
+    }
+
+    .cardx.free {
+      border: 2px dashed var(--success);
+      background: linear-gradient(180deg, #f0fdf4, #ffffff 70%);
+      box-shadow: 0 12px 32px rgba(34,197,94,.15);
+    }
+
+    .ribbon {
+      position: absolute;
+      top: 12px;
+      left: -10px;
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 0 10px 10px 0;
+      font-weight: 900;
+      font-size: .85rem;
+      box-shadow: 0 6px 16px rgba(34,197,94,.3);
+      z-index: 10;
+    }
+
+    .used-before {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: #fff7ed;
+      color: #9a3412;
+      border: 1px solid #fed7aa;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: .75rem;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      z-index: 8;
+    }
+
+    .title {
+      font-weight: 900;
+      font-size: 1.25rem;
+      text-align: center;
+      margin: 0 0 1rem;
+      color: var(--text);
+    }
+
+    .badge-wrap {
+      text-align: center;
+      margin: 1rem 0;
+    }
+
+    .badge-mix {
+      background: var(--mix-bg);
+      color: var(--mix-text);
+      border: 1px solid var(--mix-border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-size: .8rem;
+      display: inline-block;
+    }
+
+    .badge-spr {
+      background: var(--spr-bg);
+      color: var(--spr-text);
+      border: 1px solid var(--spr-border);
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-size: .8rem;
+      display: inline-block;
+    }
+
+    .btn-play {
+      display: block;
+      width: 100%;
+      text-align: center;
+      color: #fff;
+      font-weight: 900;
+      border: none;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      border-radius: 12px;
+      padding: 12px;
+      text-decoration: none;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .btn-play::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255,255,255,.2);
+      transition: left var(--transition);
+    }
+
+    .btn-play:hover {
+      color: #fff;
+      box-shadow: 0 10px 24px rgba(139,92,246,.3);
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+
+    .btn-play:hover::before {
+      left: 100%;
+    }
+
+    .btn-play:disabled {
+      background: #e2e8f0 !important;
+      color: #94a3b8 !important;
+      cursor: not-allowed;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 50px;
+      margin-bottom: 24px;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid rgba(139,92,246,.12);
+    }
+
+    .section-header h5 {
+      margin: 0;
+      font-weight: 900;
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      color: var(--text);
+    }
+
+    .section-header small {
+      color: var(--muted);
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .packages-section {
+        padding: 40px 20px;
+        margin: 20px auto;
+      }
+
+      .section-title h2 {
+        font-size: 2rem;
+      }
+
+      .scroll-row {
+        gap: 16px;
+      }
+
+      .pkg {
+        min-width: 280px;
+        max-width: 320px;
+      }
+
+      .cardx {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .packages-section {
+        border-radius: 0;
+        padding: 30px 16px;
+      }
+
+      .section-title h2 {
+        font-size: 1.6rem;
+      }
+
+      .section-header {
+        flex-direction: column;
+        gap: .5rem;
+        align-items: flex-start;
+      }
+
+      .pkg {
+        min-width: 100%;
+      }
+
+      .scroll-row {
+        overflow-x: visible;
+      }
+    }
   </style>
 </head>
 <body>
@@ -65,12 +345,14 @@
   <div class="container my-3">
     {% if messages %}
       {% for m in messages %}
-        <div class="alert alert-{{ m.tags|default:'info' }}">{{ m|safe }}</div>
+        <div class="alert alert-{{ m.tags|default:'info' }} rounded-lg" role="alert">
+          {{ m|safe }}
+        </div>
       {% endfor %}
     {% endif %}
   </div>
 
-  <!-- فورم إنشاء جلسة (مخفي) -->
+  <!-- Hidden Form -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
       target="_blank"
       style="display:none">
@@ -81,18 +363,18 @@
   </form>
 
   <section class="packages-section">
-    <div class="section-title text-center mb-3">
+    <div class="section-title">
       <h2>اختر الحزمة المناسبة</h2>
-      <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب خلية الحروف</p>
+      <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب <strong>خلية الحروف</strong></p>
     </div>
 
-    <!-- المجانية بالأعلى -->
+    <!-- Free Package -->
     {% if free_package %}
-      <div class="pkg mb-3" style="min-width:100%;">
+      <div class="pkg mb-4" style="min-width:100%;">
         <div class="cardx free">
           <span class="ribbon">مجانية</span>
-          <div class="title mb-2">جولة تجريبية</div>
-          <div class="text-center mb-2">
+          <div class="title">جولة تجريبية</div>
+          <div class="badge-wrap">
             {% if free_package.question_theme == 'sports' %}
               <span class="badge-spr">نوع الأسئلة: {{ free_package.get_question_theme_display }}</span>
             {% else %}
@@ -100,52 +382,58 @@
             {% endif %}
           </div>
 
-          <div>
+          <div style="margin-top:auto;">
             {% if request.user.is_authenticated %}
               {% if free_active_session %}
-                <a class="btn-play" href="{% url 'games:letters_session' free_active_session.id %}" target="_blank" rel="noopener">ارجع إلى جلستك المجانية</a>
+                <a class="btn-play" href="{% url 'games:letters_session' free_active_session.id %}" target="_blank" rel="noopener">
+                  ارجع إلى جلستك المجانية
+                </a>
               {% elif free_session_eligible %}
-                <button class="btn-play" type="button" onclick="createLettersSession('{{ free_package.id }}')">ابدأ الجولة المجانية</button>
+                <button class="btn-play" type="button" onclick="createLettersSession('{{ free_package.id }}')">
+                  ابدأ الجولة المجانية
+                </button>
               {% else %}
                 <button class="btn btn-secondary w-100" disabled>غير متاح</button>
                 <div class="text-center text-warning small mt-2">{{ free_session_message }}</div>
               {% endif %}
             {% else %}
-              <a class="btn btn-outline-primary w-100" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">سجّل الدخول للتجربة</a>
+              <a class="btn btn-outline-primary w-100" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                سجّل الدخول للتجربة
+              </a>
             {% endif %}
           </div>
         </div>
       </div>
     {% endif %}
 
-    <!-- منوّعة -->
+    <!-- Mixed Theme Packages -->
     {% if paid_packages_mixed %}
-      <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
-        <h5 class="m-0 fw-bold">🧩 أسئلة منوّعة</h5>
-        <small class="text-muted">ترتيب حسب رقم الحزمة</small>
+      <div class="section-header">
+        <h5>
+          <i class="fas fa-dice" aria-hidden="true"></i>
+          أسئلة منوّعة
+        </h5>
+        <small>ترتيب حسب رقم الحزمة</small>
       </div>
       <div class="scroll-row" role="region" aria-label="حزم منوّعة">
         {% for package in paid_packages_mixed %}
           <div class="pkg">
             <div class="cardx">
               {% if used_before_ids and package.id in used_before_ids %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه</div>
               {% endif %}
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
-              <div class="text-center my-2">
-                <span class="badge-mix">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+              <div class="badge-wrap">
+                <span class="badge-mix">{{ package.get_question_theme_display }}</span>
               </div>
 
-              <div class="mt-3">
+              <div style="margin-top:auto;">
                 {% if user_purchases and package.id in user_purchases %}
-                  <!-- شراء صالح خلال 72 ساعة => ابدأ اللعب -->
                   <button class="btn-play" type="button" onclick="createLettersSession('{{ package.id }}')">
-  ابدأ اللعب
-</button>
-
+                    ابدأ اللعب
+                  </button>
                 {% else %}
-                  <!-- دائمًا اسمح بالشراء -->
                   <a class="btn-play" href="{% url 'payments:create_payment' package.id %}">شراء</a>
                 {% endif %}
               </div>
@@ -155,28 +443,33 @@
       </div>
     {% endif %}
 
-    <!-- رياضية -->
+    <!-- Sports Theme Packages -->
     {% if paid_packages_sports %}
-      <div class="d-flex align-items-center justify-content-between mt-4 mb-2">
-        <h5 class="m-0 fw-bold">🏅 أسئلة رياضية</h5>
-        <small class="text-muted">ترتيب حسب رقم الحزمة</small>
+      <div class="section-header">
+        <h5>
+          <i class="fas fa-medal" aria-hidden="true"></i>
+          أسئلة رياضية
+        </h5>
+        <small>ترتيب حسب رقم الحزمة</small>
       </div>
       <div class="scroll-row" role="region" aria-label="حزم رياضية">
         {% for package in paid_packages_sports %}
           <div class="pkg">
             <div class="cardx">
               {% if used_before_ids and package.id in used_before_ids %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه</div>
               {% endif %}
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
-              <div class="text-center my-2">
-                <span class="badge-spr">نوع الأسئلة: {{ package.get_question_theme_display }}</span>
+              <div class="badge-wrap">
+                <span class="badge-spr">{{ package.get_question_theme_display }}</span>
               </div>
 
-              <div class="mt-3">
+              <div style="margin-top:auto;">
                 {% if user_purchases and package.id in user_purchases %}
-                  <a class="btn-play" href="{% url 'games:create_letters_session' %}?package_id={{ package.id }}" target="_blank" rel="noopener">ابدأ اللعب</a>
+                  <button class="btn-play" type="button" onclick="createLettersSession('{{ package.id }}')">
+                    ابدأ اللعب
+                  </button>
                 {% else %}
                   <a class="btn-play" href="{% url 'payments:create_payment' package.id %}">شراء</a>
                 {% endif %}
@@ -191,7 +484,6 @@
   {% include 'footer.html' %}
 
   <script>
-    // إنشاء جلسة عبر POST (لمنع مشاكل CSRF على الأزرار)
     function createLettersSession(pkgId){
       const f = document.getElementById('lettersCreateForm');
       document.getElementById('lettersPkgId').value = pkgId;

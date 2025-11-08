@@ -4,124 +4,411 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Bootstrap & Icons (للأيقونات فقط) -->
+  <!-- Bootstrap & Icons -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 
   <style>
-    .main-footer{
-      background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-      color:#e2e8f0; padding:60px 0 20px; position:relative; overflow:hidden;
+    :root {
+      --primary: #8b5cf6;
+      --cyan: #06b6d4;
+      --bg-dark: #0f172a;
+      --bg-darker: #1e293b;
+      --text-light: #e2e8f0;
+      --text-muted: #94a3b8;
+      --border-color: rgba(255,255,255,.08);
+      --radius: 12px;
+      --transition: .3s cubic-bezier(.25,.8,.25,1);
+      --shadow: 0 10px 30px rgba(0,0,0,.2);
     }
-    .main-footer::before{
-      content:''; position:absolute; inset:0;
-      background:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="g"><stop offset="0" stop-color="%238b5cf6" stop-opacity=".05"/><stop offset="1" stop-color="%2306b6d4" stop-opacity=".02"/></radialGradient></defs><circle fill="url(%23g)" cx="200" cy="200" r="300"/><circle fill="url(%23g)" cx="800" cy="800" r="300"/></svg>') center/cover;
-      z-index:1;
-    }
-    .main-footer > .container{ position:relative; z-index:2; }
 
-    /* Brand */
-    .footer-brand{ text-align:right; }
-    .footer-logo{ height:60px; width:auto; }
-    .brand-title{ color:#fff; font-weight:700; font-size:1.5rem; margin:.75rem 0 .5rem; }
-    .brand-description{ color:#a0aec0; line-height:1.6; font-size:.95rem; }
-
-    /* Titles */
-    .footer-title{
-      color:#fff; font-weight:600; font-size:1.1rem; margin-bottom:1.4rem; position:relative; padding-bottom:.5rem;
+    .main-footer {
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      color: var(--text-light);
+      padding: 80px 0 24px;
+      position: relative;
+      overflow: hidden;
     }
-    .footer-title::after{
-      content:''; position:absolute; bottom:0; right:0; width:30px; height:3px;
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4); border-radius:2px;
+
+    .main-footer::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="g"><stop offset="0" stop-color="%238b5cf6" stop-opacity=".06"/><stop offset="1" stop-color="%2306b6d4" stop-opacity=".02"/></radialGradient></defs><circle fill="url(%23g)" cx="200" cy="200" r="320"/><circle fill="url(%23g)" cx="800" cy="800" r="320"/></svg>') center/cover;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .main-footer > .container {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* Brand Section */
+    .footer-brand {
+      text-align: right;
+    }
+
+    .footer-logo {
+      height: 60px;
+      width: auto;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
+    }
+
+    .brand-title {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.6rem;
+      margin: .8rem 0 .5rem;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-description {
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-size: .95rem;
+      margin: .5rem 0 0;
+    }
+
+    /* Section Titles */
+    .footer-title {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 1.6rem;
+      position: relative;
+      padding-bottom: .6rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .footer-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      border-radius: 2px;
     }
 
     /* Links */
-    .footer-links{ list-style:none; padding:0; margin:0; }
-    .footer-links li{ margin-bottom:.75rem; }
-    .footer-links a{
-      color:#a0aec0; text-decoration:none; transition:all .3s ease; font-size:.95rem; display:inline-block;
-    }
-    .footer-links a:hover{ color:#06b6d4; transform:translateX(-5px); }
-
-    /* Contact */
-    .contact-item{ color:#a0aec0; margin-bottom:.75rem; display:flex; align-items:center; font-size:.95rem; }
-    .contact-item i{ color:#8b5cf6; width:20px; }
-    .contact-item a{ color:#a0aec0; text-decoration:none; transition:color .3s; }
-    .contact-item a:hover{ color:#06b6d4; }
-
-    /* Social (أزرار دائرية بنفس الثيم) */
-    .social-links{ display:flex; gap:1rem; flex-wrap:wrap; }
-    .social-link{
-      width:45px; height:45px; background:rgba(255,255,255,.1); border-radius:50%;
-      display:flex; align-items:center; justify-content:center; color:#a0aec0; text-decoration:none;
-      transition:all .3s ease; backdrop-filter:blur(10px);
-    }
-    .social-link:hover{
-      background:linear-gradient(135deg,#8b5cf6,#06b6d4); color:#fff; transform:translateY(-3px);
-      box-shadow:0 10px 20px rgba(139,92,246,.3);
+    .footer-links {
+      list-style: none;
+      padding: 0;
+      margin: 0;
     }
 
-    /* WhatsApp CTA (موجود إن احتجته لاحقًا – غير مستخدم الآن) */
-    .whatsapp-cta{
-      display:inline-flex; align-items:center; gap:.5rem; font-weight:700;
-      padding:.6rem 1rem; border:none; border-radius:999px; color:#fff; text-decoration:none;
-      background:linear-gradient(135deg,#25D366,#128C7E);
-      box-shadow:0 8px 18px rgba(18,140,126,.25); transition:transform .2s ease;
+    .footer-links li {
+      margin-bottom: .9rem;
+      opacity: 0;
+      animation: fadeInUp .5s ease forwards;
     }
-    .whatsapp-cta:hover{ transform:translateY(-2px); color:#fff; }
 
-    /* Bottom */
-    .footer-bottom{ margin-top:3rem; padding-top:2rem; border-top:1px solid rgba(255,255,255,.1); }
-    .copyright{ color:#718096; margin:0; font-size:.9rem; }
-    .footer-bottom-links{ display:flex; gap:2rem; justify-content:flex-end; }
-    .footer-bottom-links a{ color:#718096; text-decoration:none; font-size:.9rem; transition:color .3s; }
-    .footer-bottom-links a:hover{ color:#06b6d4; }
+    .footer-links li:nth-child(1) { animation-delay: .1s; }
+    .footer-links li:nth-child(2) { animation-delay: .15s; }
+    .footer-links li:nth-child(3) { animation-delay: .2s; }
+    .footer-links li:nth-child(4) { animation-delay: .25s; }
 
-    /* Back to top */
-    .back-to-top{
-      position:fixed; bottom:30px; left:30px; width:50px; height:50px; border:none; border-radius:50%;
-      font-size:1.2rem; cursor:pointer; transition:all .3s; opacity:0; visibility:hidden; transform:translateY(20px);
-      z-index:1000; color:#fff; background:linear-gradient(135deg,#8b5cf6,#06b6d4); box-shadow:0 5px 15px rgba(139,92,246,.4);
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: var(--transition);
+      font-size: .95rem;
+      display: inline-block;
+      position: relative;
     }
-    .back-to-top.show{ opacity:1; visibility:visible; transform:translateY(0); }
-    .back-to-top:hover{ transform:translateY(-5px) scale(1.08); box-shadow:0 10px 25px rgba(139,92,246,.5); }
 
-    /* Animations (خفيفة) */
-    .footer-links li, .contact-item, .social-link{
-      opacity:0; transform:translateY(16px); animation:fadeUp .5s ease forwards;
+    .footer-links a::before {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      right: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      transition: width var(--transition);
     }
-    .footer-links li:nth-child(1){animation-delay:.06s}
-    .footer-links li:nth-child(2){animation-delay:.12s}
-    .footer-links li:nth-child(3){animation-delay:.18s}
-    .footer-links li:nth-child(4){animation-delay:.24s}
-    .contact-item:nth-child(1){animation-delay:.06s}
-    .contact-item:nth-child(2){animation-delay:.12s}
-    .contact-item:nth-child(3){animation-delay:.18s}
-    .social-link:nth-child(1){animation-delay:.06s}
-    .social-link:nth-child(2){animation-delay:.12s}
-    @keyframes fadeUp{ to{ opacity:1; transform:translateY(0) } }
+
+    .footer-links a:hover {
+      color: var(--cyan);
+      transform: translateX(-4px);
+    }
+
+    .footer-links a:hover::before {
+      width: 100%;
+    }
+
+    /* Contact Section */
+    .contact-item {
+      color: var(--text-muted);
+      margin-bottom: .9rem;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      font-size: .95rem;
+      opacity: 0;
+      animation: fadeInUp .5s ease forwards;
+    }
+
+    .contact-item:nth-child(1) { animation-delay: .1s; }
+    .contact-item:nth-child(2) { animation-delay: .15s; }
+    .contact-item:nth-child(3) { animation-delay: .2s; }
+
+    .contact-item i {
+      color: var(--primary);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(139,92,246,.1);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .contact-item a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+
+    .contact-item a:hover {
+      color: var(--cyan);
+    }
+
+    /* Social Links */
+    .social-links {
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .social-link {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, rgba(139,92,246,.1), rgba(6,182,212,.1));
+      border: 1.5px solid rgba(139,92,246,.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-light);
+      text-decoration: none;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      animation: fadeInUp .5s ease forwards;
+    }
+
+    .social-link:nth-child(1) { animation-delay: .1s; }
+    .social-link:nth-child(2) { animation-delay: .15s; }
+    .social-link:nth-child(3) { animation-delay: .2s; }
+
+    .social-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      transition: left var(--transition);
+      z-index: -1;
+    }
+
+    .social-link:hover {
+      color: #fff;
+      transform: translateY(-3px) scale(1.05);
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(139,92,246,.3);
+    }
+
+    .social-link:hover::before {
+      left: 0;
+    }
+
+    /* License Badge */
+    .license-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .6rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(139,92,246,.12), rgba(6,182,212,.08));
+      color: #cbd5e1;
+      border: 1px solid rgba(139,92,246,.25);
+      font-size: .85rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: var(--transition);
+    }
+
+    .license-badge:hover {
+      background: linear-gradient(135deg, rgba(139,92,246,.16), rgba(6,182,212,.12));
+      border-color: rgba(139,92,246,.35);
+    }
+
+    .license-badge i {
+      color: var(--primary);
+      font-size: 1rem;
+    }
+
+    /* Bottom Section */
+    .footer-bottom {
+      margin-top: 4rem;
+      padding-top: 2.4rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .copyright {
+      color: var(--text-muted);
+      margin: 0;
+      font-size: .9rem;
+      font-weight: 500;
+    }
+
+    .footer-bottom-links {
+      display: flex;
+      gap: 2.4rem;
+      justify-content: flex-end;
+    }
+
+    .footer-bottom-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: .9rem;
+      font-weight: 500;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .footer-bottom-links a::before {
+      content: '';
+      position: absolute;
+      bottom: -3px;
+      right: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      transition: width var(--transition);
+    }
+
+    .footer-bottom-links a:hover {
+      color: var(--cyan);
+    }
+
+    .footer-bottom-links a:hover::before {
+      width: 100%;
+    }
+
+    /* Back to Top */
+    .back-to-top {
+      position: fixed;
+      bottom: 30px;
+      left: 30px;
+      width: 52px;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: var(--transition);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px);
+      z-index: 1000;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      box-shadow: 0 8px 24px rgba(139,92,246,.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .back-to-top.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .back-to-top:hover {
+      transform: translateY(-5px) scale(1.1);
+      box-shadow: 0 12px 32px rgba(139,92,246,.45);
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
     /* Responsive */
-    @media (max-width:768px){
-      .main-footer{ padding:40px 0 20px; }
-      .footer-brand{ text-align:center; margin-bottom:2rem; }
-      .footer-title::after{ left:50%; transform:translateX(-50%); right:auto; }
-      .social-links{ justify-content:center; }
-      .footer-bottom-links{ justify-content:center; margin-top:1rem; }
-      .copyright{ text-align:center; }
-      .back-to-top{ bottom:20px; left:20px; width:45px; height:45px; }
-    }
-    @media (max-width:576px){
-      .footer-bottom-links{ flex-direction:column; gap:.5rem; text-align:center; }
-      .social-link{ width:40px; height:40px; }
+    @media (max-width: 768px) {
+      .main-footer {
+        padding: 60px 0 20px;
+      }
+
+      .footer-brand {
+        text-align: center;
+        margin-bottom: 2.4rem;
+      }
+
+      .footer-title::after {
+        right: 50%;
+        transform: translateX(50%);
+      }
+
+      .social-links {
+        justify-content: center;
+      }
+
+      .footer-bottom-links {
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+
+      .copyright {
+        text-align: center;
+      }
+
+      .back-to-top {
+        bottom: 20px;
+        left: 20px;
+        width: 48px;
+        height: 48px;
+        font-size: 1.1rem;
+      }
     }
 
-    /* شارة وثيقة العمل الحر (اختيارية) */
-    .license-badge{
-      display:inline-flex; align-items:center; gap:.5rem; padding:.4rem .7rem; border-radius:10px;
-      background:rgba(139,92,246,.12); color:#cbd5e1; border:1px solid rgba(139,92,246,.25); font-size:.85rem;
+    @media (max-width: 576px) {
+      .footer-bottom-links {
+        flex-direction: column;
+        gap: .8rem;
+        text-align: center;
+      }
+
+      .social-link {
+        width: 44px;
+        height: 44px;
+      }
+
+      .back-to-top {
+        width: 44px;
+        height: 44px;
+      }
     }
-    .license-badge i{ color:#8b5cf6; }
   </style>
 </head>
 <body>
@@ -129,76 +416,80 @@
 <footer class="main-footer" role="contentinfo">
   <div class="container">
     <div class="row">
-      <!-- Logo + Description -->
-      <div class="col-lg-4 col-md-6 mb-4">
+      <!-- Brand Section -->
+      <div class="col-lg-4 col-md-6 mb-4 mb-lg-0">
         <div class="footer-brand">
-          <img
-            src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-            alt="وش الجواب"
-            class="footer-logo me-3"
-            width="160" height="60" loading="lazy" decoding="async">
+          <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+               alt="وش الجواب"
+               class="footer-logo"
+               width="160" height="60"
+               loading="lazy"
+               decoding="async">
           <h5 class="brand-title">وش الجواب</h5>
-          <p class="brand-description">منصة الألعاب التفاعلية.</p>
+          <p class="brand-description">منصة الألعاب التفاعلية الذكية.</p>
 
-          <!-- شارة وثيقة العمل الحر (يمكن تعديل الرقم أو إزالتها) -->
-          <div class="mt-3">
-            <span class="license-badge" aria-label="وثيقة العمل الحر">
-              <i class="fa-solid fa-certificate" aria-hidden="true"></i>
-              وثيقة العمل الحر: <strong dir="ltr">FL-115861372</strong>
-            </span>
+          <div class="license-badge" aria-label="وثيقة العمل الحر">
+            <i class="fa-solid fa-certificate" aria-hidden="true"></i>
+            <span>وثيقة العمل الحر: <strong dir="ltr">FL-115861372</strong></span>
           </div>
         </div>
       </div>
 
       <!-- Quick Links -->
-      <div class="col-lg-2 col-md-6 mb-4">
-        <h6 class="footer-title">روابط سريعة</h6>
+      <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+        <h6 class="footer-title">
+          <i class="fas fa-link" aria-hidden="true"></i>
+          روابط سريعة
+        </h6>
         <ul class="footer-links">
           <li><a href="{% url 'home' %}">الرئيسية</a></li>
         </ul>
       </div>
 
       <!-- Games -->
-      <div class="col-lg-2 col-md-6 mb-4">
-        <h6 class="footer-title">الألعاب</h6>
+      <div class="col-lg-2 col-md-6 mb-4 mb-lg-0">
+        <h6 class="footer-title">
+          <i class="fas fa-gamepad" aria-hidden="true"></i>
+          الألعاب
+        </h6>
         <ul class="footer-links">
           <li><a href="{% url 'games:letters_home' %}">خلية الحروف</a></li>
-          <!-- تفعيل تحدي الصور مثل خلية الحروف -->
           <li><a href="{% url 'games:images_home' %}">تحدي الصور</a></li>
-          <li><a class="disabled" style="pointer-events:none; color:#718096;">سؤال وجواب <small>(قريباً)</small></a></li>
+          <li><a style="pointer-events:none; cursor:default; color:#718096;">سؤال وجواب <small>(قريباً)</small></a></li>
         </ul>
       </div>
 
       <!-- Contact & Social -->
-      <div class="col-lg-4 col-md-6 mb-4">
-        <h6 class="footer-title">تواصل معنا</h6>
+      <div class="col-lg-4 col-md-6">
+        <h6 class="footer-title">
+          <i class="fas fa-headset" aria-hidden="true"></i>
+          تواصل معنا
+        </h6>
 
-        <!-- أيقونات واتساب + تيك توك بنفس الثيم -->
-        <div class="social-links mb-3" aria-label="وسائل التواصل">
+        <div class="social-links" aria-label="وسائل التواصل الاجتماعي">
           <a href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%20%D8%AD%D9%88%D9%84%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%88%D8%B4%20%D8%A7%D9%84%D8%AC%D9%88%D8%A7%D8%A8."
              class="social-link" target="_blank" rel="noopener noreferrer"
-             title="واتساب - وش الجواب" aria-label="واتساب - وش الجواب">
+             title="واتساب - وش الجواب" aria-label="واتساب">
             <i class="fab fa-whatsapp" aria-hidden="true"></i>
           </a>
 
           <a href="https://www.tiktok.com/@wesh_aljawab?_t=ZS-8zc6F2n2CQK&_r=1"
              class="social-link" target="_blank" rel="noopener noreferrer"
-             title="تيك توك - وش الجواب" aria-label="تيك توك - وش الجواب">
+             title="تيك توك - وش الجواب" aria-label="تيك توك">
             <i class="fab fa-tiktok" aria-hidden="true"></i>
           </a>
         </div>
 
-        <!-- الموقع بعد الأيقونات -->
         <div class="contact-info">
           <p class="contact-item">
-            <i class="fas fa-map-marker-alt me-2" aria-hidden="true"></i>
-            الرياض، المملكة العربية السعودية
+            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+            <span>الرياض، المملكة العربية السعودية</span>
           </p>
         </div>
       </div>
     </div>
 
-    <!-- Bottom -->
+    <!-- Bottom Section -->
     <div class="footer-bottom">
       <div class="row align-items-center">
         <div class="col-md-6">
@@ -206,47 +497,34 @@
             &copy; {% now "Y" %} وش الجواب. جميع الحقوق محفوظة.
           </p>
         </div>
-        <div class="col-md-6 text-md-end">
+        <div class="col-md-6">
           <div class="footer-bottom-links">
             <a href="{% url 'privacy' %}">سياسة الخصوصية</a>
-            <a href="{% url 'returns' %}"> سياسة الاسترجاع</a>
+            <a href="{% url 'returns' %}">سياسة الاسترجاع</a>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Back to Top -->
+  <!-- Back to Top Button -->
   <button class="back-to-top" id="backToTop" title="العودة للأعلى" aria-label="العودة للأعلى">
     <i class="fas fa-chevron-up" aria-hidden="true"></i>
   </button>
 </footer>
 
-<!-- JS (خفيف) -->
 <script>
 document.addEventListener('DOMContentLoaded', function(){
   const backToTopBtn = document.getElementById('backToTop');
 
-  // إظهار/إخفاء زر العودة للأعلى
   window.addEventListener('scroll', function(){
     if (window.scrollY > 300) backToTopBtn.classList.add('show');
     else backToTopBtn.classList.remove('show');
-  }, { passive:true });
+  }, { passive: true });
 
-  // سلوك الزر
   backToTopBtn.addEventListener('click', function(){
-    window.scrollTo({ top:0, behavior:'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
-
-  // تشغيل أنيميشن العناصر عند ظهورها
-  const els = document.querySelectorAll('.footer-links li, .contact-item, .social-link');
-  const io = new IntersectionObserver((entries)=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting){ e.target.style.animationPlayState='running'; io.unobserve(e.target); }
-    });
-  }, { threshold:0.1, rootMargin:'0px 0px -50px 0px' });
-
-  els.forEach(el=>{ el.style.animationPlayState='paused'; io.observe(el); });
 });
 </script>
 
