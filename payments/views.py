@@ -45,7 +45,7 @@ def create_payment(request, package_id):
             return redirect("games:create_letters_session")
 
         elif package.game_type == "images":
-            return redirect("games:create_images_session")
+            return redirect("games:images_home")
 
         elif package.game_type == "time":
             return redirect("games:time_home")
