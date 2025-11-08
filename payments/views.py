@@ -12,14 +12,10 @@ logger = logging.getLogger(__name__)
 @login_required
 @transaction.atomic
 def create_payment(request, package_id):
-    """
-    دفع وهمي — يعمل لجميع الألعاب:
-    Letters / Images / Time / Quiz
-    """
     try:
         package = get_object_or_404(GamePackage, id=package_id)
 
-        # هل لديه شراء ساري لنفس الحزمة؟
+        # هل لديه شراء ساري مسبقًا؟
         existing = UserPurchase.objects.filter(
             user=request.user,
             package=package,
@@ -27,36 +23,35 @@ def create_payment(request, package_id):
         ).first()
 
         if existing:
-            messages.info(request, "✅ الحزمة مفعلة لديك مسبقًا.")
+            messages.info(request, "✅ سبق لك شراء هذه الحزمة وهي ما زالت صالحة.")
+            # 👇 نوجه المستخدم حسب نوع اللعبة
+            if package.game_type == 'letters':
+                return redirect("games:letters_home")
+            elif package.game_type == 'images':
+                return redirect("games:images_home")
+            else:
+                return redirect("games:home")
+
+        # إنشاء شراء جديد صالح 72 ساعة
+        expiry_time = timezone.now() + timezone.timedelta(hours=72)
+
+        purchase = UserPurchase.objects.create(
+            user=request.user,
+            package=package,
+            expires_at=expiry_time
+        )
+
+        messages.success(request, f"🎉 تم تفعيل الحزمة! صالحة حتى {expiry_time.strftime('%Y-%m-%d %H:%M')}")
+
+        # ✅ التوجيه حسب نوع اللعبة:
+        if package.game_type == 'letters':
+            return redirect(f"/games/letters/create/?package_id={package.id}")
+        elif package.game_type == 'images':
+            return redirect(f"/games/images/create/?package_id={package.id}")
         else:
-            expiry_time = timezone.now() + timezone.timedelta(hours=72)
-            UserPurchase.objects.create(
-                user=request.user,
-                package=package,
-                expires_at=expiry_time
-            )
-            messages.success(
-                request,
-                f"🎉 تم تفعيل الحزمة! صالحة حتى {expiry_time.strftime('%Y-%m-%d %H:%M')}"
-            )
-
-        # ✅ نرجّع حسب نوع اللعبة
-        if package.game_type == "letters":
-            return redirect("games:create_letters_session")
-
-        elif package.game_type == "images":
-            return redirect("games:images_home")
-
-        elif package.game_type == "time":
-            return redirect("games:time_home")
-
-        elif package.game_type == "quiz":
-            return redirect("games:quiz_home")
-
-        # fallback احتياطي
-        return redirect("games:home")
+            return redirect("games:home")
 
     except Exception as e:
-        logger.error(f"[FakePayment] ERROR: {e}", exc_info=True)
-        messages.error(request, "⚠️ حدث خطأ أثناء الدفع. حاول مرة أخرى.")
+        logger.error(f"Fake payment failed: {e}", exc_info=True)
+        messages.error(request, "⚠️ حدث خطأ غير متوقع أثناء تجهيز الشراء. حاول لاحقًا.")
         return redirect("games:home")
