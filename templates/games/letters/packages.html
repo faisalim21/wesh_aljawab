@@ -71,7 +71,10 @@
   </div>
 
   <!-- فورم إنشاء جلسة (مخفي) -->
-  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}" style="display:none">
+  <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
+      target="_blank"
+      style="display:none">
+
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
     <button type="submit" id="hiddenSubmitBtn">go</button>
@@ -137,7 +140,10 @@
               <div class="mt-3">
                 {% if user_purchases and package.id in user_purchases %}
                   <!-- شراء صالح خلال 72 ساعة => ابدأ اللعب -->
-                  <a class="btn-play" href="{% url 'games:create_letters_session' %}?package_id={{ package.id }}" target="_blank" rel="noopener">ابدأ اللعب</a>
+                  <button class="btn-play" type="button" onclick="createLettersSession('{{ package.id }}')">
+  ابدأ اللعب
+</button>
+
                 {% else %}
                   <!-- دائمًا اسمح بالشراء -->
                   <a class="btn-play" href="{% url 'payments:create_payment' package.id %}">شراء</a>
