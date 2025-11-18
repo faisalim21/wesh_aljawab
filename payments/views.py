@@ -122,25 +122,49 @@ def telr_success(request):
         return redirect("games:home")
 
     if trans.status == "completed":
-        messages.success(request, "تمت العملية بنجاح سابقًا.")
+        # لو الجلسة منشأة سابقًا نرجّع لها
+        purchase = UserPurchase.objects.filter(
+            user=trans.user,
+            package=trans.package,
+            is_completed=False
+        ).first()
+
+        if purchase and hasattr(purchase, "game_session"):
+            return redirect("games:letters_session", purchase.game_session.id)
+
+        messages.success(request, "تمت العملية سابقًا.")
         return redirect("games:home")
 
-    # 2) تحديث الحالة
+    # 2) تحديث حالة المعاملة
     trans.status = "completed"
     trans.completed_at = timezone.now()
     trans.save()
 
-    # 3) إنشاء شراء جديد صالح لمدة 72 ساعة
+    # 3) إنشاء شراء صالح لمدة 72 ساعة
     expiry_time = timezone.now() + timezone.timedelta(hours=72)
 
-    UserPurchase.objects.create(
+    purchase = UserPurchase.objects.create(
         user=trans.user,
         package=trans.package,
         expires_at=expiry_time
     )
 
-    messages.success(request, "🎉 تمت عملية الدفع بنجاح! تم تفعيل الحزمة.")
-    return redirect("games:home")
+    # 4) إنشاء جلسة لعب جديدة للحزمة
+    from games.models import GameSession
+
+    session = GameSession.objects.create(
+        host=trans.user,
+        package=trans.package,
+        game_type=trans.package.game_type,
+        purchase=purchase,
+        team1_name=trans.user.preferences.default_team1_name if hasattr(trans.user, 'preferences') else "الفريق الأخضر",
+        team2_name=trans.user.preferences.default_team2_name if hasattr(trans.user, 'preferences') else "الفريق البرتقالي",
+    )
+
+    messages.success(request, "🎉 عملية الدفع نجحت! تم إنشاء جلستك.")
+
+    # 5) توجيه المستخدم لصفحة الجلسة
+    return redirect("games:letters_session", session.id)
 
 
 
