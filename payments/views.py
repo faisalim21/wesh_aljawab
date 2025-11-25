@@ -1,5 +1,6 @@
 ﻿import requests
 import json
+import uuid
 from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -13,10 +14,6 @@ from .models import TelrTransaction
 
 
 # ============================
-#   إنشاء عملية الدفع
-# ============================
-
-# ============================
 #   إنشاء الدفع
 # ============================
 
@@ -24,7 +21,7 @@ from .models import TelrTransaction
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # 1) التحقق من وجود شراء سابق غير مكتمل
+    # هل يوجد شراء مفتوح سابق؟
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
@@ -38,12 +35,12 @@ def start_payment(request, package_id):
             is_completed=False
         )
 
-    # 2) إنشاء order_id محلي مؤقت حتى لا يتكرر
+    # order_id مؤقت وفريد 100%
     initial_order_id = f"local-{uuid.uuid4()}"
 
-    # 3) إنشاء المعاملة
+    # إنشاء المعاملة
     transaction = TelrTransaction.objects.create(
-        order_id=initial_order_id,   # هذا لن يتكرر أبداً
+        order_id=initial_order_id,   # مستحيل يكون فاضي
         purchase=purchase,
         user=request.user,
         package=package,
@@ -52,7 +49,7 @@ def start_payment(request, package_id):
         status="pending"
     )
 
-    # 4) تجهيز بيانات Telr
+    # تجهيز الطلب
     endpoint, data = generate_telr_url(purchase, request)
 
     try:
@@ -63,21 +60,18 @@ def start_payment(request, package_id):
             "message": "خطأ أثناء الاتصال ببوابة Telr"
         })
 
-    # 5) التحقق من وجود رابط الدفع
+    # تأكد أن الرد صحيح
     if "order" not in result or "url" not in result["order"]:
         return render(request, "payments/error.html", {
             "message": f"استجابة غير صالحة من Telr: {result}"
         })
 
+    # التحديث بالرقم الحقيقي من Telr
     telr_order_id = result["order"]["cartid"]
-
-    # 6) تحديث order_id الحقيقي من Telr
     transaction.order_id = telr_order_id
     transaction.save()
 
-    # 7) توجيه المستخدم لصفحة الدفع
     return redirect(result["order"]["url"])
-
 
 
 # ============================
@@ -85,9 +79,6 @@ def start_payment(request, package_id):
 # ============================
 
 def telr_success(request):
-    """
-    صفحة النجاح بعد الدفع
-    """
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
@@ -95,7 +86,6 @@ def telr_success(request):
     purchase.is_completed = True
     purchase.save()
 
-    # تحديد وجهة اللاعب حسب نوع اللعبة
     if purchase.package.game_type == "letters":
         next_url = f"/games/letters/create/?package_id={purchase.package.id}"
     elif purchase.package.game_type == "images":
@@ -109,31 +99,20 @@ def telr_success(request):
 
 
 def telr_failed(request):
-    """
-    عند فشل عملية الدفع
-    """
     return render(request, "payments/failed.html")
 
 
 def telr_cancel(request):
-    """
-    عند إلغاء عملية الدفع
-    """
     messages.info(request, "تم إلغاء عملية الدفع.")
     return redirect("games:home")
 
 
-
 # ============================
-#   Webhook (Callback)
+#   Webhook
 # ============================
 
 @csrf_exempt
 def telr_webhook(request):
-    """
-    رد السيرفر من Telr — حتى لو المستخدم أغلق الصفحة
-    """
-
     try:
         data = json.loads(request.body.decode('utf-8'))
     except:
@@ -143,7 +122,7 @@ def telr_webhook(request):
     status = data.get("status")
 
     if not order_id:
-        return HttpResponse("Missing cartid", status=400)
+        return HttpResponse("Missing order id", status=400)
 
     transaction = TelrTransaction.objects.filter(order_id=order_id).first()
     if not transaction:
@@ -154,7 +133,6 @@ def telr_webhook(request):
     transaction.save()
 
     purchase = transaction.purchase
-
     if status == "paid":
         purchase.is_completed = True
         purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
