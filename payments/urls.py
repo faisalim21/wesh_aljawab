@@ -5,7 +5,8 @@ app_name = "payments"
 
 urlpatterns = [
     # إنشاء الدفع
-    path("create/<uuid:package_id>/", views.start_payment, name="create_payment"),
+    path("pay/<uuid:package_id>/", views.start_payment, name="start_payment"),
+
 
     # العودة من Telr
     path("telr/success/", views.telr_success, name="telr_success"),
