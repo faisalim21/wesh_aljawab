@@ -16,20 +16,15 @@ from .models import TelrTransaction
 #   إنشاء عملية الدفع
 # ============================
 
+# ============================
+#   إنشاء الدفع
+# ============================
+
 @login_required
 def start_payment(request, package_id):
-    """
-    إنشاء عملية دفع وتوجيه المستخدم لصفحة Telr
-    """
+    package = get_object_or_404(GamePackage, id=package_id)
 
-    package = get_object_or_404(GamePackage, id=package_id, is_active=True)
-
-    if package.is_free:
-        return render(request, "payments/error.html", {
-            "message": "هذه الحزمة مجانية ولا تحتاج إلى شراء."
-        })
-
-    # التحقق من وجود شراء نشط لنفس الحزمة
+    # 1) التحقق من وجود شراء سابق غير مكتمل
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
@@ -43,44 +38,44 @@ def start_payment(request, package_id):
             is_completed=False
         )
 
-    # إنشاء عملية Telr
+    # 2) إنشاء order_id محلي مؤقت حتى لا يتكرر
+    initial_order_id = f"local-{uuid.uuid4()}"
+
+    # 3) إنشاء المعاملة
     transaction = TelrTransaction.objects.create(
+        order_id=initial_order_id,   # هذا لن يتكرر أبداً
         purchase=purchase,
         user=request.user,
         package=package,
         amount=package.effective_price,
         currency="SAR",
-        status="INIT"
+        status="pending"
     )
 
-    # تجهيز بيانات Telr
+    # 4) تجهيز بيانات Telr
     endpoint, data = generate_telr_url(purchase, request)
 
     try:
-        response = requests.post(endpoint, data=data, timeout=20)
+        response = requests.post(endpoint, data=data)
         result = response.json()
     except Exception:
-        transaction.status = "ERROR"
-        transaction.save()
         return render(request, "payments/error.html", {
-            "message": "تعذّر الاتصال ببوابة الدفع."
+            "message": "خطأ أثناء الاتصال ببوابة Telr"
         })
 
+    # 5) التحقق من وجود رابط الدفع
     if "order" not in result or "url" not in result["order"]:
-        transaction.status = "INVALID_RESPONSE"
-        transaction.raw_response = result
-        transaction.save()
         return render(request, "payments/error.html", {
-            "message": "تعذّر إنشاء عملية الدفع."
+            "message": f"استجابة غير صالحة من Telr: {result}"
         })
 
-    # تحديث cartId الحقيقي من Telr
-    transaction.order_id = result["order"]["cartid"]
-    transaction.payment_url = result["order"]["url"]
-    transaction.status = "PENDING"
+    telr_order_id = result["order"]["cartid"]
+
+    # 6) تحديث order_id الحقيقي من Telr
+    transaction.order_id = telr_order_id
     transaction.save()
 
-    # تحويل المستخدم لصفحة Telr
+    # 7) توجيه المستخدم لصفحة الدفع
     return redirect(result["order"]["url"])
 
 
