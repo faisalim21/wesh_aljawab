@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="alert alert-danger text-center">
+        <h3>حدث خطأ أثناء التواصل مع بوابة الدفع</h3>
+        <p>{{ message }}</p>
+        <a href="/games/" class="btn btn-primary mt-3">العودة</a>
+    </div>
+</div>
+{% endblock %}
