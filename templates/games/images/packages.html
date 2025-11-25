@@ -577,11 +577,10 @@
                 </button>
               {% else %}
                 <a class="btn-play purchase-link"
-                   href="{% url 'payments:create_payment' package.id %}"
-                   data-package-id="{{ package.id }}"
-                   data-used-before="{% if used_before_ids and package.id in used_before_ids %}true{% else %}false{% endif %}">
+                  href="{% url 'payments:start_payment' package.id %}">
                   شراء
                 </a>
+
               {% endif %}
             </div>
 

@@ -4,11 +4,13 @@ from . import views
 app_name = "payments"
 
 urlpatterns = [
-    # إنشاء جلسة الدفع
-    path("create/<uuid:package_id>/", views.create_payment, name="create_payment"),
+    # إنشاء الدفع
+    path("create/<uuid:package_id>/", views.start_payment, name="create_payment"),
 
-    # العودة من تلر بعد الدفع
+    # العودة من Telr
     path("telr/success/", views.telr_success, name="telr_success"),
-    path("telr/fail/", views.telr_fail, name="telr_fail"),
-    path("telr/cancel/", views.telr_cancel, name="telr_cancel"),
+    path("telr/failed/", views.telr_failed, name="telr_failed"),
+    path("telr/cancel/", views.telr_cancel, name="telr_cancel"),\
+    path("telr/webhook/", views.telr_webhook, name="telr_webhook"),
+
 ]

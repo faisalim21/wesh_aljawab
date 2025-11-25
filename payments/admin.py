@@ -379,3 +379,15 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ("invoice_number", "transaction", "customer_name", "total_amount", "created_at")
     search_fields = ("invoice_number", "customer_name", "transaction__id")
     date_hierarchy = "created_at"
+
+
+
+from django.contrib import admin
+from .models import TelrTransaction
+
+@admin.register(TelrTransaction)
+class TelrAdmin(admin.ModelAdmin):
+    list_display = ("order_id", "user", "package", "amount", "status", "created_at")
+    list_filter = ("status", "currency")
+    search_fields = ("order_id", "user__username", "package__game_type")
+    readonly_fields = ("raw_response",)
