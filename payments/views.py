@@ -1,12 +1,11 @@
 ﻿import requests
 import json
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
 
 from games.models import GamePackage, UserPurchase
 from .telr import generate_telr_url
@@ -22,60 +21,78 @@ def start_payment(request, package_id):
     """
     إنشاء عملية دفع وتوجيه المستخدم لصفحة Telr
     """
-    package = get_object_or_404(GamePackage, id=package_id)
 
-    # التأكد من عدم وجود عملية شراء مفتوحة مسبقًا
-    existing = UserPurchase.objects.filter(
+    package = get_object_or_404(GamePackage, id=package_id, is_active=True)
+
+    if package.is_free:
+        return render(request, "payments/error.html", {
+            "message": "هذه الحزمة مجانية ولا تحتاج إلى شراء."
+        })
+
+    # التحقق من وجود شراء نشط لنفس الحزمة
+    purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
         is_completed=False
     ).first()
 
-    if existing:
-        purchase = existing
-    else:
+    if not purchase:
         purchase = UserPurchase.objects.create(
             user=request.user,
             package=package,
             is_completed=False
         )
 
-    # تسجيل المعاملة
-    trans = TelrTransaction.objects.create(
-        order_id=str(purchase.id),
+    # إنشاء عملية Telr
+    transaction = TelrTransaction.objects.create(
         purchase=purchase,
         user=request.user,
         package=package,
         amount=package.effective_price,
         currency="SAR",
-        status="pending"
+        status="INIT"
     )
 
     # تجهيز بيانات Telr
     endpoint, data = generate_telr_url(purchase, request)
 
     try:
-        response = requests.post(endpoint, data=data)
+        response = requests.post(endpoint, data=data, timeout=20)
         result = response.json()
     except Exception:
-        messages.error(request, "فشل الاتصال ببوابة Telr.")
-        return redirect("games:home")
+        transaction.status = "ERROR"
+        transaction.save()
+        return render(request, "payments/error.html", {
+            "message": "تعذّر الاتصال ببوابة الدفع."
+        })
 
     if "order" not in result or "url" not in result["order"]:
-        messages.error(request, "فشل في إنشاء عملية الدفع.")
-        return redirect("games:home")
+        transaction.status = "INVALID_RESPONSE"
+        transaction.raw_response = result
+        transaction.save()
+        return render(request, "payments/error.html", {
+            "message": "تعذّر إنشاء عملية الدفع."
+        })
 
-    # تحديث order_id الحقيقي
-    trans.order_id = result["order"]["cartid"]
-    trans.save()
+    # تحديث cartId الحقيقي من Telr
+    transaction.order_id = result["order"]["cartid"]
+    transaction.payment_url = result["order"]["url"]
+    transaction.status = "PENDING"
+    transaction.save()
 
+    # تحويل المستخدم لصفحة Telr
     return redirect(result["order"]["url"])
+
+
 
 # ============================
 #   Telr Return URLs
 # ============================
 
 def telr_success(request):
+    """
+    صفحة النجاح بعد الدفع
+    """
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
@@ -83,6 +100,7 @@ def telr_success(request):
     purchase.is_completed = True
     purchase.save()
 
+    # تحديد وجهة اللاعب حسب نوع اللعبة
     if purchase.package.game_type == "letters":
         next_url = f"/games/letters/create/?package_id={purchase.package.id}"
     elif purchase.package.game_type == "images":
@@ -96,13 +114,19 @@ def telr_success(request):
 
 
 def telr_failed(request):
-    messages.error(request, "فشلت عملية الدفع.")
+    """
+    عند فشل عملية الدفع
+    """
     return render(request, "payments/failed.html")
 
 
 def telr_cancel(request):
+    """
+    عند إلغاء عملية الدفع
+    """
     messages.info(request, "تم إلغاء عملية الدفع.")
     return redirect("games:home")
+
 
 
 # ============================
@@ -112,8 +136,7 @@ def telr_cancel(request):
 @csrf_exempt
 def telr_webhook(request):
     """
-    يستقبل رد Telr النهائي (Server to Server)
-    حتى لو المستخدم أغلق المتصفح.
+    رد السيرفر من Telr — حتى لو المستخدم أغلق الصفحة
     """
 
     try:
@@ -125,20 +148,18 @@ def telr_webhook(request):
     status = data.get("status")
 
     if not order_id:
-        return HttpResponse("Missing order id", status=400)
+        return HttpResponse("Missing cartid", status=400)
 
-    # جلب المعاملة
-    trans = TelrTransaction.objects.filter(order_id=order_id).first()
-    if not trans:
+    transaction = TelrTransaction.objects.filter(order_id=order_id).first()
+    if not transaction:
         return HttpResponse("Transaction not found", status=404)
 
-    # تحديث بيانات العملية
-    trans.status = status
-    trans.raw_response = data
-    trans.save()
+    transaction.status = status
+    transaction.raw_response = data
+    transaction.save()
 
-    # تحديث UserPurchase
-    purchase = trans.purchase
+    purchase = transaction.purchase
+
     if status == "paid":
         purchase.is_completed = True
         purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
