@@ -32,7 +32,8 @@ def generate_telr_url(purchase, request):
         "ivp_cart": order_id,
         "ivp_amount": amount,
         "ivp_currency": "SAR",
-        "ivp_desc": f"شراء حزمة {purchase.package.title}",
+        "ivp_desc": f"شراء حزمة رقم {purchase.package.package_number}",
+
 
         "return_auth": return_auth,
         "return_decl": return_decl,
