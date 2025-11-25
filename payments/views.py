@@ -22,23 +22,31 @@ def start_payment(request, package_id):
     """
     إنشاء عملية دفع وتوجيه المستخدم لصفحة Telr
     """
-
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # إنشاء شراء جديد بحالة pending
-    purchase = UserPurchase.objects.create(
+    # التأكد من عدم وجود عملية شراء مفتوحة مسبقًا
+    existing = UserPurchase.objects.filter(
         user=request.user,
         package=package,
         is_completed=False
-    )
+    ).first()
 
-    # تسجيل المعاملة في جدول Transaction
+    if existing:
+        purchase = existing
+    else:
+        purchase = UserPurchase.objects.create(
+            user=request.user,
+            package=package,
+            is_completed=False
+        )
+
+    # تسجيل المعاملة
     trans = TelrTransaction.objects.create(
         order_id=str(purchase.id),
         purchase=purchase,
         user=request.user,
         package=package,
-        amount=package.price,
+        amount=package.effective_price,
         currency="SAR",
         status="pending"
     )
@@ -46,7 +54,6 @@ def start_payment(request, package_id):
     # تجهيز بيانات Telr
     endpoint, data = generate_telr_url(purchase, request)
 
-    # إرسال الطلب إلى Telr
     try:
         response = requests.post(endpoint, data=data)
         result = response.json()
@@ -54,18 +61,15 @@ def start_payment(request, package_id):
         messages.error(request, "فشل الاتصال ببوابة Telr.")
         return redirect("games:home")
 
-    # التأكد من وجود رابط الدفع
     if "order" not in result or "url" not in result["order"]:
-        messages.error(request, "فشل في إنشاء عملية الدفع. حاول لاحقاً.")
+        messages.error(request, "فشل في إنشاء عملية الدفع.")
         return redirect("games:home")
 
-    # تحديث رقم الطلب النهائي في transaction
+    # تحديث order_id الحقيقي
     trans.order_id = result["order"]["cartid"]
     trans.save()
 
-    pay_url = result["order"]["url"]
-    return redirect(pay_url)
-
+    return redirect(result["order"]["url"])
 
 # ============================
 #   Telr Return URLs
