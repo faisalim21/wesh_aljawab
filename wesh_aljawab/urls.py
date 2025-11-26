@@ -7,8 +7,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView
 
 def home_view(request):
-    """الصفحة الرئيسية"""
-    return render(request, 'home.html')
+    return render(request, 'base.html')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
