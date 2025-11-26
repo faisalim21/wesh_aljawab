@@ -72,7 +72,10 @@ def start_payment(request, package_id):
     transaction.order_id = telr_order_id
     transaction.save()
 
-    return redirect(result["order"]["url"])
+    return render(request, "payments/processing.html", {
+        "payment_url": result["order"]["url"]
+    })
+
 
 
 # ============================
