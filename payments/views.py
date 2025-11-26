@@ -74,7 +74,7 @@ def start_payment(request, package_id):
 
     return render(request, "payments/processing.html", {
         "payment_url": result["order"]["url"]
-    })
+    }) 
 
 
 
