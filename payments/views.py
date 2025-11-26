@@ -137,5 +137,6 @@ def telr_webhook(request):
         purchase.is_completed = True
         purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
         purchase.save()
-
+ 
     return HttpResponse("OK", status=200)
+  
