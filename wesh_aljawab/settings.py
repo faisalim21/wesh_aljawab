@@ -330,7 +330,8 @@ RAJHI_CONFIG = {
 
 # ========== TELR TEST CONFIG ==========
 TELR_STORE_ID = "34132"
-TELR_AUTH_KEY = "wT45z-TDzZ3@hvV"
+TELR_AUTH_KEY = "wT45z-TDzZ3@hvvV"
+
 
 # روابط العودة من Telr
 TELR_RETURN_SUCCESS = "https://wesh-aljawab.com/payments/telr/success/"
