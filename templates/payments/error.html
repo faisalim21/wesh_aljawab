@@ -1,11 +1,9 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="container py-5">
-    <div class="alert alert-danger text-center">
-        <h3>حدث خطأ أثناء التواصل مع بوابة الدفع</h3>
-        <p>{{ message }}</p>
-        <a href="/games/" class="btn btn-primary mt-3">العودة</a>
-    </div>
-</div>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<body style="padding:40px;font-family:sans-serif">
+    <h2>❌ خطأ أثناء طلب الدفع</h2>
+    <pre style="background:#eee;padding:20px;border-radius:10px;">
+{{ message }}
+    </pre>
+</body>
+</html>

@@ -21,7 +21,7 @@ from .models import TelrTransaction
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # هل يوجد شراء مفتوح سابق؟
+    # هل يوجد شراء سابق غير مكتمل؟
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
@@ -35,12 +35,12 @@ def start_payment(request, package_id):
             is_completed=False
         )
 
-    # order_id مؤقت وفريد 100%
+    # order_id مؤقت وفريد
     initial_order_id = f"local-{uuid.uuid4()}"
 
-    # إنشاء المعاملة
+    # إنشاء معاملة Telr
     transaction = TelrTransaction.objects.create(
-        order_id=initial_order_id,   # مستحيل يكون فاضي
+        order_id=initial_order_id,
         purchase=purchase,
         user=request.user,
         package=package,
@@ -49,33 +49,33 @@ def start_payment(request, package_id):
         status="pending"
     )
 
-    # تجهيز الطلب
+    # تجهيز الطلب الحقيقي باستخدام order_id
     endpoint, data = generate_telr_url(purchase, request, initial_order_id)
 
-
+    # إرسال الطلب لـ Telr
     try:
-        response = requests.post(endpoint, data=data)
+        response = requests.post(endpoint, data=data, timeout=15)
         result = response.json()
-    except Exception:
+    except Exception as e:
         return render(request, "payments/error.html", {
-            "message": "خطأ أثناء الاتصال ببوابة Telr"
+            "message": f"فشل الاتصال بـ Telr: {str(e)}"
         })
 
-    # تأكد أن الرد صحيح
+    # Telr رجع خطأ؟ نعرضه لك مباشرة
     if "order" not in result or "url" not in result["order"]:
         return render(request, "payments/error.html", {
-            "message": f"استجابة غير صالحة من Telr: {result}"
+            "message": json.dumps(result, ensure_ascii=False, indent=2)
         })
 
-    # التحديث بالرقم الحقيقي من Telr
-    telr_order_id = result["order"]["cartid"]
+    # تحديث رقم الطلب الحقيقي من Telr
+    telr_order_id = result["order"].get("cartid", initial_order_id)
     transaction.order_id = telr_order_id
     transaction.save()
 
+    # فتح صفحة التحويل
     return render(request, "payments/processing.html", {
         "payment_url": result["order"]["url"]
-    }) 
-
+    })
 
 
 # ============================
@@ -97,9 +97,7 @@ def telr_success(request):
     else:
         next_url = "/"
 
-    return render(request, "payments/success.html", {
-        "redirect_url": next_url
-    })
+    return render(request, "payments/success.html", {"redirect_url": next_url})
 
 
 def telr_failed(request):
@@ -132,6 +130,7 @@ def telr_webhook(request):
     if not transaction:
         return HttpResponse("Transaction not found", status=404)
 
+    # حفظ الرد
     transaction.status = status
     transaction.raw_response = data
     transaction.save()
@@ -141,6 +140,5 @@ def telr_webhook(request):
         purchase.is_completed = True
         purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
         purchase.save()
- 
+
     return HttpResponse("OK", status=200)
-  
