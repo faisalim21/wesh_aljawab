@@ -50,7 +50,8 @@ def start_payment(request, package_id):
     )
 
     # تجهيز الطلب
-    endpoint, data = generate_telr_url(purchase, request)
+    endpoint, data = generate_telr_url(purchase, request, initial_order_id)
+
 
     try:
         response = requests.post(endpoint, data=data)
