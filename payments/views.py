@@ -51,6 +51,7 @@ def start_payment(request, package_id):
 
     # تجهيز الطلب الحقيقي باستخدام order_id
     endpoint, data = generate_telr_url(purchase, request, initial_order_id)
+    print("TELR REQUEST PAYLOAD >>>", data)
 
     # إرسال الطلب لـ Telr
     try:
