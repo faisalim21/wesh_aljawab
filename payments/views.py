@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+import logging
+logger = logging.getLogger("payments")
 
 from games.models import GamePackage, UserPurchase
 from .telr import generate_telr_url
@@ -21,7 +23,6 @@ from .models import TelrTransaction
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # هل يوجد شراء سابق غير مكتمل؟
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
@@ -35,10 +36,8 @@ def start_payment(request, package_id):
             is_completed=False
         )
 
-    # order_id مؤقت وفريد
     initial_order_id = f"local-{uuid.uuid4()}"
 
-    # إنشاء معاملة Telr
     transaction = TelrTransaction.objects.create(
         order_id=initial_order_id,
         purchase=purchase,
@@ -49,11 +48,13 @@ def start_payment(request, package_id):
         status="pending"
     )
 
-    # تجهيز الطلب الحقيقي باستخدام order_id
     endpoint, data = generate_telr_url(purchase, request, initial_order_id)
-    print("TELR REQUEST PAYLOAD >>>", data)
 
-    # إرسال الطلب لـ Telr
+    # 🔥 تسجيل الـ Payload في Render Logs
+    import json, logging
+    logger = logging.getLogger("payments")
+    logger.info("TELR REQUEST PAYLOAD >>> " + json.dumps(data, ensure_ascii=False))
+
     try:
         response = requests.post(endpoint, data=data, timeout=15)
         result = response.json()
@@ -62,21 +63,19 @@ def start_payment(request, package_id):
             "message": f"فشل الاتصال بـ Telr: {str(e)}"
         })
 
-    # Telr رجع خطأ؟ نعرضه لك مباشرة
     if "order" not in result or "url" not in result["order"]:
         return render(request, "payments/error.html", {
             "message": json.dumps(result, ensure_ascii=False, indent=2)
         })
 
-    # تحديث رقم الطلب الحقيقي من Telr
     telr_order_id = result["order"].get("cartid", initial_order_id)
     transaction.order_id = telr_order_id
     transaction.save()
 
-    # فتح صفحة التحويل
     return render(request, "payments/processing.html", {
         "payment_url": result["order"]["url"]
     })
+
 
 
 # ============================
