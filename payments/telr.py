@@ -38,7 +38,7 @@ def generate_telr_url(purchase, request, order_id):
     payload = {
         "ivp_method": "create",
         "ivp_store": "34132",
-        "ivp_authkey": "wT45z-TDzZ3@hvV",
+        "ivp_authkey": "wT45z-TDzZ3@hvvV",
         "ivp_test": "1",
 
         # أهم نقطة — رقم الطلب الحقيقي
