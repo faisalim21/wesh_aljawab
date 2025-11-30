@@ -1615,20 +1615,14 @@ def create_images_session(request):
 @login_required
 @require_http_methods(["GET"])
 def images_create(request):
-    """
-    استقبال المستخدم بعد الدفع الناجح.
-    - يتحقق من وجود شراء صالح (is_completed=True، expires_at > now)
-    - يبدأ الجلسة تلقائياً
-    - يوجّه المستخدم مباشرة إلى صفحة اللعب
-    """
     package_id = request.GET.get("package_id")
     if not package_id:
-        messages.error(request, "لم يتم تحديد الحزمة.")
+        messages.error(request, "لم يتم العثور على الحزمة.")
         return redirect("games:images_home")
 
     package = get_object_or_404(GamePackage, id=package_id, game_type="images")
 
-    # تأكد أن المستخدم يملك شراء مكتمل
+    # شراء فعّال؟
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
@@ -1640,22 +1634,22 @@ def images_create(request):
         messages.error(request, "لا يوجد شراء صالح لهذه الحزمة.")
         return redirect("games:images_home")
 
-    # هل توجد جلسة نشطة لنفس الشراء؟
-    existing = GameSession.objects.filter(
+    # لو لديه جلسة قديمة مرتبطة بنفس الشراء
+    existing_session = GameSession.objects.filter(
         purchase=purchase,
         is_active=True,
         game_type="images"
     ).first()
 
-    if existing and not existing.is_time_expired:
-        return redirect("games:images_session", session_id=existing.id)
+    if existing_session and not existing_session.is_time_expired:
+        return redirect("games:images_session", session_id=existing_session.id)
 
     # إنشاء جلسة جديدة
     session = GameSession.objects.create(
         host=request.user,
         package=package,
         purchase=purchase,
-        game_type="images",
+        game_type="images"
     )
 
     PictureGameProgress.objects.get_or_create(
