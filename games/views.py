@@ -1611,6 +1611,62 @@ def create_images_session(request):
         except Exception: pass
 
 
+
+@login_required
+@require_http_methods(["GET"])
+def images_create(request):
+    """
+    استقبال المستخدم بعد الدفع الناجح.
+    - يتحقق من وجود شراء صالح (is_completed=True، expires_at > now)
+    - يبدأ الجلسة تلقائياً
+    - يوجّه المستخدم مباشرة إلى صفحة اللعب
+    """
+    package_id = request.GET.get("package_id")
+    if not package_id:
+        messages.error(request, "لم يتم تحديد الحزمة.")
+        return redirect("games:images_home")
+
+    package = get_object_or_404(GamePackage, id=package_id, game_type="images")
+
+    # تأكد أن المستخدم يملك شراء مكتمل
+    purchase = UserPurchase.objects.filter(
+        user=request.user,
+        package=package,
+        is_completed=True,
+        expires_at__gt=timezone.now()
+    ).order_by("-purchase_date").first()
+
+    if not purchase:
+        messages.error(request, "لا يوجد شراء صالح لهذه الحزمة.")
+        return redirect("games:images_home")
+
+    # هل توجد جلسة نشطة لنفس الشراء؟
+    existing = GameSession.objects.filter(
+        purchase=purchase,
+        is_active=True,
+        game_type="images"
+    ).first()
+
+    if existing and not existing.is_time_expired:
+        return redirect("games:images_session", session_id=existing.id)
+
+    # إنشاء جلسة جديدة
+    session = GameSession.objects.create(
+        host=request.user,
+        package=package,
+        purchase=purchase,
+        game_type="images",
+    )
+
+    PictureGameProgress.objects.get_or_create(
+        session=session,
+        defaults={"current_index": 1}
+    )
+
+    return redirect("games:images_session", session_id=session.id)
+
+
+
 def images_display(request, display_link):
     session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='images')
     if session.is_time_expired:
