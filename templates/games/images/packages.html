@@ -520,27 +520,31 @@
         <div>
           <div class="package-card">
 
-            {% if used_before_ids and package.id in used_before_ids %}
-              <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك لعب هذه الحزمة</div>
+            {# شارة سبق شراء #}
+            {% if package.id in expired_packages_ids %}
+              <div class="used-before">
+                <i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه الحزمة
+              </div>
             {% endif %}
 
             <div class="pkg-head">
               <div class="package-title">حزمة رقم {{ package.package_number }}</div>
             </div>
 
-            <!-- Price -->
+            <!-- السعر -->
             <div class="pkg-pricing">
               {% if package.has_discount %}
                 <div class="price-wrap">
                   <div class="price-new">
-                    <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                    <span class="val">{{ package.discounted_price|floatformat:0 }}</span>
                     <span class="icon-saudi_riyal"></span>
                   </div>
                   <div class="price-old">
-                    <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                    <span class="val">{{ package.original_price|floatformat:0 }}</span>
                     <span class="icon-saudi_riyal"></span>
                   </div>
                 </div>
+
                 <div class="text-center">
                   <span class="save-badge"
                         data-orig="{{ package.original_price }}"
@@ -549,6 +553,7 @@
                     وفّر <b class="save-pct">—</b>
                   </span>
                 </div>
+
               {% else %}
                 <div class="price-wrap">
                   <div class="price-new">
@@ -560,9 +565,7 @@
             </div>
 
             {% if package.description %}
-              <div>
-                <p class="pkg-desc">{{ package.description }}</p>
-              </div>
+              <p class="pkg-desc">{{ package.description }}</p>
             {% endif %}
 
             <div class="trust-row">
@@ -570,23 +573,31 @@
             </div>
 
             <div class="pkg-actions">
-              {% if user_purchases and package.id in user_purchases %}
-                <button type="button" class="btn-play" onclick="createImagesSession('{{ package.id }}')">
-                  <span class="btn-text">ابدأ اللعب</span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
+
+              {# زر أخضر – ابدأ اللعب إذا الشراء ساري #}
+              {% if package.id in active_packages_ids %}
+                <button type="button"
+                        class="btn-play"
+                        onclick="createImagesSession('{{ package.id }}')"
+                        style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                  ابدأ اللعب
                 </button>
+
+              {# زر شراء إذا لا يوجد شراء فعال #}
               {% else %}
                 <a class="btn-play purchase-link"
-                  href="{% url 'payments:start_payment' package.id %}">
+                  href="{% url 'payments:start_payment' package.id %}"
+                  style="background: linear-gradient(135deg, #8b5cf6, #06b6d4);">
                   شراء
                 </a>
-
               {% endif %}
+
             </div>
 
           </div>
         </div>
-      {% endfor %}
+        {% endfor %}
+
 
     </div>
   </section>

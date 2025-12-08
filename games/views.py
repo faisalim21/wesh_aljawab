@@ -282,12 +282,14 @@ def _get_model(app_label: str, model_name_candidates):
     
 def letters_game_home(request):
     """
-    صفحة اختيار الحزم لخلية الحروف:
-    - أعلى الصفحة: الحزمة المجانية (إن وُجدت ومفعّلة).
-    - تحتها: منوّعة ثم رياضية (سكرول).
-    - 'ابدأ اللعب' يظهر فقط لو عنده شراء صالح خلال 72 ساعة.
-    - 'شراء' دائمًا متاح (حتى لو سبق لعبها)، وشارة 'سبق لك لعب هذه الحزمة' للتذكير فقط.
+    صفحة اختيار الحزم:
+    - زر ابدأ اللعب يظهر فقط للحزم ذات شراء فعال (داخل 72 ساعة).
+    - شارة "سبق لك شراء هذه الحزمة" تظهر للحزم التي اشتراها المستخدم مسبقًا لكن انتهت صلاحيتها.
+    - زر شراء متاح دائمًا إلا إذا كانت الحزمة مفعلة حالياً.
     """
+
+    now = timezone.now()
+
     # الحزمة المجانية
     free_package = (
         LettersPackage.objects.filter(
@@ -308,8 +310,9 @@ def letters_game_home(request):
         ).order_by('-id').first()
 
         free_session_eligible = free_active_session is None
+
         if not free_session_eligible:
-            free_session_message = "لديك جلسة مجانية سارية. ارجع لها أو أكملها أولًا."
+            free_session_message = "لديك جلسة مجانية سارية."
         else:
             had_free_before = LettersSession.objects.filter(
                 package=free_package,
@@ -319,47 +322,52 @@ def letters_game_home(request):
                 free_session_eligible = False
                 free_session_message = "لقد استخدمت الجلسة المجانية الخاصة بك."
 
-    # الحزم المدفوعة حسب التصنيف
+    # الحزم المدفوعة
     paid_qs = LettersPackage.objects.filter(
         is_active=True, is_free=False, game_type='letters'
     )
     paid_packages_mixed = paid_qs.filter(question_theme='mixed').order_by('package_number')
     paid_packages_sports = paid_qs.filter(question_theme='sports').order_by('package_number')
 
-    # مشتريات المستخدم الصالحة (72 ساعة)
-    valid_ids = set()
-    used_before_ids = set()
+    # ============================
+    # 🔥 منطق الشراء الجديد
+    # ============================
+    active_packages_ids = set()   # شراء فعال → ابدأ اللعب
+    expired_packages_ids = set()  # شراء سابق لكنه منتهي → تظهر شارة "سبق لك شراء هذه الحزمة"
+    used_before_ids = set()       # للتمييز فقط
 
     if request.user.is_authenticated:
-        # مشتريات المستخدم الفعّالة (غير مكتملة ولم تنتهِ صلاحيتها)
-        valid_ids = set(
-            UserPurchase.objects.filter(
-                user=request.user,
-                package__game_type='letters',
-                is_completed=False,
-                expires_at__gte=timezone.now(),   # أو استخدم computed_expires_at لو كانت None
-            ).values_list('package_id', flat=True)
+        purchases = UserPurchase.objects.filter(
+            user=request.user,
+            package__game_type='letters'
         )
 
-        used_before_ids = set(
-            LettersSession.objects.filter(
-                Q(purchase__user=request.user) | Q(host=request.user)
-            ).values_list('package_id', flat=True)
-        )
+        for p in purchases:
+            used_before_ids.add(p.package_id)
+
+            # شراء مكتمل وصالح
+            if p.is_completed and p.expires_at and p.expires_at > now:
+                active_packages_ids.add(p.package_id)
+            else:
+                # منتهي أو غير مكتمل
+                expired_packages_ids.add(p.package_id)
 
     context = {
-        'free_package': free_package,
-        'free_active_session': free_active_session,
-        'free_session_eligible': free_session_eligible,
-        'free_session_message': free_session_message,
-        'paid_packages_mixed': paid_packages_mixed,
-        'paid_packages_sports': paid_packages_sports,
-        'user_purchases': valid_ids,
-        'used_before_ids': used_before_ids,
+        "free_package": free_package,
+        "free_active_session": free_active_session,
+        "free_session_eligible": free_session_eligible,
+        "free_session_message": free_session_message,
+
+        "paid_packages_mixed": paid_packages_mixed,
+        "paid_packages_sports": paid_packages_sports,
+
+        # أهم ثلاث قوائم
+        "active_packages_ids": active_packages_ids,
+        "expired_packages_ids": expired_packages_ids,
+        "used_before_ids": used_before_ids,
     }
-    return render(request, 'games/letters/packages.html', context)
 
-
+    return render(request, "games/letters/packages.html", context)
 @require_http_methods(["POST"])
 def create_letters_session(request):
     """
@@ -608,70 +616,79 @@ def letters_contestants(request, contestants_link):
 # ===============================
 
 def images_game_home(request):
-    # الحزمة المجانية + المدفوعة المتاحة
+    now = timezone.now()
+
+    # الحزمة المجانية
     free_package = GamePackage.objects.filter(
         game_type='images', is_free=True, is_active=True
     ).first()
 
+    # الحزم المدفوعة
     paid_packages = GamePackage.objects.filter(
         game_type='images', is_free=False, is_active=True
     ).order_by('package_number')
 
-    # تجهيز متغيرات العرض بحسب حالة المستخدم
+    # ============================
+    #   منطق الشراء الجديد
+    # ============================
+    active_packages_ids = set()    # شراء فعال → زر ابدأ اللعب
+    expired_packages_ids = set()   # شراء منتهي → شارة "سبق لك شراء هذه الحزمة"
+    used_before_ids = set()        # فقط لعرض الشارة إن احتجنا
+
+    free_session_eligible = False
+    free_session_message = ""
+    free_active_session = None
+
     if request.user.is_authenticated:
-        now = timezone.now()
 
-        # الحزم التي يملكها المستخدم حاليًا (نشطة: is_completed=False + لم تنتهِ)
-        user_purchases = set(
-            UserPurchase.objects.filter(
-                user=request.user,
-                is_completed=False,
-                package__game_type='images',
-                package__is_active=True
-            )
-            .filter(Q(expires_at__isnull=True) | Q(expires_at__gt=now))
-            .values_list('package_id', flat=True)
-        )
-
-        # الحزم التي سبق أن لعبها (لإظهار شارة "سبق لك لعب هذه الحزمة")
-        used_before_ids = set(
-            GameSession.objects.filter(
-                host=request.user, game_type='images'
-            ).values_list('package_id', flat=True).distinct()
-        )
-
-        # أهلية الجولة المجانية للصور
-        free_session_eligible, free_session_message, _count = check_free_session_eligibility(
+        # أهلية الجولة المجانية
+        free_session_eligible, free_session_message, _ = check_free_session_eligibility(
             request.user, 'images'
         )
 
-        # ✅ جلسة مجانية سارية (images) للمستخدم لهذه الحزمة
-        free_active_session = None
+        # جلسة مجانية نشطة
         if free_package:
-            candidate = (GameSession.objects
-                         .filter(host=request.user, package=free_package, is_active=True, game_type='images')
-                         .order_by('-created_at')
-                         .first())
+            candidate = GameSession.objects.filter(
+                host=request.user,
+                package=free_package,
+                is_active=True,
+                game_type='images'
+            ).order_by('-created_at').first()
+
             if candidate and not candidate.is_time_expired:
                 free_active_session = candidate
 
-    else:
-        user_purchases = set()
-        used_before_ids = set()
-        free_session_eligible = False
-        free_session_message = 'سجّل الدخول لتجربة الجولة المجانية.'
-        free_active_session = None
+        # مشتريات المستخدم
+        purchases = UserPurchase.objects.filter(
+            user=request.user,
+            package__game_type='images'
+        )
 
-    return render(request, 'games/images/packages.html', {
+        for p in purchases:
+            used_before_ids.add(p.package_id)
+
+            if p.is_completed and p.expires_at and p.expires_at > now:
+                active_packages_ids.add(p.package_id)
+            else:
+                expired_packages_ids.add(p.package_id)
+
+    context = {
         'page_title': 'وش الجواب - تحدي الصور',
         'free_package': free_package,
         'paid_packages': paid_packages,
+
+        # القوائم المهمة
+        'active_packages_ids': active_packages_ids,
+        'expired_packages_ids': expired_packages_ids,
         'used_before_ids': used_before_ids,
-        'user_purchases': user_purchases,
+
+        # المجانية
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
-        'free_active_session': free_active_session,  # 👈 مهم عشان زر "ارجع إلى جلستك المجانية"
-    })
+        'free_active_session': free_active_session,
+    }
+
+    return render(request, 'games/images/packages.html', context)
 
 
 def quiz_game_home(request):
