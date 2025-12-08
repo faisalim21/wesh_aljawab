@@ -337,9 +337,22 @@ class UserPurchase(models.Model):
 
     @property
     def is_expired(self) -> bool:
+        """
+        ترجع True إذا انتهت صلاحية الشراء.
+        وبشكل اختياري تقوم تلقائياً بتحديث is_completed (تحسين للنظام).
+        """
         now = timezone.now()
         end = self.expires_at or self.computed_expires_at
-        return now >= end
+
+        expired = now >= end
+
+        # تحسين إضافي: ختم الشراء مباشرة عند التحقق (بدون انتظار save)
+        if expired and not self.is_completed:
+            self.is_completed = True
+            # تحديث سريع بدون إعادة حساب أشياء أخرى
+            super(UserPurchase, self).save(update_fields=['is_completed'])
+
+        return expired
 
     @property
     def time_left(self) -> timedelta:

@@ -23,19 +23,43 @@ from .models import TelrTransaction
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # 🟢 نقطة مهمّة:
-    # هنا دائمًا ننشئ UserPurchase جديد لكل محاولة شراء
-    # ولا نعيد استخدام أي Purchase قديم.
-    purchase = UserPurchase.objects.create(
+    # ============================
+    #   STEP 1 — تحديث أي شراء منتهي
+    # ============================
+    old_purchases = UserPurchase.objects.filter(
         user=request.user,
         package=package,
         is_completed=False
     )
 
-    # نولّد معرّف مبدئي محلي
+    for p in old_purchases:
+        if p.is_expired:
+            p.is_completed = True
+            p.save(update_fields=['is_completed'])
+
+    # ============================
+    #   STEP 2 — إعادة استخدام شراء سابق غير مكتمل
+    # ============================
+    existing = UserPurchase.objects.filter(
+        user=request.user,
+        package=package,
+        is_completed=False
+    ).first()
+
+    if existing:
+        purchase = existing
+    else:
+        purchase = UserPurchase.objects.create(
+            user=request.user,
+            package=package,
+            is_completed=False
+        )
+
+    # ============================
+    #   STEP 3 — إنشاء Transaction خاصة بـ Telr
+    # ============================
     initial_order_id = f"local-{uuid.uuid4()}"
 
-    # نسجّل حركة Telr المرتبطة بهذا الشراء
     transaction = TelrTransaction.objects.create(
         order_id=initial_order_id,
         purchase=purchase,
@@ -49,11 +73,12 @@ def start_payment(request, package_id):
     # تجهيز بيانات Telr
     endpoint, data = generate_telr_url(purchase, request, initial_order_id)
 
-    # تسجيل الـ Payload في اللوق
-    import json, logging
-    logger = logging.getLogger("payments")
+    # تسجيل بيانات الطلب في اللوق
     logger.info("TELR REQUEST PAYLOAD >>> " + json.dumps(data, ensure_ascii=False))
 
+    # ============================
+    #   STEP 4 — إرسال الطلب لـ Telr
+    # ============================
     try:
         response = requests.post(endpoint, data=data, timeout=15)
         result = response.json()
@@ -67,16 +92,15 @@ def start_payment(request, package_id):
             "message": json.dumps(result, ensure_ascii=False, indent=2)
         })
 
-    # تحديث رقم الطلب القادم من Telr (cartid)
+    # تحديث رقم الطلب القادم من Telr
     telr_order_id = result["order"].get("cartid", initial_order_id)
     transaction.order_id = telr_order_id
     transaction.save()
 
-    # صفحة "جاري المعالجة" تعرض زر الانتقال لصفحة الدفع في Telr
+    # صفحة "جاري المعالجة"
     return render(request, "payments/processing.html", {
         "payment_url": result["order"]["url"]
     })
-
 
 
 # ============================
