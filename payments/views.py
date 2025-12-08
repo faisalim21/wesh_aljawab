@@ -98,27 +98,54 @@ def telr_success(request):
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
-    purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
+    # اكتمال الدفع
     purchase.is_completed = True
+    purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
     purchase.save()
 
-    if purchase.package.game_type == "letters":
-        next_url = f"/games/letters/create/?package_id={purchase.package.id}"
-    elif purchase.package.game_type == "images":
-        next_url = f"/games/images/create/?package_id={purchase.package.id}"
-    else:
-        next_url = "/"
+    # إنشاء جلسة جديدة مباشرة وتوجيه المستخدم إليها
+    session = GameSession.objects.create(
+        host=purchase.user,
+        package=purchase.package,
+        game_type=purchase.package.game_type,
+        is_active=True
+    )
 
-    return render(request, "payments/success.html", {"redirect_url": next_url})
+    if purchase.package.game_type == "letters":
+        return redirect(f"/games/letters/session/{session.id}/")
+
+    if purchase.package.game_type == "images":
+        return redirect(f"/games/images/session/{session.id}/")
+
+    return redirect("/")
+
 
 
 def telr_failed(request):
-    return render(request, "payments/failed.html")
+    messages.error(request, "فشلت عملية الدفع، الرجاء المحاولة مرة أخرى.")
+
+    game_type = request.GET.get("type")
+
+    if game_type == "letters":
+        return redirect("/games/letters/")
+    if game_type == "images":
+        return redirect("/games/images/")
+
+    return redirect("/")
+
 
 
 def telr_cancel(request):
     messages.info(request, "تم إلغاء عملية الدفع.")
-    return redirect("games:home")
+
+    game_type = request.GET.get("type")
+
+    if game_type == "letters":
+        return redirect("/games/letters/")
+    if game_type == "images":
+        return redirect("/games/images/")
+
+    return redirect("/")
 
 
 # ============================

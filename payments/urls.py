@@ -13,5 +13,6 @@ urlpatterns = [
     path("telr/failed/", views.telr_failed, name="telr_failed"),
     path("telr/cancel/", views.telr_cancel, name="telr_cancel"),\
     path("telr/webhook/", views.telr_webhook, name="telr_webhook"),
+    
 
 ]

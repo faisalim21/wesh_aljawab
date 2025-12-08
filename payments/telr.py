@@ -3,6 +3,7 @@
 import uuid
 from django.conf import settings
 
+# إعدادات Telr
 TELR_STORE_ID = "34132"
 TELR_AUTH_KEY = "wT45z-TDzZ3@hvV"
 TELR_TEST_MODE = "1"  # 1 = Test Mode
@@ -11,11 +12,9 @@ TELR_TEST_MODE = "1"  # 1 = Test Mode
 BASE_URL = "https://wesh-aljawab.com"
 
 
-# payments/telr.py
-
 def generate_telr_url(purchase, request, order_id):
     """
-    إنشاء رابط الدفع عبر Telr باستخدام order_id الحقيقي
+    إنشاء رابط الدفع عبر Telr مع روابط رجوع صحيحة
     """
 
     package = purchase.package
@@ -23,12 +22,12 @@ def generate_telr_url(purchase, request, order_id):
     # السعر الحقيقي
     amount = str(package.discounted_price or package.price)
 
-    BASE_URL = "https://wesh-aljawab.com"
+    # == RETURN URL WITH GAME TYPE ==
+    game_type = package.game_type  # letters / images
 
-    # == RETURN URL ==
-    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}"
-    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}"
-    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}"
+    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}&type={game_type}"
+    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}&type={game_type}"
+    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}&type={game_type}"
 
     # == CALLBACK ==
     notify_url = f"{BASE_URL}/payments/telr/webhook/"
@@ -37,11 +36,11 @@ def generate_telr_url(purchase, request, order_id):
 
     payload = {
         "ivp_method": "create",
-        "ivp_store": "34132",
-        "ivp_authkey": "wT45z-TDzZ3@hvvV",
-        "ivp_test": "1",
+        "ivp_store": TELR_STORE_ID,
+        "ivp_authkey": TELR_AUTH_KEY,
+        "ivp_test": TELR_TEST_MODE,
 
-        # أهم نقطة — رقم الطلب الحقيقي
+        # رقم الطلب الحقيقي القادم من start_payment
         "ivp_cart": order_id,
 
         "ivp_amount": amount,
@@ -49,7 +48,7 @@ def generate_telr_url(purchase, request, order_id):
         "ivp_desc": package_name,
         "ivp_lang": "ar",
 
-        # URLs
+        # * هذه أهم الروابط، الآن كلها تحتوي على game_type
         "return_auth": return_auth,
         "return_decl": return_decl,
         "return_can": return_cancl,
