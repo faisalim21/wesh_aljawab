@@ -301,6 +301,7 @@ def letters_game_home(request):
     free_session_eligible = False
     free_session_message = ""
 
+    # ===== المنطق الخاص بالحزمة المجانية =====
     if request.user.is_authenticated and free_package:
         free_active_session = LettersSession.objects.filter(
             package=free_package,
@@ -322,19 +323,18 @@ def letters_game_home(request):
                 free_session_eligible = False
                 free_session_message = "لقد استخدمت الجلسة المجانية الخاصة بك."
 
-    # الحزم المدفوعة
+    # ===== الحزم المدفوعة =====
     paid_qs = LettersPackage.objects.filter(
         is_active=True, is_free=False, game_type='letters'
     )
     paid_packages_mixed = paid_qs.filter(question_theme='mixed').order_by('package_number')
     paid_packages_sports = paid_qs.filter(question_theme='sports').order_by('package_number')
 
-    # ============================
-    # 🔥 منطق الشراء الجديد
-    # ============================
-    active_packages_ids = set()   # شراء فعال → ابدأ اللعب
-    expired_packages_ids = set()  # شراء سابق لكنه منتهي → تظهر شارة "سبق لك شراء هذه الحزمة"
-    used_before_ids = set()       # للتمييز فقط
+    # ========= منطق الشراء المصحّح =========
+    active_packages_ids = set()         # شراء مكتمل وصالح → "ابدأ اللعب"
+    completed_packages_ids = set()      # شراء مكتمل وانتهى → "سبق شراء"
+    used_before_ids = set()             # كل الحزم التي سبق شراؤها
+    expired_packages_ids = set()        # لأغراض قديمة أو مستقبلية
 
     if request.user.is_authenticated:
         purchases = UserPurchase.objects.filter(
@@ -345,13 +345,20 @@ def letters_game_home(request):
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            # شراء مكتمل وصالح
-            if p.is_completed and p.expires_at and p.expires_at > now:
-                active_packages_ids.add(p.package_id)
-            else:
-                # منتهي أو غير مكتمل
-                expired_packages_ids.add(p.package_id)
+            # ---- 1) شراء غير مكتمل = تجاهله ----
+            if not p.is_completed:
+                continue
 
+            # ---- 2) شراء مكتمل وصالح ----
+            if p.expires_at and p.expires_at > now:
+                active_packages_ids.add(p.package_id)
+                continue
+
+            # ---- 3) شراء مكتمل وانتهت صلاحيته ----
+            completed_packages_ids.add(p.package_id)
+            expired_packages_ids.add(p.package_id)
+
+    # ===== تمرير البيانات للقالب =====
     context = {
         "free_package": free_package,
         "free_active_session": free_active_session,
@@ -361,13 +368,17 @@ def letters_game_home(request):
         "paid_packages_mixed": paid_packages_mixed,
         "paid_packages_sports": paid_packages_sports,
 
-        # أهم ثلاث قوائم
+        # أهم ثلاث قوائم بعد الإصلاح
         "active_packages_ids": active_packages_ids,
+        "completed_packages_ids": completed_packages_ids,  # ← تستخدمها القوالب
         "expired_packages_ids": expired_packages_ids,
         "used_before_ids": used_before_ids,
     }
 
     return render(request, "games/letters/packages.html", context)
+
+
+
 @require_http_methods(["POST"])
 def create_letters_session(request):
     """
@@ -629,19 +640,19 @@ def images_game_home(request):
     ).order_by('package_number')
 
     # ============================
-    #   منطق الشراء الجديد
+    #   منطق الشراء الجديد (المصحّح)
     # ============================
-    active_packages_ids = set()    # شراء فعال → زر ابدأ اللعب
-    expired_packages_ids = set()   # شراء منتهي → شارة "سبق لك شراء هذه الحزمة"
-    used_before_ids = set()        # فقط لعرض الشارة إن احتجنا
-
+    active_packages_ids = set()        # شراء مكتمل وصالح → "ابدأ اللعب"
+    expired_packages_ids = set()       # شراء مكتمل وانتهى وقته → "سبق شراء"
+    used_before_ids = set()            # كل الحزم التي سبق شراؤها (للزينة فقط)
+    
     free_session_eligible = False
     free_session_message = ""
     free_active_session = None
 
     if request.user.is_authenticated:
 
-        # أهلية الجولة المجانية
+        # تحقق من أهلية الجولة المجانية
         free_session_eligible, free_session_message, _ = check_free_session_eligibility(
             request.user, 'images'
         )
@@ -667,10 +678,17 @@ def images_game_home(request):
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            if p.is_completed and p.expires_at and p.expires_at > now:
+            # ---- تجاهل المشتريات غير المكتملة (لا تظهر كسبق شراء) ----
+            if not p.is_completed:
+                continue
+
+            # ---- شراء مكتمل وصالح ----
+            if p.expires_at and p.expires_at > now:
                 active_packages_ids.add(p.package_id)
-            else:
-                expired_packages_ids.add(p.package_id)
+                continue
+
+            # ---- شراء مكتمل وانتهت صلاحيته ----
+            expired_packages_ids.add(p.package_id)
 
     context = {
         'page_title': 'وش الجواب - تحدي الصور',

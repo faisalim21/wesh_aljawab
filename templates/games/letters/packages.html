@@ -526,9 +526,10 @@
             <div class="cardx">
 
               {# شارة انتهاء صلاحية / سبق شراء #}
-              {% if package.id in expired_packages_ids %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه</div>
+              {% if package.id in completed_packages_ids %}
+                  <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه</div>
               {% endif %}
+
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
               <div class="badge-wrap">
