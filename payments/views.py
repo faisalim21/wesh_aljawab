@@ -23,62 +23,50 @@ from .models import TelrTransaction
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # ============================
-    #   STEP 1 — تحديث أي شراء منتهي
-    # ============================
+    # STEP 1 — تحديث المشتريات المنتهية
     old_purchases = UserPurchase.objects.filter(
-        user=request.user,
-        package=package,
-        is_completed=False
+        user=request.user, package=package, is_completed=False
     )
-
     for p in old_purchases:
         if p.is_expired:
             p.is_completed = True
             p.save(update_fields=['is_completed'])
 
-    # ============================
-    #   STEP 2 — إعادة استخدام شراء سابق غير مكتمل
-    # ============================
-    existing = UserPurchase.objects.filter(
+    # STEP 2 — التحقق من وجود عملية دفع معلقة
+    from .models import TelrTransaction
+    pending_tx = TelrTransaction.objects.filter(
         user=request.user,
         package=package,
-        is_completed=False
+        status="pending",
+        purchase__is_completed=False
     ).first()
 
-    if existing:
-        purchase = existing
+    if pending_tx:
+        purchase = pending_tx.purchase
     else:
+        # إنشاء Purchase جديدة (لا تعتبر شراء حقيقي إلا بعد success)
         purchase = UserPurchase.objects.create(
             user=request.user,
             package=package,
             is_completed=False
         )
 
-    # ============================
-    #   STEP 3 — إنشاء Transaction خاصة بـ Telr
-    # ============================
-    initial_order_id = f"local-{uuid.uuid4()}"
+        # إنشاء Transaction جديدة
+        initial_order_id = f"local-{uuid.uuid4()}"
+        pending_tx = TelrTransaction.objects.create(
+            order_id=initial_order_id,
+            purchase=purchase,
+            user=request.user,
+            package=package,
+            amount=package.effective_price,
+            currency="SAR",
+            status="pending"
+        )
 
-    transaction = TelrTransaction.objects.create(
-        order_id=initial_order_id,
-        purchase=purchase,
-        user=request.user,
-        package=package,
-        amount=package.effective_price,
-        currency="SAR",
-        status="pending"
-    )
-
-    # تجهيز بيانات Telr
-    endpoint, data = generate_telr_url(purchase, request, initial_order_id)
-
-    # تسجيل بيانات الطلب في اللوق
+    # STEP 3 — تجهيز وإرسال طلب Telr
+    endpoint, data = generate_telr_url(purchase, request, pending_tx.order_id)
     logger.info("TELR REQUEST PAYLOAD >>> " + json.dumps(data, ensure_ascii=False))
 
-    # ============================
-    #   STEP 4 — إرسال الطلب لـ Telr
-    # ============================
     try:
         response = requests.post(endpoint, data=data, timeout=15)
         result = response.json()
@@ -92,15 +80,14 @@ def start_payment(request, package_id):
             "message": json.dumps(result, ensure_ascii=False, indent=2)
         })
 
-    # تحديث رقم الطلب القادم من Telr
-    telr_order_id = result["order"].get("cartid", initial_order_id)
-    transaction.order_id = telr_order_id
-    transaction.save()
+    # تحديث order_id من Telr
+    pending_tx.order_id = result["order"].get("cartid", pending_tx.order_id)
+    pending_tx.save()
 
-    # صفحة "جاري المعالجة"
     return render(request, "payments/processing.html", {
         "payment_url": result["order"]["url"]
     })
+
 
 
 # ============================
