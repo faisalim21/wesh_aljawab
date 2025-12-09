@@ -98,34 +98,27 @@ def telr_success(request):
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
-    # تأكيد اكتمال الدفع وتحديث وقت الانتهاء
     purchase.is_completed = True
     purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
     purchase.save()
 
-    # لو فيه جلسة قديمة مربوطة بهذا الشراء → نرجع لها
-    existing_session = GameSession.objects.filter(purchase=purchase).first()
-    if existing_session:
-        session = existing_session
-    else:
-        # إنشاء جلسة جديدة
+    # إنشاء أو استرجاع الجلسة
+    session = GameSession.objects.filter(purchase=purchase).first()
+    if not session:
         session = GameSession.objects.create(
             host=purchase.user,
             package=purchase.package,
             game_type=purchase.package.game_type,
-            purchase=purchase,   # ← نربط الجلسة بالشراء
-            is_active=True
+            purchase=purchase
         )
 
-    # توجيه المستخدم للجلسة حسب نوع اللعبة
-    if purchase.package.game_type == "letters":
-        return redirect(f"/games/letters/session/{session.id}/")
+    # بدل redirect نمرر الرابط للتمبلت
+    game_url = f"/games/{purchase.package.game_type}/session/{session.id}/"
 
-    if purchase.package.game_type == "images":
-        return redirect(f"/games/images/session/{session.id}/")
+    return render(request, "payments/success.html", {
+        "game_url": game_url
+    })
 
-    # افتراضي
-    return redirect("/")
 
 
 
