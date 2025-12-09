@@ -112,12 +112,14 @@ def telr_success(request):
             purchase=purchase
         )
 
-    # بدل redirect نمرر الرابط للتمبلت
-    game_url = f"/games/{purchase.package.game_type}/session/{session.id}/"
+    # رجوع للصفحة الرئيسية لكل نوع لعبة
+    if purchase.package.game_type == "letters":
+        return redirect("/games/letters/?paid=1")
 
-    return render(request, "payments/success.html", {
-        "game_url": game_url
-    })
+    if purchase.package.game_type == "images":
+        return redirect("/games/images/?paid=1")
+
+    return redirect("/")
 
 
 

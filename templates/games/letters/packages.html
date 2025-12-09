@@ -452,6 +452,15 @@
       {% endfor %}
     {% endif %}
   </div>
+  {% if request.GET.paid %}
+  <div class="container">
+    <div class="alert alert-success text-center fw-bold" style="font-size: 1.1rem;">
+      🎉 تم الدفع بنجاح!  
+      <br>
+      الآن يمكنك الضغط على "ابدأ اللعب" لبدء جلستك الجديدة.
+    </div>
+  </div>
+  {% endif %}
 
   <!-- Hidden Form -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
