@@ -3,21 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>تم الدفع بنجاح</title>
+    <style>
+        body {
+            font-family: "Tajawal", sans-serif;
+            background: #f9fafb;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        h2 {
+            color: #16a34a;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #374151;
+            font-size: 18px;
+            margin-bottom: 25px;
+        }
+        .box {
+            background: #ffffff;
+            display: inline-block;
+            padding: 25px 35px;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        }
+    </style>
 </head>
 <body>
 
-<h2 style="text-align:center;">تم الدفع بنجاح 🎉</h2>
-<p style="text-align:center;">سيتم فتح الجلسة الآن...</p>
+    <div class="box">
+        <h2>✔ تم الدفع بنجاح</h2>
+        <p>سيتم الآن فتح جلستك الجديدة في تبويب جديد.</p>
+    </div>
 
-<script>
-    // يفتح الجلسة في تبويب جديد تلقائيًا
-    window.open("{{ game_url }}", "_blank");
-
-    // يرجع المستخدم للقائمة أو يقفل الصفحة
-    setTimeout(function(){
-        window.location.href = "/"; 
-    }, 1500);
-</script>
+    <script>
+        // فتح الجلسة في تبويب جديد مباشرة
+        window.open("{{ game_url }}", "_blank");
+    </script>
 
 </body>
 </html>
