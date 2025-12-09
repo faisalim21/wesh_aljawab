@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import logging
 logger = logging.getLogger("payments")
-
+from games.models import GameSession
 from games.models import GamePackage, UserPurchase
 from .telr import generate_telr_url
 from .models import TelrTransaction
@@ -98,25 +98,33 @@ def telr_success(request):
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
-    # اكتمال الدفع
+    # تأكيد اكتمال الدفع وتحديث وقت الانتهاء
     purchase.is_completed = True
     purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
     purchase.save()
 
-    # إنشاء جلسة جديدة مباشرة وتوجيه المستخدم إليها
-    session = GameSession.objects.create(
-        host=purchase.user,
-        package=purchase.package,
-        game_type=purchase.package.game_type,
-        is_active=True
-    )
+    # لو فيه جلسة قديمة مربوطة بهذا الشراء → نرجع لها
+    existing_session = GameSession.objects.filter(purchase=purchase).first()
+    if existing_session:
+        session = existing_session
+    else:
+        # إنشاء جلسة جديدة
+        session = GameSession.objects.create(
+            host=purchase.user,
+            package=purchase.package,
+            game_type=purchase.package.game_type,
+            purchase=purchase,   # ← نربط الجلسة بالشراء
+            is_active=True
+        )
 
+    # توجيه المستخدم للجلسة حسب نوع اللعبة
     if purchase.package.game_type == "letters":
         return redirect(f"/games/letters/session/{session.id}/")
 
     if purchase.package.game_type == "images":
         return redirect(f"/games/images/session/{session.id}/")
 
+    # افتراضي
     return redirect("/")
 
 
