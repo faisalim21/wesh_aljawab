@@ -14,7 +14,7 @@ BASE_URL = "https://wesh-aljawab.com"
 
 def generate_telr_url(purchase, request, order_id):
     """
-    إنشاء رابط الدفع عبر Telr مع روابط رجوع صحيحة
+    إنشاء رابط الدفع عبر Telr مع روابط رجوع صحيحة تشمل نوع اللعبة
     """
 
     package = purchase.package
@@ -22,13 +22,13 @@ def generate_telr_url(purchase, request, order_id):
     # السعر الحقيقي
     amount = str(package.discounted_price or package.price)
 
+    # نوع اللعبة letters / images
+    game_type = package.game_type  
+
     # == RETURN URL WITH GAME TYPE ==
-    game_type = package.game_type  # letters / images
-
-    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}"
-    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}"
-    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}"
-
+    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}&type={game_type}"
+    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}&type={game_type}"
+    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}&type={game_type}"
 
     # == CALLBACK ==
     notify_url = f"{BASE_URL}/payments/telr/webhook/"
@@ -49,7 +49,7 @@ def generate_telr_url(purchase, request, order_id):
         "ivp_desc": package_name,
         "ivp_lang": "ar",
 
-        # * هذه أهم الروابط، الآن كلها تحتوي على game_type
+        # روابط الرجوع — الآن صحيحة 100%
         "return_auth": return_auth,
         "return_decl": return_decl,
         "return_can": return_cancl,
