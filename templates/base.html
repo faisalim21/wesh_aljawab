@@ -9,13 +9,15 @@
 
   {# ——— الأساسيات ——— #}
   <title>
-    {% block title %}{{ page_title|default:"وش الجواب - منصة الألعاب الذكية" }}{% endblock %}
+    {% block title %}{{ page_title|default:"وش الجواب - ألعاب تفاعلية ذكية | خلية الحروف | تحدي الصور | امبوستر" }}{% endblock %}
   </title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="description" content="{% block meta_description %}{{ page_description|default:'منصة وش الجواب - ألعاب تفاعلية ذكية مثل خلية الحروف، تحدي الصور، لعبة امبوستر، تحدي الوقت. اختبر ذكاءك وتحدى أصدقاءك في أفضل الألعاب الجماعية والتفاعلية.' }}{% endblock %}">
+  <meta name="keywords" content="وش الجواب, خلية الحروف, تحدي الصور, لعبة امبوستر, impostor, العاب تفاعلية, العاب ذكاء, العاب جماعية, تحدي الوقت, العاب عربية, ألعاب أونلاين">
   <meta name="robots" content="index,follow">
+  <meta name="author" content="وش الجواب">
 
   {# ——— Canonical ——— #}
   <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
@@ -24,21 +26,23 @@
   <meta property="og:locale" content="ar_SA">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="وش الجواب">
-  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - ألعاب تفاعلية ذكية | خلية الحروف | تحدي الصور' }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية - خلية الحروف، تحدي الصور، امبوستر والمزيد' }}{% endblock %}">
   <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
   <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
   <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
+  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب - منصة الألعاب التفاعلية' }}{% endblock %}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
 
   {# ——— Twitter Card ——— #}
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
+  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - ألعاب تفاعلية ذكية' }}{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك - خلية الحروف، تحدي الصور، امبوستر' }}{% endblock %}">
   <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
 
   {# ——— Favicons / PWA ——— #}
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#6366f1">
   <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
   <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
@@ -47,23 +51,71 @@
   {# ——— تحسينات أداء الخطوط ——— #}
   <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" as="style">
 
-  {# ——— JSON-LD ——— #}
+  {# ——— JSON-LD محسّن ——— #}
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "وش الجواب",
+    "alternateName": ["Wesh Aljawab", "منصة وش الجواب"],
     "url": "https://wesh-aljawab.onrender.com/",
+    "description": "منصة ألعاب تفاعلية ذكية تضم خلية الحروف، تحدي الصور، لعبة امبوستر وتحدي الوقت",
     "inLanguage": "ar",
+    "keywords": "وش الجواب, خلية الحروف, تحدي الصور, امبوستر, العاب تفاعلية, العاب ذكاء",
     "publisher": {
       "@type": "Organization",
       "name": "وش الجواب",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png",
+        "width": 512,
+        "height": 512
       }
+    },
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://wesh-aljawab.onrender.com/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
     }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "name": "ألعاب وش الجواب",
+    "description": "مجموعة الألعاب التفاعلية المتاحة على منصة وش الجواب",
+    "itemListElement": [
+      {
+        "@type": "Game",
+        "position": 1,
+        "name": "خلية الحروف",
+        "description": "لعبة خلية الحروف مع 140 سؤال وشاشة عرض وزر للمتسابقين",
+        "url": "https://wesh-aljawab.onrender.com/games/letters/",
+        "gamePlatform": "Web Browser",
+        "genre": "Word Game"
+      },
+      {
+        "@type": "Game",
+        "position": 2,
+        "name": "تحدي الصور",
+        "description": "لعبة مقتبسة من السلاسل الشهيرة أتحداك تجيب الصورة",
+        "url": "https://wesh-aljawab.onrender.com/games/images/",
+        "gamePlatform": "Web Browser",
+        "genre": "Picture Quiz"
+      },
+      {
+        "@type": "Game",
+        "position": 3,
+        "name": "امبوستر",
+        "description": "لعبة ترند على التيك توك - اكتشف الامبوستر بين اللاعبين",
+        "gamePlatform": "Web Browser",
+        "genre": "Social Deduction"
+      }
+    ]
   }
   </script>
 
@@ -72,134 +124,194 @@
   <!-- CSS & Fonts -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
-
     :root {
-      --primary: #8b5cf6;
-      --primary-light: #a78bfa;
-      --cyan: #06b6d4;
-      --cyan-light: #22d3ee;
-      --orange: #f59e0b;
-      --orange-dark: #f97316;
-      --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --radius: 20px;
-      --transition: .4s cubic-bezier(.25,.8,.25,1);
-      --shadow-sm: 0 4px 12px rgba(0,0,0,.08);
-      --shadow-md: 0 12px 28px rgba(0,0,0,.12);
-      --shadow-lg: 0 20px 48px rgba(0,0,0,.16);
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary: #06b6d4;
+      --secondary-light: #22d3ee;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --gradient-main: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+      --gradient-card: linear-gradient(135deg, rgba(99,102,241,0.05) 0%, rgba(6,182,212,0.05) 100%);
+      --radius: 24px;
+      --radius-sm: 16px;
+      --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+      --shadow-md: 0 8px 24px rgba(99,102,241,0.12);
+      --shadow-lg: 0 16px 48px rgba(99,102,241,0.18);
+      --shadow-xl: 0 24px 64px rgba(99,102,241,0.24);
     }
 
     * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
       font-family: 'Tajawal', sans-serif;
     }
 
     body {
-      background: var(--bg-gradient);
+      background: var(--gradient-main);
       min-height: 100vh;
-      margin: 0;
-      padding: 0;
       overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(6,182,212,0.15) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     /* Hero Section */
     .hero-section {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.95), rgba(6, 182, 212, 0.95));
-      padding: 140px 0 120px;
+      background: linear-gradient(135deg, rgba(99,102,241,0.95), rgba(139,92,246,0.92), rgba(6,182,212,0.95));
+      padding: 160px 0 140px;
       text-align: center;
       color: white;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.12);
     }
 
     .hero-section::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a"><stop offset="0" stop-color="%23ffffff" stop-opacity=".15"/><stop offset="1" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><g opacity=".9"><circle fill="url(%23a)" cx="200" cy="200" r="200"/><circle fill="url(%23a)" cx="800" cy="800" r="200"/><circle fill="url(%23a)" cx="800" cy="200" r="200"/><circle fill="url(%23a)" cx="200" cy="800" r="200"/></g></svg>') center/cover;
-      z-index: 1;
+      background: 
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.12) 0%, transparent 60%),
+        radial-gradient(circle at 70% 70%, rgba(255,255,255,0.08) 0%, transparent 60%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
     }
 
     .hero-content {
       position: relative;
       z-index: 2;
-      animation: fadeInDown .8s ease;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 0.5rem 1.2rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(255,255,255,0.2);
+      letter-spacing: 0.5px;
     }
 
     .hero-title {
-      font-size: 3.8rem;
+      font-size: 4.2rem;
       font-weight: 800;
-      margin-bottom: 1.2rem;
-      text-shadow: 0 4px 12px rgba(0,0,0,.2);
-      letter-spacing: -1px;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 4px 24px rgba(0,0,0,0.2);
+      letter-spacing: -2px;
+      line-height: 1.1;
     }
 
     .hero-subtitle {
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       margin-bottom: 1rem;
-      opacity: .95;
-      font-weight: 500;
-      letter-spacing: .5px;
+      opacity: 0.95;
+      font-weight: 600;
+      letter-spacing: 0.5px;
     }
 
     .hero-description {
-      font-size: 1.1rem;
-      opacity: .9;
-      max-width: 600px;
+      font-size: 1.15rem;
+      opacity: 0.92;
+      max-width: 680px;
       margin: 0 auto;
       line-height: 1.8;
+      font-weight: 400;
     }
 
     /* Games Section */
     .games-section {
-      padding: 100px 0;
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      padding: 120px 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 100px;
+      position: relative;
+    }
+
+    .section-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.95);
+      color: var(--primary);
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      letter-spacing: 0.5px;
     }
 
     .section-title {
-      text-align: center;
-      margin-bottom: 80px;
-    }
-
-    .section-title h2 {
-      font-size: 2.8rem;
+      font-size: 3.2rem;
       font-weight: 800;
-      margin-bottom: 1.2rem;
-      background: linear-gradient(135deg, var(--primary), var(--cyan));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -1px;
+      margin-bottom: 1.5rem;
+      color: white;
+      text-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      letter-spacing: -1.5px;
     }
 
-    .section-title p {
-      color: #64748b;
-      font-size: 1.1rem;
-      margin: 0;
+    .section-description {
+      color: rgba(255,255,255,0.95);
+      font-size: 1.2rem;
+      margin: 0 auto;
       font-weight: 500;
+      max-width: 600px;
+      line-height: 1.7;
     }
 
     .games-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 32px;
-      align-items: stretch;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
     }
 
-    /* Game Card */
+    /* Game Card - مقاسات موحدة */
     .game-card {
-      background: #fff;
+      background: rgba(255,255,255,0.98);
+      backdrop-filter: blur(20px);
       border-radius: var(--radius);
-      padding: 2.2rem;
+      padding: 2.5rem;
       box-shadow: var(--shadow-md);
       transition: var(--transition);
       position: relative;
       overflow: hidden;
-      border: 1px solid rgba(139,92,246,.08);
+      border: 1px solid rgba(99,102,241,0.08);
       display: flex;
       flex-direction: column;
+      min-height: 560px;
+      height: 100%;
     }
 
     .game-card::before {
@@ -208,44 +320,62 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      height: 5px;
+      background: var(--gradient-main);
       transform: scaleX(0);
-      transition: transform var(--transition);
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       transform-origin: right;
     }
 
+    .game-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gradient-card);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 0;
+    }
+
     .game-card:hover {
-      transform: translateY(-12px);
-      box-shadow: var(--shadow-lg);
-      border-color: rgba(139,92,246,.16);
+      transform: translateY(-16px) scale(1.02);
+      box-shadow: var(--shadow-xl);
+      border-color: rgba(99,102,241,0.2);
     }
 
     .game-card:hover::before {
       transform: scaleX(1);
-      transform-origin: right;
+    }
+
+    .game-card:hover::after {
+      opacity: 1;
+    }
+
+    .game-card > * {
+      position: relative;
+      z-index: 1;
     }
 
     .game-icon {
-      width: 160px;
-      height: 160px;
-      margin: 0 auto 1.8rem;
-      background: linear-gradient(135deg, var(--primary), var(--cyan));
-      border-radius: 24px;
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 2rem;
+      background: var(--gradient-main);
+      border-radius: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2.8rem;
+      font-size: 3.5rem;
       color: #fff;
-      box-shadow: 0 12px 28px rgba(139,92,246,.3);
-      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(99,102,241,0.3);
       position: relative;
+      overflow: hidden;
       transition: var(--transition);
     }
 
     .game-card:hover .game-icon {
-      transform: scale(1.08) rotate(2deg);
-      box-shadow: 0 16px 36px rgba(139,92,246,.4);
+      transform: scale(1.08) rotate(-2deg);
+      box-shadow: 0 20px 48px rgba(99,102,241,0.4);
     }
 
     .game-icon img {
@@ -253,117 +383,154 @@
       height: 100%;
       object-fit: cover;
       display: block;
-      border-radius: 20px;
+      border-radius: 24px;
+    }
+
+    .game-icon::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .game-card:hover .game-icon::before {
+      opacity: 1;
     }
 
     .game-title {
-      font-size: 1.6rem;
+      font-size: 1.75rem;
       font-weight: 800;
       margin-bottom: 1.2rem;
-      color: #1f2937;
+      color: #1e293b;
       text-align: center;
+      letter-spacing: -0.5px;
     }
 
     .game-description {
       color: #64748b;
       text-align: center;
-      margin-bottom: 1.6rem;
+      margin-bottom: 2rem;
       line-height: 1.8;
       flex-grow: 1;
-      font-size: .95rem;
+      font-size: 1rem;
+      font-weight: 400;
     }
 
     .game-status {
       text-align: center;
-      margin-bottom: 1.8rem;
+      margin-bottom: 2rem;
     }
 
     .status-badge {
-      display: inline-block;
-      padding: .6rem 1.2rem;
-      border-radius: 25px;
-      font-size: .85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.4rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
       font-weight: 700;
-      border: 1px solid;
+      border: 2px solid;
+      letter-spacing: 0.3px;
+      transition: var(--transition);
     }
 
     .status-available {
-      background: rgba(16,185,129,.12);
+      background: rgba(16,185,129,0.12);
       color: #059669;
-      border-color: rgba(16,185,129,.3);
+      border-color: rgba(16,185,129,0.25);
+    }
+
+    .game-card:hover .status-available {
+      background: rgba(16,185,129,0.18);
+      border-color: rgba(16,185,129,0.4);
     }
 
     .status-coming-soon {
-      background: rgba(245,158,11,.12);
+      background: rgba(245,158,11,0.12);
       color: #d97706;
-      border-color: rgba(245,158,11,.3);
+      border-color: rgba(245,158,11,0.25);
+    }
+
+    .game-card:hover .status-coming-soon {
+      background: rgba(245,158,11,0.18);
+      border-color: rgba(245,158,11,0.4);
     }
 
     .play-button {
       width: 100%;
-      padding: 1.1rem;
+      padding: 1.2rem;
       border: none;
-      border-radius: 14px;
+      border-radius: var(--radius-sm);
       font-weight: 800;
-      font-size: 1rem;
+      font-size: 1.05rem;
       transition: var(--transition);
       text-decoration: none;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: .6rem;
+      gap: 0.7rem;
       position: relative;
       overflow: hidden;
       cursor: pointer;
+      letter-spacing: 0.3px;
     }
 
     .play-button::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,.2);
-      transition: left .4s ease;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s ease, height 0.6s ease;
+    }
+
+    .play-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .play-button span {
+      position: relative;
+      z-index: 1;
     }
 
     .play-button.available {
-      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      background: var(--gradient-main);
       color: #fff;
+      box-shadow: 0 8px 24px rgba(99,102,241,0.3);
     }
 
     .play-button.available:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(139,92,246,.3);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(99,102,241,0.4);
       color: #fff;
       text-decoration: none;
     }
 
-    .play-button.available:hover::before {
-      left: 100%;
-    }
-
     .play-button.disabled {
-      background: #e2e8f0;
-      color: #a0aec0;
+      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+      color: #94a3b8;
       cursor: not-allowed;
+      box-shadow: none;
     }
 
     .play-button.whatsapp {
       background: linear-gradient(135deg, #25D366, #128C7E);
       color: #fff;
+      box-shadow: 0 8px 24px rgba(37,211,102,0.3);
     }
 
     .play-button.whatsapp:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(18,140,126,.3);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(37,211,102,0.4);
       color: #fff;
       text-decoration: none;
-    }
-
-    .play-button.whatsapp:hover::before {
-      left: 100%;
     }
 
     /* Floating Shapes */
@@ -372,49 +539,66 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      z-index: 0;
+      z-index: 1;
+      pointer-events: none;
     }
 
     .shape {
       position: absolute;
-      background: rgba(255,255,255,.1);
+      background: rgba(255,255,255,0.08);
       border-radius: 50%;
-      animation: float 8s ease-in-out infinite;
+      animation: float 10s ease-in-out infinite;
+      backdrop-filter: blur(2px);
     }
 
     .shape:nth-child(1) {
-      width: 80px;
-      height: 80px;
+      width: 100px;
+      height: 100px;
       top: 15%;
       left: 10%;
       animation-delay: 0s;
     }
 
     .shape:nth-child(2) {
-      width: 60px;
-      height: 60px;
-      top: 70%;
-      right: 10%;
+      width: 140px;
+      height: 140px;
+      top: 60%;
+      right: 15%;
       animation-delay: 2s;
     }
 
     .shape:nth-child(3) {
-      width: 100px;
-      height: 100px;
-      bottom: 15%;
-      left: 20%;
+      width: 80px;
+      height: 80px;
+      bottom: 20%;
+      left: 25%;
       animation-delay: 4s;
     }
 
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-30px); }
+    .shape:nth-child(4) {
+      width: 120px;
+      height: 120px;
+      top: 40%;
+      right: 30%;
+      animation-delay: 6s;
     }
 
-    @keyframes fadeInDown {
+    @keyframes float {
+      0%, 100% { 
+        transform: translateY(0px) translateX(0px);
+      }
+      33% { 
+        transform: translateY(-40px) translateX(20px);
+      }
+      66% { 
+        transform: translateY(-20px) translateX(-20px);
+      }
+    }
+
+    @keyframes fadeInUp {
       from {
         opacity: 0;
-        transform: translateY(-30px);
+        transform: translateY(40px);
       }
       to {
         opacity: 1;
@@ -422,41 +606,110 @@
       }
     }
 
+    /* Trust Indicators */
+    .trust-section {
+      text-align: center;
+      padding: 60px 0;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      margin-top: 80px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .trust-items {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+
+    .trust-item {
+      text-align: center;
+      color: white;
+    }
+
+    .trust-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: 0.9;
+    }
+
+    .trust-number {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff, rgba(255,255,255,0.8));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .trust-label {
+      font-size: 1rem;
+      opacity: 0.85;
+      font-weight: 500;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .hero-title {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
+        letter-spacing: -1px;
       }
 
       .hero-subtitle {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
       }
 
       .hero-section {
-        padding: 100px 0 80px;
+        padding: 120px 0 100px;
       }
 
-      .section-title h2 {
-        font-size: 2.2rem;
+      .section-title {
+        font-size: 2.4rem;
       }
 
       .games-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 30px;
+        padding: 0 15px;
       }
 
       .games-section {
-        padding: 60px 0;
+        padding: 80px 0;
       }
 
-      .section-title {
-        margin-bottom: 50px;
+      .section-header {
+        margin-bottom: 60px;
       }
 
       .game-icon {
-        width: 140px;
-        height: 140px;
-        font-size: 2.4rem;
+        width: 160px;
+        height: 160px;
+        font-size: 3rem;
+      }
+
+      .game-card {
+        min-height: 540px;
+        padding: 2rem;
+      }
+
+      .trust-items {
+        gap: 40px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 2.2rem;
+      }
+
+      .section-title {
+        font-size: 2rem;
+      }
+
+      .game-card {
+        min-height: 520px;
       }
     }
   </style>
@@ -469,13 +722,15 @@
           <div class="shape"></div>
           <div class="shape"></div>
           <div class="shape"></div>
+          <div class="shape"></div>
         </div>
         <div class="hero-content">
             <div class="container">
+                <div class="hero-badge">✨ منصة الألعاب التفاعلية الأولى</div>
                 <h1 class="hero-title">وش الجواب؟</h1>
-                <p class="hero-subtitle">منصة الألعاب التفاعلية الذكية</p>
+                <p class="hero-subtitle">ألعاب ذكية تفاعلية تجمع الأصدقاء</p>
                 <p class="hero-description">
-                  اختبر ذكاءك، تحدى أصدقاءك، واستمتع بأفضل تجربة ألعاب تفاعلية وممتعة
+                  اختبر ذكاءك، تحدى أصدقاءك، واستمتع بتجربة ألعاب احترافية مصممة خصيصاً للجلسات الجماعية والمسابقات
                 </p>
             </div>
         </div>
@@ -483,143 +738,184 @@
 
     <section class="games-section">
         <div class="container">
-            <div class="section-title">
-                <h2>اختر لعبتك المفضلة</h2>
-                <p>مجموعة متنوعة من الألعاب الذكية والممتعة</p>
+            <div class="section-header">
+                <div class="section-badge">🎮 مجموعة الألعاب</div>
+                <h2 class="section-title">اختر لعبتك المفضلة</h2>
+                <p class="section-description">
+                  مجموعة متنوعة من الألعاب الذكية والممتعة المصممة بعناية
+                </p>
             </div>
 
             <div class="games-grid">
-                <!-- لعبة خلية الحروف -->
-                <div>
-                    <div class="game-card">
+                <!-- 1. لعبة خلية الحروف -->
+                <article class="game-card" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="خلية الحروف">
-                        <img src="https://i.imgur.com/iRwZgzE.jpeg" alt="خلية الحروف" loading="lazy" decoding="async">
+                        <img src="https://i.imgur.com/iRwZgzE.jpeg" alt="لعبة خلية الحروف" width="180" height="180" loading="eager" decoding="async" itemprop="image">
                     </div>
-                    <h3 class="game-title">خلية الحروف</h3>
-                    <p class="game-description">
+                    <h3 class="game-title" itemprop="name">خلية الحروف</h3>
+                    <p class="game-description" itemprop="description">
                         خلية الحروف مع 140 سؤال، وشاشة عرض وزر للمتسابقين، تجربة كاملة ومتكاملة كما لو كنت في حروف.
                     </p>
                     <div class="game-status">
                         <span class="status-badge status-available">
-                        <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                        متاح الآن
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:letters_home' %}" class="play-button available" aria-label="ابدأ لعب خلية الحروف">
+                    <a href="{% url 'games:letters_home' %}" class="play-button available" aria-label="ابدأ لعب خلية الحروف" itemprop="url">
                         <i class="fas fa-play" aria-hidden="true"></i>
-                        ابدأ اللعب
+                        <span>ابدأ اللعب</span>
                     </a>
-                    </div>
-                </div>
+                </article>
 
-                <!-- لعبة تحدي الصور -->
-                <div>
-                    <div class="game-card">
+                <!-- 2. لعبة تحدي الصور -->
+                <article class="game-card" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="تحدي الصور">
-                        <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="تحدي الصور" loading="lazy" decoding="async">
+                        <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="لعبة تحدي الصور" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
                     </div>
-                    <h3 class="game-title">تحدي الصور</h3>
-                    <p class="game-description">
+                    <h3 class="game-title" itemprop="name">تحدي الصور</h3>
+                    <p class="game-description" itemprop="description">
                         لعبة مقتبسة من السلاسل الشهيرة "أتحداك تجيب الصورة"، مع زر للمتسابقين وشاشة للعرض.
                     </p>
                     <div class="game-status">
                         <span class="status-badge status-available">
-                        <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                        متاح الآن
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور">
+                    <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور" itemprop="url">
                         <i class="fas fa-play" aria-hidden="true"></i>
-                        ابدأ اللعب
+                        <span>ابدأ اللعب</span>
                     </a>
-                    </div>
-                </div>
+                </article>
 
-                <!-- لعبة تحدّي الوقت -->
-                <div>
-                    <div class="game-card">
-                    <div class="game-icon" aria-label="تحدّي الوقت">
-                        <img src="https://i.imgur.com/1k1kU8z.jpeg" alt="تحدّي الوقت" loading="lazy" decoding="async">
+                <!-- 3. لعبة امبوستر -->
+                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                    <div class="game-icon" aria-label="لعبة امبوستر" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                        <i class="fas fa-mask" aria-hidden="true"></i>
                     </div>
-                    <h3 class="game-title">تحدّي الوقت</h3>
-                    <p class="game-description">
-                        وجهاً لوجه بمؤقّتَين يتبادلان مثل الشطرنج! اختر حتى 8 فئات مختلفة وكل جولة جديدة.
+                    <h3 class="game-title" itemprop="name">امبوستر</h3>
+                    <p class="game-description" itemprop="description">
+                        هي لعبة ترند في التيك توك على اللاعبين اكتشاف الامبوستر منهم. تجربة مثيرة ومليئة بالمفاجآت!
                     </p>
                     <div class="game-status">
                         <span class="status-badge status-available">
-                        <i class="fas fa-check-circle me-1" aria-hidden="true"></i>
-                        متاح الآن
+                        <i class="fas fa-check-circle" aria-hidden="true"></i>
+                        <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:time_home' %}" class="play-button available" aria-label="ابدأ لعب تحدّي الوقت">
-                        <i class="fas fa-hourglass-start me-1" aria-hidden="true"></i>
-                        ابدأ اللعب
+                    <a href="#" class="play-button available" aria-label="ابدأ لعب امبوستر" itemprop="url">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        <span>ابدأ اللعب</span>
                     </a>
-                    </div>
-                </div>
+                </article>
 
-                <!-- لعبة سؤال وجواب -->
-                <div>
-                    <div class="game-card">
-                    <div class="game-icon">
+                <!-- 4. لعبة تحدّي الوقت -->
+                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                    <div class="game-icon" aria-label="تحدّي الوقت">
+                        <img src="https://i.imgur.com/1k1kU8z.jpeg" alt="لعبة تحدي الوقت" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
+                    </div>
+                    <h3 class="game-title" itemprop="name">تحدّي الوقت</h3>
+                    <p class="game-description" itemprop="description">
+                        وجهاً لوجه بمؤقّتَين يتبادلان مثل الشطرنج! اختر حتى 8 فئات مختلفة وكل جولة جديدة.
+                    </p>
+                    <div class="game-status">
+                        <span class="status-badge status-coming-soon">
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>قريباً</span>
+                        </span>
+                    </div>
+                    <button class="play-button disabled" disabled aria-disabled="true">
+                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <span>غير متاح حالياً</span>
+                    </button>
+                </article>
+
+                <!-- 5. لعبة سؤال وجواب -->
+                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                    <div class="game-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
                         <i class="fas fa-question-circle" aria-hidden="true"></i>
                     </div>
-                    <h3 class="game-title">سؤال وجواب</h3>
-                    <p class="game-description">
+                    <h3 class="game-title" itemprop="name">سؤال وجواب</h3>
+                    <p class="game-description" itemprop="description">
                         التحدي الكلاسيكي بطعم عصري! اختر التصنيفات المفضلة وتنافس في مجموعة متنوعة من الأسئلة.
                     </p>
                     <div class="game-status">
                         <span class="status-badge status-coming-soon">
-                        <i class="fas fa-clock me-1" aria-hidden="true"></i>
-                        قريباً
+                        <i class="fas fa-clock" aria-hidden="true"></i>
+                        <span>قريباً</span>
                         </span>
                     </div>
                     <button class="play-button disabled" disabled aria-disabled="true">
-                        <i class="fas fa-lock me-1" aria-hidden="true"></i>
-                        غير متاح حالياً
+                        <i class="fas fa-lock" aria-hidden="true"></i>
+                        <span>غير متاح حالياً</span>
                     </button>
-                    </div>
-                </div>
+                </article>
 
-                <!-- تصميم لعبة حسب الطلب -->
-                <div>
-                    <div class="game-card">
-                    <div class="game-icon" title="تصميم لعبة حسب الطلب">
+                <!-- 6. تصميم لعبة حسب الطلب -->
+                <article class="game-card">
+                    <div class="game-icon" title="تصميم لعبة حسب الطلب" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">
                         <i class="fas fa-magic" aria-hidden="true"></i>
                     </div>
                     <h3 class="game-title">تصميم لعبة حسب الطلب</h3>
                     <p class="game-description">
                         عندك فكرة لعبة خاصة؟ ننفّذها لك بالكامل وتتماشى مع هوية منصتك واحتياجك.
                     </p>
+                    <div class="game-status" style="visibility: hidden;">
+                        <span class="status-badge">-</span>
+                    </div>
                     <a
                         class="play-button whatsapp"
                         href="https://wa.me/966550799857?text=%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%D8%8C%20%D8%A3%D8%B1%D9%8A%D8%AF%20%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D9%84%D8%B9%D8%A8%D8%A9%20%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B7%D9%84%D8%A8"
-                        target="_blank" rel="noopener"
+                        target="_blank" rel="noopener noreferrer"
                         aria-label="تواصل عبر واتساب لتصميم لعبة حسب الطلب">
                         <i class="fab fa-whatsapp" aria-hidden="true"></i>
-                        تواصل معنا عبر الواتساب
+                        <span>تواصل معنا</span>
                     </a>
-                    </div>
-                </div>
+                </article>
 
-                <!-- اقترح لنا ألعاب -->
-                <div>
-                    <div class="game-card">
-                    <div class="game-icon" title="اقترح لنا ألعاب ولك نسبة">
+                <!-- 7. اقترح لنا ألعاب -->
+                <article class="game-card">
+                    <div class="game-icon" title="اقترح لنا ألعاب ولك نسبة" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
                         <i class="fas fa-lightbulb" aria-hidden="true"></i>
                     </div>
                     <h3 class="game-title">اقترح ألعاب ولك نسبة</h3>
                     <p class="game-description">
                         عندك فكرة لعبة قوية؟ أرسلها لنا، ولو اعتمدناها لك نسبة من الأرباح.
                     </p>
+                    <div class="game-status" style="visibility: hidden;">
+                        <span class="status-badge">-</span>
+                    </div>
                     <a
                         class="play-button whatsapp"
                         href="https://wa.me/966550799857?text=%D8%B9%D9%86%D8%AF%D9%8A%20%D9%81%D9%83%D8%B1%D8%A9%20%D9%84%D9%84%D8%B9%D8%A8%D8%A9%20%D9%88%D8%A3%D8%B1%D8%BA%D8%A8%20%D8%A8%D9%85%D9%86%D8%A7%D9%82%D8%B4%D8%AA%D9%87%D8%A7"
-                        target="_blank" rel="noopener"
+                        target="_blank" rel="noopener noreferrer"
                         aria-label="اقترح لعبة واحصل على نسبة عبر واتساب">
                         <i class="fab fa-whatsapp" aria-hidden="true"></i>
-                        تواصل معنا عبر الواتساب
+                        <span>اقترح الآن</span>
                     </a>
+                </article>
+            </div>
+
+            <!-- Trust Section -->
+            <div class="trust-section">
+                <div class="container">
+                    <div class="trust-items">
+                        <div class="trust-item">
+                            <div class="trust-icon">🎮</div>
+                            <div class="trust-number">7+</div>
+                            <div class="trust-label">ألعاب تفاعلية</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="trust-icon">⚡</div>
+                            <div class="trust-number">100%</div>
+                            <div class="trust-label">تجربة احترافية</div>
+                        </div>
+                        <div class="trust-item">
+                            <div class="trust-icon">🏆</div>
+                            <div class="trust-number">24/7</div>
+                            <div class="trust-label">متاح دائماً</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -632,15 +928,30 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Animate cards on load
             const cards = document.querySelectorAll('.game-card');
             cards.forEach((card, index) => {
                 card.style.opacity = '0';
-                card.style.transform = 'translateY(40px)';
+                card.style.transform = 'translateY(50px)';
                 setTimeout(() => {
-                    card.style.transition = 'all .6s cubic-bezier(.25,.8,.25,1)';
+                    card.style.transition = 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
                     card.style.opacity = '1';
                     card.style.transform = 'translateY(0)';
-                }, index * 120);
+                }, index * 100);
+            });
+
+            // Add smooth scroll behavior
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
             });
         });
     </script>
