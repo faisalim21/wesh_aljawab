@@ -25,9 +25,10 @@ def generate_telr_url(purchase, request, order_id):
     # == RETURN URL WITH GAME TYPE ==
     game_type = package.game_type  # letters / images
 
-    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}&type={game_type}"
-    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}&type={game_type}"
-    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}&type={game_type}"
+    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}"
+    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}"
+    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}"
+
 
     # == CALLBACK ==
     notify_url = f"{BASE_URL}/payments/telr/webhook/"
