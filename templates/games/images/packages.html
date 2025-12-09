@@ -444,15 +444,14 @@
       </div>
     {% endif %}
   </div>
-  {% if request.GET.paid %}
-  <div class="container">
-    <div class="alert alert-success text-center fw-bold" style="font-size: 1.1rem;">
-      🎉 تم الدفع بنجاح!  
-      <br>
-      الآن يمكنك الضغط على "ابدأ اللعب" لبدء جلستك الجديدة.
-    </div>
-  </div>
-  {% endif %}
+{% if request.GET.success %}
+<div class="alert alert-success text-center fw-bold">
+  🎉 تم الدفع بنجاح!  
+  <br>
+  جاهز لبدء اللعب الآن.
+</div>
+{% endif %}
+
 
   <!-- Hidden Form -->
   <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}"
@@ -614,140 +613,159 @@
   {% include 'footer.html' %}
 
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-      const LOGIN_URL = "{% url 'accounts:login' %}";
-      const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-      const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
+  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
 
-      let sessionLocked = false;
+  const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+  const LOGIN_URL = "{% url 'accounts:login' %}";
+  const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+  const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
 
-      // Calculate savings
-      (function computeSavings(){
-        document.querySelectorAll('.save-badge').forEach(el=>{
-          const o = parseFloat(el.getAttribute('data-orig') || '0');
-          const d = parseFloat(el.getAttribute('data-disc') || '0');
-          const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
-          const txt = pct>0 ? pct + '%' : 'خصم';
-          const tgt = el.querySelector('.save-pct');
-          if (tgt) tgt.textContent = txt;
-        });
-      })();
+  let sessionLocked = false;
 
-      // Repurchase alert
-      document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
-        a.addEventListener('click', (ev)=>{
-          const ok = confirm('تنبيه: سبق لك لعب هذه الحزمة.\nإذا كنت ترغب باللعب مرة أخرى، أكمل عملية الشراء.');
-          if (!ok){ ev.preventDefault(); }
-        });
-      });
+  // ============================
+  //  حساب نسبة الخصم
+  // ============================
+  (function computeSavings(){
+    document.querySelectorAll('.save-badge').forEach(el=>{
+      const o = parseFloat(el.dataset.orig || '0');
+      const d = parseFloat(el.dataset.disc || '0');
+      const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
+      el.querySelector('.save-pct').textContent = pct>0 ? pct + '%' : 'خصم';
+    });
+  })();
 
-      // Create paid session
-      window.createImagesSession = function(packageId) {
-        if (!IS_AUTH) {
-          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-          return;
-        }
-        if (!packageId) return;
-        if (sessionLocked) {
-          alert('انتظر قليلاً... جاري إنشاء الجلسة');
-          return;
-        }
-        sessionLocked = true;
+  // ============================
+  //   نظام بدء اللعب (مدفوع)
+  // ============================
+  window.createImagesSession = function(packageId) {
 
-        const form = document.getElementById('imagesCreateForm');
-        const input = document.getElementById('imagesPkgId');
-        const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+    // 1) إذا Telr أرجع session، نفتح الجلسة فوراً
+    const sessionId = new URLSearchParams(window.location.search).get("session");
 
-        input.value = packageId;
-        showLoading(packageId, true);
+    if (sessionId) {
+      window.location.href = `/games/images/session/${sessionId}/`;
+      return;
+    }
 
-        const timeoutId = setTimeout(() => {
-          sessionLocked = false;
-          showLoading(packageId, false);
-        }, 10000);
+    // 2) إذا مافيه Session راجع من Telr — نرجع للنظام العادي
+    if (!IS_AUTH) {
+      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+      return;
+    }
 
-        try {
-          submitBtn ? submitBtn.click() : form.submit();
-          clearTimeout(timeoutId);
-        } catch (e) {
-          alert('خطأ أثناء الإرسال: ' + e.message);
-          clearTimeout(timeoutId);
-          sessionLocked = false;
-          showLoading(packageId, false);
-        }
-      };
+    if (!packageId) return;
 
-      // Create free session
-      window.createFreeImagesSession = async function(packageId) {
-        if (!IS_AUTH) {
-          window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-          return;
-        }
-        if (!packageId) return;
-        if (sessionLocked) {
-          alert('انتظر قليلاً... جاري إنشاء الجلسة');
-          return;
-        }
+    if (sessionLocked) {
+      alert('انتظر قليلاً... جاري إنشاء الجلسة');
+      return;
+    }
 
-        try {
-          const r = await fetch(API_ELIGIBILITY_URL, { credentials: 'same-origin' });
-          const data = await r.json();
-          if (!(data && data.success)) {
-            alert('تعذر التحقق من الأهلية، حاول لاحقًا');
-            return;
-          }
-          if (!data.eligible) {
-            alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
-            return;
-          }
-        } catch {
-          // Continue anyway
-        }
+    sessionLocked = true;
 
-        sessionLocked = true;
+    const form = document.getElementById('imagesCreateForm');
+    const input = document.getElementById('imagesPkgId');
+    const submitBtn = document.getElementById('hiddenSubmitBtnImg');
 
-        const form = document.getElementById('imagesCreateForm');
-        const input = document.getElementById('imagesPkgId');
-        const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+    input.value = packageId;
+    showLoading(packageId, true);
 
-        input.value = packageId;
-        showLoading(packageId, true);
+    const timeoutId = setTimeout(() => {
+      sessionLocked = false;
+      showLoading(packageId, false);
+    }, 10000);
 
-        const timeoutId = setTimeout(() => {
-          sessionLocked = false;
-          showLoading(packageId, false);
-        }, 10000);
+    try {
+      submitBtn ? submitBtn.click() : form.submit();
+      clearTimeout(timeoutId);
+    } catch (e) {
+      alert('خطأ أثناء الإرسال: ' + e.message);
+      clearTimeout(timeoutId);
+      sessionLocked = false;
+      showLoading(packageId, false);
+    }
+  };
 
-        try {
-          submitBtn ? submitBtn.click() : form.submit();
-          clearTimeout(timeoutId);
-        } catch (e) {
-          alert('خطأ أثناء الإرسال: ' + e.message);
-          clearTimeout(timeoutId);
-          sessionLocked = false;
-          showLoading(packageId, false);
-        }
-      };
+  // ============================
+  //   نظام الجولة التجريبية
+  // ============================
+  window.createFreeImagesSession = async function(packageId) {
+    if (!IS_AUTH) {
+      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+      return;
+    }
 
-      function showLoading(packageId, show) {
-        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-        btns.forEach((btn) => {
-          const text = btn.querySelector('.btn-text');
-          const spinner = btn.querySelector('.loading-spinner');
-          if (text && spinner) {
-            text.style.display = show ? 'none' : 'block';
-            spinner.style.display = show ? 'block' : 'none';
-            btn.disabled = show;
-          }
-        });
+    if (!packageId) return;
+
+    if (sessionLocked) {
+      alert('انتظر قليلاً... جاري إنشاء الجلسة');
+      return;
+    }
+
+    try {
+      const r = await fetch(API_ELIGIBILITY_URL, { credentials: 'same-origin' });
+      const data = await r.json();
+
+      if (!data?.success) {
+        alert('تعذر التحقق من الأهلية، حاول لاحقًا');
+        return;
       }
 
-      window.addEventListener('pageshow', (e) => {
-        if (e.persisted) sessionLocked = false;
-      });
+      if (!data.eligible) {
+        alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
+        return;
+      }
+    } catch {}
+
+    sessionLocked = true;
+
+    const form = document.getElementById('imagesCreateForm');
+    const input = document.getElementById('imagesPkgId');
+    const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+
+    input.value = packageId;
+    showLoading(packageId, true);
+
+    const timeoutId = setTimeout(() => {
+      sessionLocked = false;
+      showLoading(packageId, false);
+    }, 10000);
+
+    try {
+      submitBtn ? submitBtn.click() : form.submit();
+      clearTimeout(timeoutId);
+    } catch (e) {
+      alert('خطأ أثناء الإرسال: ' + e.message);
+      clearTimeout(timeoutId);
+      sessionLocked = false;
+      showLoading(packageId, false);
+    }
+  };
+
+  // ============================
+  //   مؤثر التحميل على الزر
+  // ============================
+  function showLoading(packageId, show) {
+    const btns = document.querySelectorAll(`button[onclick*="${packageId}"]`);
+    btns.forEach(btn => {
+      const text = btn.querySelector('.btn-text');
+      const spinner = btn.querySelector('.loading-spinner');
+      if (text && spinner) {
+        text.style.display = show ? 'none' : 'block';
+        spinner.style.display = show ? 'block' : 'none';
+        btn.disabled = show;
+      }
     });
-  </script>
+  }
+
+  // معالجة الرجوع للخلف من المتصفح
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) sessionLocked = false;
+  });
+
+});
+</script>
+
 </body>
 </html>

@@ -452,15 +452,13 @@
       {% endfor %}
     {% endif %}
   </div>
-  {% if request.GET.paid %}
-  <div class="container">
-    <div class="alert alert-success text-center fw-bold" style="font-size: 1.1rem;">
-      🎉 تم الدفع بنجاح!  
-      <br>
-      الآن يمكنك الضغط على "ابدأ اللعب" لبدء جلستك الجديدة.
-    </div>
-  </div>
-  {% endif %}
+{% if request.GET.success %}
+<div class="alert alert-success text-center fw-bold">
+  🎉 تم الدفع بنجاح!  
+  <br>
+  جاهز لبدء اللعب الآن.
+</div>
+{% endif %}
 
   <!-- Hidden Form -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
@@ -725,10 +723,19 @@
     });
 
     function createLettersSession(pkgId){
-      const f = document.getElementById('lettersCreateForm');
-      document.getElementById('lettersPkgId').value = pkgId;
-      f.submit();
+        const sessionId = new URLSearchParams(window.location.search).get("session");
+
+        if (sessionId) {
+            window.location.href = `/games/letters/session/${sessionId}/`;
+            return;
+        }
+
+        // الوضع الطبيعي إذا ما كان من دفع
+        const f = document.getElementById('lettersCreateForm');
+        document.getElementById('lettersPkgId').value = pkgId;
+        f.submit();
     }
+
   </script>
 </body>
 </html>
