@@ -699,43 +699,152 @@
 
   {% include 'footer.html' %}
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // حساب نسبة التوفير
-      (function computeSavings(){
-        document.querySelectorAll('.save-badge').forEach(el=>{
-          const o = parseFloat(el.getAttribute('data-orig') || '0');
-          const d = parseFloat(el.getAttribute('data-disc') || '0');
-          const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
-          const txt = pct>0 ? pct + '%' : 'خصم';
-          const tgt = el.querySelector('.save-pct');
-          if (tgt) tgt.textContent = txt;
-        });
-      })();
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-      // تنبيه إعادة الشراء
-      document.querySelectorAll('.purchase-link[data-used-before="true"]').forEach(a=>{
-        a.addEventListener('click', (ev)=>{
-          const ok = confirm('تنبيه: سبق لك لعب هذه الحزمة.\nإذا كنت ترغب باللعب مرة أخرى، أكمل عملية الشراء.');
-          if (!ok){ ev.preventDefault(); }
-        });
-      });
-    });
+    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const LOGIN_URL = "{% url 'accounts:login' %}";
+    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+    const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
 
-    function createLettersSession(pkgId){
+    let sessionLocked = false;
+
+    // حساب الخصم
+    (function computeSavings() {
+        document.querySelectorAll('.save-badge').forEach(el => {
+            const o = parseFloat(el.dataset.orig || '0');
+            const d = parseFloat(el.dataset.disc || '0');
+            const pct = (o > 0 && d > 0 && d < o) ? Math.round((1 - (d / o)) * 100) : 0;
+            const tgt = el.querySelector('.save-pct');
+            if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
+        });
+    })();
+
+    // فتح تبويب جديد آمن
+    function openNewTab() {
+        return window.open("", "_blank");
+    }
+
+    // إظهار التحميل
+    function showLoading(packageId, show) {
+        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+        btns.forEach(btn => {
+            const text = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.loading-spinner');
+            if (text && spinner) {
+                text.style.display = show ? 'none' : 'block';
+                spinner.style.display = show ? 'block' : 'none';
+                btn.disabled = show;
+            }
+        });
+    }
+
+    // --------- إنشاء جلسة مدفوعة ---------
+    window.createLettersSession = function (packageId) {
+
+        // هل Telr رجّع session؟
         const sessionId = new URLSearchParams(window.location.search).get("session");
-
         if (sessionId) {
-            window.location.href = `/games/letters/session/${sessionId}/`;
+            const tab = openNewTab();
+            tab.location.href = `/games/letters/session/${sessionId}/`;
             return;
         }
 
-        // الوضع الطبيعي إذا ما كان من دفع
-        const f = document.getElementById('lettersCreateForm');
-        document.getElementById('lettersPkgId').value = pkgId;
-        f.submit();
-    }
+        if (!IS_AUTH) {
+            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+            return;
+        }
 
-  </script>
+        if (!packageId) return;
+        if (sessionLocked) {
+            alert("انتظر قليلاً... جاري إنشاء الجلسة");
+            return;
+        }
+
+        sessionLocked = true;
+
+        const gameTab = openNewTab();
+
+        const form = document.getElementById("lettersCreateForm");
+        const input = document.getElementById("lettersPkgId");
+        const btn = document.getElementById("hiddenSubmitBtn");
+
+        input.value = packageId;
+        form.target = gameTab.name;
+
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }, 8000);
+
+        try {
+            btn ? btn.click() : form.submit();
+            clearTimeout(timeoutId);
+        } catch (e) {
+            alert("خطأ أثناء الإرسال: " + e.message);
+            clearTimeout(timeoutId);
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }
+    };
+
+    // --------- إنشاء جلسة مجانية ---------
+    window.createFreeLettersSession = async function (packageId) {
+
+        if (!IS_AUTH) {
+            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+            return;
+        }
+
+        if (!packageId) return;
+        if (sessionLocked) {
+            alert("انتظر قليلاً... جاري إنشاء الجلسة");
+            return;
+        }
+
+        try {
+            const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
+            const data = await r.json();
+
+            if (!data.success || !data.eligible) {
+                alert(data.message || "لا يمكنك بدء الجولة المجانية.");
+                return;
+            }
+        } catch (e) {}
+
+        sessionLocked = true;
+
+        const gameTab = openNewTab();
+
+        const form = document.getElementById("lettersCreateForm");
+        const input = document.getElementById("lettersPkgId");
+        const btn = document.getElementById("hiddenSubmitBtn");
+
+        input.value = packageId;
+        form.target = gameTab.name;
+
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }, 8000);
+
+        try {
+            btn ? btn.click() : form.submit();
+            clearTimeout(timeoutId);
+        } catch (e) {
+            alert("خطأ أثناء الإرسال: " + e.message);
+            clearTimeout(timeoutId);
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }
+    };
+
+});
+</script>
+
 </body>
 </html>

@@ -615,157 +615,147 @@
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
 
-  const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-  const LOGIN_URL = "{% url 'accounts:login' %}";
-  const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-  const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
+    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
+    const LOGIN_URL = "{% url 'accounts:login' %}";
+    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
+    const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
 
-  let sessionLocked = false;
+    let sessionLocked = false;
 
-  // ============================
-  //  حساب نسبة الخصم
-  // ============================
-  (function computeSavings(){
-    document.querySelectorAll('.save-badge').forEach(el=>{
-      const o = parseFloat(el.dataset.orig || '0');
-      const d = parseFloat(el.dataset.disc || '0');
-      const pct = (o>0 && d>0 && d<o) ? Math.round((1 - (d/o))*100) : 0;
-      el.querySelector('.save-pct').textContent = pct>0 ? pct + '%' : 'خصم';
-    });
-  })();
+    // حساب الخصم
+    (function computeSavings() {
+        document.querySelectorAll('.save-badge').forEach(el => {
+            const o = parseFloat(el.dataset.orig || '0');
+            const d = parseFloat(el.dataset.disc || '0');
+            const pct = (o > 0 && d > 0 && d < o) ? Math.round((1 - (d / o)) * 100) : 0;
+            const tgt = el.querySelector('.save-pct');
+            if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
+        });
+    })();
 
-  // ============================
-  //   نظام بدء اللعب (مدفوع)
-  // ============================
-  window.createImagesSession = function(packageId) {
-
-    // 1) إذا Telr أرجع session، نفتح الجلسة فوراً
-    const sessionId = new URLSearchParams(window.location.search).get("session");
-
-    if (sessionId) {
-      window.location.href = `/games/images/session/${sessionId}/`;
-      return;
+    function openNewTab() {
+        return window.open("", "_blank");
     }
 
-    // 2) إذا مافيه Session راجع من Telr — نرجع للنظام العادي
-    if (!IS_AUTH) {
-      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-      return;
+    function showLoading(packageId, show) {
+        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
+        btns.forEach(btn => {
+            const text = btn.querySelector('.btn-text');
+            const spinner = btn.querySelector('.loading-spinner');
+            if (text && spinner) {
+                text.style.display = show ? 'none' : 'block';
+                spinner.style.display = show ? 'block' : 'none';
+                btn.disabled = show;
+            }
+        });
     }
 
-    if (!packageId) return;
+    // -------- جلسة مدفوعة --------
+    window.createImagesSession = function (packageId) {
 
-    if (sessionLocked) {
-      alert('انتظر قليلاً... جاري إنشاء الجلسة');
-      return;
-    }
+        const sessionId = new URLSearchParams(window.location.search).get("session");
+        if (sessionId) {
+            const tab = openNewTab();
+            tab.location.href = `/games/images/session/${sessionId}/`;
+            return;
+        }
 
-    sessionLocked = true;
+        if (!IS_AUTH) {
+            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+            return;
+        }
 
-    const form = document.getElementById('imagesCreateForm');
-    const input = document.getElementById('imagesPkgId');
-    const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+        if (!packageId) return;
+        if (sessionLocked) {
+            alert("انتظر قليلاً... جاري إنشاء الجلسة");
+            return;
+        }
 
-    input.value = packageId;
-    showLoading(packageId, true);
+        sessionLocked = true;
 
-    const timeoutId = setTimeout(() => {
-      sessionLocked = false;
-      showLoading(packageId, false);
-    }, 10000);
+        const gameTab = openNewTab();
 
-    try {
-      submitBtn ? submitBtn.click() : form.submit();
-      clearTimeout(timeoutId);
-    } catch (e) {
-      alert('خطأ أثناء الإرسال: ' + e.message);
-      clearTimeout(timeoutId);
-      sessionLocked = false;
-      showLoading(packageId, false);
-    }
-  };
+        const form = document.getElementById("imagesCreateForm");
+        const input = document.getElementById("imagesPkgId");
+        const btn = document.getElementById("hiddenSubmitBtnImg");
 
-  // ============================
-  //   نظام الجولة التجريبية
-  // ============================
-  window.createFreeImagesSession = async function(packageId) {
-    if (!IS_AUTH) {
-      window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-      return;
-    }
+        input.value = packageId;
+        form.target = gameTab.name;
 
-    if (!packageId) return;
+        showLoading(packageId, true);
 
-    if (sessionLocked) {
-      alert('انتظر قليلاً... جاري إنشاء الجلسة');
-      return;
-    }
+        const timeoutId = setTimeout(() => {
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }, 8000);
 
-    try {
-      const r = await fetch(API_ELIGIBILITY_URL, { credentials: 'same-origin' });
-      const data = await r.json();
+        try {
+            btn ? btn.click() : form.submit();
+            clearTimeout(timeoutId);
+        } catch (e) {
+            alert("خطأ أثناء الإرسال: " + e.message);
+            clearTimeout(timeoutId);
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }
+    };
 
-      if (!data?.success) {
-        alert('تعذر التحقق من الأهلية، حاول لاحقًا');
-        return;
-      }
+    // -------- جلسة مجانية --------
+    window.createFreeImagesSession = async function (packageId) {
 
-      if (!data.eligible) {
-        alert(data.message || 'لقد استخدمت الجلسة المجانية الخاصة بك.');
-        return;
-      }
-    } catch {}
+        if (!IS_AUTH) {
+            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+            return;
+        }
 
-    sessionLocked = true;
+        if (!packageId) return;
+        if (sessionLocked) {
+            alert("انتظر قليلاً... جاري إنشاء الجلسة");
+            return;
+        }
 
-    const form = document.getElementById('imagesCreateForm');
-    const input = document.getElementById('imagesPkgId');
-    const submitBtn = document.getElementById('hiddenSubmitBtnImg');
+        try {
+            const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
+            const data = await r.json();
 
-    input.value = packageId;
-    showLoading(packageId, true);
+            if (!data.success || !data.eligible) {
+                alert(data.message || "لا يمكنك بدء الجولة المجانية.");
+                return;
+            }
+        } catch (e) {}
 
-    const timeoutId = setTimeout(() => {
-      sessionLocked = false;
-      showLoading(packageId, false);
-    }, 10000);
+        sessionLocked = true;
 
-    try {
-      submitBtn ? submitBtn.click() : form.submit();
-      clearTimeout(timeoutId);
-    } catch (e) {
-      alert('خطأ أثناء الإرسال: ' + e.message);
-      clearTimeout(timeoutId);
-      sessionLocked = false;
-      showLoading(packageId, false);
-    }
-  };
+        const gameTab = openNewTab();
 
-  // ============================
-  //   مؤثر التحميل على الزر
-  // ============================
-  function showLoading(packageId, show) {
-    const btns = document.querySelectorAll(`button[onclick*="${packageId}"]`);
-    btns.forEach(btn => {
-      const text = btn.querySelector('.btn-text');
-      const spinner = btn.querySelector('.loading-spinner');
-      if (text && spinner) {
-        text.style.display = show ? 'none' : 'block';
-        spinner.style.display = show ? 'block' : 'none';
-        btn.disabled = show;
-      }
-    });
-  }
+        const form = document.getElementById("imagesCreateForm");
+        const input = document.getElementById("imagesPkgId");
+        const btn = document.getElementById("hiddenSubmitBtnImg");
 
-  // معالجة الرجوع للخلف من المتصفح
-  window.addEventListener('pageshow', (e) => {
-    if (e.persisted) sessionLocked = false;
-  });
+        input.value = packageId;
+        form.target = gameTab.name;
+
+        showLoading(packageId, true);
+
+        const timeoutId = setTimeout(() => {
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }, 8000);
+
+        try {
+            btn ? btn.click() : form.submit();
+            clearTimeout(timeoutId);
+        } catch (e) {
+            alert("خطأ أثناء الإرسال: " + e.message);
+            clearTimeout(timeoutId);
+            sessionLocked = false;
+            showLoading(packageId, false);
+        }
+    };
 
 });
 </script>
-
 </body>
 </html>
