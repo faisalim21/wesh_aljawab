@@ -5,7 +5,7 @@ from django.conf import settings
 
 # إعدادات Telr
 TELR_STORE_ID = "34132"
-TELR_AUTH_KEY = "wT45z-TDzZ3@hvV"
+TELR_AUTH_KEY = "wT45z-TDzZ3@hvvV"
 TELR_TEST_MODE = "1"  # 1 = Test Mode
 
 # دومينك الرسمي
