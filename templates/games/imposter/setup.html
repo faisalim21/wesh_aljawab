@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعداد لعبة امبوستر</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #0f0f15;
+            color: #fff;
+            font-family: "Tajawal", sans-serif;
+            padding: 30px;
+        }
+        .cardx {
+            background: #1b1b24;
+            padding: 30px;
+            border-radius: 18px;
+            max-width: 480px;
+            margin: auto;
+            box-shadow: 0 0 25px rgba(0,0,0,0.4);
+        }
+        button {
+            font-size: 1.3rem;
+            padding: 12px;
+        }
+        label {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2 class="text-center mb-4">إعداد اللعبة</h2>
+
+    <div class="cardx">
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label>عدد اللاعبين:</label>
+            <input type="number" name="players" class="form-control"
+                   min="3" max="20" value="4" required>
+
+            <label>عدد الإمبوستر:</label>
+            <input type="number" name="imposters" class="form-control"
+                   min="1" max="5" value="1" required>
+
+            <button class="btn btn-primary w-100 mt-4">
+                ابدأ اللعبة →
+            </button>
+        </form>
+
+    </div>
+
+</body>
+</html>

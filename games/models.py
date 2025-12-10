@@ -46,6 +46,7 @@ class GamePackage(models.Model):
         ('images',  'تحدي الصور'),
         ('time',    'تحدّي الوقت'),
         ('quiz',    'سؤال وجواب'),
+        ('imposter', 'لعبة امبوستر'),  
     ]
 
     # أنواع الأسئلة (للحروف - قابلة للتوسّع)
@@ -779,3 +780,46 @@ class TimeSessionPackage(models.Model):
 
     def __str__(self):
         return f"{self.session_id} → {self.category.name} → pkg#{self.package.package_number}"
+
+
+
+
+
+# =========================
+# لعبة امبوستر
+# =========================
+
+
+
+
+class ImposterWord(models.Model):
+    """
+    كلمة واحدة تُستخدم في جولة من لعبة امبوستر.
+    مرتبطة بحزمة معينة من نوع 'imposter'.
+    """
+    package = models.ForeignKey(
+        'GamePackage',
+        on_delete=models.CASCADE,
+        related_name='imposter_words',
+        limit_choices_to={'game_type': 'imposter'},  # أمان + ترتيب
+    )
+    word = models.CharField("الكلمة الأساسية", max_length=100)
+    hint = models.CharField(
+        "تلميح مقترح (اختياري)",
+        max_length=200,
+        blank=True,
+        help_text="مجرد تلميح مبدئي تقدر تعرضه في الشرح أو تتجاهله في الواجهة."
+    )
+    is_active = models.BooleanField("فعّالة؟", default=True)
+    created_at = models.DateTimeField("تاريخ الإضافة", default=timezone.now)
+
+    class Meta:
+        verbose_name = "كلمة امبوستر"
+        verbose_name_plural = "كلمات امبوستر"
+        ordering = ('package', 'id')
+
+    def __str__(self):
+        return f"{self.word} — حزمة {self.package.package_number}"
+
+
+

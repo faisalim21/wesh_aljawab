@@ -2,6 +2,7 @@
 from django.urls import path
 from . import views
 from . import views_time  # فيوزات تحدّي الوقت
+from . import views_imposter
 
 app_name = 'games'
 
@@ -50,9 +51,22 @@ urlpatterns = [
     path('api/images-prev/', views.api_images_prev, name='api_images_prev'),
 
     # =========================
-    # سؤال وجواب (Quiz)
+    # امبوستر
     # =========================
-    path('quiz/', views.quiz_game_home, name='quiz_home'),
+    path('imposter/', views.imposter_packages, name='imposter_packages'),
+    path('imposter/start/<uuid:package_id>/', views.start_imposter_session, name='imposter_start'),
+    path('imposter/', views_imposter.imposter_home, name='imposter_home'),
+    path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
+    path("imposter/create/", views_imposter.create_imposter_session, name="create_imposter_session"),
+    path("imposter/session/<uuid:session_id>/", views_imposter.imposter_session, name="imposter_session"),
+    path('imposter/setup/<uuid:package_id>/', views_imposter.imposter_setup, name='imposter_setup'),
+    path('imposter/session/<uuid:session_id>/', views_imposter.imposter_session_view, name='imposter_session'),
+    path("imposter/<uuid:session_id>/setup/", views_imposter.imposter_setup_view, name="imposter_setup"),
+    path("imposter/session/<uuid:session_id>/", views_imposter.imposter_session_view, name="imposter_session"),
+
+
+
+
 
     # =========================
     # تحدّي الوقت (Time Challenge)

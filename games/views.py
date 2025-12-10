@@ -1903,3 +1903,17 @@ def images_session(request, session_id):
         'display_url': request.build_absolute_uri(reverse('games:images_display', args=[session.display_link])),
         'contestants_url': request.build_absolute_uri(reverse('games:images_contestants', args=[session.contestants_link])),
     })
+
+
+
+
+def imposter_packages(request):
+    packages = GamePackage.objects.filter(
+        game_type="imposter",
+        is_active=True
+    ).order_by("package_number")
+
+    return render(request, "imposter/packages.html", {
+        "packages": packages,
+        "page_title": "حزم لعبة امبوستر"
+    })
