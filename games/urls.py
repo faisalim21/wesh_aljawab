@@ -53,16 +53,22 @@ urlpatterns = [
     # =========================
     # امبوستر
     # =========================
-    path('imposter/', views.imposter_packages, name='imposter_packages'),
-    path("imposter/start/", views_imposter.start_imposter_session, name="imposter_start"),
-    path('imposter/', views_imposter.imposter_home, name='imposter_home'),
+# =========================
+# امبوستر
+# =========================
+
+    # صفحة عرض الحزم
     path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
-    path("imposter/create/", views_imposter.create_imposter_session, name="create_imposter_session"),
-    path("imposter/session/<uuid:session_id>/", views_imposter.imposter_session, name="imposter_session"),
+
+    # إنشاء جلسة بعد الضغط "ابدأ"
+    path('imposter/create/', views_imposter.create_imposter_session, name='create_imposter_session'),
+
+    # صفحة الإعداد (عدد اللاعبين + عدد الامبوستر + اختيار الكلمة)
     path('imposter/setup/<uuid:package_id>/', views_imposter.imposter_setup, name='imposter_setup'),
+
+    # صفحة تمرير الجوال
     path('imposter/session/<uuid:session_id>/', views_imposter.imposter_session_view, name='imposter_session'),
-    path("imposter/<uuid:session_id>/setup/", views_imposter.imposter_setup_view, name="imposter_setup"),
-    path("imposter/session/<uuid:session_id>/", views_imposter.imposter_session_view, name="imposter_session"),
+
 
 
 
