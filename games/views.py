@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.utils import timezone
 from games.models import UserPurchase, GameSession  # ← إضافة UserPurchase (و GameSession إن احتجته بالأسفل)
+from . import views_imposter
 
 from django.db import transaction, IntegrityError
 from django.db.models import Q

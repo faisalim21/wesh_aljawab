@@ -54,7 +54,7 @@ urlpatterns = [
     # امبوستر
     # =========================
     path('imposter/', views.imposter_packages, name='imposter_packages'),
-    path('imposter/start/<uuid:package_id>/', views.start_imposter_session, name='imposter_start'),
+    path("imposter/start/", views_imposter.start_imposter_session, name="imposter_start"),
     path('imposter/', views_imposter.imposter_home, name='imposter_home'),
     path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
     path("imposter/create/", views_imposter.create_imposter_session, name="create_imposter_session"),
