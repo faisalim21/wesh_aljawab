@@ -245,7 +245,7 @@
 
                 {# زر بدء / شراء #}
                 {% if pkg.is_free or pkg.package_number == 0 %}
-                    <form method="post" action="{% url 'games:imposter_start' pkg.id %}">
+                    <a href="{% url 'games:imposter_setup' pkg.id %}" class="imp-btn imp-free">
                         {% csrf_token %}
                         <button type="submit" class="imp-btn imp-free">
                             <i class="fa-solid fa-bolt"></i>
