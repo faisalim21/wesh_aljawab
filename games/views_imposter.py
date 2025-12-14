@@ -24,7 +24,7 @@ def imposter_packages(request):
         .order_by('package_number')
     )
 
-    return render(request, "games/imposter_packages.html", {
+    return render(request, "games/imposter/packages.html", {
         "packages": packages
     })
 
