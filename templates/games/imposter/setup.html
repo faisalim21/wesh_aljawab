@@ -42,7 +42,7 @@
 
         <form 
             method="POST"
-            action="{% url 'imposter_setup' package.id %}"
+            action="{% url 'games:imposter_setup' package.id %}"
             target="_blank"
         >
             {% csrf_token %}
