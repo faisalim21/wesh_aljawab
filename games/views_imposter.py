@@ -73,34 +73,57 @@ from django.views.decorators.http import require_http_methods
 @require_http_methods(["GET", "POST"])
 def imposter_session_view(request, session_id):
     """
-    صفحة تمرير الجوال — كل لاعب يشوف دوره فقط.
+    صفحة تمرير الجوال:
+    - كل لاعب يشوف دوره
+    - الكلمة تتغير حسب الجولة
     """
-    session = get_object_or_404(GameSession, id=session_id, game_type="imposter")
-    key = f"imposter_{session.id}"
 
+    session = get_object_or_404(
+        GameSession,
+        id=session_id,
+        game_type="imposter"
+    )
+
+    key = f"imposter_{session.id}"
     game_data = request.session.get(key)
+
     if not game_data:
         return render(request, "games/imposter/error.html", {
             "message": "تعذر تحميل بيانات الجلسة."
         })
 
-    players_count   = game_data["players_count"]
-    imposters       = game_data["imposters"]
-    secret_word     = game_data["secret_word"]
-    current_index   = game_data["current_index"]
+    players_count = game_data["players_count"]
+    imposters = game_data["imposters"]
+    words = game_data["words"]
+    current_round = game_data["current_round"]
+    current_index = game_data["current_index"]
 
-    # الانتقال للاعب التالي
-    current_index += 1
-
-    # إذا خلصوا اللاعبين → انتهت مرحلة الكشف
-    if current_index >= players_count:
+    # الكلمة الحالية حسب الجولة
+    try:
+        secret_word = words[current_round]
+    except IndexError:
         return render(request, "games/imposter/done.html", {
             "session": session,
             "players": players_count,
             "imposters": len(imposters),
         })
 
-    # تحديد دور اللاعب الحالي
+    # اللاعب التالي
+    current_index += 1
+
+    # انتهى جميع اللاعبين في هذه الجولة
+    if current_index >= players_count:
+        game_data["current_index"] = -1
+        game_data["current_round"] += 1
+        request.session[key] = game_data
+        request.session.modified = True
+
+        return render(request, "games/imposter/round_done.html", {
+            "round_number": current_round + 1,
+            "total_rounds": len(words),
+        })
+
+    # هل اللاعب إمبوستر؟
     is_imposter = current_index in imposters
 
     # حفظ التقدم
@@ -112,7 +135,9 @@ def imposter_session_view(request, session_id):
         "session": session,
         "player_number": current_index + 1,
         "is_imposter": is_imposter,
-        "secret_word": secret_word if not is_imposter else None,
+        "secret_word": None if is_imposter else secret_word,
+        "round_number": current_round + 1,
+        "total_rounds": len(words),
     })
 
 
