@@ -247,22 +247,19 @@
                 {# زر بدء / شراء #}
                 {% if pkg.is_free or pkg.package_number == 0 %}
                     <a href="{% url 'games:imposter_setup' pkg.id %}" class="imp-btn imp-free">
-                        {% csrf_token %}
-                        <button type="submit" class="imp-btn imp-free">
-                            <i class="fa-solid fa-bolt"></i>
-                            جرّب الآن مجانًا
-                        </button>
-                    </form>
+                        <i class="fa-solid fa-bolt"></i>
+                        جرّب الآن مجانًا
+                    </a>
+
                 {% else %}
                     <form method="post" action="{% url 'games:imposter_start' pkg.id %}">
-
-">
                         {% csrf_token %}
                         <button type="submit" class="imp-btn">
                             <i class="fa-solid fa-cart-shopping"></i>
                             شراء وبدء اللعب
                         </button>
                     </form>
+
                 {% endif %}
 
             </div>
