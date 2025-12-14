@@ -53,15 +53,10 @@ urlpatterns = [
     # =========================
     # امبوستر
     # =========================
-# =========================
-# امبوستر
-# =========================
+
 
     # صفحة عرض الحزم
     path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
-
-    # إنشاء جلسة بعد الضغط "ابدأ"
-    path('imposter/create/', views_imposter.create_imposter_session, name='create_imposter_session'),
 
     # صفحة الإعداد (عدد اللاعبين + عدد الامبوستر + اختيار الكلمة)
     path(
