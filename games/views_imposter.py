@@ -301,16 +301,3 @@ def imposter_setup_view(request, session_id):
     })
 
 
-def imposter_start(request, package_id):
-    """
-    صفحة بداية الحزمة: تعرض وصف الحزمة + عدد الكلمات + زر (ابدأ)
-    ثم ينتقل المستخدم لصفحة setup لإدخال عدد اللاعبين.
-    """
-    package = get_object_or_404(GamePackage, id=package_id, game_type='imposter')
-
-    word_count = package.imposter_words.filter(is_active=True).count()
-
-    return render(request, "games/imposter/start.html", {
-        "package": package,
-        "word_count": word_count,
-    })
