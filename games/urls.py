@@ -57,9 +57,9 @@ urlpatterns = [
 # امبوستر
 # =========================
     # صفحة البداية للحزمة
-path('imposter/start/<uuid:package_id>/', 
-     views_imposter.imposter_start, 
-     name='imposter_start'),
+    path('imposter/start/<uuid:package_id>/',
+        views_imposter.imposter_start,
+        name='imposter_start'),
 
     # صفحة عرض الحزم
     path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
