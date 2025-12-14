@@ -155,16 +155,13 @@ import random
 @login_required
 def imposter_setup(request, package_id):
     """
-    صفحة إعداد لعبة الامبوستر:
+    إعداد لعبة امبوستر:
     - اختيار عدد اللاعبين
-    - اختيار عدد الإمبوستر
-    - اختيار كلمة
-    - إنشاء جلسة
-    - حفظ بيانات اللعبة في session
-    - التحويل لصفحة تمرير الجوال
+    - اختيار عدد الإمبوسترات
+    - اختيار كلمة عشوائية (من الأدمن)
+    - تجهيز الجلسة في session
     """
 
-    # جلب الحزمة
     package = get_object_or_404(
         GamePackage,
         id=package_id,
@@ -172,51 +169,40 @@ def imposter_setup(request, package_id):
         is_active=True
     )
 
-    # جلب الكلمات الفعالة
-    words = package.imposter_words.filter(is_active=True)
+    # الكلمات المفعّلة فقط
+    words_qs = ImposterWord.objects.filter(
+        package=package,
+        is_active=True
+    )
 
-    if not words.exists():
+    if not words_qs.exists():
         return render(request, "games/imposter/error.html", {
-            "message": "لا توجد كلمات مفعلة في هذه الحزمة."
+            "message": "لا توجد كلمات مضافة لهذه الحزمة."
         })
 
-    # عند الإرسال
     if request.method == "POST":
         try:
             players_count = int(request.POST.get("players_count"))
             imposters_count = int(request.POST.get("imposters_count"))
-            word_id = request.POST.get("word_id")
         except (TypeError, ValueError):
             return render(request, "games/imposter/setup.html", {
                 "package": package,
-                "words": words,
-                "error": "بيانات غير صالحة."
+                "error": "بيانات غير صحيحة."
             })
 
-        # تحقق منطقي
-        if players_count < 3 or players_count > 20:
+        if players_count < 3:
             return render(request, "games/imposter/setup.html", {
                 "package": package,
-                "words": words,
-                "error": "عدد اللاعبين يجب أن يكون بين 3 و 20."
+                "error": "عدد اللاعبين يجب أن يكون 3 على الأقل."
             })
 
         if imposters_count < 1 or imposters_count >= players_count:
             return render(request, "games/imposter/setup.html", {
                 "package": package,
-                "words": words,
-                "error": "عدد الإمبوستر يجب أن يكون أقل من عدد اللاعبين."
+                "error": "عدد الإمبوسترات غير صالح."
             })
 
-        # الكلمة المختارة
-        chosen_word = get_object_or_404(
-            ImposterWord,
-            id=word_id,
-            package=package,
-            is_active=True
-        )
-
-        # إنشاء جلسة جديدة
+        # إنشاء جلسة
         session = GameSession.objects.create(
             host=request.user,
             package=package,
@@ -224,26 +210,34 @@ def imposter_setup(request, package_id):
             is_active=True
         )
 
-        # تجهيز بيانات اللعبة
+        # عدد الجولات:
+        # المجانية = كلمة وحدة
+        # المدفوعة = 3 كلمات (أو أقل لو ما توفر)
+        if package.is_free or package.package_number == 0:
+            rounds_count = 1
+        else:
+            rounds_count = min(3, words_qs.count())
+
+        # اختيار كلمات عشوائية
+        words = random.sample(list(words_qs), rounds_count)
+
+        # اختيار الإمبوسترات
         order = list(range(players_count))
         imposters = random.sample(order, imposters_count)
 
+        # حفظ كل شيء في session
         request.session[f"imposter_{session.id}"] = {
             "players_count": players_count,
             "imposters_count": imposters_count,
             "imposters": imposters,
-            "secret_word": chosen_word.word,
-            "order": order,
+            "words": [w.word for w in words],  # قائمة الكلمات (جولات)
+            "current_round": 0,
             "current_index": -1,
         }
         request.session.modified = True
 
-        # تحويل لصفحة تمرير الجوال
-        return redirect('games:imposter_session', session_id=session.id)
+        return redirect("games:imposter_session", session_id=session.id)
 
-
-    # GET → عرض صفحة الإعداد
     return render(request, "games/imposter/setup.html", {
         "package": package,
-        "words": words,
     })
