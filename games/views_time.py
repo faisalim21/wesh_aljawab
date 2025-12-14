@@ -9,7 +9,7 @@ from django.utils.crypto import get_random_string
 from django.views.decorators.http import require_GET, require_POST
 from django.template import TemplateDoesNotExist
 from django.urls import reverse, NoReverseMatch
-
+from games.models import GamePackage, ImposterWord
 from .models import GameSession
 
 # موديلات إضافية (حسب مشروعك)
@@ -525,3 +525,20 @@ def api_time_get_current(request):
             "current": cur or {},
         }
     )
+
+
+
+
+def imposter_start(request, package_id):
+    """
+    صفحة بداية الحزمة: تعرض وصف الحزمة + عدد الكلمات + زر (ابدأ)
+    ثم ينتقل المستخدم لصفحة setup لإدخال عدد اللاعبين.
+    """
+    package = get_object_or_404(GamePackage, id=package_id, game_type='imposter')
+
+    word_count = package.imposter_words.filter(is_active=True).count()
+
+    return render(request, "games/imposter/start.html", {
+        "package": package,
+        "word_count": word_count,
+    })
