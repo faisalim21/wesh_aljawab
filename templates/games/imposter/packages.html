@@ -253,7 +253,8 @@
                         </button>
                     </form>
                 {% else %}
-                    <form method="post" action="{% url 'games:imposter_start' pkg.id %}
+                    <form method="post" action="{% url 'games:imposter_start' pkg.id %}">
+
 ">
                         {% csrf_token %}
                         <button type="submit" class="imp-btn">
