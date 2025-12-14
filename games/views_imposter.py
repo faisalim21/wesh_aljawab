@@ -1,20 +1,42 @@
 from django.shortcuts import render
 from games.models import GamePackage, ImposterWord
 from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
 
+from games.models import (
+    GamePackage,
+    ImposterWord,
+    GameSession,
+    UserPurchase,   # ✅ هذا الناقص
+)
+
+@login_required
 def imposter_start(request, package_id):
-    """
-    صفحة بداية الحزمة: تعرض وصف الحزمة + عدد الكلمات + زر (ابدأ)
-    ثم ينتقل المستخدم لصفحة setup لإدخال عدد اللاعبين.
-    """
-    package = get_object_or_404(GamePackage, id=package_id, game_type='imposter')
+    package = get_object_or_404(
+        GamePackage,
+        id=package_id,
+        game_type='imposter'
+    )
 
-    word_count = package.imposter_words.filter(is_active=True).count()
+    # لو الحزمة مجانية → مباشرة صفحة الإعداد
+    if package.is_free:
+        return redirect('games:imposter_setup', package_id=package.id)
 
-    return render(request, "games/imposter/start.html", {
-        "package": package,
-        "word_count": word_count,
-    })
+    # لو مدفوعة → نتحقق من الشراء
+    purchase = UserPurchase.objects.filter(
+        user=request.user,
+        package=package,
+        is_completed=False
+    ).first()
+
+    # ما اشترى → نرسله للدفع
+    if not purchase:
+        return redirect(f"/payments/start/{package.id}/")
+
+    # اشترى → نوديه للإعداد
+    return redirect('games:imposter_setup', package_id=package.id)
+
+
 
 def imposter_home(request):
     packages = GamePackage.objects.filter(
