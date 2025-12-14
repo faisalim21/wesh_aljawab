@@ -9,7 +9,6 @@ from django.utils.crypto import get_random_string
 from django.views.decorators.http import require_GET, require_POST
 from django.template import TemplateDoesNotExist
 from django.urls import reverse, NoReverseMatch
-from games.models import GamePackage, ImposterWord
 from .models import GameSession
 
 # موديلات إضافية (حسب مشروعك)
