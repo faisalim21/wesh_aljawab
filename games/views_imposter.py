@@ -44,60 +44,6 @@ def imposter_packages(request):
     })
 
 
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseBadRequest
-from django.utils import timezone
-from games.models import GamePackage, GameSession, UserPurchase, ImposterWord
-import uuid
-
-
-@login_required
-def create_imposter_session(request):
-    if request.method != "POST":
-        return HttpResponseBadRequest("Invalid Request")
-
-    package_id = request.POST.get("package_id")
-    if not package_id:
-        return HttpResponseBadRequest("Missing package")
-
-    package = get_object_or_404(GamePackage, id=package_id, game_type='imposter')
-
-    # إذا الحزمة مجانية → أنشئ جلسة مباشرة
-    if package.is_free:
-        session = GameSession.objects.create(
-            host=request.user,
-            package=package,
-            game_type="imposter",
-            is_active=True
-        )
-        return redirect(f"/games/imposter/session/{session.id}/")
-
-    # إذا الحزمة مدفوعة → نتأكد هل عنده شراء سابق غير منتهي
-    purchase = UserPurchase.objects.filter(
-        user=request.user,
-        package=package,
-        is_completed=False
-    ).first()
-
-    # إذا ما عنده → نرسله للدفع
-    if not purchase:
-        return redirect(f"/payments/start/{package.id}/")
-
-    # إذا عنده شراء نشط → أنشئ جلسة
-    session = GameSession.objects.create(
-        host=request.user,
-        package=package,
-        game_type="imposter",
-        purchase=purchase,
-        is_active=True
-    )
-
-    return redirect(f"/games/imposter/session/{session.id}/")
-
-
-
 from django.shortcuts import render, redirect
 from django.http import Http404
 from django.views.decorators.http import require_http_methods
@@ -179,39 +125,76 @@ def start_imposter_session(request, session_id, secret_word, players_count, impo
 
 
 from django.shortcuts import render, redirect, get_object_or_404
-from games.models import GamePackage, ImposterWord, GameSession, UserPurchase
-import uuid
+from django.contrib.auth.decorators import login_required
+from games.models import GamePackage, ImposterWord, GameSession
 import random
 
+
+@login_required
 def imposter_setup(request, package_id):
     """
-    صفحة إعداد الجلسة:
-    - عدد اللاعبين
-    - عدد الامبوستر
-    - الكلمة المختارة
+    صفحة إعداد لعبة الامبوستر:
+    - اختيار عدد اللاعبين
+    - اختيار عدد الإمبوستر
+    - اختيار كلمة
+    - إنشاء جلسة
+    - حفظ بيانات اللعبة في session
+    - التحويل لصفحة تمرير الجوال
     """
 
-    package = get_object_or_404(GamePackage, id=package_id, game_type="imposter")
+    # جلب الحزمة
+    package = get_object_or_404(
+        GamePackage,
+        id=package_id,
+        game_type="imposter",
+        is_active=True
+    )
 
-    # جلب كلمات الحزمة
+    # جلب الكلمات الفعالة
     words = package.imposter_words.filter(is_active=True)
 
-    if request.method == "POST":
-        players_count   = int(request.POST.get("players"))
-        imposters_count = int(request.POST.get("imposters"))
-        word_id         = request.POST.get("word_id")
+    if not words.exists():
+        return render(request, "games/imposter/error.html", {
+            "message": "لا توجد كلمات مفعلة في هذه الحزمة."
+        })
 
-        if imposters_count >= players_count:
+    # عند الإرسال
+    if request.method == "POST":
+        try:
+            players_count = int(request.POST.get("players_count"))
+            imposters_count = int(request.POST.get("imposters_count"))
+            word_id = request.POST.get("word_id")
+        except (TypeError, ValueError):
             return render(request, "games/imposter/setup.html", {
                 "package": package,
                 "words": words,
-                "error": "عدد الامبوستر يجب أن يكون أقل من عدد اللاعبين.",
+                "error": "بيانات غير صالحة."
             })
 
-        chosen_word = get_object_or_404(ImposterWord, id=word_id, package=package)
+        # تحقق منطقي
+        if players_count < 3 or players_count > 20:
+            return render(request, "games/imposter/setup.html", {
+                "package": package,
+                "words": words,
+                "error": "عدد اللاعبين يجب أن يكون بين 3 و 20."
+            })
 
-        # إنشاء جلسة جديدة في النظام
-        # (تمامًا كما تفعل خلية الحروف وتحدي الصور بعد الشراء)
+        if imposters_count < 1 or imposters_count >= players_count:
+            return render(request, "games/imposter/setup.html", {
+                "package": package,
+                "words": words,
+                "error": "عدد الإمبوستر يجب أن يكون أقل من عدد اللاعبين."
+            })
+
+        # الكلمة المختارة
+        chosen_word = get_object_or_404(
+            ImposterWord,
+            id=word_id,
+            package=package,
+            is_active=True
+        )
+
+        # إنشاء جلسة جديدة
         session = GameSession.objects.create(
             host=request.user,
             package=package,
@@ -219,85 +202,25 @@ def imposter_setup(request, package_id):
             is_active=True
         )
 
-        # تجهيز بيانات الجلسة (في session فقط)
+        # تجهيز بيانات اللعبة
         order = list(range(players_count))
         imposters = random.sample(order, imposters_count)
 
         request.session[f"imposter_{session.id}"] = {
             "players_count": players_count,
             "imposters_count": imposters_count,
+            "imposters": imposters,
             "secret_word": chosen_word.word,
             "order": order,
-            "imposters": imposters,
             "current_index": -1,
         }
         request.session.modified = True
 
-        # تحويل المستخدم إلى صفحة الجلسة
+        # تحويل لصفحة تمرير الجوال
         return redirect(f"/games/imposter/session/{session.id}/")
-
-    return render(request, "games/imposter/setup.html", {
-        "package": package,
-        "words": words,
-
-
-    })
-
-
-
-
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponseBadRequest
-from .models import GameSession, ImposterWord
-import random
-
-def imposter_setup_view(request, session_id):
-
-    session = get_object_or_404(GameSession, id=session_id, game_type="imposter")
-
-    # جيب كلمة من الحزمة
-    words_qs = ImposterWord.objects.filter(package=session.package, is_active=True)
-    if not words_qs.exists():
-        return HttpResponseBadRequest("لا توجد كلمات في هذه الحزمة!")
-
-    # لو POST → نبدأ اللعبة
-    if request.method == "POST":
-        try:
-            players_count = int(request.POST.get("players"))
-            imposters_count = int(request.POST.get("imposters"))
-        except:
-            return HttpResponseBadRequest("بيانات غير صالحة")
-
-        if players_count < 3 or players_count > 20:
-            return HttpResponseBadRequest("عدد اللاعبين يجب أن يكون بين 3 و 20.")
-
-        if imposters_count < 1 or imposters_count >= players_count:
-            return HttpResponseBadRequest("عدد الإمبوستر غير صالح.")
-
-        # اختيار كلمة عشوائية
-        chosen_word = random.choice(list(words_qs)).word
-
-        # وزع الإمبوستر عشوائيًا
-        all_players = list(range(players_count))  # 0..players_count-1
-        imposters = random.sample(all_players, imposters_count)
-
-        # خزّن البيانات داخل session storage
-        key = f"imposter_{session.id}"
-        request.session[key] = {
-            "players_count": players_count,
-            "imposters": imposters,
-            "secret_word": chosen_word,
-            "current_index": -1,   # قبل أول لاعب
-        }
-        request.session.modified = True
-
-        # توجيه إلى صفحة تمرير الجوال
-        return redirect("games:imposter_session", session_id=session.id)
 
     # GET → عرض صفحة الإعداد
     return render(request, "games/imposter/setup.html", {
-        "session": session,
+        "package": package,
+        "words": words,
     })
-
-

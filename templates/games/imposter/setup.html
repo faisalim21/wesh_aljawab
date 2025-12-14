@@ -39,21 +39,22 @@
 
     <div class="cardx">
 
-        <form method="POST">
+        <form method="POST" action="{% url 'imposter_setup' package.id %}">
             {% csrf_token %}
 
             <label>عدد اللاعبين:</label>
-            <input type="number" name="players" class="form-control"
-                   min="3" max="20" value="4" required>
+            <input type="number" name="players_count" class="form-control"
+                min="3" max="20" value="4" required>
 
             <label>عدد الإمبوستر:</label>
-            <input type="number" name="imposters" class="form-control"
-                   min="1" max="5" value="1" required>
+            <input type="number" name="imposters_count" class="form-control"
+                min="1" max="15" value="1" required>
 
             <button class="btn btn-primary w-100 mt-4">
                 ابدأ اللعبة →
             </button>
         </form>
+
 
     </div>
 

@@ -64,7 +64,11 @@ urlpatterns = [
     path('imposter/create/', views_imposter.create_imposter_session, name='create_imposter_session'),
 
     # صفحة الإعداد (عدد اللاعبين + عدد الامبوستر + اختيار الكلمة)
-    path('imposter/setup/<uuid:package_id>/', views_imposter.imposter_setup, name='imposter_setup'),
+    path(
+        'imposter/setup/<uuid:session_id>/',
+        views_imposter.imposter_setup,
+        name='imposter_setup'
+    ),
 
     # صفحة تمرير الجوال
     path('imposter/session/<uuid:session_id>/', views_imposter.imposter_session_view, name='imposter_session'),
