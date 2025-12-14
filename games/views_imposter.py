@@ -217,7 +217,8 @@ def imposter_setup(request, package_id):
         request.session.modified = True
 
         # تحويل لصفحة تمرير الجوال
-        return redirect(f"/games/imposter/session/{session.id}/")
+        return redirect('games:imposter_session', session_id=session.id)
+
 
     # GET → عرض صفحة الإعداد
     return render(request, "games/imposter/setup.html", {
