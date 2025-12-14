@@ -54,6 +54,11 @@ urlpatterns = [
     # امبوستر
     # =========================
 
+    path(
+        'imposter/setup/<uuid:package_id>/',
+        views_imposter.imposter_setup,
+        name='imposter_setup'
+    ),
 
     # صفحة عرض الحزم
     path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
