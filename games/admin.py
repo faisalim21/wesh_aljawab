@@ -1674,6 +1674,98 @@ class TimeRiddleAdmin(admin.ModelAdmin):
                            escape(obj.image_url))
     thumb.short_description = "معاينة"
 
+
+
+
+
+
+
+    # ========= امبوستر=========
+from .models import ImposterWord
+
+
+class ImposterPackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - إمبوستر"
+        verbose_name_plural = "حزم - إمبوستر"
+
+class ImposterWordInline(admin.TabularInline):
+    model = ImposterWord
+    fk_name = 'package'
+    extra = 1
+    fields = ('word',)
+
+
+@admin.register(ImposterPackage)
+class ImposterPackageAdmin(admin.ModelAdmin):
+    list_display = (
+        'package_info',
+        'words_count',
+        'price_info',
+        'is_free_icon',
+        'status_badge',
+        'created_at',
+    )
+    list_filter = ('is_free', 'is_active', 'created_at')
+    search_fields = ('package_number', 'description')
+    ordering = ('package_number',)
+    inlines = [ImposterWordInline]
+
+    fieldsets = (
+        ('المعلومات الأساسية', {
+            'fields': (
+                'package_number', 'is_free',
+                ('original_price', 'discounted_price', 'price'),
+                'is_active'
+            )
+        }),
+        ('الوصف', {'fields': ('description',)}),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(game_type='imposter').annotate(
+            _wcount=Count('imposter_words')
+        )
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package_number}"
+    package_info.short_description = "الرقم"
+
+    def words_count(self, obj):
+        return obj._wcount
+    words_count.short_description = "عدد الكلمات"
+
+    def price_info(self, obj):
+        if obj.is_free:
+            return "🆓 مجانية"
+        if obj.discounted_price and obj.original_price and obj.discounted_price < obj.original_price:
+            return format_html('<s>{} ﷼</s> → <b>{} ﷼</b>', obj.original_price, obj.discounted_price)
+        return f"{obj.price} ﷼"
+    price_info.short_description = "السعر"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return format_html(
+            '<b style="color:{};">{}</b>',
+            'green' if obj.is_active else 'red',
+            'فعّالة' if obj.is_active else 'غير فعّالة'
+        )
+    status_badge.short_description = "الحالة"
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'imposter'
+        super().save_model(request, obj, form, change)
+
+
+
+
+
+
+
 # ========= تحسينات عامة لواجهة الأدمن =========
 admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
