@@ -71,7 +71,12 @@ path(
     name='imposter_session'
 ),
 
-
+# صفحة بداية الحزمة (قبل الإعداد)
+path(
+    'imposter/start/<uuid:package_id>/',
+    views_imposter.imposter_start,
+    name='imposter_start'
+),
 
 
 
