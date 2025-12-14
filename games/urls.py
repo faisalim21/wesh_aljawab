@@ -50,28 +50,26 @@ urlpatterns = [
     path('api/images-next/', views.api_images_next, name='api_images_next'),
     path('api/images-prev/', views.api_images_prev, name='api_images_prev'),
 
-    # =========================
-    # امبوستر
-    # =========================
+# =========================
+# امبوستر
+# =========================
 
-    path(
-        'imposter/setup/<uuid:package_id>/',
-        views_imposter.imposter_setup,
-        name='imposter_setup'
-    ),
+# صفحة عرض الحزم
+path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
 
-    # صفحة عرض الحزم
-    path('imposter/', views_imposter.imposter_packages, name='imposter_packages'),
+# صفحة الإعداد (مرتبطة بالحزمة)
+path(
+    'imposter/setup/<uuid:package_id>/',
+    views_imposter.imposter_setup,
+    name='imposter_setup'
+),
 
-    # صفحة الإعداد (عدد اللاعبين + عدد الامبوستر + اختيار الكلمة)
-    path(
-        'imposter/setup/<uuid:session_id>/',
-        views_imposter.imposter_setup,
-        name='imposter_setup'
-    ),
-
-    # صفحة تمرير الجوال
-    path('imposter/session/<uuid:session_id>/', views_imposter.imposter_session_view, name='imposter_session'),
+# صفحة تمرير الجوال
+path(
+    'imposter/session/<uuid:session_id>/',
+    views_imposter.imposter_session_view,
+    name='imposter_session'
+),
 
 
 
