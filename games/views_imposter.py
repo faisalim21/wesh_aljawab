@@ -66,20 +66,12 @@ def imposter_packages(request):
     })
 
 
-from django.shortcuts import render, redirect
-from django.http import Http404
-from django.views.decorators.http import require_http_methods
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
-
-from .models import (
-    GameSession,
-    ImposterWord,
-)
-
 import random
+
+from .models import GameSession
 
 
 @require_http_methods(["GET"])
@@ -90,54 +82,53 @@ def imposter_session_view(request, session_id):
         game_type="imposter"
     )
 
-    # ---------------------------
-    # إعداد بيانات الجلسة
-    # ---------------------------
-    game_data = request.session.get(f"imposter_game_{session.id}")
+    session_key = f"imposter_game_{session.id}"
+    game_data = request.session.get(session_key)
 
     if not game_data:
-        # حماية: لو دخل الصفحة بدون إعداد
         return redirect("games:imposter_setup", session.package.id)
 
     players_count   = game_data["players_count"]
     imposters_count = game_data["imposters_count"]
-    words            = game_data["words"]          # قائمة الكلمات
-    imposters_map    = game_data["imposters_map"]  # dict: player_index -> True/False
+    words           = game_data["words"]
+    imposters_map   = game_data["imposters_map"]
 
-    current_index = game_data.get("current_player", 0)
-    current_round = game_data.get("current_round", 0)
+    current_player = game_data.get("current_player", 0)
+    current_round  = game_data.get("current_round", 0)
 
     # ---------------------------
-    # انتهاء الجولة
+    # انتهت كل الكلمات
     # ---------------------------
-    if current_index >= players_count:
-        game_data["current_player"] = 0
-        game_data["current_round"] += 1
-        request.session[f"imposter_game_{session.id}"] = game_data
-        return redirect("games:imposter_session", session.id)
-
     if current_round >= len(words):
-        # انتهت كل الجولات
-        del request.session[f"imposter_game_{session.id}"]
+        del request.session[session_key]
         return render(request, "games/imposter/finished.html", {
             "session": session
         })
 
     # ---------------------------
-    # بيانات اللاعب الحالي
+    # انتهى جميع اللاعبين → نبدأ جولة جديدة
     # ---------------------------
-    is_imposter = imposters_map.get(str(current_index), False)
+    if current_player >= players_count:
+        game_data["current_player"] = 0
+        game_data["current_round"] += 1
+        request.session[session_key] = game_data
+        return redirect("games:imposter_session", session.id)
+
+    # ---------------------------
+    # اللاعب الحالي
+    # ---------------------------
+    is_imposter = imposters_map.get(str(current_player), False)
     secret_word = words[current_round]
 
-    # ---------------------------
-    # التحكم في الكشف
-    # ---------------------------
     reveal = request.GET.get("reveal") == "1"
+    next_player = request.GET.get("next") == "1"
 
-    # لو تم الكشف ثم ضغط التالي → ننتقل للاعب التالي
-    if reveal and request.GET.get("next") == "1":
+    # ---------------------------
+    # الانتقال للاعب التالي
+    # ---------------------------
+    if reveal and next_player:
         game_data["current_player"] += 1
-        request.session[f"imposter_game_{session.id}"] = game_data
+        request.session[session_key] = game_data
         return redirect("games:imposter_session", session.id)
 
     # ---------------------------
@@ -145,16 +136,15 @@ def imposter_session_view(request, session_id):
     # ---------------------------
     context = {
         "session": session,
-        "player_number": current_index + 1,
-        "is_imposter": is_imposter,
-        "secret_word": None if is_imposter else secret_word,
+        "player_number": current_player + 1,
         "round_number": current_round + 1,
         "total_rounds": len(words),
         "reveal": reveal,
+        "is_imposter": is_imposter,
+        "secret_word": None if is_imposter else secret_word,
     }
 
     return render(request, "games/imposter/player_screen.html", context)
-
 
 import random
 
