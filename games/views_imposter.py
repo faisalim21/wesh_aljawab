@@ -66,20 +66,65 @@ def imposter_packages(request):
     })
 
 
-import random
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.http import require_http_methods
-from games.models import GamePackage, ImposterWord
-
+from games.models import GameSession
 
 def imposter_session_view(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
 
-    # مؤقتًا فقط للتأكد أن كل شيء شغال
-    return render(request, "games/imposter/session.html", {
-        "session": session,
-    })
+    session_key = f"imposter_{session.id}"
+    game = request.session.get(session_key)
 
+    if not game:
+        return render(request, "games/imposter/error.html", {
+            "message": "الجلسة غير موجودة أو انتهت."
+        })
+
+    players_count   = game["players_count"]
+    imposters       = game["imposters"]
+    words           = game["words"]
+    current_round   = game["current_round"]
+    current_index   = game["current_index"]
+
+    # انتهت كل الجولات
+    if current_round >= len(words):
+        return render(request, "games/imposter/round_done.html", {
+            "rounds_count": len(words)
+        })
+
+    # الكلمة الحالية
+    secret_word = words[current_round]
+
+    # المرحلة 1: تسليم الجوال
+    if request.method == "GET":
+        return render(request, "games/imposter/session.html", {
+            "step": "handover",
+            "player_number": current_index + 2,  # لأننا ما كشفنا بعد
+            "players_count": players_count,
+        })
+
+    # المرحلة 2: كشف الدور
+    if request.method == "POST":
+        current_index += 1
+
+        # نهاية اللاعبين → ننتقل للجولة التالية
+        if current_index >= players_count:
+            game["current_round"] += 1
+            game["current_index"] = -1
+            request.session.modified = True
+            return redirect("games:imposter_session", session_id=session.id)
+
+        is_imposter = current_index in imposters
+
+        game["current_index"] = current_index
+        request.session.modified = True
+
+        return render(request, "games/imposter/session.html", {
+            "step": "reveal",
+            "player_number": current_index + 1,
+            "is_imposter": is_imposter,
+            "secret_word": None if is_imposter else secret_word,
+        })
 
 
 import random
