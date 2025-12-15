@@ -66,85 +66,64 @@ def imposter_packages(request):
     })
 
 
+import random
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.http import require_http_methods
-from django.utils import timezone
-import random
-
-from .models import GameSession
+from games.models import GamePackage, ImposterWord
 
 
-@require_http_methods(["GET"])
-def imposter_session_view(request, session_id):
-    session = get_object_or_404(
-        GameSession,
-        id=session_id,
-        game_type="imposter"
+@require_http_methods(["GET", "POST"])
+def imposter_session_view(request, package_id):
+    package = get_object_or_404(
+        GamePackage,
+        id=package_id,
+        game_type="imposter",
+        is_active=True
     )
 
-    session_key = f"imposter_game_{session.id}"
-    game_data = request.session.get(session_key)
+    # ====== GET → رجّعه للإعداد ======
+    if request.method == "GET":
+        return redirect("games:imposter_setup", package_id=package.id)
 
-    if not game_data:
-        return redirect("games:imposter_setup", session.package.id)
+    # ====== POST → بدء الجولة ======
+    try:
+        players_count = int(request.POST.get("players_count"))
+        imposters_count = int(request.POST.get("imposters_count"))
+    except (TypeError, ValueError):
+        return redirect("games:imposter_setup", package_id=package.id)
 
-    players_count   = game_data["players_count"]
-    imposters_count = game_data["imposters_count"]
-    words           = game_data["words"]
-    imposters_map   = game_data["imposters_map"]
+    # ====== تحقق منطقي ======
+    if players_count < 3:
+        return redirect("games:imposter_setup", package_id=package.id)
 
-    current_player = game_data.get("current_player", 0)
-    current_round  = game_data.get("current_round", 0)
+    if imposters_count < 1 or imposters_count >= players_count:
+        return redirect("games:imposter_setup", package_id=package.id)
 
-    # ---------------------------
-    # انتهت كل الكلمات
-    # ---------------------------
-    if current_round >= len(words):
-        del request.session[session_key]
-        return render(request, "games/imposter/finished.html", {
-            "session": session
+    # ====== اختيار كلمة عشوائية ======
+    words_qs = package.imposter_words.filter(is_active=True)
+    if not words_qs.exists():
+        return render(request, "games/imposter/error.html", {
+            "message": "لا توجد كلمات مفعّلة لهذه الحزمة."
         })
 
-    # ---------------------------
-    # انتهى جميع اللاعبين → نبدأ جولة جديدة
-    # ---------------------------
-    if current_player >= players_count:
-        game_data["current_player"] = 0
-        game_data["current_round"] += 1
-        request.session[session_key] = game_data
-        return redirect("games:imposter_session", session.id)
+    selected_word = random.choice(list(words_qs))
 
-    # ---------------------------
-    # اللاعب الحالي
-    # ---------------------------
-    is_imposter = imposters_map.get(str(current_player), False)
-    secret_word = words[current_round]
+    # ====== اختيار الإمبوسترز ======
+    all_players = list(range(1, players_count + 1))
+    imposters = random.sample(all_players, imposters_count)
 
-    reveal = request.GET.get("reveal") == "1"
-    next_player = request.GET.get("next") == "1"
-
-    # ---------------------------
-    # الانتقال للاعب التالي
-    # ---------------------------
-    if reveal and next_player:
-        game_data["current_player"] += 1
-        request.session[session_key] = game_data
-        return redirect("games:imposter_session", session.id)
-
-    # ---------------------------
-    # العرض
-    # ---------------------------
+    # ====== إرسال البيانات للواجهة ======
     context = {
-        "session": session,
-        "player_number": current_player + 1,
-        "round_number": current_round + 1,
-        "total_rounds": len(words),
-        "reveal": reveal,
-        "is_imposter": is_imposter,
-        "secret_word": None if is_imposter else secret_word,
+        "package": package,
+        "players_count": players_count,
+        "imposters": imposters,              # مثال: [2, 5]
+        "secret_word": selected_word.word,   # مثال: "ماتشا"
+        "hint": selected_word.hint,           # اختياري
     }
 
-    return render(request, "games/imposter/player_screen.html", context)
+    return render(request, "games/imposter/session.html", context)
+
+
 
 import random
 
