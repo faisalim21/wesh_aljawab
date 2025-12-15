@@ -140,8 +140,6 @@ def imposter_session_view(request, session_id):
         "total_rounds": len(words),
     })
 
-
-
 import random
 
 def start_imposter_session(request, session_id, secret_word, players_count, imposters_count):
