@@ -252,13 +252,21 @@
                     </a>
 
                 {% else %}
+
+                {% if pkg.id in purchased_packages %}
+                    <a href="{% url 'games:imposter_setup' pkg.id %}" class="imp-btn imp-free">
+                        <i class="fa-solid fa-play"></i>
+                        ابدأ اللعب
+                    </a>
+                {% else %}
                     <a href="{% url 'payments:start_payment' pkg.id %}" class="imp-btn">
                         <i class="fa-solid fa-cart-shopping"></i>
                         شراء وبدء اللعب
                     </a>
-
-
                 {% endif %}
+
+            {% endif %}
+
 
             </div>
         {% empty %}
