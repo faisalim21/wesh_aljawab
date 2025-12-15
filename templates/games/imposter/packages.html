@@ -277,6 +277,22 @@
 
     </div>
 </div>
+
+{% if step == "done" %}
+  <div class="game-title">انتهت الجولة {{ round_number }}</div>
+
+  <form method="post">
+    {% csrf_token %}
+    {% if not is_last_round %}
+      <input type="hidden" name="action" value="next_round">
+      <button class="btn-next">ابدأ الجولة التالية</button>
+    {% else %}
+      <p class="big-word">🎉 انتهت اللعبة</p>
+      <p class="player-label">شكراً للعبكم</p>
+    {% endif %}
+  </form>
+{% endif %}
+
 {% include "footer.html" %}
 
 </body>

@@ -90,85 +90,87 @@ from django.views.decorators.http import require_http_methods
 from games.models import GameSession
 
 
+from django.shortcuts import render, get_object_or_404
+from django.views.decorators.http import require_http_methods
+import random
+from games.models import GameSession
+
+
 @require_http_methods(["GET", "POST"])
 def imposter_session_view(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
 
-    session_key = f"imposter_{session.id}"
-    game_data = request.session.get(session_key)
-
-    if not game_data:
-        return redirect("games:imposter_setup", package_id=session.package.id)
-
-    players_count = game_data["players_count"]
-    imposters = game_data["imposters"]
-    words = game_data["words"]
-    current_round = game_data["current_round"]
-    current_index = game_data.get("current_index", 0)
-    step = game_data.get("step", "pass")
-
-    secret_word = words[current_round]
-
-    # =========================
-    # GET → أول مرة
-    # =========================
-    if request.method == "GET":
-        game_data["current_index"] = 0
-        game_data["step"] = "pass"
-        request.session.modified = True
-
-        return render(request, "games/imposter/session.html", {
-            "step": 0,
-            "player_number": 1,
+    data = request.session.get(f"imposter_{session.id}")
+    if not data:
+        return render(request, "games/imposter/error.html", {
+            "message": "انتهت الجلسة أو لم يتم إعدادها."
         })
 
-    # =========================
-    # POST → التحكم بالتنقل
-    # =========================
-    if step == "pass":
-        # بعد تمرير الجوال → نعرض الدور
-        game_data["step"] = "show"
+    players_count = data["players_count"]
+    imposters_count = data["imposters_count"]
+    words = data["words"]
+    current_round = data["current_round"]
+    current_index = data["current_index"]
 
-    elif step == "show":
-        # بعد ما يشوف دوره → ننتقل للي بعده
-        current_index += 1
-        game_data["current_index"] = current_index
+    # ❌ انتهت كل الجولات
+    if current_round >= len(words):
+        return render(request, "games/imposter/session.html", {
+            "step": "finished"
+        })
 
-        if current_index >= players_count:
-            game_data["step"] = "done"
+    # ===== POST =====
+    if request.method == "POST":
+        action = request.POST.get("action")
+
+        # بدء جولة جديدة
+        if action == "next_round":
+            order = list(range(players_count))
+            data["imposters"] = random.sample(order, imposters_count)
+            data["current_index"] = -1
+            data["current_round"] += 1
+            request.session.modified = True
+
         else:
-            game_data["step"] = "pass"
+            # التالي داخل الجولة
+            data["current_index"] += 1
+            request.session.modified = True
 
-    request.session.modified = True
+        return render(request, "games/imposter/session.html", build_context(data))
 
-    # =========================
-    # انتهى الجميع
-    # =========================
-    if game_data["step"] == "done":
-        return render(request, "games/imposter/session.html", {
-            "step": "done"
-        })
+    # ===== GET =====
+    return render(request, "games/imposter/session.html", build_context(data))
 
-    # =========================
-    # شاشة تمرير الجوال
-    # =========================
-    if game_data["step"] == "pass":
-        return render(request, "games/imposter/session.html", {
+
+def build_context(data):
+    players_count = data["players_count"]
+    imposters = data["imposters"]
+    words = data["words"]
+    current_round = data["current_round"]
+    current_index = data["current_index"]
+
+    # المرحلة 0 — تمرير الجوال
+    if current_index == -1:
+        return {
             "step": 0,
-            "player_number": current_index + 1
-        })
+            "player_number": 1
+        }
 
-    # =========================
-    # شاشة عرض الدور
-    # =========================
-    is_imposter = current_index in imposters
+    # داخل اللاعبين
+    if current_index < players_count:
+        return {
+            "step": 1,
+            "player_number": current_index + 1,
+            "is_imposter": current_index in imposters,
+            "secret_word": words[current_round]
+        }
 
-    return render(request, "games/imposter/session.html", {
-        "step": 1,
-        "player_number": current_index + 1,
-        "is_imposter": is_imposter,
-        "secret_word": None if is_imposter else secret_word
-    })
+    # نهاية الجولة
+    return {
+        "step": "done",
+        "round_number": current_round + 1,
+        "is_last_round": current_round == len(words) - 1
+    }
+
 
 
 
