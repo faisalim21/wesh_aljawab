@@ -177,13 +177,28 @@
 
     <!-- المرحلة الأخيرة -->
     {% if step == "done" %}
-      <div class="player-number">جاهزين؟</div>
-      <div class="description">
-        ابدأوا اللعب الآن ✨  
-        كل لاعب يعطي تلميح،  
-        والإمبوستر يحاول يخفي نفسه
-      </div>
+      <div class="game-title">جاهزين؟</div>
+
+      <p class="big-word">ابدأوا اللعب الآن ✨</p>
+      <p class="player-label">
+        كل لاعب يعطي تلميح، والإمبوستر يحاول يخفي نفسه
+      </p>
+
+      <form method="post" style="margin-top:25px;">
+        {% csrf_token %}
+
+        {% if not is_last_round %}
+          <input type="hidden" name="action" value="next_round">
+          <button class="btn-next">
+            🔄 جولة جديدة
+          </button>
+        {% else %}
+          <p class="big-word text-success">🎉 انتهت اللعبة</p>
+          <p class="player-label">خلصت كلمات الحزمة</p>
+        {% endif %}
+      </form>
     {% endif %}
+
 
   </div>
 </div>
