@@ -72,56 +72,13 @@ from django.views.decorators.http import require_http_methods
 from games.models import GamePackage, ImposterWord
 
 
-@require_http_methods(["GET", "POST"])
-def imposter_session_view(request, package_id):
-    package = get_object_or_404(
-        GamePackage,
-        id=package_id,
-        game_type="imposter",
-        is_active=True
-    )
+def imposter_session_view(request, session_id):
+    session = get_object_or_404(GameSession, id=session_id)
 
-    # ====== GET → رجّعه للإعداد ======
-    if request.method == "GET":
-        return redirect("games:imposter_setup", package_id=package.id)
-
-    # ====== POST → بدء الجولة ======
-    try:
-        players_count = int(request.POST.get("players_count"))
-        imposters_count = int(request.POST.get("imposters_count"))
-    except (TypeError, ValueError):
-        return redirect("games:imposter_setup", package_id=package.id)
-
-    # ====== تحقق منطقي ======
-    if players_count < 3:
-        return redirect("games:imposter_setup", package_id=package.id)
-
-    if imposters_count < 1 or imposters_count >= players_count:
-        return redirect("games:imposter_setup", package_id=package.id)
-
-    # ====== اختيار كلمة عشوائية ======
-    words_qs = package.imposter_words.filter(is_active=True)
-    if not words_qs.exists():
-        return render(request, "games/imposter/error.html", {
-            "message": "لا توجد كلمات مفعّلة لهذه الحزمة."
-        })
-
-    selected_word = random.choice(list(words_qs))
-
-    # ====== اختيار الإمبوسترز ======
-    all_players = list(range(1, players_count + 1))
-    imposters = random.sample(all_players, imposters_count)
-
-    # ====== إرسال البيانات للواجهة ======
-    context = {
-        "package": package,
-        "players_count": players_count,
-        "imposters": imposters,              # مثال: [2, 5]
-        "secret_word": selected_word.word,   # مثال: "ماتشا"
-        "hint": selected_word.hint,           # اختياري
-    }
-
-    return render(request, "games/imposter/session.html", context)
+    # مؤقتًا فقط للتأكد أن كل شيء شغال
+    return render(request, "games/imposter/session.html", {
+        "session": session,
+    })
 
 
 
