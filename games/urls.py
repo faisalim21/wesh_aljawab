@@ -66,9 +66,9 @@ path(
 
 # صفحة تمرير الجوال
 path(
-    'imposter/session/<uuid:session_id>/',
-    views_imposter.imposter_session_view,
-    name='imposter_session'
+    "games/imposter/session/<uuid:package_id>/",
+    views.imposter_session_view,
+    name="imposter_session"
 ),
 
 # صفحة بداية الحزمة (قبل الإعداد)
