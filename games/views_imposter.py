@@ -2,6 +2,7 @@ from django.shortcuts import render
 from games.models import GamePackage, ImposterWord
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from games.models import (
     GamePackage,
@@ -53,6 +54,11 @@ from django.shortcuts import render
 from django.db.models import Count
 from .models import GamePackage
 
+from games.models import UserPurchase
+
+from django.db.models import Count
+from games.models import GamePackage, UserPurchase
+
 def imposter_packages(request):
     packages = (
         GamePackage.objects
@@ -61,9 +67,22 @@ def imposter_packages(request):
         .order_by('package_number')
     )
 
+    purchased_packages = set()
+
+    if request.user.is_authenticated:
+        purchased_packages = set(
+            UserPurchase.objects.filter(
+                user=request.user,
+                is_completed=True,
+                expires_at__gt=timezone.now()
+            ).values_list("package_id", flat=True)
+        )
+
     return render(request, "games/imposter/packages.html", {
-        "packages": packages
+        "packages": packages,
+        "purchased_packages": purchased_packages,
     })
+
 
 
 from django.shortcuts import render, get_object_or_404, redirect

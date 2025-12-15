@@ -98,24 +98,42 @@ def telr_success(request):
     purchase_id = request.GET.get("purchase")
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
 
-    # اكتمال الدفع
+    # تأكيد اكتمال الدفع
     purchase.is_completed = True
     purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
     purchase.save()
 
-    # استرجاع أو إنشاء جلسة
+    package = purchase.package
+
+    # إنشاء جلسة (بدون بدء اللعب)
     session = GameSession.objects.filter(purchase=purchase).first()
     if not session:
         session = GameSession.objects.create(
             host=purchase.user,
-            package=purchase.package,
-            game_type=purchase.package.game_type,
+            package=package,
+            game_type=package.game_type,
             purchase=purchase,
             is_active=True
         )
 
-    # إعادة التوجيه لصفحة الحزم + session_id + success=1
-    return redirect(f"/games/letters/?success=1&session={session.id}")
+    # 🔹 التحويل حسب نوع اللعبة
+    if package.game_type == "imposter":
+        return redirect(
+            f"/games/imposter/?paid=1&package={package.id}"
+        )
+
+    if package.game_type == "letters":
+        return redirect(
+            f"/games/letters/?paid=1&package={package.id}"
+        )
+
+    if package.game_type == "images":
+        return redirect(
+            f"/games/images/?paid=1&package={package.id}"
+        )
+
+    return redirect("/")
+
 
 
 

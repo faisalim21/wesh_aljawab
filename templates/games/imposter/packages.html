@@ -252,13 +252,11 @@
                     </a>
 
                 {% else %}
-                    <form method="post" action="{% url 'games:imposter_start' pkg.id %}">
-                        {% csrf_token %}
-                        <button type="submit" class="imp-btn">
-                            <i class="fa-solid fa-cart-shopping"></i>
-                            شراء وبدء اللعب
-                        </button>
-                    </form>
+                    <a href="{% url 'payments:start_payment' pkg.id %}" class="imp-btn">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        شراء وبدء اللعب
+                    </a>
+
 
                 {% endif %}
 
