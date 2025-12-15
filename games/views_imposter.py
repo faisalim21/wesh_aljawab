@@ -71,6 +71,11 @@ from django.views.decorators.http import require_http_methods
 from games.models import GameSession
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_http_methods
+from games.models import GameSession
+
+
 @require_http_methods(["GET", "POST"])
 def imposter_session_view(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
@@ -78,42 +83,58 @@ def imposter_session_view(request, session_id):
     key = f"imposter_{session.id}"
     game_data = request.session.get(key)
 
-    # حماية: لو الجلسة غير موجودة
     if not game_data:
         return redirect("games:imposter_packages")
 
     players_count = game_data["players_count"]
     imposters = game_data["imposters"]
     secret_word = game_data["words"][game_data["current_round"]]
-    current_index = game_data["current_index"]
+
+    current_index = game_data.get("current_index", -1)
+    showing_card = game_data.get("showing_card", False)
 
     # =========================
-    # POST → زر "التالي"
+    # POST → زر التالي
     # =========================
     if request.method == "POST":
-        # أول ضغطة تبدأ باللاعب الأول
-        if current_index < players_count - 1:
-            game_data["current_index"] += 1
-            request.session[key] = game_data
-            request.session.modified = True
-            return redirect("games:imposter_session", session_id=session.id)
 
-        # خلصنا كل اللاعبين
-        return render(request, "games/imposter/session.html", {
-            "step": "done"
-        })
+        # لو كنا في شاشة التمرير → نعرض البطاقة
+        if not showing_card:
+            # أول لاعب
+            if current_index == -1:
+                game_data["current_index"] = 0
+            game_data["showing_card"] = True
+
+        else:
+            # كنا نعرض البطاقة → نرجع لشاشة تمرير
+            game_data["showing_card"] = False
+
+            # ننتقل للاعب التالي
+            if current_index < players_count - 1:
+                game_data["current_index"] += 1
+            else:
+                # انتهى الجميع
+                return render(request, "games/imposter/session.html", {
+                    "step": "done"
+                })
+
+        request.session[key] = game_data
+        request.session.modified = True
+        return redirect("games:imposter_session", session_id=session.id)
 
     # =========================
-    # GET → تحديد المرحلة
+    # GET → العرض
     # =========================
 
-    # قبل أي لاعب
-    if current_index == -1:
+    # شاشة تمرير الجوال
+    if not showing_card:
+        player_number = current_index + 1 if current_index >= 0 else 1
         return render(request, "games/imposter/session.html", {
-            "step": 0
+            "step": 0,
+            "player_number": player_number
         })
 
-    # لاعب حالي
+    # شاشة كشف الدور
     player_number = current_index + 1
     is_imposter = current_index in imposters
 
