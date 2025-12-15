@@ -31,7 +31,7 @@ def imposter_start(request, package_id):
 
     # ما اشترى → نرسله للدفع
     if not purchase:
-        return redirect(f"/payments/start/{package.id}/")
+        return redirect("payments:start_payment", package_id=package.id)
 
     # اشترى → نوديه للإعداد
     return redirect('games:imposter_setup', package_id=package.id)
