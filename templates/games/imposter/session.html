@@ -78,7 +78,8 @@
   <!-- المرحلة 0 — تمرير الجوال -->
   {% if step == 0 %}
     <div class="game-title">ابدأ الجولة</div>
-    <p class="player-label">أعطِ <b>اللاعب الأول</b> الجوال</p>
+    <p class="player-label">أعطِ <b>اللاعب رقم {{ player_number }}</b> الجوال</p>
+
     <form method="post">
       {% csrf_token %}
       <input type="hidden" name="step" value="1">

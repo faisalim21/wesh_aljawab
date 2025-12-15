@@ -67,74 +67,97 @@ def imposter_packages(request):
 
 
 from django.shortcuts import render, get_object_or_404, redirect
-from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
 from games.models import GameSession
 
 
-@require_http_methods(["GET", "POST"])
+@login_required
 def imposter_session_view(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)
+
+    # (اختياري للأمان) لا أحد يدخل الجلسة إلا صاحبها
+    if session.host_id and session.host_id != request.user.id:
+        return redirect("games:imposter_packages")
 
     key = f"imposter_{session.id}"
     game_data = request.session.get(key)
 
+    # لو ما فيه بيانات (مثلاً سوا ريفرش بعد ما انتهت السيشن/انمسحت)
     if not game_data:
-        return redirect("games:imposter_packages")
+        return redirect("games:imposter_setup", package_id=session.package_id)
 
-    players_count   = game_data["players_count"]
-    imposters       = game_data["imposters"]
-    secret_word     = game_data["words"][game_data["current_round"]]
+    players_count = int(game_data.get("players_count", 0))
+    imposters = set(game_data.get("imposters", []))
+    words = game_data.get("words", [])
+    current_round = int(game_data.get("current_round", 0))
 
-    # الحالة الحالية
-    current_index = game_data.get("current_index", 0)
-    showing_card  = game_data.get("showing_card", False)
+    # حماية بسيطة
+    if players_count < 3 or not words or current_round < 0 or current_round >= len(words):
+        return redirect("games:imposter_setup", package_id=session.package_id)
 
-    # =========================
-    # POST → زر التالي
-    # =========================
+    secret_word = words[current_round]
+
+    # ---------
+    # الحالة التي نحتاجها عشان ما "يفضحها":
+    # current_index: رقم اللاعب الحالي (0-based)
+    # reveal: هل الآن في شاشة كشف الدور؟ (True) أو شاشة "أعط الجوال" (False)
+    # ---------
+    if "current_index" not in game_data:
+        game_data["current_index"] = 0
+    if "reveal" not in game_data:
+        game_data["reveal"] = False
+
+    current_index = int(game_data["current_index"])
+    reveal = bool(game_data["reveal"])
+
+    # --------- POST: زر التالي ---------
     if request.method == "POST":
+        step = request.POST.get("step", "")
 
-        if not showing_card:
-            # كنا في شاشة تمرير → نعرض بطاقة اللاعب الحالي
-            game_data["showing_card"] = True
+        # من شاشة "أعط الجوال" -> نكشف الدور لنفس اللاعب
+        if step == "1":
+            game_data["reveal"] = True
 
-        else:
-            # كنا نعرض البطاقة → ننتقل للاعب التالي
-            game_data["showing_card"] = False
-            game_data["current_index"] += 1
-
-            # انتهى جميع اللاعبين
-            if game_data["current_index"] >= players_count:
-                return render(request, "games/imposter/session.html", {
-                    "step": "done"
-                })
+        # من شاشة كشف الدور -> نروح للي بعده (شاشة "أعط الجوال")
+        elif step == "next":
+            if game_data.get("reveal"):
+                game_data["current_index"] = int(game_data.get("current_index", 0)) + 1
+                game_data["reveal"] = False
 
         request.session[key] = game_data
         request.session.modified = True
+
         return redirect("games:imposter_session", session_id=session.id)
 
-    # =========================
-    # GET → العرض
-    # =========================
+    # --------- GET: عرض الشاشة حسب الحالة ---------
+    current_index = int(game_data.get("current_index", 0))
+    reveal = bool(game_data.get("reveal", False))
 
-    player_number = current_index + 1
-
-    # شاشة تمرير الجوال
-    if not showing_card:
+    # انتهينا من تمرير الجوال على كل اللاعبين
+    if current_index >= players_count:
         return render(request, "games/imposter/session.html", {
-            "step": 0,
-            "player_number": player_number
+            "session": session,
+            "step": "done",
         })
 
-    # شاشة كشف الدور
-    is_imposter = current_index in imposters
+    # شاشة "أعط الجوال للاعب رقم X"
+    if not reveal:
+        return render(request, "games/imposter/session.html", {
+            "session": session,
+            "step": 0,
+            "player_number": current_index + 1,
+        })
 
+    # شاشة كشف الدور للاعب رقم X
+    is_imposter = (current_index in imposters)
     return render(request, "games/imposter/session.html", {
+        "session": session,
         "step": 1,
-        "player_number": player_number,
+        "player_number": current_index + 1,  # ✅ عشان ما يطلع 0
         "is_imposter": is_imposter,
-        "secret_word": secret_word if not is_imposter else None,
+        "secret_word": secret_word,
     })
+
 
 
 import random
