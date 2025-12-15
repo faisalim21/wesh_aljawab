@@ -67,7 +67,7 @@ path(
 # صفحة تمرير الجوال
 path(
     "games/imposter/session/<uuid:package_id>/",
-    views.imposter_session_view,
+    views_imposter.imposter_session_view,
     name="imposter_session"
 ),
 
