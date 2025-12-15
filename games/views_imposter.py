@@ -70,75 +70,91 @@ from django.shortcuts import render, redirect
 from django.http import Http404
 from django.views.decorators.http import require_http_methods
 
-@require_http_methods(["GET", "POST"])
-def imposter_session_view(request, session_id):
-    """
-    صفحة تمرير الجوال:
-    - كل لاعب يشوف دوره
-    - الكلمة تتغير حسب الجولة
-    """
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.http import require_http_methods
+from django.utils import timezone
 
+from .models import (
+    GameSession,
+    ImposterWord,
+)
+
+import random
+
+
+@require_http_methods(["GET"])
+def imposter_session_view(request, session_id):
     session = get_object_or_404(
         GameSession,
         id=session_id,
         game_type="imposter"
     )
 
-    key = f"imposter_{session.id}"
-    game_data = request.session.get(key)
+    # ---------------------------
+    # إعداد بيانات الجلسة
+    # ---------------------------
+    game_data = request.session.get(f"imposter_game_{session.id}")
 
     if not game_data:
-        return render(request, "games/imposter/error.html", {
-            "message": "تعذر تحميل بيانات الجلسة."
-        })
+        # حماية: لو دخل الصفحة بدون إعداد
+        return redirect("games:imposter_setup", session.package.id)
 
-    players_count = game_data["players_count"]
-    imposters = game_data["imposters"]
-    words = game_data["words"]
-    current_round = game_data["current_round"]
-    current_index = game_data["current_index"]
+    players_count   = game_data["players_count"]
+    imposters_count = game_data["imposters_count"]
+    words            = game_data["words"]          # قائمة الكلمات
+    imposters_map    = game_data["imposters_map"]  # dict: player_index -> True/False
 
-    # الكلمة الحالية حسب الجولة
-    try:
-        secret_word = words[current_round]
-    except IndexError:
-        return render(request, "games/imposter/done.html", {
-            "session": session,
-            "players": players_count,
-            "imposters": len(imposters),
-        })
+    current_index = game_data.get("current_player", 0)
+    current_round = game_data.get("current_round", 0)
 
-    # اللاعب التالي
-    current_index += 1
-
-    # انتهى جميع اللاعبين في هذه الجولة
+    # ---------------------------
+    # انتهاء الجولة
+    # ---------------------------
     if current_index >= players_count:
-        game_data["current_index"] = -1
+        game_data["current_player"] = 0
         game_data["current_round"] += 1
-        request.session[key] = game_data
-        request.session.modified = True
+        request.session[f"imposter_game_{session.id}"] = game_data
+        return redirect("games:imposter_session", session.id)
 
-        return render(request, "games/imposter/round_done.html", {
-            "round_number": current_round + 1,
-            "total_rounds": len(words),
+    if current_round >= len(words):
+        # انتهت كل الجولات
+        del request.session[f"imposter_game_{session.id}"]
+        return render(request, "games/imposter/finished.html", {
+            "session": session
         })
 
-    # هل اللاعب إمبوستر؟
-    is_imposter = current_index in imposters
+    # ---------------------------
+    # بيانات اللاعب الحالي
+    # ---------------------------
+    is_imposter = imposters_map.get(str(current_index), False)
+    secret_word = words[current_round]
 
-    # حفظ التقدم
-    game_data["current_index"] = current_index
-    request.session[key] = game_data
-    request.session.modified = True
+    # ---------------------------
+    # التحكم في الكشف
+    # ---------------------------
+    reveal = request.GET.get("reveal") == "1"
 
-    return render(request, "games/imposter/player_screen.html", {
+    # لو تم الكشف ثم ضغط التالي → ننتقل للاعب التالي
+    if reveal and request.GET.get("next") == "1":
+        game_data["current_player"] += 1
+        request.session[f"imposter_game_{session.id}"] = game_data
+        return redirect("games:imposter_session", session.id)
+
+    # ---------------------------
+    # العرض
+    # ---------------------------
+    context = {
         "session": session,
         "player_number": current_index + 1,
         "is_imposter": is_imposter,
         "secret_word": None if is_imposter else secret_word,
         "round_number": current_round + 1,
         "total_rounds": len(words),
-    })
+        "reveal": reveal,
+    }
+
+    return render(request, "games/imposter/player_screen.html", context)
+
 
 import random
 

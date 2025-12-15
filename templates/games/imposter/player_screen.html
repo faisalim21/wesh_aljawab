@@ -2,60 +2,47 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>دور اللاعب</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-
-    <style>
-        body {
-            background: #111;
-            color: white;
-            font-family: "Tajawal", sans-serif;
-            text-align: center;
-            padding: 40px 20px;
-        }
-        .box {
-            background: #1f1f1f;
-            padding: 40px 25px;
-            border-radius: 20px;
-            margin-top: 40px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.4);
-        }
-        .word {
-            font-size: 2.4rem;
-            font-weight: bold;
-            margin-top: 10px;
-            color: #4ade80;
-        }
-        button {
-            font-size: 1.4rem !important;
-            padding: 12px !important;
-        }
-    </style>
 </head>
 
-<body>
+<body class="bg-dark text-white d-flex align-items-center justify-content-center" style="min-height:100vh">
 
-    <h2>اللاعب رقم {{ player_number }}</h2>
+<div class="card text-center p-4" style="max-width:420px;background:#111;border-radius:18px">
 
-    <div class="box">
+    <h4 class="mb-4">
+        الجولة {{ round_number }} / {{ total_rounds }}
+    </h4>
 
-        {% if is_imposter %}
-            <h3 class="mb-4" style="color:#f87171;">أنت الـ إمبوستر 👀</h3>
-            <p>ما عندك الكلمة… حاول تتصرف!</p>
+    {% if not reveal %}
+        <!-- المرحلة الأولى -->
+        <h2 class="mb-4">🎭</h2>
+        <p class="fs-5 mb-4">
+            أعطِ الجوال للاعب رقم <strong>{{ player_number }}</strong>
+        </p>
 
-        {% else %}
-            <h3 class="mb-3" style="color:#60a5fa;">أنت داخل السالفة ✓</h3>
-            <p>كلمتكم هي:</p>
-            <div class="word">{{ secret_word }}</div>
-        {% endif %}
-
-        <a href="" class="btn btn-primary w-100 mt-4">
-            التالي →
+        <a class="btn btn-primary w-100"
+           href="?reveal=1">
+            التالي
         </a>
 
-    </div>
+    {% else %}
+        <!-- المرحلة الثانية -->
+        {% if is_imposter %}
+            <h2 class="text-danger mb-3">😈 أنت الإمبوستر</h2>
+            <p class="opacity-75">حاول ما تنكشف 👀</p>
+        {% else %}
+            <h2 class="text-success mb-3">🟢 أنت داخل السالفة</h2>
+            <p class="fs-4 fw-bold">{{ secret_word }}</p>
+        {% endif %}
+
+        <a class="btn btn-success w-100 mt-4"
+           href="{% url 'games:imposter_session' session.id %}">
+            التالي
+        </a>
+    {% endif %}
+
+</div>
 
 </body>
 </html>
