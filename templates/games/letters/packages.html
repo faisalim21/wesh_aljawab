@@ -980,6 +980,13 @@ document.addEventListener('DOMContentLoaded', function () {
         showLoading(button, true);
 
         try {
+            // فتح التبويب الجديد فوراً (قبل الـ request)
+            const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+            
+            if (!gameTab) {
+                throw new Error('يرجى السماح بفتح النوافذ المنبثقة');
+            }
+
             // إنشاء FormData
             const formData = new FormData();
             formData.append('package_id', packageId);
@@ -989,23 +996,38 @@ document.addEventListener('DOMContentLoaded', function () {
             const response = await fetch(CREATE_SESSION_URL, {
                 method: 'POST',
                 body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                credentials: 'same-origin'
             });
 
             if (!response.ok) {
+                gameTab.close();
                 throw new Error('فشل إنشاء الجلسة');
             }
 
-            const data = await response.json();
-
-            if (data.success && data.session_url) {
-                // فتح التبويب الجديد بعد الحصول على الرابط
-                window.open(data.session_url, '_blank', 'noopener,noreferrer');
+            // محاولة قراءة الـ response كـ JSON أولاً
+            let sessionUrl = null;
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/json')) {
+                // Response هو JSON
+                const data = await response.json();
+                if (data.success && data.session_url) {
+                    sessionUrl = data.session_url;
+                } else {
+                    throw new Error(data.message || 'حدث خطأ أثناء إنشاء الجلسة');
+                }
             } else {
-                throw new Error(data.message || 'حدث خطأ أثناء إنشاء الجلسة');
+                // Response هو HTML (redirect)
+                // نستخرج الـ URL من الـ response
+                sessionUrl = response.url;
+            }
+
+            if (sessionUrl) {
+                // توجيه التبويب للصفحة
+                gameTab.location.href = sessionUrl;
+            } else {
+                gameTab.close();
+                throw new Error('لم يتم الحصول على رابط الجلسة');
             }
 
         } catch (error) {
