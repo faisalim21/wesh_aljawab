@@ -712,9 +712,58 @@
         min-height: 520px;
       }
     }
+    /* Top Announcement */
+    .top-announcement {
+      position: relative;
+      z-index: 999;
+      width: 100%;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e293b;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .announcement-btn {
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .announcement-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
+      color: #fff;
+    }
+
   </style>
 </head>
 <body>
+  <div class="top-announcement">
+    <span>
+      🚀 نبحث عن شركاء أو موظفين للانضمام لفريق <strong>وش الجواب</strong>
+    </span>
+    <a
+      href="https://wa.me/966550799857?text=مرحباً، مهتم بالانضمام أو الشراكة مع وش الجواب"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="announcement-btn"
+    >
+      تواصل معنا
+    </a>
+  </div>
+
     {% include 'header.html' %}
 
     <section class="hero-section">

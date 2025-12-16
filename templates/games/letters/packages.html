@@ -37,27 +37,73 @@
 
     * {
       font-family: 'Tajawal', sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
     body {
       background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
-      margin: 0;
-      padding: 0;
+      padding-top: 20px;
+      padding-bottom: 40px;
     }
 
+    /* Success Message */
+    .success-banner {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin: 20px auto;
+      max-width: 800px;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+      animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .success-banner i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .success-banner h3 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .success-banner p {
+      font-size: 1rem;
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    /* Packages Section */
     .packages-section {
-      background: rgba(255,255,255,.97);
+      background: rgba(255,255,255,.98);
       border-radius: 28px;
       margin: 40px auto;
-      padding: 60px 32px;
+      padding: 50px 24px;
       max-width: 1200px;
       box-shadow: 0 20px 50px rgba(0,0,0,.12);
     }
 
     .section-title {
       text-align: center;
-      margin-bottom: 50px;
+      margin-bottom: 40px;
     }
 
     .section-title h2 {
@@ -75,18 +121,21 @@
       margin: 0;
       font-size: 1.05rem;
       font-weight: 500;
+      line-height: 1.6;
     }
 
+    /* Scrollable Row */
     .scroll-row {
       display: flex;
       gap: 20px;
       overflow-x: auto;
-      padding-bottom: 12px;
+      padding-bottom: 16px;
       scroll-behavior: smooth;
+      scroll-padding: 20px;
     }
 
     .scroll-row::-webkit-scrollbar {
-      height: 8px;
+      height: 10px;
     }
 
     .scroll-row::-webkit-scrollbar-thumb {
@@ -95,27 +144,34 @@
       transition: var(--transition);
     }
 
+    .scroll-row::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(90deg, var(--cyan), var(--primary));
+    }
+
     .scroll-row::-webkit-scrollbar-track {
       background: rgba(139,92,246,.08);
       border-radius: 999px;
+      margin: 0 20px;
     }
 
+    /* Package Card */
     .pkg {
-      min-width: 300px;
+      min-width: 320px;
       max-width: 340px;
       flex: 0 0 auto;
     }
 
     .cardx {
       background: #fff;
-      border: 1px solid var(--card-border);
+      border: 2px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 24px;
+      padding: 28px;
       position: relative;
       box-shadow: var(--shadow-md);
       height: 100%;
       display: flex;
       flex-direction: column;
+      gap: 16px;
       transition: var(--transition);
       overflow: hidden;
     }
@@ -126,99 +182,111 @@
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 5px;
       background: linear-gradient(90deg, var(--primary), var(--cyan));
       transform: scaleX(0);
-      transition: transform var(--transition);
+      transition: transform .5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
       transform-origin: right;
     }
 
     .cardx:hover {
-      transform: translateY(-8px);
+      transform: translateY(-10px) scale(1.02);
       box-shadow: var(--shadow-lg);
-      border-color: rgba(139,92,246,.2);
+      border-color: rgba(139,92,246,.3);
     }
 
     .cardx:hover::before {
       transform: scaleX(1);
-      transform-origin: right;
     }
 
+    /* Free Card */
     .cardx.free {
-      border: 2px dashed var(--success);
+      border: 3px dashed var(--success);
       background: linear-gradient(180deg, #f0fdf4, #ffffff 70%);
-      box-shadow: 0 12px 32px rgba(34,197,94,.15);
+      box-shadow: 0 12px 32px rgba(34,197,94,.2);
     }
 
+    .cardx.free:hover {
+      box-shadow: 0 20px 48px rgba(34,197,94,.3);
+    }
+
+    /* Ribbons & Badges */
     .ribbon {
       position: absolute;
-      top: 12px;
-      left: -10px;
+      top: 16px;
+      left: -12px;
       background: linear-gradient(135deg, var(--success), #16a34a);
       color: #fff;
-      padding: 8px 14px;
-      border-radius: 0 10px 10px 0;
+      padding: 10px 16px;
+      border-radius: 0 12px 12px 0;
       font-weight: 900;
-      font-size: .85rem;
-      box-shadow: 0 6px 16px rgba(34,197,94,.3);
+      font-size: .9rem;
+      box-shadow: 0 6px 20px rgba(34,197,94,.35);
       z-index: 10;
+      letter-spacing: 0.5px;
     }
 
     .used-before {
       position: absolute;
-      top: 12px;
-      right: 12px;
+      top: 16px;
+      right: 16px;
       background: #fff7ed;
       color: #9a3412;
-      border: 1px solid #fed7aa;
-      padding: 6px 12px;
-      border-radius: 10px;
+      border: 2px solid #fed7aa;
+      padding: 8px 14px;
+      border-radius: 12px;
       font-weight: 800;
-      font-size: .75rem;
+      font-size: .78rem;
       display: flex;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
       z-index: 8;
+      box-shadow: 0 4px 12px rgba(154, 52, 18, 0.15);
     }
 
+    /* Title */
     .title {
       font-weight: 900;
-      font-size: 1.25rem;
+      font-size: 1.4rem;
       text-align: center;
-      margin: 0 0 1rem;
+      margin: 8px 0;
       color: var(--text);
+      letter-spacing: -0.5px;
     }
 
+    /* Badge Wrap */
     .badge-wrap {
       text-align: center;
-      margin: 1rem 0;
+      margin: 8px 0;
     }
 
     .badge-mix {
       background: var(--mix-bg);
       color: var(--mix-text);
-      border: 1px solid var(--mix-border);
+      border: 2px solid var(--mix-border);
       border-radius: 999px;
-      padding: 6px 12px;
+      padding: 8px 16px;
       font-weight: 800;
-      font-size: .8rem;
+      font-size: .85rem;
       display: inline-block;
+      letter-spacing: 0.3px;
     }
 
     .badge-spr {
       background: var(--spr-bg);
       color: var(--spr-text);
-      border: 1px solid var(--spr-border);
+      border: 2px solid var(--spr-border);
       border-radius: 999px;
-      padding: 6px 12px;
+      padding: 8px 16px;
       font-weight: 800;
-      font-size: .8rem;
+      font-size: .85rem;
       display: inline-block;
+      letter-spacing: 0.3px;
     }
 
-    /* الأسعار - NEW */
+    /* Pricing */
     .pkg-pricing {
-      margin-top: 1rem;
+      margin: 12px 0;
       text-align: center;
     }
 
@@ -226,13 +294,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      margin: 6px 0;
+      gap: 12px;
+      margin: 8px 0;
+      flex-wrap: wrap;
     }
 
     .price-new {
       font-weight: 900;
-      font-size: 1.15rem;
+      font-size: 1.5rem;
       color: #0ea5e9;
       display: flex;
       align-items: center;
@@ -246,7 +315,7 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: .95rem;
+      font-size: 1.1rem;
     }
 
     .save-badge {
@@ -255,17 +324,20 @@
       gap: 6px;
       background: #ecfeff;
       color: #0369a1;
-      border: 1px solid #7dd3fc;
+      border: 2px solid #7dd3fc;
       font-weight: 800;
       border-radius: 999px;
-      padding: 3px 10px;
-      font-size: .8rem;
+      padding: 6px 14px;
+      font-size: .85rem;
+      margin-top: 6px;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
     }
 
     .save-badge i {
       color: #0284c7;
     }
 
+    /* Trust Row */
     .trust-row {
       display: flex;
       align-items: center;
@@ -274,80 +346,122 @@
       color: #0f172a;
       font-weight: 700;
       font-size: .9rem;
-      margin-top: .35rem;
+      margin: 8px 0;
+      flex-wrap: wrap;
     }
 
     .trust-row .pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
+      gap: 8px;
+      padding: 8px 14px;
       border-radius: 999px;
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      border: 2px solid #e2e8f0;
       color: #334155;
+      font-size: .85rem;
+      white-space: nowrap;
     }
 
+    /* Buttons */
     .btn-play {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
-      text-align: center;
       color: #fff;
       font-weight: 900;
+      font-size: 1.05rem;
       border: none;
       background: linear-gradient(135deg, var(--primary), var(--cyan));
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 14px;
+      padding: 16px 24px;
       text-decoration: none;
       transition: var(--transition);
       position: relative;
       overflow: hidden;
       cursor: pointer;
+      margin-top: auto;
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
     }
 
     .btn-play::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,.2);
-      transition: left var(--transition);
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width .6s ease, height .6s ease;
     }
 
     .btn-play:hover {
       color: #fff;
-      box-shadow: 0 10px 24px rgba(139,92,246,.3);
+      box-shadow: 0 12px 32px rgba(139,92,246,.4);
       text-decoration: none;
-      transform: translateY(-2px);
+      transform: translateY(-3px);
     }
 
     .btn-play:hover::before {
-      left: 100%;
+      width: 400px;
+      height: 400px;
+    }
+
+    .btn-play:active {
+      transform: translateY(-1px);
+    }
+
+    .btn-play.btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .btn-play.btn-success:hover {
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.4);
     }
 
     .btn-play:disabled {
       background: #e2e8f0 !important;
       color: #94a3b8 !important;
       cursor: not-allowed;
+      box-shadow: none !important;
+      transform: none !important;
     }
 
+    .btn-play .btn-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Loading Spinner */
     .loading-spinner {
       display: none;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .btn-play.loading .btn-text {
+      opacity: 0;
+    }
+
+    .btn-play.loading .loading-spinner {
+      display: block;
     }
 
     .spinner {
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #fff;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #fff;
       border-radius: 50%;
-      width: 18px;
-      height: 18px;
-      animation: spin 1s linear infinite;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
@@ -355,31 +469,30 @@
       100% { transform: rotate(360deg); }
     }
 
-    .note-line {
-      font-size: .85rem;
-      color: #9a3412;
-      text-align: center;
-      margin-top: .5rem;
-    }
-
+    /* Section Header */
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-top: 50px;
       margin-bottom: 24px;
-      padding-bottom: 1rem;
-      border-bottom: 2px solid rgba(139,92,246,.12);
+      padding-bottom: 16px;
+      border-bottom: 3px solid rgba(139,92,246,.15);
     }
 
     .section-header h5 {
       margin: 0;
       font-weight: 900;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       display: flex;
       align-items: center;
-      gap: .6rem;
+      gap: 10px;
       color: var(--text);
+    }
+
+    .section-header h5 i {
+      color: var(--primary);
+      font-size: 1.3rem;
     }
 
     .section-header small {
@@ -389,52 +502,155 @@
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       .packages-section {
         padding: 40px 20px;
-        margin: 20px auto;
+        margin: 30px 16px;
+        border-radius: 24px;
       }
 
       .section-title h2 {
-        font-size: 2rem;
+        font-size: 2.2rem;
+      }
+
+      .pkg {
+        min-width: 300px;
+        max-width: 320px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-top: 10px;
+        padding-bottom: 20px;
+      }
+
+      .packages-section {
+        padding: 32px 16px;
+        margin: 20px 12px;
+        border-radius: 20px;
+      }
+
+      .section-title h2 {
+        font-size: 1.9rem;
+      }
+
+      .section-title p {
+        font-size: 0.95rem;
       }
 
       .scroll-row {
         gap: 16px;
+        padding-bottom: 12px;
       }
 
       .pkg {
         min-width: 280px;
-        max-width: 320px;
+        max-width: 300px;
       }
 
       .cardx {
-        padding: 20px;
+        padding: 24px;
+      }
+
+      .title {
+        font-size: 1.25rem;
+      }
+
+      .section-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 40px;
+      }
+
+      .section-header h5 {
+        font-size: 1.2rem;
+      }
+
+      .success-banner {
+        margin: 16px 12px;
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .success-banner h3 {
+        font-size: 1.2rem;
+      }
+
+      .success-banner i {
+        font-size: 1.5rem;
       }
     }
 
     @media (max-width: 576px) {
       .packages-section {
-        border-radius: 0;
-        padding: 30px 16px;
+        border-radius: 16px;
+        padding: 24px 12px;
+        margin: 16px 8px;
       }
 
       .section-title h2 {
         font-size: 1.6rem;
       }
 
-      .section-header {
-        flex-direction: column;
-        gap: .5rem;
-        align-items: flex-start;
+      .section-title p {
+        font-size: 0.9rem;
       }
 
       .pkg {
-        min-width: 100%;
+        min-width: calc(100vw - 48px);
+        max-width: calc(100vw - 48px);
       }
 
       .scroll-row {
-        overflow-x: visible;
+        gap: 12px;
+      }
+
+      .cardx {
+        padding: 20px;
+      }
+
+      .price-new {
+        font-size: 1.3rem;
+      }
+
+      .btn-play {
+        padding: 14px 20px;
+        font-size: 1rem;
+      }
+
+      .ribbon {
+        font-size: .8rem;
+        padding: 8px 12px;
+      }
+
+      .used-before {
+        font-size: .72rem;
+        padding: 6px 10px;
+      }
+    }
+
+    /* Animation on Load */
+    .pkg {
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .pkg:nth-child(1) { animation-delay: 0.1s; }
+    .pkg:nth-child(2) { animation-delay: 0.2s; }
+    .pkg:nth-child(3) { animation-delay: 0.3s; }
+    .pkg:nth-child(4) { animation-delay: 0.4s; }
+    .pkg:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   </style>
@@ -452,19 +668,18 @@
       {% endfor %}
     {% endif %}
   </div>
-{% if request.GET.success %}
-<div class="alert alert-success text-center fw-bold">
-  🎉 تم الدفع بنجاح!  
-  <br>
-  جاهز لبدء اللعب الآن.
-</div>
-{% endif %}
+
+  {% if request.GET.success %}
+  <div class="success-banner">
+    <i class="fas fa-check-circle"></i>
+    <h3>🎉 تم الدفع بنجاح!</h3>
+    <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
+  </div>
+  {% endif %}
 
   <!-- Hidden Form -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
-      target="_blank"
       style="display:none">
-
     {% csrf_token %}
     <input type="hidden" name="package_id" id="lettersPkgId">
     <button type="submit" id="hiddenSubmitBtn">go</button>
@@ -478,7 +693,7 @@
 
     <!-- Free Package -->
     {% if free_package %}
-      <div class="pkg mb-4" style="min-width:100%;">
+      <div class="pkg mb-4" style="min-width:100%; max-width:100%;">
         <div class="cardx free">
           <span class="ribbon">مجانية</span>
           <div class="title">جولة تجريبية</div>
@@ -497,20 +712,27 @@
           <div style="margin-top:auto;">
             {% if request.user.is_authenticated %}
               {% if free_active_session %}
-                <a class="btn-play" href="{% url 'games:letters_session' free_active_session.id %}" target="_blank" rel="noopener">
-                  ارجع إلى جلستك المجانية
+                <a class="btn-play btn-success" href="{% url 'games:letters_session' free_active_session.id %}" target="_blank" rel="noopener">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ارجع إلى جلستك المجانية</span>
                 </a>
               {% elif free_session_eligible %}
-                <button class="btn-play" type="button" onclick="createLettersSession('{{ free_package.id }}')">
-                  ابدأ الجولة المجانية
+                <button class="btn-play btn-success" type="button" onclick="createLettersSession('{{ free_package.id }}', true)">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ابدأ الجولة المجانية</span>
+                  <div class="loading-spinner"><div class="spinner"></div></div>
                 </button>
               {% else %}
-                <button class="btn btn-secondary w-100" disabled>غير متاح</button>
+                <button class="btn-play" disabled>
+                  <i class="fas fa-lock"></i>
+                  <span class="btn-text">غير متاح</span>
+                </button>
                 <div class="text-center text-warning small mt-2">{{ free_session_message }}</div>
               {% endif %}
             {% else %}
-              <a class="btn btn-outline-primary w-100" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
-                سجّل الدخول للتجربة
+              <a class="btn-play" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span class="btn-text">سجّل الدخول للتجربة</span>
               </a>
             {% endif %}
           </div>
@@ -522,7 +744,7 @@
     {% if paid_packages_mixed %}
       <div class="section-header">
         <h5>
-          <i class="fas fa-dice" aria-hidden="true"></i>
+          <i class="fas fa-dice"></i>
           أسئلة منوّعة
         </h5>
         <small>ترتيب حسب رقم الحزمة</small>
@@ -532,18 +754,15 @@
           <div class="pkg">
             <div class="cardx">
 
-              {# شارة انتهاء صلاحية / سبق شراء #}
               {% if package.id in completed_packages_ids %}
                   <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه</div>
               {% endif %}
-
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
               <div class="badge-wrap">
                 <span class="badge-mix">{{ package.get_question_theme_display }}</span>
               </div>
 
-              <!-- الأسعار -->
               <div class="pkg-pricing">
                 {% if package.has_discount %}
                   <div class="price-wrap">
@@ -579,31 +798,26 @@
               </div>
 
               <div style="margin-top:auto;">
-
-                {# زر أخضر = شراء فعال #}
                 {% if package.id in active_packages_ids %}
-                  <button class="btn-play"
+                  <button class="btn-play btn-success"
                           type="button"
-                          onclick="createLettersSession('{{ package.id }}')"
-                          style="background: linear-gradient(135deg,#22c55e,#16a34a);">
-                    ابدأ اللعب
+                          onclick="createLettersSession('{{ package.id }}', false)">
+                    <i class="fas fa-play"></i>
+                    <span class="btn-text">ابدأ اللعب</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
                   </button>
-
-                {# زر شراء = لا يوجد شراء فعال #}
                 {% else %}
                   <a class="btn-play"
-                    href="{% url 'payments:start_payment' package.id %}"
-                    style="background: linear-gradient(135deg,#8b5cf6,#06b6d4);">
-                    شراء
+                    href="{% url 'payments:start_payment' package.id %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="btn-text">شراء</span>
                   </a>
                 {% endif %}
-
               </div>
 
             </div>
           </div>
         {% endfor %}
-
       </div>
     {% endif %}
 
@@ -611,7 +825,7 @@
     {% if paid_packages_sports %}
       <div class="section-header">
         <h5>
-          <i class="fas fa-medal" aria-hidden="true"></i>
+          <i class="fas fa-medal"></i>
           أسئلة رياضية
         </h5>
         <small>ترتيب حسب رقم الحزمة</small>
@@ -621,7 +835,6 @@
           <div class="pkg">
             <div class="cardx">
 
-              {# شارة انتهاء صلاحية #}
               {% if package.id in expired_packages_ids %}
                 <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه</div>
               {% endif %}
@@ -631,7 +844,6 @@
                 <span class="badge-spr">{{ package.get_question_theme_display }}</span>
               </div>
 
-              <!-- الأسعار -->
               <div class="pkg-pricing">
                 {% if package.has_discount %}
                   <div class="price-wrap">
@@ -644,7 +856,6 @@
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
-
                   <div class="text-center">
                     <span class="save-badge"
                           data-orig="{{ package.original_price }}"
@@ -653,7 +864,6 @@
                       وفّر <b class="save-pct">—</b>
                     </span>
                   </div>
-
                 {% else %}
                   <div class="price-wrap">
                     <div class="price-new">
@@ -669,30 +879,26 @@
               </div>
 
               <div style="margin-top:auto;">
-
-                {# زر أخضر إذا الشراء فعال #}
                 {% if package.id in active_packages_ids %}
-                  <button class="btn-play"
+                  <button class="btn-play btn-success"
                           type="button"
-                          onclick="createLettersSession('{{ package.id }}')"
-                          style="background: linear-gradient(135deg,#22c55e,#16a34a);">
-                    ابدأ اللعب
+                          onclick="createLettersSession('{{ package.id }}', false)">
+                    <i class="fas fa-play"></i>
+                    <span class="btn-text">ابدأ اللعب</span>
+                    <div class="loading-spinner"><div class="spinner"></div></div>
                   </button>
-
                 {% else %}
                   <a class="btn-play"
-                    href="{% url 'payments:start_payment' package.id %}"
-                    style="background: linear-gradient(135deg,#8b5cf6,#06b6d4);">
-                    شراء
+                    href="{% url 'payments:start_payment' package.id %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="btn-text">شراء</span>
                   </a>
                 {% endif %}
-
               </div>
 
             </div>
           </div>
         {% endfor %}
-
       </div>
     {% endif %}
   </section>
@@ -706,10 +912,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const LOGIN_URL = "{% url 'accounts:login' %}";
     const NEXT_URL = "{{ request.get_full_path|urlencode }}";
     const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
+    const CREATE_SESSION_URL = "{% url 'games:create_letters_session' %}";
 
     let sessionLocked = false;
 
-    // حساب الخصم
+    // ===== حساب الخصم =====
     (function computeSavings() {
         document.querySelectorAll('.save-badge').forEach(el => {
             const o = parseFloat(el.dataset.orig || '0');
@@ -720,128 +927,109 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     })();
 
-    // فتح تبويب جديد آمن
-    function openNewTab() {
-        return window.open("", "_blank");
-    }
-
-    // إظهار التحميل
-    function showLoading(packageId, show) {
-        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-        btns.forEach(btn => {
-            const text = btn.querySelector('.btn-text');
-            const spinner = btn.querySelector('.loading-spinner');
-            if (text && spinner) {
-                text.style.display = show ? 'none' : 'block';
-                spinner.style.display = show ? 'block' : 'none';
-                btn.disabled = show;
-            }
-        });
-    }
-
-    // --------- إنشاء جلسة مدفوعة ---------
-    window.createLettersSession = function (packageId) {
-
-        // هل Telr رجّع session؟
-        const sessionId = new URLSearchParams(window.location.search).get("session");
-        if (sessionId) {
-            const tab = openNewTab();
-            tab.location.href = `/games/letters/session/${sessionId}/`;
-            return;
+    // ===== إظهار/إخفاء التحميل =====
+    function showLoading(button, show) {
+        if (!button) return;
+        if (show) {
+            button.classList.add('loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('loading');
+            button.disabled = false;
         }
+    }
 
+    // ===== إنشاء الجلسة =====
+    window.createLettersSession = async function (packageId, isFree) {
+
+        // التحقق من تسجيل الدخول
         if (!IS_AUTH) {
             window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
             return;
         }
 
-        if (!packageId) return;
+        if (!packageId) {
+            alert("معرف الحزمة غير صحيح");
+            return;
+        }
+
         if (sessionLocked) {
             alert("انتظر قليلاً... جاري إنشاء الجلسة");
             return;
         }
 
-        sessionLocked = true;
+        // البحث عن الزر
+        const button = event ? event.currentTarget : document.querySelector(`button[onclick*="${packageId}"]`);
 
-        const gameTab = openNewTab();
+        // التحقق من الأهلية للجلسة المجانية
+        if (isFree) {
+            try {
+                const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
+                const data = await r.json();
 
-        const form = document.getElementById("lettersCreateForm");
-        const input = document.getElementById("lettersPkgId");
-        const btn = document.getElementById("hiddenSubmitBtn");
-
-        input.value = packageId;
-        form.target = gameTab.name;
-
-        showLoading(packageId, true);
-
-        const timeoutId = setTimeout(() => {
-            sessionLocked = false;
-            showLoading(packageId, false);
-        }, 8000);
-
-        try {
-            btn ? btn.click() : form.submit();
-            clearTimeout(timeoutId);
-        } catch (e) {
-            alert("خطأ أثناء الإرسال: " + e.message);
-            clearTimeout(timeoutId);
-            sessionLocked = false;
-            showLoading(packageId, false);
-        }
-    };
-
-    // --------- إنشاء جلسة مجانية ---------
-    window.createFreeLettersSession = async function (packageId) {
-
-        if (!IS_AUTH) {
-            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-            return;
-        }
-
-        if (!packageId) return;
-        if (sessionLocked) {
-            alert("انتظر قليلاً... جاري إنشاء الجلسة");
-            return;
-        }
-
-        try {
-            const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
-            const data = await r.json();
-
-            if (!data.success || !data.eligible) {
-                alert(data.message || "لا يمكنك بدء الجولة المجانية.");
-                return;
+                if (!data.success || !data.eligible) {
+                    alert(data.message || "لا يمكنك بدء الجولة المجانية.");
+                    return;
+                }
+            } catch (e) {
+                console.error("Error checking eligibility:", e);
             }
-        } catch (e) {}
+        }
 
         sessionLocked = true;
-
-        const gameTab = openNewTab();
-
-        const form = document.getElementById("lettersCreateForm");
-        const input = document.getElementById("lettersPkgId");
-        const btn = document.getElementById("hiddenSubmitBtn");
-
-        input.value = packageId;
-        form.target = gameTab.name;
-
-        showLoading(packageId, true);
-
-        const timeoutId = setTimeout(() => {
-            sessionLocked = false;
-            showLoading(packageId, false);
-        }, 8000);
+        showLoading(button, true);
 
         try {
-            btn ? btn.click() : form.submit();
-            clearTimeout(timeoutId);
-        } catch (e) {
-            alert("خطأ أثناء الإرسال: " + e.message);
-            clearTimeout(timeoutId);
+            // إنشاء FormData
+            const formData = new FormData();
+            formData.append('package_id', packageId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            // إرسال الطلب
+            const response = await fetch(CREATE_SESSION_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('فشل إنشاء الجلسة');
+            }
+
+            const data = await response.json();
+
+            if (data.success && data.session_url) {
+                // فتح التبويب الجديد بعد الحصول على الرابط
+                window.open(data.session_url, '_blank', 'noopener,noreferrer');
+            } else {
+                throw new Error(data.message || 'حدث خطأ أثناء إنشاء الجلسة');
+            }
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert(error.message || 'حدث خطأ أثناء إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
+        } finally {
             sessionLocked = false;
-            showLoading(packageId, false);
+            showLoading(button, false);
         }
     };
+
+    // ===== معالج نجاح الدفع من URL =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionFromUrl = urlParams.get('session');
+    
+    if (sessionFromUrl) {
+        // فتح الجلسة تلقائياً في تبويب جديد
+        const sessionUrl = `/games/letters/session/${sessionFromUrl}/`;
+        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+        
+        // إزالة البارامتر من URL
+        const newUrl = window.location.pathname + '?success=1';
+        window.history.replaceState({}, document.title, newUrl);
+    }
 
 });
 </script>
