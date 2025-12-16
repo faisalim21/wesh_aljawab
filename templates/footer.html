@@ -113,6 +113,7 @@
     .footer-links li:nth-child(2) { animation-delay: .15s; }
     .footer-links li:nth-child(3) { animation-delay: .2s; }
     .footer-links li:nth-child(4) { animation-delay: .25s; }
+    .footer-links li:nth-child(5) { animation-delay: .3s; }
 
     .footer-links a {
       color: var(--text-muted);
@@ -455,12 +456,14 @@
         <ul class="footer-links">
           <li><a href="{% url 'games:letters_home' %}">خلية الحروف</a></li>
           <li><a href="{% url 'games:images_home' %}">تحدي الصور</a></li>
+          <li><a href="{% url 'games:imposter_packages' %}">امبوستر</a></li>
+          <li><a style="pointer-events:none; cursor:default; color:#718096;">تحدّي الوقت <small>(قريباً)</small></a></li>
           <li><a style="pointer-events:none; cursor:default; color:#718096;">سؤال وجواب <small>(قريباً)</small></a></li>
         </ul>
       </div>
 
       <!-- Contact & Social -->
-      <div class="col-lg-4 col-md-6">
+      <div class="col-lg-4 col-md-6" id="footer-contact">
         <h6 class="footer-title">
           <i class="fas fa-headset" aria-hidden="true"></i>
           تواصل معنا
