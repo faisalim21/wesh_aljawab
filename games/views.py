@@ -298,9 +298,9 @@ def letters_game_home(request):
         LettersPackage.objects.filter(
             is_free=True,
             is_active=True,
-            game_type="letters"
+            game_type='letters'
         )
-        .order_by("-id")
+        .order_by('-id')
         .first()
     )
 
@@ -309,35 +309,29 @@ def letters_game_home(request):
     free_session_message = ""
 
     if request.user.is_authenticated and free_package:
+
         # آخر جلسة مجانية للمستخدم
-        candidate = (
+        last_free_session = (
             LettersSession.objects.filter(
                 package=free_package,
-                host=request.user,
-                is_active=True
+                host=request.user
             )
-            .order_by("-created_at")
+            .order_by('-created_at')
             .first()
         )
 
-        # لو فيه جلسة ولم تنتهِ وقتياً → تعتبر سارية
-        if candidate and not candidate.is_time_expired:
-            free_active_session = candidate
+        # جلسة مجانية نشطة (غير منتهية)
+        if last_free_session and not last_free_session.is_time_expired:
+            free_active_session = last_free_session
             free_session_eligible = False
             free_session_message = "لديك جلسة مجانية سارية."
         else:
-            # لا توجد جلسة سارية
-            had_free_before = LettersSession.objects.filter(
-                package=free_package,
-                host=request.user
-            ).exists()
-
-            if had_free_before:
+            # انتهت أو لا توجد جلسة → نتحقق هل سبق استخدامها
+            if last_free_session:
                 free_session_eligible = False
                 free_session_message = "لقد استخدمت الجلسة المجانية الخاصة بك."
             else:
                 free_session_eligible = True
-                free_session_message = ""
 
     # =========================
     # الحزم المدفوعة
@@ -345,44 +339,44 @@ def letters_game_home(request):
     paid_qs = LettersPackage.objects.filter(
         is_active=True,
         is_free=False,
-        game_type="letters"
+        game_type='letters'
     )
 
     paid_packages_mixed = paid_qs.filter(
-        question_theme="mixed"
-    ).order_by("package_number")
+        question_theme='mixed'
+    ).order_by('package_number')
 
     paid_packages_sports = paid_qs.filter(
-        question_theme="sports"
-    ).order_by("package_number")
+        question_theme='sports'
+    ).order_by('package_number')
 
     # =========================
-    # منطق الشراء (موحد وصحيح)
+    # منطق الشراء المصحّح
     # =========================
-    active_packages_ids = set()        # شراء مكتمل + صالح → ابدأ اللعب
-    completed_packages_ids = set()     # شراء مكتمل لكن انتهى
+    active_packages_ids = set()       # شراء مكتمل وصالح → "ابدأ اللعب"
+    completed_packages_ids = set()    # شراء مكتمل وانتهى → "سبق شراء"
     expired_packages_ids = set()
     used_before_ids = set()
 
     if request.user.is_authenticated:
         purchases = UserPurchase.objects.filter(
             user=request.user,
-            package__game_type="letters"
+            package__game_type='letters'
         )
 
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            # تجاهل غير المكتمل
+            # شراء غير مكتمل → تجاهل
             if not p.is_completed:
                 continue
 
-            # شراء صالح
+            # شراء مكتمل وصالح
             if p.expires_at and p.expires_at > now:
                 active_packages_ids.add(p.package_id)
                 continue
 
-            # شراء منتهي
+            # شراء مكتمل وانتهت صلاحيته
             completed_packages_ids.add(p.package_id)
             expired_packages_ids.add(p.package_id)
 
@@ -405,6 +399,7 @@ def letters_game_home(request):
     }
 
     return render(request, "games/letters/packages.html", context)
+
 
 
 from django.http import JsonResponse
