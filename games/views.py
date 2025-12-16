@@ -383,13 +383,7 @@ def letters_game_home(request):
 @require_http_methods(["POST"])
 def create_letters_session(request):
     """
-    إنشاء جلسة خلية الحروف:
-    - المجانية: تتطلب تسجيل دخول + أهلية جلسة مجانية واحدة (FreeTrialUsage).
-    - المدفوعة: تتطلب تسجيل دخول + وجود شراء نشط واحد غير مكتمل.
-      * إن كان عنده جلسة نشطة لنفس الحزمة/الشراء → نعيد توجيهه إليها.
-      * وإلا ننشئ جلسة واحدة ونثبت ترتيب الحروف.
-    - حماية ضد النقر المزدوج عبر قفل كاش (3 ثواني).
-    - ===== التعديل المهم: redirect مباشر لصفحة الجلسة =====
+    إنشاء جلسة خلية الحروف - يرجع JSON للـ AJAX requests
     """
     if request.method != 'POST':
         return redirect('games:letters_home')
@@ -397,40 +391,53 @@ def create_letters_session(request):
     package_id = request.POST.get('package_id')
     package = get_object_or_404(GamePackage, id=package_id, game_type='letters')
 
-    # قفل خفيف لمنع الإنشاء المزدوج لكل مستخدم/آيبي
+    # قفل خفيف
     lock_owner = request.user.id if request.user.is_authenticated else request.META.get('REMOTE_ADDR', 'anon')
     lock_key = f"letters_create_lock:{lock_owner}"
     if cache.get(lock_key):
+        # للـ AJAX requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'يتم إنشاء الجلسة الآن'}, status=429)
         messages.info(request, '⏳ يتم إنشاء الجلسة الآن، انتظر لحظات...')
         return redirect('games:letters_home')
+    
     cache.set(lock_key, 1, timeout=3)
 
     try:
         # ========= الحزمة المجانية =========
         if package.is_free:
             if not request.user.is_authenticated:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': 'يرجى تسجيل الدخول'}, status=401)
                 messages.error(request, 'يرجى تسجيل الدخول للاستفادة من الجلسة المجانية')
                 return redirect(f'/accounts/login/?next={request.path}')
 
-            # محاولة تسجيل الاستخدام المجاني (قيد فريد يمنع التكرار)
             try:
                 with transaction.atomic():
                     FreeTrialUsage.objects.create(user=request.user, game_type='letters')
             except IntegrityError:
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': 'لقد استخدمت الجلسة المجانية'}, status=400)
                 messages.error(request, 'لقد استخدمت الجلسة المجانية الخاصة بك.')
                 return redirect('games:letters_home')
 
-            # توجيه إلى جلسة مجانية نشطة لنفس الحزمة إن وُجدت
+            # جلسة موجودة
             existing = (GameSession.objects
                         .filter(host=request.user, package=package, is_active=True)
-                        .order_by('-created_at')
-                        .first())
+                        .order_by('-created_at').first())
             if existing and not existing.is_time_expired:
+                session_url = reverse('games:letters_session', args=[existing.id])
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'session_id': str(existing.id),
+                        'session_url': session_url,
+                        'message': 'تم توجيهك إلى جلستك المجانية النشطة.'
+                    })
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
-                # ===== redirect صحيح =====
                 return redirect('games:letters_session', session_id=existing.id)
 
-            # إنشاء جلسة مجانية جديدة
+            # إنشاء جلسة جديدة
             team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
             team2_name = request.POST.get('team2_name', 'الفريق البرتقالي')
 
@@ -440,74 +447,97 @@ def create_letters_session(request):
                 game_type='letters',
                 team1_name=team1_name,
                 team2_name=team2_name,
-                purchase=None,  # تأكيد أن المجاني بدون شراء
+                purchase=None,
             )
 
-            # ترتيب الحروف + التقدم
             letters = get_free_order()
             set_session_order(session.id, letters, is_free=True)
             LettersGameProgress.objects.create(session=session, cell_states={}, used_letters=[])
 
-            messages.success(request, '🎉 تم إنشاء جلستك المجانية بنجاح! ⏰ صالحة لمدة ساعة واحدة.')
+            session_url = reverse('games:letters_session', args=[session.id])
             
-            # ===== التعديل المهم: redirect لصفحة الجلسة مباشرة =====
+            # للـ AJAX - نرجع JSON
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'session_id': str(session.id),
+                    'session_url': session_url,
+                    'message': '🎉 تم إنشاء جلستك المجانية بنجاح!'
+                })
+            
+            messages.success(request, '🎉 تم إنشاء جلستك المجانية بنجاح!')
             return redirect('games:letters_session', session_id=session.id)
 
         # ========= الحزم المدفوعة =========
         if not request.user.is_authenticated:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'يرجى تسجيل الدخول'}, status=401)
             messages.error(request, 'يرجى تسجيل الدخول للحزم المدفوعة')
             return redirect(f'/accounts/login/?next={request.path}')
 
         with transaction.atomic():
             now = timezone.now()
-            # شراء نشط واحد غير مكتمل
-            purchase = (UserPurchase.objects
-                        .select_for_update()
+            purchase = (UserPurchase.objects.select_for_update()
                         .filter(user=request.user, package=package, is_completed=False, expires_at__gt=now)
-                        .order_by('-purchase_date')
-                        .first())
+                        .order_by('-purchase_date').first())
 
             if not purchase:
-                # حدّث أي شراء قديم غير مكتمل إن لزم
-                stale = (UserPurchase.objects
-                         .select_for_update()
+                stale = (UserPurchase.objects.select_for_update()
                          .filter(user=request.user, package=package, is_completed=False)
-                         .order_by('-purchase_date')
-                         .first())
+                         .order_by('-purchase_date').first())
                 if stale:
                     stale.mark_expired_if_needed(auto_save=True)
 
-                messages.error(request, 'يجب شراء هذه الحزمة أولًا أو أن شراءك السابق انتهت صلاحيته.')
+                error_msg = 'يجب شراء هذه الحزمة أولاً أو أن شراءك السابق انتهت صلاحيته.'
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': error_msg}, status=400)
+                messages.error(request, error_msg)
                 return redirect('games:letters_home')
 
-            # حدّث حالة انتهاء الصلاحية لو لزم
             if purchase.mark_expired_if_needed(auto_save=True):
-                messages.error(request, 'انتهت صلاحية الشراء السابق. لإعادة اللعب تحتاج شراء جديد.')
+                error_msg = 'انتهت صلاحية الشراء السابق. لإعادة اللعب تحتاج شراء جديد.'
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({'success': False, 'error': error_msg}, status=400)
+                messages.error(request, error_msg)
                 return redirect('games:letters_home')
 
-            # جلسة موجودة مرتبطة بنفس الشراء؟
+            # جلسة موجودة بالشراء
             existing_by_purchase = GameSession.objects.filter(purchase=purchase, is_active=True).first()
             if existing_by_purchase and not existing_by_purchase.is_time_expired:
-                messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
-                # ===== redirect صحيح =====
+                session_url = reverse('games:letters_session', args=[existing_by_purchase.id])
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'session_id': str(existing_by_purchase.id),
+                        'session_url': session_url,
+                        'message': 'لديك جلسة نشطة — تم توجيهك لها.'
+                    })
+                messages.info(request, 'لديك جلسة نشطة — تم توجيهك لها.')
                 return redirect('games:letters_session', session_id=existing_by_purchase.id)
 
-            # بديل احتياطي: جلسة بعد وقت الشراء لنفس الحزمة والمضيف
+            # جلسة موجودة بالحزمة
             existing_session = (GameSession.objects
-                                .filter(host=request.user, package=package, is_active=True, created_at__gte=purchase.purchase_date)
-                                .order_by('-created_at')
-                                .first())
+                                .filter(host=request.user, package=package, is_active=True, 
+                                        created_at__gte=purchase.purchase_date)
+                                .order_by('-created_at').first())
             if existing_session and not existing_session.is_time_expired:
-                # لو موجودة وما كانت مربوطة، اربطها بهذا الشراء (لو كان الحقل فارغ)
                 if existing_session.purchase_id is None:
                     existing_session.purchase = purchase
                     existing_session.full_clean()
                     existing_session.save(update_fields=['purchase'])
-                messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
-                # ===== redirect صحيح =====
+                
+                session_url = reverse('games:letters_session', args=[existing_session.id])
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'session_id': str(existing_session.id),
+                        'session_url': session_url,
+                        'message': 'لديك جلسة نشطة — تم توجيهك لها.'
+                    })
+                messages.info(request, 'لديك جلسة نشطة — تم توجيهك لها.')
                 return redirect('games:letters_session', session_id=existing_session.id)
 
-            # إنشاء جلسة واحدة لهذا الشراء (OneToOne)
+            # إنشاء جديدة
             team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
             team2_name = request.POST.get('team2_name', 'الفريق البرتقالي')
 
@@ -518,27 +548,36 @@ def create_letters_session(request):
                     game_type='letters',
                     team1_name=team1_name,
                     team2_name=team2_name,
-                    purchase=purchase,  # ← الربط المهم
+                    purchase=purchase,
                 )
             except IntegrityError:
-                # في حالة سباق وسبق وانربط الشراء بجلسة
                 session = GameSession.objects.get(purchase=purchase)
 
             letters = get_paid_order_fresh()
             set_session_order(session.id, letters, is_free=False)
-            # أنشئ التقدم إن ما كان موجود
             LettersGameProgress.objects.get_or_create(
                 session=session, defaults={'cell_states': {}, 'used_letters': []}
             )
 
-        messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع باللعب 🎉')
-        logger.info(f'New paid letters session created: {session.id} by {request.user.username}')
+        session_url = reverse('games:letters_session', args=[session.id])
         
-        # ===== التعديل المهم: redirect لصفحة الجلسة مباشرة =====
+        # للـ AJAX - نرجع JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'session_id': str(session.id),
+                'session_url': session_url,
+                'message': 'تم إنشاء الجلسة المدفوعة بنجاح! 🎉'
+            })
+        
+        messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! 🎉')
+        logger.info(f'New paid letters session created: {session.id} by {request.user.username}')
         return redirect('games:letters_session', session_id=session.id)
 
     except Exception as e:
         logger.error(f'Error creating letters session: {e}')
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': 'حدث خطأ أثناء إنشاء الجلسة'}, status=500)
         messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، يرجى المحاولة مرة أخرى')
         return redirect('games:letters_home')
     finally:
@@ -548,7 +587,7 @@ def create_letters_session(request):
             pass
 
 
-        
+
 
 def letters_session(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)

@@ -953,34 +953,26 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ===== إنشاء الجلسة - الحل البسيط =====
+    // ===== إنشاء الجلسة - الحل النهائي المضمون =====
     window.createLettersSession = async function (packageId, isFree) {
 
-        // التحقق من تسجيل الدخول
         if (!IS_AUTH) {
             window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
             return;
         }
 
-        if (!packageId) {
-            alert("معرف الحزمة غير صحيح");
+        if (!packageId || sessionLocked) {
+            if (sessionLocked) alert("انتظر قليلاً...");
             return;
         }
 
-        if (sessionLocked) {
-            alert("انتظر قليلاً... جاري إنشاء الجلسة");
-            return;
-        }
-
-        // البحث عن الزر
         const button = event ? event.currentTarget : document.querySelector(`button[onclick*="${packageId}"]`);
 
-        // التحقق من الأهلية للجلسة المجانية
+        // التحقق من الأهلية للمجانية
         if (isFree) {
             try {
                 const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
                 const data = await r.json();
-
                 if (!data.success || !data.eligible) {
                     alert(data.message || "لا يمكنك بدء الجولة المجانية.");
                     return;
@@ -993,25 +985,44 @@ document.addEventListener('DOMContentLoaded', function () {
         sessionLocked = true;
         showLoading(button, true);
 
-        // حفظ flag في localStorage
-        localStorage.setItem('openInNewTab', 'true');
-        localStorage.setItem('packageId', packageId);
-
-        const form = document.getElementById('lettersCreateForm');
-        const input = document.getElementById('lettersPkgId');
-        
-        input.value = packageId;
-        form.target = '';  // نفس الصفحة
-        
         try {
-            form.submit();
+            const formData = new FormData();
+            formData.append('package_id', packageId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const response = await fetch(CREATE_SESSION_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'  // مهم!
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.session_url) {
+                // فتح التبويب الجديد مباشرة
+                const fullUrl = data.session_url.startsWith('http') 
+                    ? data.session_url 
+                    : window.location.origin + data.session_url;
+                
+                window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                
+                // إعادة تحميل بعد ثانية
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                alert(data.error || 'حدث خطأ أثناء إنشاء الجلسة');
+            }
+
         } catch (error) {
             console.error('Error:', error);
             alert('حدث خطأ أثناء إنشاء الجلسة');
+        } finally {
             sessionLocked = false;
             showLoading(button, false);
-            localStorage.removeItem('openInNewTab');
-            localStorage.removeItem('packageId');
         }
     };
 
@@ -1020,28 +1031,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionFromUrl = urlParams.get('session');
     
     if (sessionFromUrl) {
-        // فتح الجلسة تلقائياً في تبويب جديد
         const sessionUrl = `/games/letters/session/${sessionFromUrl}/`;
         window.open(sessionUrl, '_blank', 'noopener,noreferrer');
         
-        // إزالة البارامتر من URL
         const newUrl = window.location.pathname + '?success=1';
         window.history.replaceState({}, document.title, newUrl);
-    }
-
-    // ===== التحقق من localStorage بعد redirect =====
-    if (localStorage.getItem('openInNewTab') === 'true') {
-        localStorage.removeItem('openInNewTab');
-        const pkgId = localStorage.getItem('packageId');
-        localStorage.removeItem('packageId');
-        
-        // التحقق من أننا في صفحة session
-        if (window.location.pathname.includes('/session/')) {
-            // نفتح نفس الصفحة في تبويب جديد
-            window.open(window.location.href, '_blank', 'noopener,noreferrer');
-            // نرجع للـ packages
-            window.location.href = '/games/letters/';
-        }
     }
 
 });
