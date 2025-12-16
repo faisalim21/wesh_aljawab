@@ -813,11 +813,20 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <button class="btn-play btn-success"
-                          type="button"
-                          onclick="startLetters('{{ package.id }}')">
-                      <span class="btn-text">ابدأ اللعب</span>
-                  </button>
+                  <form method="POST"
+                        action="{% url 'games:create_letters_session' %}"
+                        target="_blank">
+
+                      {% csrf_token %}
+                      <input type="hidden" name="package_id" value="{{ package.id }}">
+
+                      <button type="submit" class="btn-play btn-success">
+                          <i class="fas fa-play"></i>
+                          <span class="btn-text">ابدأ اللعب</span>
+                      </button>
+
+                  </form>
+
 
 
                 {% else %}
@@ -931,138 +940,107 @@ document.addEventListener('DOMContentLoaded', function () {
     const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
     const LOGIN_URL = "{% url 'accounts:login' %}";
     const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-    const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
-    const CREATE_SESSION_URL = "{% url 'games:create_letters_session' %}";
+    const API_ELIGIBILITY_URL =
+        "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
 
-    let sessionLocked = false;
-
-    // ===== حساب الخصم =====
+    /* =====================================================
+       🧮 حساب نسبة الخصم (UI فقط)
+    ===================================================== */
     (function computeSavings() {
         document.querySelectorAll('.save-badge').forEach(el => {
             const o = parseFloat(el.dataset.orig || '0');
             const d = parseFloat(el.dataset.disc || '0');
-            const pct = (o > 0 && d > 0 && d < o)
-                ? Math.round((1 - (d / o)) * 100)
-                : 0;
+            const pct =
+                (o > 0 && d > 0 && d < o)
+                    ? Math.round((1 - (d / o)) * 100)
+                    : 0;
+
             const tgt = el.querySelector('.save-pct');
             if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
         });
     })();
 
-    // ===== إظهار / إخفاء التحميل =====
+    /* =====================================================
+       ⏳ تحميل الزر
+    ===================================================== */
     function showLoading(button, show) {
         if (!button) return;
-        if (show) {
-            button.classList.add('loading');
-            button.disabled = true;
-        } else {
-            button.classList.remove('loading');
-            button.disabled = false;
-        }
+        button.classList.toggle('loading', show);
+        button.disabled = show;
     }
 
-    // =========================================================
-    // ✅ إنشاء جلسة خلية الحروف (تبويب جديد مضمون 100%)
-    // =========================================================
+    /* =====================================================
+       🟢 الجولة المجانية فقط (JS ضروري هنا)
+       - فتح تبويب فوري
+       - تحقق أهلية
+       - إرسال POST
+    ===================================================== */
     window.createLettersSession = async function (packageId, isFree) {
 
         if (!IS_AUTH) {
-            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+            window.location.href =
+                LOGIN_URL + '?next=' + encodeURIComponent(NEXT_URL);
             return;
         }
 
-        if (!packageId || sessionLocked) {
-            if (sessionLocked) alert("انتظر قليلاً...");
-            return;
-        }
+        if (!packageId || !isFree) return;
 
-        // 🔥 فتح التبويب فور الضغط (قبل أي await)
+        const button = event?.currentTarget || null;
+
+        // فتح التبويب فورًا (مهم ضد popup blocker)
         const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
         if (!gameTab) {
             alert("الرجاء السماح بفتح النوافذ المنبثقة");
             return;
         }
 
-        const button = event ? event.currentTarget : null;
-
-        // التحقق من الأهلية للمجانية
-        if (isFree) {
-            try {
-                const r = await fetch(API_ELIGIBILITY_URL, {
-                    credentials: "same-origin"
-                });
-                const data = await r.json();
-                if (!data.success || !data.eligible) {
-                    gameTab.close();
-                    alert(data.message || "لا يمكنك بدء الجولة المجانية.");
-                    return;
-                }
-            } catch (e) {
-                console.error("Eligibility error:", e);
-                gameTab.close();
-                alert("فشل التحقق من الأهلية");
-                return;
-            }
-        }
-
-        sessionLocked = true;
         showLoading(button, true);
 
         try {
-            const formData = new FormData();
-            formData.append('package_id', packageId);
-
-            const response = await fetch(CREATE_SESSION_URL, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+            // 1️⃣ تحقق الأهلية
+            const eligibilityRes = await fetch(API_ELIGIBILITY_URL, {
+                credentials: 'same-origin'
             });
+            const eligibility = await eligibilityRes.json();
 
-            const data = await response.json();
-
-            if (data.success && data.session_url) {
-                const fullUrl = data.session_url.startsWith('http')
-                    ? data.session_url
-                    : window.location.origin + data.session_url;
-
-                // ✅ توجيه التبويب المفتوح مسبقًا
-                gameTab.location.href = fullUrl;
-
-                // تحديث الصفحة الأم
-                setTimeout(() => {
-                    window.location.reload();
-                }, 800);
-
-            } else {
+            if (!eligibility.success || !eligibility.eligible) {
                 gameTab.close();
-                alert(data.error || 'فشل إنشاء الجلسة');
+                alert(eligibility.message || "لا يمكنك بدء الجولة المجانية.");
+                return;
             }
 
-        } catch (error) {
-            console.error("Create session error:", error);
+            // 2️⃣ إنشاء الجلسة عبر POST عادي
+            const form = document.getElementById('lettersCreateForm');
+            const input = document.getElementById('lettersPkgId');
+
+            input.value = packageId;
+            form.target = gameTab.name || '_blank';
+            form.submit();
+
+            // تحديث الصفحة الأم
+            setTimeout(() => window.location.reload(), 800);
+
+        } catch (err) {
+            console.error(err);
             gameTab.close();
-            alert('حدث خطأ أثناء إنشاء الجلسة');
+            alert("حدث خطأ أثناء بدء الجولة المجانية");
         } finally {
-            sessionLocked = false;
             showLoading(button, false);
         }
     };
 
-    // =========================================================
-    // ✅ فتح الجلسة مباشرة بعد نجاح الدفع (لو رجع session بالـ URL)
-    // =========================================================
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionFromUrl = urlParams.get('session');
+    /* =====================================================
+       🔁 فتح الجلسة تلقائيًا بعد الدفع (لو رجع session)
+    ===================================================== */
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session');
 
-    if (sessionFromUrl) {
-        const sessionUrl = `/games/letters/session/${sessionFromUrl}/`;
-        window.open(sessionUrl, '_blank', 'noopener,noreferrer');
+    if (sessionId) {
+        const url = `/games/letters/session/${sessionId}/`;
+        window.open(url, '_blank', 'noopener,noreferrer');
 
-        const newUrl = window.location.pathname + '?success=1';
-        window.history.replaceState({}, document.title, newUrl);
+        const cleanUrl = window.location.pathname + '?success=1';
+        window.history.replaceState({}, document.title, cleanUrl);
     }
 
 });
