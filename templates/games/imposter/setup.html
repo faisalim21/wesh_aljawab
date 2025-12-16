@@ -1,71 +1,170 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إعداد لعبة امبوستر</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعداد لعبة امبوستر - وش الجواب</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;800;900&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            background: #0f0f15;
-            color: #fff;
-            font-family: "Tajawal", sans-serif;
-            padding: 30px;
-        }
-        .cardx {
-            background: #1b1b24;
-            padding: 30px;
-            border-radius: 18px;
-            max-width: 480px;
-            margin: auto;
-            box-shadow: 0 0 25px rgba(0,0,0,0.4);
-        }
-        button {
-            font-size: 1.3rem;
-            padding: 12px;
-        }
-        label {
-            margin-top: 12px;
-            font-weight: bold;
-        }
-    </style>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#0f172a;
+      --border:#1e293b;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --grad:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);
+    }
+
+    body{
+      background:
+        radial-gradient(circle at top right,rgba(99,102,241,.18),transparent 40%),
+        radial-gradient(circle at top left,rgba(34,197,94,.12),transparent 45%),
+        #020617;
+      font-family:"Tajawal",sans-serif;
+      color:var(--text);
+      min-height:100vh;
+    }
+
+    /* ===== Layout ===== */
+    .setup-wrapper{
+      max-width:520px;
+      margin:120px auto 80px;
+      padding:0 18px;
+    }
+
+    .setup-card{
+      background:linear-gradient(160deg,#020617,#0b1120);
+      border:1px solid var(--border);
+      border-radius:28px;
+      padding:36px 32px 40px;
+      box-shadow:0 25px 70px rgba(0,0,0,.55);
+      animation:fadeIn .5s ease;
+    }
+
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(16px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+
+    .setup-title{
+      text-align:center;
+      font-size:2rem;
+      font-weight:900;
+      margin-bottom:8px;
+    }
+
+    .setup-sub{
+      text-align:center;
+      color:var(--muted);
+      font-size:1rem;
+      margin-bottom:26px;
+    }
+
+    /* ===== Form ===== */
+    label{
+      font-weight:800;
+      margin-bottom:6px;
+      margin-top:14px;
+      display:block;
+    }
+
+    .form-control{
+      background:#020617;
+      border:1px solid var(--border);
+      color:var(--text);
+      border-radius:14px;
+      padding:12px 14px;
+      font-size:1.05rem;
+    }
+
+    .form-control:focus{
+      background:#020617;
+      color:var(--text);
+      border-color:#6366f1;
+      box-shadow:0 0 0 .2rem rgba(99,102,241,.25);
+    }
+
+    .hint{
+      font-size:.85rem;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    /* ===== Button ===== */
+    .btn-start{
+      margin-top:28px;
+      width:100%;
+      padding:14px;
+      border-radius:18px;
+      border:none;
+      font-size:1.2rem;
+      font-weight:900;
+      color:#fff;
+      background:var(--grad);
+      box-shadow:0 16px 40px rgba(99,102,241,.45);
+      transition:.25s ease;
+    }
+
+    .btn-start:hover{
+      transform:translateY(-2px);
+      box-shadow:0 22px 55px rgba(129,140,248,.65);
+    }
+
+    @media(max-width:480px){
+      .setup-title{font-size:1.7rem}
+    }
+  </style>
 </head>
 
 <body>
 {% include "header.html" %}
 
-    <h2 class="text-center mb-4">إعداد اللعبة</h2>
+<div class="setup-wrapper">
+  <div class="setup-card">
 
-    <div class="cardx">
-
-        <form
-            method="POST"
-            action="{% url 'games:imposter_setup' package.id %}"
-        >
-            {% csrf_token %}
-
-            <label>عدد اللاعبين:</label>
-            <input type="number" name="players_count" class="form-control"
-                min="3" max="20" value="4" required>
-
-            <label>عدد الإمبوستر:</label>
-            <input type="number" name="imposters_count" class="form-control"
-                min="1" max="15" value="1" required>
-
-            <button
-                class="btn btn-primary w-100 mt-4"
-                formtarget="_blank"
-            >
-                ابدأ اللعبة →
-            </button>
-        </form>
-
-
-
+    <div class="setup-title">🎭 إعداد لعبة امبوستر</div>
+    <div class="setup-sub">
+      اضبط عدد اللاعبين والإمبوستر ثم ابدأ الجولة
     </div>
-{% include "footer.html" %}
 
+    <form method="POST" action="{% url 'games:imposter_setup' package.id %}">
+      {% csrf_token %}
+
+      <label>عدد اللاعبين</label>
+      <input
+        type="number"
+        name="players_count"
+        class="form-control"
+        min="3"
+        max="20"
+        value="4"
+        required
+      >
+      <div class="hint">الحد الأدنى 3 لاعبين</div>
+
+      <label>عدد الإمبوستر</label>
+      <input
+        type="number"
+        name="imposters_count"
+        class="form-control"
+        min="1"
+        max="15"
+        value="1"
+        required
+      >
+      <div class="hint">اختر عدد الإمبوستر في الجولة</div>
+
+      <button class="btn-start" formtarget="_blank">
+        🚀 ابدأ اللعبة
+      </button>
+    </form>
+
+  </div>
+</div>
+
+{% include "footer.html" %}
 </body>
 </html>
