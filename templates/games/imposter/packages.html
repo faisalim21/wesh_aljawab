@@ -206,8 +206,6 @@
 
         {% if pkg.is_free or pkg.package_number == 0 %}
           <span class="pkg-badge badge-free">مجانية</span>
-        {% else %}
-          <span class="pkg-badge badge-paid">مدفوعة</span>
         {% endif %}
 
         <div class="pkg-title">
@@ -237,6 +235,7 @@
                 <span class="val">{{ pkg.original_price|floatformat:2 }}</span>
                 <span class="icon-saudi_riyal"></span>
             </span>
+
             <span class="price-new">
                 <span class="val">{{ pkg.discounted_price|floatformat:2 }}</span>
                 <span class="icon-saudi_riyal"></span>
@@ -250,7 +249,6 @@
         </div>
         {% endif %}
 
-        </div>
 
 
         {% if pkg.is_free or pkg.package_number == 0 %}
