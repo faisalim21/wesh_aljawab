@@ -894,13 +894,19 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <button class="btn-play btn-success"
-                          type="button"
-                          onclick="createLettersSession('{{ package.id }}', false)">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
+                  <form method="POST"
+                        action="{% url 'games:create_letters_session' %}"
+                        target="_blank">
+
+                      {% csrf_token %}
+                      <input type="hidden" name="package_id" value="{{ package.id }}">
+
+                      <button type="submit" class="btn-play btn-success">
+                          <i class="fas fa-play"></i>
+                          ابدأ اللعب
+                      </button>
+
+                  </form>
                 {% else %}
                   <a class="btn-play"
                     href="{% url 'payments:start_payment' package.id %}">
