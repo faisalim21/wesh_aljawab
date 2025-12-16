@@ -80,14 +80,16 @@
     }
 
     .pkg-badge{
-      position:absolute;
-      top:18px;
-      right:18px;
-      padding:6px 14px;
-      font-size:.8rem;
-      font-weight:900;
-      border-radius:999px;
+    position:absolute;
+    top:16px;
+    left:16px;   /* بدل right */
+    padding:6px 14px;
+    font-size:.8rem;
+    font-weight:900;
+    border-radius:999px;
+    z-index:5;
     }
+
 
     .badge-free{
       background:rgba(34,197,94,.12);
@@ -228,30 +230,26 @@
           {% endif %}
         </div>
 
+        {% if not pkg.is_free and pkg.effective_price > 0 %}
         <div class="price">
-        {% if pkg.is_free or pkg.effective_price == 0 %}
-            <span class="price-new">
-            <span class="val">0</span>
-            <span class="icon-saudi_riyal"></span>
-            </span>
-        {% else %}
             {% if pkg.has_discount %}
             <span class="price-old">
-                <span class="val">{{ pkg.original_price|floatformat:0 }}</span>
+                <span class="val">{{ pkg.original_price|floatformat:2 }}</span>
                 <span class="icon-saudi_riyal"></span>
             </span>
-
             <span class="price-new">
-                <span class="val">{{ pkg.discounted_price|floatformat:0 }}</span>
+                <span class="val">{{ pkg.discounted_price|floatformat:2 }}</span>
                 <span class="icon-saudi_riyal"></span>
             </span>
             {% else %}
             <span class="price-new">
-                <span class="val">{{ pkg.price|floatformat:0 }}</span>
+                <span class="val">{{ pkg.price|floatformat:2 }}</span>
                 <span class="icon-saudi_riyal"></span>
             </span>
             {% endif %}
+        </div>
         {% endif %}
+
         </div>
 
 
