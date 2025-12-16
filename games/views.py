@@ -389,6 +389,7 @@ def create_letters_session(request):
       * إن كان عنده جلسة نشطة لنفس الحزمة/الشراء → نعيد توجيهه إليها.
       * وإلا ننشئ جلسة واحدة ونثبت ترتيب الحروف.
     - حماية ضد النقر المزدوج عبر قفل كاش (3 ثواني).
+    - ===== التعديل المهم: redirect مباشر لصفحة الجلسة =====
     """
     if request.method != 'POST':
         return redirect('games:letters_home')
@@ -426,8 +427,8 @@ def create_letters_session(request):
                         .first())
             if existing and not existing.is_time_expired:
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
+                # ===== redirect صحيح =====
                 return redirect('games:letters_session', session_id=existing.id)
-
 
             # إنشاء جلسة مجانية جديدة
             team1_name = request.POST.get('team1_name', 'الفريق الأخضر')
@@ -448,6 +449,8 @@ def create_letters_session(request):
             LettersGameProgress.objects.create(session=session, cell_states={}, used_letters=[])
 
             messages.success(request, '🎉 تم إنشاء جلستك المجانية بنجاح! ⏰ صالحة لمدة ساعة واحدة.')
+            
+            # ===== التعديل المهم: redirect لصفحة الجلسة مباشرة =====
             return redirect('games:letters_session', session_id=session.id)
 
         # ========= الحزم المدفوعة =========
@@ -486,8 +489,8 @@ def create_letters_session(request):
             existing_by_purchase = GameSession.objects.filter(purchase=purchase, is_active=True).first()
             if existing_by_purchase and not existing_by_purchase.is_time_expired:
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
+                # ===== redirect صحيح =====
                 return redirect('games:letters_session', session_id=existing_by_purchase.id)
-
 
             # بديل احتياطي: جلسة بعد وقت الشراء لنفس الحزمة والمضيف
             existing_session = (GameSession.objects
@@ -501,6 +504,7 @@ def create_letters_session(request):
                     existing_session.full_clean()
                     existing_session.save(update_fields=['purchase'])
                 messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
+                # ===== redirect صحيح =====
                 return redirect('games:letters_session', session_id=existing_session.id)
 
             # إنشاء جلسة واحدة لهذا الشراء (OneToOne)
@@ -529,6 +533,8 @@ def create_letters_session(request):
 
         messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! استمتع باللعب 🎉')
         logger.info(f'New paid letters session created: {session.id} by {request.user.username}')
+        
+        # ===== التعديل المهم: redirect لصفحة الجلسة مباشرة =====
         return redirect('games:letters_session', session_id=session.id)
 
     except Exception as e:
@@ -540,6 +546,9 @@ def create_letters_session(request):
             cache.delete(lock_key)
         except Exception:
             pass
+
+
+        
 
 def letters_session(request, session_id):
     session = get_object_or_404(GameSession, id=session_id)

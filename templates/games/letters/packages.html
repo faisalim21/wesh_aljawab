@@ -699,9 +699,6 @@
     <button type="submit" id="hiddenSubmitBtn">go</button>
   </form>
 
-  <!-- Hidden iframe for session creation -->
-  <iframe id="sessionIframe" name="sessionIframe" style="display:none;"></iframe>
-
   <section class="packages-section">
     <div class="section-title">
       <h2>اختر الحزمة المناسبة</h2>
@@ -998,80 +995,44 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // دالة إرسال الـ form
+    // دالة إرسال الـ form - الطريقة الكلاسيكية البسيطة
     function submitSessionForm(packageId, button) {
         sessionLocked = true;
         showLoading(button, true);
 
         const form = document.getElementById('lettersCreateForm');
         const input = document.getElementById('lettersPkgId');
-        const iframe = document.getElementById('sessionIframe');
         
         input.value = packageId;
-        form.target = 'sessionIframe';
-
-        // مراقبة الـ iframe
-        let checkCount = 0;
-        const maxChecks = 20; // 10 ثواني (500ms * 20)
         
-        const checkInterval = setInterval(() => {
-            checkCount++;
+        // فتح تبويب جديد مباشرة
+        form.target = '_blank';
+        
+        try {
+            // إرسال الـ form
+            form.submit();
             
-            try {
-                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                const iframeUrl = iframe.contentWindow.location.href;
-                
-                // التحقق من أننا وصلنا لصفحة الجلسة
-                if (iframeUrl && iframeUrl.includes('/games/letters/session/')) {
-                    clearInterval(checkInterval);
-                    sessionLocked = false;
-                    showLoading(button, false);
-                    
-                    // فتح الصفحة في تبويب جديد
-                    window.open(iframeUrl, '_blank', 'noopener,noreferrer');
-                    
-                    // إعادة تحميل الصفحة لتحديث الحالة
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                    
-                    return;
-                }
-                
-                // التحقق من أننا رجعنا للـ packages (فشل)
-                if (iframeUrl && iframeUrl.includes('/games/letters/') && 
-                    !iframeUrl.includes('/session/')) {
-                    clearInterval(checkInterval);
-                    sessionLocked = false;
-                    showLoading(button, false);
-                    
-                    // إعادة تحميل الصفحة لتحديث الحالة
-                    window.location.reload();
-                    return;
-                }
-                
-            } catch (e) {
-                // Cross-origin error - نتجاهله
-            }
-            
-            // Timeout بعد 10 ثواني
-            if (checkCount >= maxChecks) {
-                clearInterval(checkInterval);
+            // إعادة تعيين الحالة بعد ثانية
+            setTimeout(() => {
                 sessionLocked = false;
                 showLoading(button, false);
-                alert('انتهت مهلة الانتظار. يرجى إعادة المحاولة.');
-            }
+                
+                // إعادة تحميل الصفحة بعد 2 ثانية لتحديث الحالة
+                setTimeout(() => {
+                    if (window.location.search.includes('paid=1')) {
+                        // إزالة paid parameter من URL
+                        const newUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, newUrl);
+                    }
+                    window.location.reload();
+                }, 2000);
+            }, 1000);
             
-        }, 500);
-
-        // إرسال الـ form
-        try {
-            form.submit();
         } catch (error) {
-            clearInterval(checkInterval);
+            console.error('Error submitting form:', error);
+            alert('حدث خطأ أثناء إنشاء الجلسة');
             sessionLocked = false;
             showLoading(button, false);
-            alert('حدث خطأ أثناء إنشاء الجلسة');
         }
     }
 
