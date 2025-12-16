@@ -164,8 +164,52 @@
       backdrop-filter:blur(20px);
       background:rgba(255,255,255,.98);
       z-index:1050 !important;
-      position:absolute !important;
+      
+      /* تأثير الظهور العصري */
+      opacity:0;
+      visibility:hidden;
+      transform:translateY(-20px) scale(0.95);
+      transition:all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
     }
+
+    .dropdown.show .custom-dropdown,
+    .custom-dropdown.show{
+      opacity:1;
+      visibility:visible;
+      transform:translateY(0) scale(1);
+      display:block !important;
+    }
+
+    /* تأثير تدريجي للعناصر داخل القائمة */
+    .custom-dropdown .dropdown-item{
+      opacity:0;
+      transform:translateX(20px);
+      transition:all 0.3s ease;
+    }
+
+    .dropdown.show .custom-dropdown .dropdown-item,
+    .custom-dropdown.show .dropdown-item{
+      opacity:1;
+      transform:translateX(0);
+    }
+
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(1),
+    .custom-dropdown.show .dropdown-item:nth-child(1){ transition-delay:0.05s; }
+    
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(2),
+    .custom-dropdown.show .dropdown-item:nth-child(2){ transition-delay:0.1s; }
+    
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(3),
+    .custom-dropdown.show .dropdown-item:nth-child(3){ transition-delay:0.15s; }
+    
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(4),
+    .custom-dropdown.show .dropdown-item:nth-child(4){ transition-delay:0.2s; }
+    
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(5),
+    .custom-dropdown.show .dropdown-item:nth-child(5){ transition-delay:0.25s; }
+    
+    .dropdown.show .custom-dropdown .dropdown-item:nth-child(6),
+    .custom-dropdown.show .dropdown-item:nth-child(6){ transition-delay:0.3s; }
 
     .dropdown-item{ 
       padding:.85rem 1.2rem; 
@@ -530,7 +574,6 @@
             <a class="nav-link dropdown-toggle" 
                href="#" 
                role="button"
-               data-bs-toggle="dropdown" 
                aria-expanded="false" 
                id="gamesDropdown">
               <i class="fas fa-gamepad" aria-hidden="true"></i>
@@ -624,7 +667,6 @@
             <a class="nav-link dropdown-toggle user-menu" 
                href="#" 
                role="button"
-               data-bs-toggle="dropdown" 
                aria-expanded="false" 
                id="userDropdown">
               <div class="user-avatar" aria-hidden="true">
@@ -747,7 +789,7 @@
 
   // ===== Desktop Hover =====
   const dropdowns = document.querySelectorAll('.nav-item.dropdown');
-  const isDesktop = () => window.matchMedia('(pointer:fine)').matches && window.innerWidth > 991;
+  const isDesktop = () => window.innerWidth > 991;
 
   function onEnter(){
     if(!isDesktop()) return;
@@ -785,43 +827,54 @@
   refreshHover(); 
   window.addEventListener('resize', refreshHover, { passive:true });
 
-  // ===== Mobile Dropdown Toggle =====
+  // ===== Mobile & Desktop Dropdown Toggle =====
   document.querySelectorAll('.dropdown-toggle').forEach(toggle=>{
     toggle.addEventListener('click', function(e){
-      if(window.innerWidth <= 991){
-        e.preventDefault(); 
-        e.stopPropagation();
-        
-        const dd = this.closest('.dropdown');
-        const menu = dd?.querySelector('.dropdown-menu');
-        if(!dd || !menu) return;
+      e.preventDefault(); 
+      e.stopPropagation();
+      
+      const dd = this.closest('.dropdown');
+      const menu = dd?.querySelector('.dropdown-menu');
+      if(!dd || !menu) return;
 
-        // Close other dropdowns
-        document.querySelectorAll('.dropdown-menu.show').forEach(other=>{
-          if(other !== menu){ 
-            other.classList.remove('show'); 
-            other.closest('.dropdown')?.classList.remove('show'); 
-          }
-        });
-
-        // Toggle current
-        const isShowing = menu.classList.contains('show');
-        if(isShowing) {
-          menu.classList.remove('show');
-          dd.classList.remove('show');
-          this.setAttribute('aria-expanded', 'false');
-        } else {
-          menu.classList.add('show');
-          dd.classList.add('show');
-          this.setAttribute('aria-expanded', 'true');
+      // إغلاق القوائم الأخرى
+      document.querySelectorAll('.dropdown').forEach(other=>{
+        if(other !== dd && other.classList.contains('show')){ 
+          other.classList.remove('show');
+          other.querySelector('.dropdown-menu')?.classList.remove('show');
+          other.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', 'false');
         }
+      });
+
+      // تبديل حالة القائمة الحالية
+      const isShowing = dd.classList.contains('show');
+      if(isShowing) {
+        dd.classList.remove('show');
+        menu.classList.remove('show');
+        this.setAttribute('aria-expanded', 'false');
+      } else {
+        dd.classList.add('show');
+        menu.classList.add('show');
+        this.setAttribute('aria-expanded', 'true');
       }
     });
   });
 
+  // إغلاق القوائم عند الضغط خارجها
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.dropdown')){
+      document.querySelectorAll('.dropdown.show').forEach(dd=>{
+        dd.classList.remove('show');
+        dd.querySelector('.dropdown-menu')?.classList.remove('show');
+        dd.querySelector('.dropdown-toggle')?.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+
+  // منع إغلاق القائمة عند الضغط داخلها
   document.querySelectorAll('.dropdown-menu').forEach(menu=>{
     menu.addEventListener('click', e=>{ 
-      if(window.innerWidth <= 991) e.stopPropagation(); 
+      e.stopPropagation(); 
     });
   });
 
