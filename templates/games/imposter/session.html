@@ -135,28 +135,29 @@
   <!-- Header / Logo -->
   <div class="game-header">
     <div class="game-logo">
-      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-           alt="وش الجواب">
+      <img
+        src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+        alt="وش الجواب">
     </div>
   </div>
 
   <!-- Game Card -->
   <div class="card-game">
 
-    <!-- المرحلة 0: تمرير الجوال -->
-    {% if step == 0 %}
+    <!-- المرحلة 1: تمرير الجوال -->
+    {% if step == "pass" %}
       <div class="player-hint">مرّر الجوال إلى</div>
       <div class="player-number">اللاعب رقم {{ player_number }}</div>
 
       <form method="post">
         {% csrf_token %}
-        <input type="hidden" name="step" value="1">
+        <input type="hidden" name="action" value="show">
         <button class="btn-next">إظهار الدور</button>
       </form>
     {% endif %}
 
-    <!-- المرحلة 1: عرض الدور -->
-    {% if step == 1 %}
+    <!-- المرحلة 2: كشف الدور -->
+    {% if step == "reveal" %}
       <div class="player-hint">دور</div>
       <div class="player-number">اللاعب {{ player_number }}</div>
 
@@ -170,17 +171,17 @@
 
       <form method="post">
         {% csrf_token %}
-        <input type="hidden" name="step" value="next">
+        <input type="hidden" name="action" value="next">
         <button class="btn-next">التالي</button>
       </form>
     {% endif %}
 
-    <!-- المرحلة الأخيرة -->
+    <!-- المرحلة 3: نهاية الجولة -->
     {% if step == "done" %}
-      <div class="game-title">جاهزين؟</div>
+      <div class="player-hint">جاهزين؟</div>
 
-      <p class="big-word">ابدأوا اللعب الآن ✨</p>
-      <p class="player-label">
+      <p class="description" style="margin-top:10px">
+        ابدأوا اللعب الآن ✨<br>
         كل لاعب يعطي تلميح، والإمبوستر يحاول يخفي نفسه
       </p>
 
@@ -189,16 +190,13 @@
 
         {% if not is_last_round %}
           <input type="hidden" name="action" value="next_round">
-          <button class="btn-next">
-            🔄 جولة جديدة
-          </button>
+          <button class="btn-next">🔄 جولة جديدة</button>
         {% else %}
-          <p class="big-word text-success">🎉 انتهت اللعبة</p>
-          <p class="player-label">خلصت كلمات الحزمة</p>
+          <div class="secret-word">🎉 انتهت اللعبة</div>
+          <div class="description">خلصت كلمات الحزمة</div>
         {% endif %}
       </form>
     {% endif %}
-
 
   </div>
 </div>
