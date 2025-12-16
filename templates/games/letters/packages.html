@@ -954,7 +954,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ===== إنشاء الجلسة =====
-    window.createLettersSession = function (packageId, isFree) {
+    window.createLettersSession = async function (packageId, isFree) {
 
         // التحقق من تسجيل الدخول
         if (!IS_AUTH) {
@@ -977,64 +977,81 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // التحقق من الأهلية للجلسة المجانية
         if (isFree) {
-            fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" })
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.success || !data.eligible) {
-                        alert(data.message || "لا يمكنك بدء الجولة المجانية.");
-                        return;
-                    }
-                    submitSessionForm(packageId, button);
-                })
-                .catch(e => {
-                    console.error("Error checking eligibility:", e);
-                    submitSessionForm(packageId, button);
-                });
-        } else {
-            submitSessionForm(packageId, button);
-        }
-    };
+            try {
+                const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
+                const data = await r.json();
 
-    // دالة إرسال الـ form - الطريقة الكلاسيكية البسيطة
-    function submitSessionForm(packageId, button) {
+                if (!data.success || !data.eligible) {
+                    alert(data.message || "لا يمكنك بدء الجولة المجانية.");
+                    return;
+                }
+            } catch (e) {
+                console.error("Error checking eligibility:", e);
+            }
+        }
+
         sessionLocked = true;
         showLoading(button, true);
 
-        const form = document.getElementById('lettersCreateForm');
-        const input = document.getElementById('lettersPkgId');
-        
-        input.value = packageId;
-        
-        // فتح تبويب جديد مباشرة
-        form.target = '_blank';
-        
         try {
-            // إرسال الـ form
-            form.submit();
-            
-            // إعادة تعيين الحالة بعد ثانية
-            setTimeout(() => {
-                sessionLocked = false;
-                showLoading(button, false);
+            // إنشاء FormData
+            const formData = new FormData();
+            formData.append('package_id', packageId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            // إرسال الطلب
+            const response = await fetch(CREATE_SESSION_URL, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                redirect: 'manual' // مهم جداً!
+            });
+
+            // استخراج الـ redirect URL من الـ response
+            if (response.type === 'opaqueredirect' || response.redirected) {
+                // المتصفح عمل redirect تلقائي
+                const redirectUrl = response.url;
                 
-                // إعادة تحميل الصفحة بعد 2 ثانية لتحديث الحالة
-                setTimeout(() => {
-                    if (window.location.search.includes('paid=1')) {
-                        // إزالة paid parameter من URL
-                        const newUrl = window.location.pathname;
-                        window.history.replaceState({}, document.title, newUrl);
-                    }
-                    window.location.reload();
-                }, 2000);
-            }, 1000);
-            
+                if (redirectUrl && redirectUrl.includes('/session/')) {
+                    // فتح التبويب الجديد
+                    window.open(redirectUrl, '_blank', 'noopener,noreferrer');
+                    
+                    // إعادة تحميل الصفحة الحالية بعد ثانية
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('لم يتم الحصول على رابط الجلسة');
+                }
+            } else if (response.status === 302 || response.status === 301) {
+                // الحصول على Location header
+                const locationUrl = response.headers.get('Location');
+                
+                if (locationUrl) {
+                    const fullUrl = locationUrl.startsWith('http') 
+                        ? locationUrl 
+                        : window.location.origin + locationUrl;
+                    
+                    window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('لم يتم الحصول على رابط التوجيه');
+                }
+            } else {
+                throw new Error('فشل إنشاء الجلسة');
+            }
+
         } catch (error) {
-            console.error('Error submitting form:', error);
-            alert('حدث خطأ أثناء إنشاء الجلسة');
+            console.error('Error:', error);
+            alert(error.message || 'حدث خطأ أثناء إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
+        } finally {
             sessionLocked = false;
             showLoading(button, false);
         }
-    }
+    };
 
     // ===== معالج نجاح الدفع من URL =====
     const urlParams = new URLSearchParams(window.location.search);
