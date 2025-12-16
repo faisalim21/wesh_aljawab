@@ -11,36 +11,39 @@
 
   <style>
     :root{
-      --bg:#0b1020;
-      --card:#0f172a;
-      --border:#1e293b;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --grad:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);
+      --primary:#6366f1;
+      --secondary:#06b6d4;
       --success:#22c55e;
-      --paid:linear-gradient(135deg,#8b5cf6,#6366f1);
+      --bg:#f8fafc;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --border:#e5e7eb;
+      --grad:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);
     }
 
     body{
-      background:radial-gradient(circle at top,#111827,#020617 70%);
+      background:
+        radial-gradient(circle at top right,rgba(99,102,241,.08),transparent 45%),
+        radial-gradient(circle at top left,rgba(6,182,212,.08),transparent 45%),
+        var(--bg);
       font-family:'Tajawal',sans-serif;
       color:var(--text);
     }
 
     /* ===== Hero ===== */
     .hero{
-      padding:120px 0 90px;
+      padding:120px 0 80px;
       text-align:center;
-      background:
-        radial-gradient(circle at top right,rgba(99,102,241,.25),transparent 40%),
-        radial-gradient(circle at top left,rgba(34,197,94,.18),transparent 45%);
-      border-bottom:1px solid var(--border);
     }
 
     .hero h1{
       font-size:3rem;
       font-weight:900;
-      margin-bottom:10px;
+      margin-bottom:12px;
+      background:var(--grad);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
     }
 
     .hero p{
@@ -55,25 +58,24 @@
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
       gap:28px;
-      margin-top:-40px;
-      padding-bottom:80px;
+      padding-bottom:90px;
     }
 
     /* ===== Card ===== */
     .pkg-card{
-      background:linear-gradient(160deg,#020617,#0b1120);
+      background:var(--card);
       border:1px solid var(--border);
       border-radius:26px;
-      padding:26px;
-      box-shadow:0 20px 50px rgba(0,0,0,.45);
+      padding:26px 26px 30px;
+      box-shadow:0 12px 30px rgba(15,23,42,.08);
       transition:.25s ease;
       position:relative;
     }
 
     .pkg-card:hover{
       transform:translateY(-6px);
-      border-color:#6366f1;
-      box-shadow:0 25px 70px rgba(0,0,0,.7);
+      box-shadow:0 18px 45px rgba(15,23,42,.12);
+      border-color:#c7d2fe;
     }
 
     .pkg-badge{
@@ -86,14 +88,14 @@
       border-radius:999px;
     }
 
-    .free{
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-      color:#ecfdf5;
+    .badge-free{
+      background:rgba(34,197,94,.12);
+      color:#15803d;
     }
 
-    .paid{
-      background:var(--paid);
-      color:#eef2ff;
+    .badge-paid{
+      background:rgba(99,102,241,.12);
+      color:#4338ca;
     }
 
     .pkg-title{
@@ -117,27 +119,28 @@
 
     .pkg-meta span{
       font-size:.85rem;
-      padding:5px 12px;
-      background:#020617;
-      border:1px solid var(--border);
+      padding:6px 12px;
+      background:#f1f5f9;
       border-radius:999px;
-      color:#c7d2fe;
+      color:#334155;
+      font-weight:700;
     }
 
     .price{
-      margin:18px 0;
+      margin:18px 0 22px;
       font-weight:900;
+      font-size:1.1rem;
     }
 
     .price-old{
       text-decoration:line-through;
-      color:#64748b;
+      color:#94a3b8;
       margin-left:8px;
       font-weight:600;
     }
 
     .price-new{
-      font-size:1.35rem;
+      font-size:1.4rem;
       color:var(--success);
     }
 
@@ -153,28 +156,28 @@
       align-items:center;
       justify-content:center;
       gap:8px;
-      background:var(--paid);
+      background:var(--grad);
       color:#fff;
-      box-shadow:0 14px 32px rgba(99,102,241,.4);
+      box-shadow:0 14px 30px rgba(99,102,241,.35);
       transition:.25s ease;
     }
 
     .btn-main:hover{
       transform:translateY(-2px);
-      box-shadow:0 18px 40px rgba(129,140,248,.6);
+      box-shadow:0 18px 38px rgba(99,102,241,.45);
     }
 
     .btn-free{
       background:linear-gradient(135deg,#22c55e,#16a34a);
-      box-shadow:0 14px 32px rgba(34,197,94,.4);
+      box-shadow:0 14px 30px rgba(34,197,94,.35);
     }
 
     .btn-free:hover{
-      box-shadow:0 18px 40px rgba(34,197,94,.6);
+      box-shadow:0 18px 38px rgba(34,197,94,.45);
     }
 
     @media(max-width:768px){
-      .hero h1{font-size:2.3rem}
+      .hero h1{font-size:2.2rem}
     }
   </style>
 </head>
@@ -186,7 +189,7 @@
   <div class="container">
     <h1>🎭 لعبة الإمبوستر</h1>
     <p>
-      اختر الحزمة المناسبة لكم، كل جولة بكلمة جديدة وتجربة مختلفة
+      اختر الحزمة المناسبة لكم، كل جولة بكلمة مختلفة وتجربة ممتعة
       لاكتشاف الإمبوستر بينكم.
     </p>
   </div>
@@ -199,9 +202,9 @@
       <div class="pkg-card">
 
         {% if pkg.is_free or pkg.package_number == 0 %}
-          <span class="pkg-badge free">مجانية</span>
+          <span class="pkg-badge badge-free">مجانية</span>
         {% else %}
-          <span class="pkg-badge paid">مدفوعة</span>
+          <span class="pkg-badge badge-paid">مدفوعة</span>
         {% endif %}
 
         <div class="pkg-title">
@@ -213,7 +216,7 @@
         </div>
 
         <div class="pkg-desc">
-          {{ pkg.description|default:"جولات متنوعة بكلمات سرّية مختلفة، مثالية للتحدي والضحك مع الأصدقاء." }}
+          {{ pkg.description|default:"جولات ممتعة بكلمات سرّية مختلفة تناسب اللعب الجماعي." }}
         </div>
 
         <div class="pkg-meta">
@@ -221,9 +224,6 @@
             <span><i class="fa-solid fa-rotate ms-1"></i>{{ pkg.word_count }} جولة</span>
           {% else %}
             <span><i class="fa-solid fa-rotate ms-1"></i>{{ pkg.imposter_words.all|length }} جولة</span>
-          {% endif %}
-
-          {% if not pkg.is_free %}
           {% endif %}
         </div>
 
