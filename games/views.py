@@ -1586,9 +1586,10 @@ def images_create(request):
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
-        is_completed=True,
+        is_completed=False,     # ✔️ شراء نشط
         expires_at__gt=timezone.now()
-    ).order_by("-purchase_date").first()
+    ).first()
+
 
     if not purchase:
         messages.error(request, "لا يوجد شراء صالح لهذه الحزمة.")
