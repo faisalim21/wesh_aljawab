@@ -731,11 +731,20 @@
                   <span class="btn-text">ارجع إلى جلستك المجانية</span>
                 </a>
               {% elif free_session_eligible %}
-                <button class="btn-play btn-success" type="button" onclick="createLettersSession('{{ free_package.id }}', true)">
-                  <i class="fas fa-play"></i>
-                  <span class="btn-text">ابدأ الجولة المجانية</span>
-                  <div class="loading-spinner"><div class="spinner"></div></div>
-                </button>
+                <form method="POST"
+                      action="{% url 'games:create_letters_session' %}"
+                      target="_blank">
+
+                    {% csrf_token %}
+                    <input type="hidden" name="package_id" value="{{ free_package.id }}">
+
+                    <button type="submit" class="btn-play btn-success">
+                        <i class="fas fa-play"></i>
+                        <span class="btn-text">ابدأ الجولة المجانية</span>
+                    </button>
+
+                </form>
+
               {% else %}
                 <button class="btn-play" disabled>
                   <i class="fas fa-lock"></i>
@@ -813,28 +822,25 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <form method="POST"
-                        action="{% url 'games:create_letters_session' %}"
-                        target="_blank">
+                <form method="POST"
+                      action="{% url 'games:create_letters_session' %}"
+                      target="_blank">
 
-                      {% csrf_token %}
-                      <input type="hidden" name="package_id" value="{{ package.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="package_id" value="{{ package.id }}">
 
-                      <button type="submit" class="btn-play btn-success">
-                          <i class="fas fa-play"></i>
-                          <span class="btn-text">ابدأ اللعب</span>
-                      </button>
+                    <button type="submit" class="btn-play btn-success">
+                        <i class="fas fa-play"></i>
+                        <span class="btn-text">ابدأ اللعب</span>
+                    </button>
 
-                  </form>
-
-
-
+                </form>
                 {% else %}
-                  <a class="btn-play"
-                    href="{% url 'payments:start_payment' package.id %}">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="btn-text">شراء</span>
-                  </a>
+                <a class="btn-play"
+                  href="{% url 'payments:start_payment' package.id %}">
+                  <i class="fas fa-shopping-cart"></i>
+                  <span class="btn-text">شراء</span>
+                </a>
                 {% endif %}
               </div>
 
