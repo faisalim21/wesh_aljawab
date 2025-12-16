@@ -714,22 +714,29 @@
     }
     /* Top Announcement */
     .top-announcement {
-      position: relative;
-      z-index: 999;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 10000;
+
       width: 100%;
       padding: 10px 16px;
-      background: rgba(255, 255, 255, 0.85);
+
+      background: rgba(255, 255, 255, 0.92);
       backdrop-filter: blur(10px);
+
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
+
       font-size: 0.95rem;
       font-weight: 600;
       color: #1e293b;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
 
+      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
     .announcement-btn {
       background: linear-gradient(135deg, #25D366, #128C7E);
       color: #fff;
@@ -746,7 +753,19 @@
       box-shadow: 0 6px 18px rgba(37, 211, 102, 0.35);
       color: #fff;
     }
+      .games-announcement {
+        display: inline-block;
+        margin-bottom: 14px;
 
+        background: rgba(99,102,241,0.08);
+        color: #4f46e5;
+
+        padding: 6px 16px;
+        border-radius: 999px;
+
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
   </style>
 </head>
 <body>
@@ -788,12 +807,19 @@
     <section class="games-section">
         <div class="container">
             <div class="section-header">
+
+                <!-- الإشعار -->
+                <div class="games-announcement">
+                    🚀 نبحث عن شركاء أو موظفين للانضمام لفريق <strong>وش الجواب</strong>
+                </div>
+
                 <div class="section-badge">🎮 مجموعة الألعاب</div>
                 <h2 class="section-title">اختر لعبتك المفضلة</h2>
                 <p class="section-description">
-                  مجموعة متنوعة من الألعاب الذكية والممتعة المصممة بعناية
+                    مجموعة متنوعة من الألعاب الذكية والممتعة المصممة بعناية
                 </p>
             </div>
+
 
             <div class="games-grid">
                 <!-- 1. لعبة خلية الحروف -->

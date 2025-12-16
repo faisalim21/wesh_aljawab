@@ -813,13 +813,12 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <button
-                    class="btn-play btn-success"
-                    type="button"
-                    onclick="startLettersGame('{{ package.id }}')">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
+                  <button class="btn-play btn-success"
+                          type="button"
+                          onclick="startLetters('{{ package.id }}')">
+                      <span class="btn-text">ابدأ اللعب</span>
                   </button>
+
 
                 {% else %}
                   <a class="btn-play"
@@ -1042,68 +1041,39 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 <script>
-function startLettersGame(packageId) {
+function startLetters(packageId) {
 
-    // 🔥 فتح التبويب فورًا (مهم جدًا)
-    const gameWindow = window.open(
-        'about:blank',
-        '_blank',
-        'noopener,noreferrer'
-    );
+    // 1️⃣ فتح تبويب فورًا (مضمون)
+    const gameTab = window.open('about:blank', '_blank');
 
-    if (!gameWindow) {
-        alert('الرجاء السماح بفتح النوافذ المنبثقة');
+    if (!gameTab) {
+        alert("الرجاء السماح بفتح النوافذ المنبثقة");
         return;
     }
 
-    // ⏳ نكتب شاشة انتظار مؤقتة
-    gameWindow.document.write(`
-        <html lang="ar" dir="rtl">
-        <head>
-            <title>جاري بدء اللعبة...</title>
-            <style>
-                body{
-                    font-family:Tajawal,sans-serif;
-                    background:#0f172a;
-                    color:#fff;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    height:100vh;
-                }
-            </style>
-        </head>
-        <body>
-            <h2>🎮 جاري تجهيز الجلسة...</h2>
-        </body>
-        </html>
-    `);
+    const formData = new FormData();
+    formData.append('package_id', packageId);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-    // 🚀 الآن نطلب من السيرفر إنشاء الجلسة
     fetch("{% url 'games:create_letters_session' %}", {
         method: "POST",
-        headers: {
-            "X-CSRFToken": "{{ csrf_token }}",
-            "X-Requested-With": "XMLHttpRequest",
-        },
-        body: new URLSearchParams({
-            package_id: packageId
-        })
+        body: formData,
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" }
     })
     .then(res => res.json())
     .then(data => {
         if (data.success && data.session_url) {
-            // 🔁 نغيّر رابط التبويب المفتوح
-            gameWindow.location.href = data.session_url;
+            gameTab.location.href = data.session_url;
+            setTimeout(() => location.reload(), 800);
         } else {
-            gameWindow.close();
-            alert(data.error || 'فشل إنشاء الجلسة');
+            gameTab.close();
+            alert(data.error || "فشل إنشاء الجلسة");
         }
     })
-    .catch(err => {
-        console.error(err);
-        gameWindow.close();
-        alert('حدث خطأ غير متوقع');
+    .catch(() => {
+        gameTab.close();
+        alert("حدث خطأ غير متوقع");
     });
 }
 </script>
