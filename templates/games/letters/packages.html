@@ -953,7 +953,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ===== إنشاء الجلسة =====
+    // ===== إنشاء الجلسة - الحل البسيط =====
     window.createLettersSession = async function (packageId, isFree) {
 
         // التحقق من تسجيل الدخول
@@ -993,63 +993,25 @@ document.addEventListener('DOMContentLoaded', function () {
         sessionLocked = true;
         showLoading(button, true);
 
+        // حفظ flag في localStorage
+        localStorage.setItem('openInNewTab', 'true');
+        localStorage.setItem('packageId', packageId);
+
+        const form = document.getElementById('lettersCreateForm');
+        const input = document.getElementById('lettersPkgId');
+        
+        input.value = packageId;
+        form.target = '';  // نفس الصفحة
+        
         try {
-            // إنشاء FormData
-            const formData = new FormData();
-            formData.append('package_id', packageId);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            // إرسال الطلب
-            const response = await fetch(CREATE_SESSION_URL, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                redirect: 'manual' // مهم جداً!
-            });
-
-            // استخراج الـ redirect URL من الـ response
-            if (response.type === 'opaqueredirect' || response.redirected) {
-                // المتصفح عمل redirect تلقائي
-                const redirectUrl = response.url;
-                
-                if (redirectUrl && redirectUrl.includes('/session/')) {
-                    // فتح التبويب الجديد
-                    window.open(redirectUrl, '_blank', 'noopener,noreferrer');
-                    
-                    // إعادة تحميل الصفحة الحالية بعد ثانية
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    throw new Error('لم يتم الحصول على رابط الجلسة');
-                }
-            } else if (response.status === 302 || response.status === 301) {
-                // الحصول على Location header
-                const locationUrl = response.headers.get('Location');
-                
-                if (locationUrl) {
-                    const fullUrl = locationUrl.startsWith('http') 
-                        ? locationUrl 
-                        : window.location.origin + locationUrl;
-                    
-                    window.open(fullUrl, '_blank', 'noopener,noreferrer');
-                    
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    throw new Error('لم يتم الحصول على رابط التوجيه');
-                }
-            } else {
-                throw new Error('فشل إنشاء الجلسة');
-            }
-
+            form.submit();
         } catch (error) {
             console.error('Error:', error);
-            alert(error.message || 'حدث خطأ أثناء إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
-        } finally {
+            alert('حدث خطأ أثناء إنشاء الجلسة');
             sessionLocked = false;
             showLoading(button, false);
+            localStorage.removeItem('openInNewTab');
+            localStorage.removeItem('packageId');
         }
     };
 
@@ -1065,6 +1027,21 @@ document.addEventListener('DOMContentLoaded', function () {
         // إزالة البارامتر من URL
         const newUrl = window.location.pathname + '?success=1';
         window.history.replaceState({}, document.title, newUrl);
+    }
+
+    // ===== التحقق من localStorage بعد redirect =====
+    if (localStorage.getItem('openInNewTab') === 'true') {
+        localStorage.removeItem('openInNewTab');
+        const pkgId = localStorage.getItem('packageId');
+        localStorage.removeItem('packageId');
+        
+        // التحقق من أننا في صفحة session
+        if (window.location.pathname.includes('/session/')) {
+            // نفتح نفس الصفحة في تبويب جديد
+            window.open(window.location.href, '_blank', 'noopener,noreferrer');
+            // نرجع للـ packages
+            window.location.href = '/games/letters/';
+        }
     }
 
 });
