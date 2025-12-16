@@ -781,11 +781,11 @@
                 {% if package.has_discount %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                     <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
@@ -813,13 +813,14 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <button class="btn-play btn-success"
-                          type="button"
-                          onclick="createLettersSession('{{ package.id }}', false)">
+                  <button
+                    class="btn-play btn-success"
+                    type="button"
+                    onclick="startLettersGame('{{ package.id }}')">
                     <i class="fas fa-play"></i>
                     <span class="btn-text">ابدأ اللعب</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
                   </button>
+
                 {% else %}
                   <a class="btn-play"
                     href="{% url 'payments:start_payment' package.id %}">
@@ -881,7 +882,7 @@
                 {% else %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="val">{{ package.price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
@@ -1039,6 +1040,72 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 });
+</script>
+<script>
+function startLettersGame(packageId) {
+
+    // 🔥 فتح التبويب فورًا (مهم جدًا)
+    const gameWindow = window.open(
+        'about:blank',
+        '_blank',
+        'noopener,noreferrer'
+    );
+
+    if (!gameWindow) {
+        alert('الرجاء السماح بفتح النوافذ المنبثقة');
+        return;
+    }
+
+    // ⏳ نكتب شاشة انتظار مؤقتة
+    gameWindow.document.write(`
+        <html lang="ar" dir="rtl">
+        <head>
+            <title>جاري بدء اللعبة...</title>
+            <style>
+                body{
+                    font-family:Tajawal,sans-serif;
+                    background:#0f172a;
+                    color:#fff;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    height:100vh;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>🎮 جاري تجهيز الجلسة...</h2>
+        </body>
+        </html>
+    `);
+
+    // 🚀 الآن نطلب من السيرفر إنشاء الجلسة
+    fetch("{% url 'games:create_letters_session' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "X-Requested-With": "XMLHttpRequest",
+        },
+        body: new URLSearchParams({
+            package_id: packageId
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.session_url) {
+            // 🔁 نغيّر رابط التبويب المفتوح
+            gameWindow.location.href = data.session_url;
+        } else {
+            gameWindow.close();
+            alert(data.error || 'فشل إنشاء الجلسة');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        gameWindow.close();
+        alert('حدث خطأ غير متوقع');
+    });
+}
 </script>
 
 </body>
