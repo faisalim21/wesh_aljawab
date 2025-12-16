@@ -165,40 +165,17 @@
       <div class="hint">حدد عدد الإمبوستر في هذه الجولة</div>
 
       <button
-            type="submit"
-            class="btn-start"
-            onclick="openGameInNewTab(event)"
-            >
-            🚀 ابدأ اللعبة
-        </button>
+        type="submit"
+        class="btn-start"
+        formtarget="_blank"
+    >
+        🚀 ابدأ اللعبة
+    </button>
 
     </form>
 
   </div>
 </div>
-<script>
-  function openGameInNewTab(e) {
-    e.preventDefault();
-
-    const form = e.target.closest("form");
-    const actionUrl = form.action;
-
-    // محاولة فتح تبويب جديد (مضمونة لأنها داخل click)
-    const newTab = window.open(actionUrl, "_blank");
-
-    if (newTab) {
-      // أرسل الفورم للتبويب الجديد
-      const clonedForm = form.cloneNode(true);
-      clonedForm.target = "_self";
-      newTab.document.body.appendChild(clonedForm);
-      clonedForm.submit();
-    } else {
-      // fallback 100% — لو المتصفح منع التبويب
-      form.submit();
-    }
-  }
-</script>
-
 {% include "footer.html" %}
 </body>
 </html>
