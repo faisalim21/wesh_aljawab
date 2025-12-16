@@ -291,75 +291,104 @@ def letters_game_home(request):
 
     now = timezone.now()
 
+    # =========================
     # الحزمة المجانية
+    # =========================
     free_package = (
         LettersPackage.objects.filter(
-            is_free=True, is_active=True, game_type='letters'
-        ).order_by('-id').first()
+            is_free=True,
+            is_active=True,
+            game_type="letters"
+        )
+        .order_by("-id")
+        .first()
     )
 
     free_active_session = None
     free_session_eligible = False
     free_session_message = ""
 
-    # ===== المنطق الخاص بالحزمة المجانية =====
     if request.user.is_authenticated and free_package:
-        free_active_session = LettersSession.objects.filter(
-            package=free_package,
-            host=request.user,
-            is_active=True,
-            is_completed=False
-        ).order_by('-id').first()
+        # آخر جلسة مجانية للمستخدم
+        candidate = (
+            LettersSession.objects.filter(
+                package=free_package,
+                host=request.user,
+                is_active=True
+            )
+            .order_by("-created_at")
+            .first()
+        )
 
-        free_session_eligible = free_active_session is None
-
-        if not free_session_eligible:
+        # لو فيه جلسة ولم تنتهِ وقتياً → تعتبر سارية
+        if candidate and not candidate.is_time_expired:
+            free_active_session = candidate
+            free_session_eligible = False
             free_session_message = "لديك جلسة مجانية سارية."
         else:
+            # لا توجد جلسة سارية
             had_free_before = LettersSession.objects.filter(
                 package=free_package,
                 host=request.user
             ).exists()
+
             if had_free_before:
                 free_session_eligible = False
                 free_session_message = "لقد استخدمت الجلسة المجانية الخاصة بك."
+            else:
+                free_session_eligible = True
+                free_session_message = ""
 
-    # ===== الحزم المدفوعة =====
+    # =========================
+    # الحزم المدفوعة
+    # =========================
     paid_qs = LettersPackage.objects.filter(
-        is_active=True, is_free=False, game_type='letters'
+        is_active=True,
+        is_free=False,
+        game_type="letters"
     )
-    paid_packages_mixed = paid_qs.filter(question_theme='mixed').order_by('package_number')
-    paid_packages_sports = paid_qs.filter(question_theme='sports').order_by('package_number')
 
-    # ========= منطق الشراء المصحّح =========
-    active_packages_ids = set()         # شراء مكتمل وصالح → "ابدأ اللعب"
-    completed_packages_ids = set()      # شراء مكتمل وانتهى → "سبق شراء"
-    used_before_ids = set()             # كل الحزم التي سبق شراؤها
-    expired_packages_ids = set()        # لأغراض قديمة أو مستقبلية
+    paid_packages_mixed = paid_qs.filter(
+        question_theme="mixed"
+    ).order_by("package_number")
+
+    paid_packages_sports = paid_qs.filter(
+        question_theme="sports"
+    ).order_by("package_number")
+
+    # =========================
+    # منطق الشراء (موحد وصحيح)
+    # =========================
+    active_packages_ids = set()        # شراء مكتمل + صالح → ابدأ اللعب
+    completed_packages_ids = set()     # شراء مكتمل لكن انتهى
+    expired_packages_ids = set()
+    used_before_ids = set()
 
     if request.user.is_authenticated:
         purchases = UserPurchase.objects.filter(
             user=request.user,
-            package__game_type='letters'
+            package__game_type="letters"
         )
 
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            # ---- 1) شراء غير مكتمل = تجاهله ----
+            # تجاهل غير المكتمل
             if not p.is_completed:
                 continue
 
-            # ---- 2) شراء مكتمل وصالح ----
+            # شراء صالح
             if p.expires_at and p.expires_at > now:
                 active_packages_ids.add(p.package_id)
                 continue
 
-            # ---- 3) شراء مكتمل وانتهت صلاحيته ----
+            # شراء منتهي
             completed_packages_ids.add(p.package_id)
             expired_packages_ids.add(p.package_id)
 
-    # ===== تمرير البيانات للقالب =====
+    # =========================
+    # تمرير البيانات للقالب
+    # =========================
     context = {
         "free_package": free_package,
         "free_active_session": free_active_session,
@@ -369,15 +398,13 @@ def letters_game_home(request):
         "paid_packages_mixed": paid_packages_mixed,
         "paid_packages_sports": paid_packages_sports,
 
-        # أهم ثلاث قوائم بعد الإصلاح
         "active_packages_ids": active_packages_ids,
-        "completed_packages_ids": completed_packages_ids,  # ← تستخدمها القوالب
+        "completed_packages_ids": completed_packages_ids,
         "expired_packages_ids": expired_packages_ids,
         "used_before_ids": used_before_ids,
     }
 
     return render(request, "games/letters/packages.html", context)
-
 
 
 from django.http import JsonResponse
@@ -416,9 +443,10 @@ def create_letters_session(request):
         purchase = UserPurchase.objects.filter(
             user=request.user,
             package=package,
-            is_completed=False,
+            is_completed=True,          # ✔️ شراء مكتمل
             expires_at__gt=timezone.now()
         ).first()
+
 
         if not purchase:
             return JsonResponse({
@@ -1586,10 +1614,9 @@ def images_create(request):
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
-        is_completed=False,     # ✔️ شراء نشط
+        is_completed=True,
         expires_at__gt=timezone.now()
-    ).first()
-
+    ).order_by("-purchase_date").first()
 
     if not purchase:
         messages.error(request, "لا يوجد شراء صالح لهذه الحزمة.")
