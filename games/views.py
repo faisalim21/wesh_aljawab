@@ -387,6 +387,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.urls import reverse
 import random
+from django.views.decorators.csrf import csrf_exempt
 
 from games.models import (
     GamePackage,
@@ -394,7 +395,7 @@ from games.models import (
     UserPurchase,
     LettersGameQuestion,   # ✅ الموديل الصحيح
 )
-
+@csrf_exempt
 @login_required
 @require_POST
 def create_letters_session(request):

@@ -935,13 +935,15 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.save-badge').forEach(el => {
             const o = parseFloat(el.dataset.orig || '0');
             const d = parseFloat(el.dataset.disc || '0');
-            const pct = (o > 0 && d > 0 && d < o) ? Math.round((1 - (d / o)) * 100) : 0;
+            const pct = (o > 0 && d > 0 && d < o)
+                ? Math.round((1 - (d / o)) * 100)
+                : 0;
             const tgt = el.querySelector('.save-pct');
             if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
         });
     })();
 
-    // ===== إظهار/إخفاء التحميل =====
+    // ===== إظهار / إخفاء التحميل =====
     function showLoading(button, show) {
         if (!button) return;
         if (show) {
@@ -953,7 +955,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // ===== إنشاء الجلسة - الحل النهائي المضمون =====
+    // =========================================================
+    // ✅ إنشاء جلسة خلية الحروف (تبويب جديد مضمون 100%)
+    // =========================================================
     window.createLettersSession = async function (packageId, isFree) {
 
         if (!IS_AUTH) {
@@ -966,19 +970,32 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        const button = event ? event.currentTarget : document.querySelector(`button[onclick*="${packageId}"]`);
+        // 🔥 فتح التبويب فور الضغط (قبل أي await)
+        const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+        if (!gameTab) {
+            alert("الرجاء السماح بفتح النوافذ المنبثقة");
+            return;
+        }
+
+        const button = event ? event.currentTarget : null;
 
         // التحقق من الأهلية للمجانية
         if (isFree) {
             try {
-                const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
+                const r = await fetch(API_ELIGIBILITY_URL, {
+                    credentials: "same-origin"
+                });
                 const data = await r.json();
                 if (!data.success || !data.eligible) {
+                    gameTab.close();
                     alert(data.message || "لا يمكنك بدء الجولة المجانية.");
                     return;
                 }
             } catch (e) {
-                console.error("Error checking eligibility:", e);
+                console.error("Eligibility error:", e);
+                gameTab.close();
+                alert("فشل التحقق من الأهلية");
+                return;
             }
         }
 
@@ -988,37 +1005,39 @@ document.addEventListener('DOMContentLoaded', function () {
         try {
             const formData = new FormData();
             formData.append('package_id', packageId);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
             const response = await fetch(CREATE_SESSION_URL, {
                 method: 'POST',
                 body: formData,
                 credentials: 'same-origin',
                 headers: {
-                    'X-Requested-With': 'XMLHttpRequest'  // مهم!
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
             });
 
             const data = await response.json();
 
             if (data.success && data.session_url) {
-                // فتح التبويب الجديد مباشرة
-                const fullUrl = data.session_url.startsWith('http') 
-                    ? data.session_url 
+                const fullUrl = data.session_url.startsWith('http')
+                    ? data.session_url
                     : window.location.origin + data.session_url;
-                
-                window.open(fullUrl, '_blank', 'noopener,noreferrer');
-                
-                // إعادة تحميل بعد ثانية
+
+                // ✅ توجيه التبويب المفتوح مسبقًا
+                gameTab.location.href = fullUrl;
+
+                // تحديث الصفحة الأم
                 setTimeout(() => {
                     window.location.reload();
-                }, 1000);
+                }, 800);
+
             } else {
-                alert(data.error || 'حدث خطأ أثناء إنشاء الجلسة');
+                gameTab.close();
+                alert(data.error || 'فشل إنشاء الجلسة');
             }
 
         } catch (error) {
-            console.error('Error:', error);
+            console.error("Create session error:", error);
+            gameTab.close();
             alert('حدث خطأ أثناء إنشاء الجلسة');
         } finally {
             sessionLocked = false;
@@ -1026,57 +1045,23 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // ===== معالج نجاح الدفع من URL =====
+    // =========================================================
+    // ✅ فتح الجلسة مباشرة بعد نجاح الدفع (لو رجع session بالـ URL)
+    // =========================================================
     const urlParams = new URLSearchParams(window.location.search);
     const sessionFromUrl = urlParams.get('session');
-    
+
     if (sessionFromUrl) {
         const sessionUrl = `/games/letters/session/${sessionFromUrl}/`;
         window.open(sessionUrl, '_blank', 'noopener,noreferrer');
-        
+
         const newUrl = window.location.pathname + '?success=1';
         window.history.replaceState({}, document.title, newUrl);
     }
 
 });
 </script>
-<script>
-function startLetters(packageId) {
 
-    // 1️⃣ فتح تبويب فورًا (مضمون)
-    const gameTab = window.open('about:blank', '_blank');
-
-    if (!gameTab) {
-        alert("الرجاء السماح بفتح النوافذ المنبثقة");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append('package_id', packageId);
-    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-    fetch("{% url 'games:create_letters_session' %}", {
-        method: "POST",
-        body: formData,
-        credentials: "same-origin",
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success && data.session_url) {
-            gameTab.location.href = data.session_url;
-            setTimeout(() => location.reload(), 800);
-        } else {
-            gameTab.close();
-            alert(data.error || "فشل إنشاء الجلسة");
-        }
-    })
-    .catch(() => {
-        gameTab.close();
-        alert("حدث خطأ غير متوقع");
-    });
-}
-</script>
 
 </body>
 </html>
