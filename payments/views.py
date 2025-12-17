@@ -94,45 +94,81 @@ def start_payment(request, package_id):
 #   Telr Return URLs
 # ============================
 
+from django.shortcuts import redirect, get_object_or_404
+from django.utils import timezone
+from django.db import transaction
+from datetime import timedelta
+
+from games.models import GameSession, UserPurchase
+
+
 def telr_success(request):
+    """
+    Return URL بعد نجاح الدفع من Telr.
+
+    ✅ أهدافها:
+    - تجعل العملية idempotent (لو انضغط الرابط مرتين ما يخرب)
+    - تكمّل الشراء وتثبت expires_at
+    - تنشئ/تجلب GameSession المرتبطة بالشراء
+    - ترجع لصفحة الحزم ومعها session=<uuid> + success=1
+      (عشان زر "ابدأ اللعب" يفتح تبويب جديد عند ضغط المستخدم)
+    """
+
     purchase_id = request.GET.get("purchase")
+    if not purchase_id:
+        # بدون purchase لا نقدر نكمل بأمان
+        return redirect("/")
+
     purchase = get_object_or_404(UserPurchase, id=purchase_id)
-
-    # تأكيد اكتمال الدفع
-    purchase.is_completed = True
-    purchase.expires_at = timezone.now() + timezone.timedelta(hours=72)
-    purchase.save()
-
     package = purchase.package
 
-    # إنشاء جلسة (بدون بدء اللعب)
-    session = GameSession.objects.filter(purchase=purchase).first()
-    if not session:
-        session = GameSession.objects.create(
-            host=purchase.user,
-            package=package,
-            game_type=package.game_type,
-            purchase=purchase,
-            is_active=True
+    # نخليها ذرّية + آمنة ضد التكرار
+    with transaction.atomic():
+        # قفل صف الشراء لمنع السباقات
+        purchase = (
+            UserPurchase.objects.select_for_update()
+            .select_related("package", "user")
+            .get(id=purchase.id)
         )
 
-    # 🔹 التحويل حسب نوع اللعبة
-    if package.game_type == "imposter":
-        return redirect(
-            f"/games/imposter/?paid=1&package={package.id}"
+        # ✅ ثبّت اكتمال الشراء (لو مسبقاً مكتمل ما نغيّر شيء)
+        if not purchase.is_completed:
+            purchase.is_completed = True
+
+        # ✅ ثبّت تاريخ الانتهاء 72 ساعة (لو ما انحط سابقاً)
+        now = timezone.now()
+        if not purchase.expires_at or purchase.expires_at <= now:
+            purchase.expires_at = now + timedelta(hours=72)
+
+        purchase.save(update_fields=["is_completed", "expires_at"])
+
+        # ✅ جلسة مرتبطة بنفس الشراء؟ استخدمها، وإلا أنشئ
+        session = (
+            GameSession.objects.select_for_update()
+            .filter(purchase=purchase)
+            .first()
         )
 
+        if not session:
+            session = GameSession.objects.create(
+                host=purchase.user,
+                package=package,
+                game_type=package.game_type,
+                purchase=purchase,
+                is_active=True
+            )
+
+    # ✅ توجيه لصفحة الحزم مع session id (بدون فتح تبويب هنا)
+    # فتح التبويب بيكون من زر "ابدأ اللعب" داخل الصفحة عند ضغط المستخدم
     if package.game_type == "letters":
-        return redirect(
-            f"/games/letters/?paid=1&package={package.id}"
-        )
-
+        return redirect(f"/games/letters/?success=1&session={session.id}")
     if package.game_type == "images":
-        return redirect(
-            f"/games/images/?paid=1&package={package.id}"
-        )
+        return redirect(f"/games/images/?success=1&session={session.id}")
+    if package.game_type == "imposter":
+        return redirect(f"/games/imposter/?success=1&session={session.id}")
 
     return redirect("/")
+
 
 
 

@@ -690,6 +690,17 @@
     <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
   </div>
   {% endif %}
+  {% if request.GET.session %}
+  <div class="text-center my-4">
+    <button
+      class="btn-play btn-success"
+      id="startPaidSessionBtn"
+      data-session="{{ request.GET.session }}">
+      <i class="fas fa-play"></i>
+      ابدأ اللعب
+    </button>
+  </div>
+  {% endif %}
 
   <!-- Hidden Form -->
   <form id="lettersCreateForm" method="post" action="{% url 'games:create_letters_session' %}"
@@ -943,12 +954,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-    const LOGIN_URL = "{% url 'accounts:login' %}";
-    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-    const API_ELIGIBILITY_URL =
-        "{% url 'games:api_check_free_session_eligibility' %}?game_type=letters";
-
     /* =====================================================
        🧮 حساب نسبة الخصم (UI فقط)
     ===================================================== */
@@ -967,90 +972,39 @@ document.addEventListener('DOMContentLoaded', function () {
     })();
 
     /* =====================================================
-       ⏳ تحميل الزر
+       ▶️ زر بدء الجلسة بعد الدفع (المدفوعة)
+       - فتح تبويب جديد مضمون 100%
+       - بدون popup block
     ===================================================== */
-    function showLoading(button, show) {
-        if (!button) return;
-        button.classList.toggle('loading', show);
-        button.disabled = show;
-    }
+    const startBtn = document.getElementById('startPaidSessionBtn');
 
-    /* =====================================================
-       🟢 الجولة المجانية فقط (JS ضروري هنا)
-       - فتح تبويب فوري
-       - تحقق أهلية
-       - إرسال POST
-    ===================================================== */
-    window.createLettersSession = async function (packageId, isFree) {
-
-        if (!IS_AUTH) {
-            window.location.href =
-                LOGIN_URL + '?next=' + encodeURIComponent(NEXT_URL);
-            return;
-        }
-
-        if (!packageId || !isFree) return;
-
-        const button = event?.currentTarget || null;
-
-        // فتح التبويب فورًا (مهم ضد popup blocker)
-        const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
-        if (!gameTab) {
-            alert("الرجاء السماح بفتح النوافذ المنبثقة");
-            return;
-        }
-
-        showLoading(button, true);
-
-        try {
-            // 1️⃣ تحقق الأهلية
-            const eligibilityRes = await fetch(API_ELIGIBILITY_URL, {
-                credentials: 'same-origin'
-            });
-            const eligibility = await eligibilityRes.json();
-
-            if (!eligibility.success || !eligibility.eligible) {
-                gameTab.close();
-                alert(eligibility.message || "لا يمكنك بدء الجولة المجانية.");
+    if (startBtn) {
+        startBtn.addEventListener('click', function () {
+            const sessionId = this.dataset.session;
+            if (!sessionId) {
+                alert("تعذر العثور على الجلسة");
                 return;
             }
 
-            // 2️⃣ إنشاء الجلسة عبر POST عادي
-            const form = document.getElementById('lettersCreateForm');
-            const input = document.getElementById('lettersPkgId');
+            const url = `/games/letters/session/${sessionId}/`;
 
-            input.value = packageId;
-            form.target = gameTab.name || '_blank';
-            form.submit();
+            // فتح التبويب من click مباشر = مضمون
+            const win = window.open(url, '_blank', 'noopener,noreferrer');
 
-            // تحديث الصفحة الأم
-            setTimeout(() => window.location.reload(), 800);
+            if (!win) {
+                alert("الرجاء السماح بفتح النوافذ المنبثقة للمتابعة");
+                return;
+            }
 
-        } catch (err) {
-            console.error(err);
-            gameTab.close();
-            alert("حدث خطأ أثناء بدء الجولة المجانية");
-        } finally {
-            showLoading(button, false);
-        }
-    };
-
-    /* =====================================================
-       🔁 فتح الجلسة تلقائيًا بعد الدفع (لو رجع session)
-    ===================================================== */
-    const params = new URLSearchParams(window.location.search);
-    const sessionId = params.get('session');
-
-    if (sessionId) {
-        const url = `/games/letters/session/${sessionId}/`;
-        window.open(url, '_blank', 'noopener,noreferrer');
-
-        const cleanUrl = window.location.pathname + '?success=1';
-        window.history.replaceState({}, document.title, cleanUrl);
+            // تعطيل الزر بعد الفتح (UX + أمان)
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-check"></i> تم فتح الجلسة';
+        });
     }
 
 });
 </script>
+
 
 
 </body>
