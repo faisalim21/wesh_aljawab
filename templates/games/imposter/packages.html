@@ -718,11 +718,27 @@
       box-shadow: none;
     }
 
+
+    /* ===============================
+   منع تغطية المحتوى بواسطة الهيدر
+    =============================== */
+    .page-offset {
+      padding-top: 96px; /* افتراضي للجوال */
+    }
+
+    /* إذا كان الهيدر أعلى على شاشات أكبر */
+    @media (min-width: 768px) {
+      .page-offset {
+        padding-top: 72px;
+      }
+    }
+
   </style>
 </head>
 <body>
 
   {% include 'header.html' %}
+<div class="page-offset">
 
   <div class="container my-3">
     {% if messages %}
@@ -892,6 +908,7 @@
     {% endif %}
 
   </section>
+</div> <!-- end page-offset -->
 
   {% include 'footer.html' %}
 
