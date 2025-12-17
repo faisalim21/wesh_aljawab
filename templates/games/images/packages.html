@@ -1,68 +1,99 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-
-  <title>
-    {% block title %}{{ page_title|default:"وش الجواب - تحدي الصور" }}{% endblock %}
-  </title>
-  <meta charset="utf-8">
+  <!-- ===============================
+       الأساسيات
+  ================================ -->
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <meta name="description" content="{% block meta_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta name="robots" content="index,follow">
+  <title>
+    {% block title %}{{ page_title|default:"وش الجواب - تحدي الصور | ألعاب جماعية تفاعلية" }}{% endblock %}
+  </title>
 
-  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
+  <meta name="description"
+        content="{% block meta_description %}{{ page_description|default:'العب تحدي الصور مع أصدقائك في منصة وش الجواب – لعبة جماعية تفاعلية تعتمد على الذكاء والملاحظة.' }}{% endblock %}">
+  <meta name="robots" content="index,follow,max-image-preview:large">
 
+  <link rel="canonical"
+        href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.com/games/images/{% endif %}">
+
+  <!-- ===============================
+       Open Graph
+  ================================ -->
   <meta property="og:locale" content="ar_SA">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="وش الجواب">
-  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
+  <meta property="og:title"
+        content="{% block og_title %}{{ page_title|default:'وش الجواب - تحدي الصور' }}{% endblock %}">
+  <meta property="og:description"
+        content="{% block og_description %}{{ page_description|default:'تحدي الصور – العب مع أصدقائك واختبر سرعة ملاحظتك.' }}{% endblock %}">
+  <meta property="og:url"
+        content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.com/games/images/{% endif %}">
+  <meta property="og:image"
+        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:secure_url"
+        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"
+        content="{% block og_image_alt %}{{ page_og_alt|default:'وش الجواب – تحدي الصور' }}{% endblock %}">
 
+  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - منصة الألعاب الذكية' }}{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'اختبر ذكاءك وتحدى أصدقاءك مع منصة وش الجواب للألعاب الذكية التفاعلية.' }}{% endblock %}">
-  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
+  <meta name="twitter:title"
+        content="{% block twitter_title %}{{ page_title|default:'وش الجواب - تحدي الصور' }}{% endblock %}">
+  <meta name="twitter:description"
+        content="{% block twitter_description %}{{ page_description|default:'تحدي الصور – لعبة جماعية ممتعة.' }}{% endblock %}">
+  <meta name="twitter:image"
+        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
 
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <!-- ===============================
+       الهوية
+  ================================ -->
+  <meta name="theme-color" content="#4f46e5">
+  <link rel="icon" type="image/png" sizes="32x32"
+        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16"
+        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon"
+        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+  <!-- ===============================
+       Fonts & CSS
+  ================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
+
+  <!-- ===============================
+       Structured Data
+  ================================ -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "وش الجواب",
-    "url": "https://wesh-aljawab.onrender.com/",
+    "@type": "WebPage",
+    "name": "تحدي الصور – وش الجواب",
+    "url": "https://wesh-aljawab.com/games/images/",
     "inLanguage": "ar",
-    "publisher": {
-      "@type": "Organization",
+    "isPartOf": {
+      "@type": "WebSite",
       "name": "وش الجواب",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
-      }
+      "url": "https://wesh-aljawab.com/"
     }
   }
   </script>
 
   {% block meta_overrides %}{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-
+  <!-- ===============================
+       CSS (كامل – بدون حذف)
+  ================================ -->
   <style>
     :root {
       --primary: #8b5cf6;
@@ -83,6 +114,7 @@
 
     * {
       font-family: 'Tajawal', sans-serif;
+      box-sizing: border-box;
     }
 
     body {
@@ -129,6 +161,7 @@
       gap: 28px;
       align-items: stretch;
     }
+
 
     /* Package Card */
     .package-card {
@@ -433,46 +466,69 @@
 
   {% include 'header.html' %}
 
+  <!-- ===============================
+       رسائل النظام
+  ================================ -->
   <div class="container pt-4">
     {% if messages %}
       <div class="mb-3">
         {% for message in messages %}
-          <div class="alert alert-{{ message.tags|default:'info' }} mb-2 rounded-lg" role="alert">
+          <div class="alert alert-{{ message.tags|default:'info' }} mb-2 rounded-3 text-center fw-semibold" role="alert">
             {{ message|safe }}
           </div>
         {% endfor %}
       </div>
     {% endif %}
   </div>
-{% if request.GET.success %}
-<div class="alert alert-success text-center fw-bold">
-  🎉 تم الدفع بنجاح!  
-  <br>
-  جاهز لبدء اللعب الآن.
-</div>
-{% endif %}
 
+  <!-- ===============================
+       رسالة نجاح الدفع
+  ================================ -->
+  {% if request.GET.success %}
+    <div class="container mb-4">
+      <div class="alert alert-success text-center fw-bold rounded-4 shadow-sm">
+        🎉 تم الدفع بنجاح  
+        <div class="small fw-normal mt-1">
+          جاهز لبدء اللعب الآن
+        </div>
+      </div>
+    </div>
+  {% endif %}
 
-  <!-- Hidden Form -->
-  <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}"
-      target="_blank"
-      style="display:none">
+  <!-- ===============================
+       Hidden Form (لا يُلمس)
+  ================================ -->
+  <form id="imagesCreateForm"
+        method="post"
+        action="{% url 'games:create_images_session' %}"
+        target="_blank"
+        style="display:none">
 
     {% csrf_token %}
     <input type="hidden" name="package_id" id="imagesPkgId">
     <button type="submit" id="hiddenSubmitBtnImg" style="display:none">Submit</button>
   </form>
 
+  <!-- ===============================
+       قسم الحزم
+  ================================ -->
   <section class="packages-section container">
+
+    <!-- العنوان -->
     <div class="section-title">
-      <h2>اختر الحزمة المناسبة</h2>
-      <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب <strong>تحدي الصور</strong></p>
+      <h2>تحدي الصور</h2>
+      <p>
+        اختر الحزمة المناسبة وابدأ اللعب مع أصدقائك في
+        <strong>تحدي الصور</strong>
+      </p>
     </div>
 
     <div class="packages-grid">
 
+      <!-- ===============================
+           الحزمة المجانية
+      ================================ -->
       {% if free_package %}
-        <!-- Free Package -->
         <div>
           <div class="package-card free-card">
             <div class="ribbon">مجانية</div>
@@ -482,40 +538,39 @@
             </div>
 
             {% if free_package.description %}
-              <div>
-                <p class="pkg-desc">{{ free_package.description }}</p>
-              </div>
+              <p class="pkg-desc">{{ free_package.description }}</p>
             {% endif %}
 
             <div class="pkg-actions">
               {% if request.user.is_authenticated %}
 
                 {% if free_active_session %}
-                  <a href="{% url 'games:images_session' free_active_session.id %}" class="btn-play" id="freeImgBtn">
-                    <span class="btn-text">ارجع إلى جلستك المجانية</span>
+                  <a href="{% url 'games:images_session' free_active_session.id %}"
+                     class="btn-play">
+                    <span class="btn-text">العودة للجلسة المجانية</span>
                     <div class="loading-spinner"><div class="spinner"></div></div>
                   </a>
 
                 {% elif free_session_eligible %}
-                  <button type="button" class="btn-play" id="freeImgBtn"
+                  <button type="button"
+                          class="btn-play"
                           onclick="createFreeImagesSession('{{ free_package.id }}')">
                     <span class="btn-text">ابدأ الجولة المجانية</span>
                     <div class="loading-spinner"><div class="spinner"></div></div>
                   </button>
 
                 {% else %}
-                  <button type="button" class="btn-play" id="freeImgBtn" disabled>
+                  <button type="button" class="btn-play" disabled>
                     <span class="btn-text">غير متاح</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
                   </button>
-                  <div class="note-line">
+                  <div class="note-line mt-2">
                     {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
                   </div>
                 {% endif %}
 
               {% else %}
-                <a class="btn btn-outline-primary w-100 mt-1"
-                  href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                <a class="btn btn-outline-primary w-100 mt-2"
+                   href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
                   سجّل الدخول للتجربة
                 </a>
               {% endif %}
@@ -524,19 +579,24 @@
         </div>
       {% endif %}
 
+      <!-- ===============================
+           الحزم المدفوعة
+      ================================ -->
       {% for package in paid_packages %}
         <div>
           <div class="package-card">
 
-            {# شارة سبق شراء #}
             {% if package.id in expired_packages_ids %}
               <div class="used-before">
-                <i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه الحزمة
+                <i class="fa-solid fa-rotate-left"></i>
+                سبق لك شراء هذه الحزمة
               </div>
             {% endif %}
 
             <div class="pkg-head">
-              <div class="package-title">حزمة رقم {{ package.package_number }}</div>
+              <div class="package-title">
+                حزمة رقم {{ package.package_number }}
+              </div>
             </div>
 
             <!-- السعر -->
@@ -561,7 +621,6 @@
                     وفّر <b class="save-pct">—</b>
                   </span>
                 </div>
-
               {% else %}
                 <div class="price-wrap">
                   <div class="price-new">
@@ -577,12 +636,14 @@
             {% endif %}
 
             <div class="trust-row">
-              <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة</span>
+              <span class="pill">
+                <i class="fa-solid fa-clock"></i>
+                صلاحية 72 ساعة
+              </span>
             </div>
 
             <div class="pkg-actions">
 
-              {# زر أخضر – ابدأ اللعب إذا الشراء ساري #}
               {% if package.id in active_packages_ids %}
                 <button type="button"
                         class="btn-play"
@@ -590,12 +651,9 @@
                         style="background: linear-gradient(135deg, #22c55e, #16a34a);">
                   ابدأ اللعب
                 </button>
-
-              {# زر شراء إذا لا يوجد شراء فعال #}
               {% else %}
                 <a class="btn-play purchase-link"
-                  href="{% url 'payments:start_payment' package.id %}"
-                  style="background: linear-gradient(135deg, #8b5cf6, #06b6d4);">
+                   href="{% url 'payments:start_payment' package.id %}">
                   شراء
                 </a>
               {% endif %}
@@ -604,155 +662,150 @@
 
           </div>
         </div>
-        {% endfor %}
-
+      {% endfor %}
 
     </div>
   </section>
 
   {% include 'footer.html' %}
 
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Bootstrap (مرة واحدة فقط) -->
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    /* ===============================
+       إعدادات عامة
+    ================================ */
     const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
     const LOGIN_URL = "{% url 'accounts:login' %}";
     const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-    const API_ELIGIBILITY_URL = "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
+    const API_ELIGIBILITY_URL =
+        "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
 
     let sessionLocked = false;
 
-    // حساب الخصم
-    (function computeSavings() {
-        document.querySelectorAll('.save-badge').forEach(el => {
-            const o = parseFloat(el.dataset.orig || '0');
-            const d = parseFloat(el.dataset.disc || '0');
-            const pct = (o > 0 && d > 0 && d < o) ? Math.round((1 - (d / o)) * 100) : 0;
-            const tgt = el.querySelector('.save-pct');
-            if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
-        });
-    })();
+    /* ===============================
+       حساب الخصومات (UI فقط)
+    ================================ */
+    document.querySelectorAll('.save-badge').forEach(el => {
+        const o = parseFloat(el.dataset.orig || '0');
+        const d = parseFloat(el.dataset.disc || '0');
+        const pct = (o > 0 && d > 0 && d < o)
+            ? Math.round((1 - d / o) * 100)
+            : 0;
 
-    function openNewTab() {
-        return window.open("", "_blank");
+        const tgt = el.querySelector('.save-pct');
+        if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
+    });
+
+    /* ===============================
+       أدوات مساعدة
+    ================================ */
+    function openSafeTab() {
+        const tab = window.open('', '_blank');
+        if (!tab) {
+            alert('الرجاء السماح بفتح النوافذ المنبثقة');
+            return null;
+        }
+        return tab;
     }
 
-    function showLoading(packageId, show) {
-        const btns = document.querySelectorAll('button[onclick*="' + packageId + '"]');
-        btns.forEach(btn => {
-            const text = btn.querySelector('.btn-text');
-            const spinner = btn.querySelector('.loading-spinner');
-            if (text && spinner) {
-                text.style.display = show ? 'none' : 'block';
-                spinner.style.display = show ? 'block' : 'none';
-                btn.disabled = show;
-            }
-        });
+    function toggleLoading(button, loading) {
+        if (!button) return;
+        const text = button.querySelector('.btn-text');
+        const spinner = button.querySelector('.loading-spinner');
+
+        if (text) text.style.display = loading ? 'none' : 'block';
+        if (spinner) spinner.style.display = loading ? 'block' : 'none';
+        button.disabled = loading;
     }
 
-    // -------- جلسة مدفوعة --------
-    window.createImagesSession = function (packageId) {
+    function resetLock(button) {
+        sessionLocked = false;
+        toggleLoading(button, false);
+    }
 
-        const sessionId = new URLSearchParams(window.location.search).get("session");
-        if (sessionId) {
-            const tab = openNewTab();
-            tab.location.href = `/games/images/session/${sessionId}/`;
+    /* ===============================
+       إنشاء جلسة (مدفوعة أو مجانية)
+    ================================ */
+    async function createSession({ packageId, isFree = false, button }) {
+
+        if (!IS_AUTH) {
+            window.location.href =
+                `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
             return;
         }
 
-        if (!IS_AUTH) {
-            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
+        if (sessionLocked) {
+            alert('انتظر قليلاً… يتم تجهيز الجلسة');
             return;
         }
 
         if (!packageId) return;
-        if (sessionLocked) {
-            alert("انتظر قليلاً... جاري إنشاء الجلسة");
-            return;
-        }
 
-        sessionLocked = true;
-
-        const gameTab = openNewTab();
-
-        const form = document.getElementById("imagesCreateForm");
-        const input = document.getElementById("imagesPkgId");
-        const btn = document.getElementById("hiddenSubmitBtnImg");
-
-        input.value = packageId;
-        form.target = gameTab.name;
-
-        showLoading(packageId, true);
-
-        const timeoutId = setTimeout(() => {
-            sessionLocked = false;
-            showLoading(packageId, false);
-        }, 8000);
-
-        try {
-            btn ? btn.click() : form.submit();
-            clearTimeout(timeoutId);
-        } catch (e) {
-            alert("خطأ أثناء الإرسال: " + e.message);
-            clearTimeout(timeoutId);
-            sessionLocked = false;
-            showLoading(packageId, false);
-        }
-    };
-
-    // -------- جلسة مجانية --------
-    window.createFreeImagesSession = async function (packageId) {
-
-        if (!IS_AUTH) {
-            window.location.href = `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-            return;
-        }
-
-        if (!packageId) return;
-        if (sessionLocked) {
-            alert("انتظر قليلاً... جاري إنشاء الجلسة");
-            return;
-        }
-
-        try {
-            const r = await fetch(API_ELIGIBILITY_URL, { credentials: "same-origin" });
-            const data = await r.json();
-
-            if (!data.success || !data.eligible) {
-                alert(data.message || "لا يمكنك بدء الجولة المجانية.");
+        // تحقق إضافي للجلسة المجانية
+        if (isFree) {
+            try {
+                const r = await fetch(API_ELIGIBILITY_URL, {
+                    credentials: 'same-origin'
+                });
+                const data = await r.json();
+                if (!data.success || !data.eligible) {
+                    alert(data.message || 'لا يمكنك بدء الجولة المجانية');
+                    return;
+                }
+            } catch {
+                alert('تعذر التحقق من الجلسة المجانية');
                 return;
             }
-        } catch (e) {}
+        }
 
         sessionLocked = true;
+        toggleLoading(button, true);
 
-        const gameTab = openNewTab();
+        const tab = openSafeTab();
+        if (!tab) {
+            resetLock(button);
+            return;
+        }
 
-        const form = document.getElementById("imagesCreateForm");
-        const input = document.getElementById("imagesPkgId");
-        const btn = document.getElementById("hiddenSubmitBtnImg");
+        const form = document.getElementById('imagesCreateForm');
+        const input = document.getElementById('imagesPkgId');
 
         input.value = packageId;
-        form.target = gameTab.name;
+        form.target = tab.name;
 
-        showLoading(packageId, true);
-
-        const timeoutId = setTimeout(() => {
-            sessionLocked = false;
-            showLoading(packageId, false);
+        const safetyTimeout = setTimeout(() => {
+            resetLock(button);
         }, 8000);
 
         try {
-            btn ? btn.click() : form.submit();
-            clearTimeout(timeoutId);
+            form.submit();
+            clearTimeout(safetyTimeout);
         } catch (e) {
-            alert("خطأ أثناء الإرسال: " + e.message);
-            clearTimeout(timeoutId);
-            sessionLocked = false;
-            showLoading(packageId, false);
+            clearTimeout(safetyTimeout);
+            alert('حدث خطأ أثناء إنشاء الجلسة');
+            resetLock(button);
         }
+    }
+
+    /* ===============================
+       ربط الأزرار
+    ================================ */
+
+    // جلسة مدفوعة
+    window.createImagesSession = function (packageId) {
+        const button = event?.target.closest('.btn-play');
+        createSession({ packageId, isFree: false, button });
+    };
+
+    // جلسة مجانية
+    window.createFreeImagesSession = function (packageId) {
+        const button = event?.target.closest('.btn-play');
+        createSession({ packageId, isFree: true, button });
     };
 
 });
