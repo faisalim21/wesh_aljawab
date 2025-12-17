@@ -718,9 +718,7 @@
   cursor: not-allowed;
   box-shadow: none;
 }
-.page-offset {
-  padding-top: var(--header-height, 0px);
-}
+
 
   </style>
 </head>
@@ -1056,29 +1054,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    const pageOffset = document.querySelector('.page-offset');
-    if (!pageOffset) return;
-
-    // نبحث عن أي عنصر fixed أعلى الصفحة
-    const fixedTopEl = Array.from(document.body.children).find(el => {
-        const style = window.getComputedStyle(el);
-        return style.position === 'fixed' && el.getBoundingClientRect().top === 0;
-    });
-
-    if (!fixedTopEl) return;
-
-    const applyOffset = () => {
-        const h = fixedTopEl.offsetHeight;
-        pageOffset.style.paddingTop = h + 'px';
-    };
-
-    applyOffset();
-    window.addEventListener('resize', applyOffset);
 });
 </script>
 
