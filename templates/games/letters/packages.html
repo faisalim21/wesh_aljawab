@@ -976,12 +976,16 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <a
-                    class="btn-play btn-success"
-                    href="{% url 'payments:start_payment' package.id %}">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
-                  </a>
+                  <form method="POST"
+                        action="{% url 'games:create_letters_session' %}"
+                        target="_blank">
+                    {% csrf_token %}
+                    <input type="hidden" name="package_id" value="{{ package.id }}">
+                    <button type="submit" class="btn-play btn-success">
+                      <i class="fas fa-play"></i>
+                      <span class="btn-text">ابدأ اللعب</span>
+                    </button>
+                  </form>
 
 
                 {% else %}
