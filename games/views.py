@@ -410,6 +410,7 @@ from django.utils import timezone
 from django.urls import reverse
 import random
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse, HttpResponseRedirect
 
 from games.models import (
     GamePackage,
@@ -424,7 +425,10 @@ def create_letters_session(request):
     package_id = request.POST.get("package_id")
 
     if not package_id:
-        return JsonResponse({"success": False, "error": "package_id مفقود"}, status=400)
+        return JsonResponse(
+            {"success": False, "error": "package_id مفقود"},
+            status=400
+        )
 
     package = get_object_or_404(
         GamePackage,
@@ -433,58 +437,79 @@ def create_letters_session(request):
         is_active=True
     )
 
-    # ===== التحقق من الشراء (نفس منطقك) =====
+    # =========================
+    # 🔐 التحقق من الشراء
+    # =========================
     if not package.is_free:
         purchase = UserPurchase.objects.filter(
             user=request.user,
             package=package,
-            is_completed=True,          # ✔️ شراء مكتمل
+            is_completed=True,
             expires_at__gt=timezone.now()
-        ).first()
-
+        ).order_by("-id").first()
 
         if not purchase:
-            return JsonResponse({
-                "success": False,
-                "error": "لا تملك هذه الحزمة"
-            }, status=403)
+            return JsonResponse(
+                {"success": False, "error": "لا تملك هذه الحزمة"},
+                status=403
+            )
     else:
         purchase = None
 
-    # ===== جلب الأسئلة =====
-    questions_qs = LettersGameQuestion.objects.filter(
-        package=package
-    )
+    # =========================
+    # 🧠 جلب الأسئلة
+    # =========================
+    questions_qs = LettersGameQuestion.objects.filter(package=package)
 
     if not questions_qs.exists():
-        return JsonResponse({
-            "success": False,
-            "error": "لا توجد أسئلة لهذه الحزمة"
-        }, status=400)
+        return JsonResponse(
+            {"success": False, "error": "لا توجد أسئلة لهذه الحزمة"},
+            status=400
+        )
 
     questions = list(questions_qs)
     random.shuffle(questions)
 
-    # ===== إنشاء الجلسة (نفس نظامك) =====
-    session = GameSession.objects.create(
-        host=request.user,
-        package=package,
-        purchase=purchase,
-        game_type="letters",
-        is_active=True
+    # =========================
+    # 🎮 إنشاء أو جلب الجلسة (الحل الجذري)
+    # =========================
+    if purchase:
+        session, created = GameSession.objects.get_or_create(
+            purchase=purchase,
+            defaults={
+                "host": request.user,
+                "package": package,
+                "game_type": "letters",
+                "is_active": True,
+            }
+        )
+    else:
+        # للجلسة المجانية (بدون purchase)
+        session = GameSession.objects.create(
+            host=request.user,
+            package=package,
+            purchase=None,
+            game_type="letters",
+            is_active=True
+        )
+
+    # =========================
+    # 💾 تخزين بيانات الجلسة (مرة واحدة فقط)
+    # =========================
+    if f"letters_{session.id}" not in request.session:
+        request.session[f"letters_{session.id}"] = {
+            "questions": [q.id for q in questions],
+            "current_index": 0,
+        }
+        request.session.modified = True
+
+    # =========================
+    # 🧭 إعادة التوجيه (يدعم target=_blank)
+    # =========================
+    return HttpResponseRedirect(
+        reverse("games:letters_session", args=[session.id])
     )
 
-    # ===== تخزين الجلسة =====
-    request.session[f"letters_{session.id}"] = {
-        "questions": [q.id for q in questions],
-        "current_index": 0,
-    }
-    request.session.modified = True
-
-    return JsonResponse({
-        "success": True,
-        "session_url": reverse("games:letters_session", args=[session.id])
-    })
 
         
 
