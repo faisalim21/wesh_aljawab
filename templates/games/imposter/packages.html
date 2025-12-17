@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <title>اختر الحزمة — لعبة المخبر</title>
+  <title>اختر الحزمة — لعبة امبوستر</title>
 
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
@@ -13,10 +13,10 @@
   <meta name="theme-color" content="#8b5cf6">
 
   <!-- Open Graph / SEO -->
-  <meta name="description" content="اختر حزمتك المفضلة من لعبة المخبر - اكتشف المخبر بينكم في تحديات مثيرة">
+  <meta name="description" content="اختر حزمتك المفضلة من لعبة امبوستر - اكتشف المخبر بينكم في تحديات مثيرة">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="لعبة المخبر - اختر حزمتك | وش الجواب">
-  <meta property="og:description" content="العب المخبر مع أصدقائك - اكتشف المخبر بينكم في تحديات مثيرة">
+  <meta property="og:title" content="لعبة امبوستر - اختر حزمتك | وش الجواب">
+  <meta property="og:description" content="العب امبوستر مع أصدقائك - اكتشف المخبر بينكم في تحديات مثيرة">
   <meta property="og:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
   <meta property="og:url" content="https://wesh-aljawab.onrender.com/games/imposter/">
 
@@ -56,7 +56,7 @@
     body {
       background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
-      padding-top: 80px; /* زيادة البادنج لتجنب الهيدر */
+      padding-top: 20px;
       padding-bottom: 40px;
     }
 
@@ -535,7 +535,7 @@
 
     @media (max-width: 768px) {
       body {
-        padding-top: 70px; /* تقليل البادنج للجوال */
+        padding-top: 10px;
         padding-bottom: 20px;
       }
 
@@ -547,7 +547,6 @@
 
       .section-title h2 {
         font-size: 1.9rem;
-        margin-top: 10px; /* تأكد من ظهور العنوان */
       }
 
       .section-title p {
@@ -599,10 +598,6 @@
     }
 
     @media (max-width: 576px) {
-      body {
-        padding-top: 60px; /* بادنج أقل للجوال الصغير */
-      }
-
       .packages-section {
         border-radius: 16px;
         padding: 24px 12px;
@@ -611,7 +606,6 @@
 
       .section-title h2 {
         font-size: 1.6rem;
-        margin-top: 0;
       }
 
       .section-title p {
@@ -718,27 +712,11 @@
       box-shadow: none;
     }
 
-
-    /* ===============================
-   منع تغطية المحتوى بواسطة الهيدر
-    =============================== */
-    .page-offset {
-      padding-top: 96px; /* افتراضي للجوال */
-    }
-
-    /* إذا كان الهيدر أعلى على شاشات أكبر */
-    @media (min-width: 768px) {
-      .page-offset {
-        padding-top: 72px;
-      }
-    }
-
   </style>
 </head>
 <body>
 
   {% include 'header.html' %}
-<div class="page-offset">
 
   <div class="container my-3">
     {% if messages %}
@@ -773,8 +751,8 @@
     {% endif %}
 
     <div class="section-title">
-      <h2>لعبة المخبر</h2>
-      <p>اكتشف المخبر بينكم واختر إحدى الحزم التالية للعب <strong>المخبر</strong></p>
+      <h2>لعبة امبوستر</h2>
+      <p>اكتشف المخبر بينكم واختر إحدى الحزم التالية للعب <strong>امبوستر</strong></p>
     </div>
 
     <!-- Free Package -->
@@ -784,7 +762,7 @@
           <span class="ribbon">مجانية</span>
           <div class="title">جولة تجريبية</div>
           <div class="badge-wrap">
-            <span class="badge-imp">لعبة المخبر</span>
+            <span class="badge-imp">لعبة امبوستر</span>
           </div>
 
           <!-- عدد الجولات -->
@@ -816,76 +794,91 @@
       </div>
     {% endif %}
 
-    <!-- Paid Packages -->
-    {% if packages %}
-      <div class="section-header">
-        <h5>
-          <i class="fas fa-user-secret"></i>
-          حزم المخبر المدفوعة
-        </h5>
-        <small>ترتيب حسب رقم الحزمة</small>
-      </div>
-      <div class="scroll-row" role="region" aria-label="حزم المخبر">
-        {% for package in packages %}
-          {% if not package.is_free and package.package_number != 0 %}
-          <div class="pkg">
-            <div class="cardx">
+    <!-- All Packages (بدون تصنيف) -->
+    <div class="section-header">
+      <h5>
+        <i class="fas fa-user-secret"></i>
+        حزم امبوستر
+      </h5>
+      <small>ترتيب حسب رقم الحزمة</small>
+    </div>
+    <div class="scroll-row" role="region" aria-label="حزم امبوستر">
+      {% for package in packages %}
+        <div class="pkg">
+          <div class="cardx">
+            
+            {% if package.is_free or package.package_number == 0 %}
+              <span class="ribbon">مجانية</span>
+            {% endif %}
 
-              {% if package.id in purchased_packages %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> تم شراؤها مسبقاً</div>
+            {% if package.id in purchased_packages %}
+              <div class="used-before"><i class="fa-solid fa-rotate-left"></i> تم شراؤها مسبقاً</div>
+            {% endif %}
+
+            <div class="title">
+              {% if package.is_free or package.package_number == 0 %}
+                الحزمة التجريبية
+              {% else %}
+                حزمة رقم {{ package.package_number }}
               {% endif %}
+            </div>
+            
+            <div class="badge-wrap">
+              <span class="badge-imp">لعبة امبوستر</span>
+            </div>
 
-              <div class="title">حزمة رقم {{ package.package_number }}</div>
-              <div class="badge-wrap">
-                <span class="badge-imp">لعبة المخبر</span>
-              </div>
-
-              <!-- عدد الجولات -->
-              <div class="info-row">
-                <span class="game-count">
-                  <i class="fas fa-gamepad"></i>
-                  {% if package.word_count %}
-                    {{ package.word_count }} جولة
-                  {% else %}
-                    {{ package.imposter_words.all|length }} جولة
-                  {% endif %}
-                </span>
-              </div>
-
-              <!-- السعر -->
-              {% if package.effective_price > 0 %}
-              <div class="pkg-pricing">
-                {% if package.has_discount %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                    <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
-                  <div class="text-center">
-                    <span class="save-badge"
-                          data-orig="{{ package.original_price|floatformat:2 }}"
-                          data-disc="{{ package.discounted_price|floatformat:2 }}">
-                      <i class="fa-solid fa-tag"></i>
-                      وفّر <b class="save-pct">—</b>
-                    </span>
-                  </div>
+            <!-- عدد الجولات -->
+            <div class="info-row">
+              <span class="game-count">
+                <i class="fas fa-gamepad"></i>
+                {% if package.word_count %}
+                  {{ package.word_count }} جولة
                 {% else %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
+                  {{ package.imposter_words.all|length }} جولة
                 {% endif %}
-              </div>
-              {% endif %}
+              </span>
+            </div>
 
-              <div style="margin-top:auto;">
+            <!-- السعر -->
+            {% if not package.is_free and package.effective_price > 0 %}
+            <div class="pkg-pricing">
+              {% if package.has_discount %}
+                <div class="price-wrap">
+                  <div class="price-new">
+                    <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                  <div class="price-old">
+                    <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                </div>
+                <div class="text-center">
+                  <span class="save-badge"
+                        data-orig="{{ package.original_price|floatformat:2 }}"
+                        data-disc="{{ package.discounted_price|floatformat:2 }}">
+                    <i class="fa-solid fa-tag"></i>
+                    وفّر <b class="save-pct">—</b>
+                  </span>
+                </div>
+              {% else %}
+                <div class="price-wrap">
+                  <div class="price-new">
+                    <span class="val">{{ package.price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+            {% endif %}
+
+            <div style="margin-top:auto;">
+              {% if package.is_free or package.package_number == 0 %}
+                <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ابدأ الجولة المجانية</span>
+                </a>
+              {% else %}
                 {% if package.id in purchased_packages %}
                   <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
                     <i class="fas fa-play"></i>
@@ -898,17 +891,15 @@
                     <span class="btn-text">شراء</span>
                   </a>
                 {% endif %}
-              </div>
-
+              {% endif %}
             </div>
+
           </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    {% endif %}
+        </div>
+      {% endfor %}
+    </div>
 
   </section>
-</div> <!-- end page-offset -->
 
   {% include 'footer.html' %}
 

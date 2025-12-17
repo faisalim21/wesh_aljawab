@@ -718,6 +718,9 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+.page-offset {
+  padding-top: var(--header-height, 0px);
+}
 
   </style>
 </head>
@@ -788,7 +791,7 @@
           </div>
 
           <div class="trust-row">
-            <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة</span>
+            <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 1 ساعة</span>
           </div>
 
           <div style="margin-top:auto;">
@@ -1053,6 +1056,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const header = document.querySelector('header, .site-header, .main-header');
+
+    if (!header) return;
+
+    const setHeaderOffset = () => {
+        const h = header.offsetHeight;
+        document.documentElement.style.setProperty(
+            '--header-height',
+            h + 'px'
+        );
+    };
+
+    // أول تحميل
+    setHeaderOffset();
+
+    // عند تغيير حجم الشاشة (مهم للجوال)
+    window.addEventListener('resize', setHeaderOffset);
 });
 </script>
 

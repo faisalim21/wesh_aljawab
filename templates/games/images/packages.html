@@ -695,6 +695,9 @@
       cursor: not-allowed;
       box-shadow: none;
     }
+.page-offset {
+  padding-top: var(--header-height, 0px);
+}
 
   </style>
 </head>
@@ -932,6 +935,27 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const header = document.querySelector('header, .site-header, .main-header');
+
+    if (!header) return;
+
+    const setHeaderOffset = () => {
+        const h = header.offsetHeight;
+        document.documentElement.style.setProperty(
+            '--header-height',
+            h + 'px'
+        );
+    };
+
+    // أول تحميل
+    setHeaderOffset();
+
+    // عند تغيير حجم الشاشة (مهم للجوال)
+    window.addEventListener('resize', setHeaderOffset);
 });
 </script>
 
