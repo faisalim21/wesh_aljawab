@@ -667,6 +667,58 @@
         transform: translateY(0);
       }
     }
+
+    /* ===============================
+   🎮 زر بدء الجلسة (Elegant)
+================================ */
+.start-session-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 32px 0 16px;
+}
+
+.start-session-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 14px 28px;
+  font-size: 1.05rem;
+  font-weight: 800;
+
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+
+  border: none;
+  border-radius: 999px;
+
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
+  transition: all .25s ease;
+
+  letter-spacing: .3px;
+}
+
+.start-session-btn i {
+  font-size: 0.95rem;
+}
+
+.start-session-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 14px 32px rgba(34, 197, 94, 0.45);
+}
+
+.start-session-btn:active {
+  transform: translateY(0);
+}
+
+.start-session-btn:disabled {
+  background: #d1fae5;
+  color: #065f46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
   </style>
 </head>
 <body>
@@ -683,23 +735,17 @@
     {% endif %}
   </div>
 
-  {% if request.GET.success %}
-  <div class="success-banner">
-    <i class="fas fa-check-circle"></i>
-    <h3>🎉 تم الدفع بنجاح!</h3>
-    <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
-  </div>
-  {% endif %}
   {% if request.GET.session %}
-  <div class="text-center my-4">
+  <div class="start-session-wrapper">
     <button
-      class="btn-play btn-success"
+      class="start-session-btn"
       id="startPaidSessionBtn"
       data-session="{{ request.GET.session }}">
       <i class="fas fa-play"></i>
       ابدأ اللعب
     </button>
   </div>
+
   {% endif %}
 
   <!-- Hidden Form -->
@@ -711,8 +757,18 @@
   </form>
 
   <section class="packages-section">
+
+      {% if request.GET.success %}
+      <div class="success-banner">
+        <i class="fas fa-check-circle"></i>
+        <h3>🎉 تم الدفع بنجاح!</h3>
+        <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
+      </div>
+
+
+      {% endif %}
     <div class="section-title">
-      <h2>اختر الحزمة المناسبة</h2>
+      <h2>خلية الحروف</h2>
       <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب <strong>خلية الحروف</strong></p>
     </div>
 
@@ -920,19 +976,13 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <form method="POST"
-                        action="{% url 'games:create_letters_session' %}"
-                        target="_blank">
+                  <button
+                    class="btn-play btn-success start-paid-package-btn"
+                    data-package="{{ package.id }}">
+                    <i class="fas fa-play"></i>
+                    <span class="btn-text">ابدأ اللعب</span>
+                  </button>
 
-                      {% csrf_token %}
-                      <input type="hidden" name="package_id" value="{{ package.id }}">
-
-                      <button type="submit" class="btn-play btn-success">
-                          <i class="fas fa-play"></i>
-                          ابدأ اللعب
-                      </button>
-
-                  </form>
                 {% else %}
                   <a class="btn-play"
                     href="{% url 'payments:start_payment' package.id %}">
@@ -972,14 +1022,12 @@ document.addEventListener('DOMContentLoaded', function () {
     })();
 
     /* =====================================================
-       ▶️ زر بدء الجلسة بعد الدفع (المدفوعة)
-       - فتح تبويب جديد مضمون 100%
-       - بدون popup block
+       ▶️ زر "ابدأ اللعب" بعد الدفع (الأعلى)
     ===================================================== */
-    const startBtn = document.getElementById('startPaidSessionBtn');
+    const startPaidSessionBtn = document.getElementById('startPaidSessionBtn');
 
-    if (startBtn) {
-        startBtn.addEventListener('click', function () {
+    if (startPaidSessionBtn) {
+        startPaidSessionBtn.addEventListener('click', function () {
             const sessionId = this.dataset.session;
             if (!sessionId) {
                 alert("تعذر العثور على الجلسة");
@@ -988,23 +1036,52 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const url = `/games/letters/session/${sessionId}/`;
 
-            // فتح التبويب من click مباشر = مضمون
             const win = window.open(url, '_blank', 'noopener,noreferrer');
-
             if (!win) {
-                alert("الرجاء السماح بفتح النوافذ المنبثقة للمتابعة");
+                alert("الرجاء السماح بفتح النوافذ المنبثقة");
                 return;
             }
 
-            // تعطيل الزر بعد الفتح (UX + أمان)
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-check"></i> تم فتح الجلسة';
         });
     }
 
+    /* =====================================================
+       ▶️ زر "ابدأ اللعب" داخل الحزم (نفس السلوك 100%)
+    ===================================================== */
+    document.querySelectorAll('.start-paid-package-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+
+            const packageId = this.dataset.package;
+            if (!packageId) {
+                alert("تعذر تحديد الحزمة");
+                return;
+            }
+
+            // 1️⃣ فتح تبويب فوري (مهم جدًا)
+            const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+            if (!gameTab) {
+                alert("الرجاء السماح بفتح النوافذ المنبثقة");
+                return;
+            }
+
+            // 2️⃣ تجهيز الفورم وإرساله
+            const form = document.getElementById('lettersCreateForm');
+            const input = document.getElementById('lettersPkgId');
+
+            input.value = packageId;
+            form.target = gameTab.name || '_blank';
+            form.submit();
+
+            // UX
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فتح الجلسة';
+        });
+    });
+
 });
 </script>
-
 
 
 </body>
