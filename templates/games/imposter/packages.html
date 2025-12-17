@@ -56,14 +56,8 @@
     body {
       background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
-      padding-top: 70px; /* ✅ إصلاح: زيادة البادنج لحل مشكلة الهيدر */
+      padding-top: 20px;
       padding-bottom: 40px;
-    }
-
-    /* إصلاح: مساحة إضافية للهيدر الثابت */
-    .header-spacer {
-      height: 70px;
-      width: 100%;
     }
 
     /* Success Message */
@@ -108,23 +102,23 @@
       opacity: 0.95;
     }
 
-    /* ✅ إصلاح: تصميم مشابه لخلية الحروف */
+    /* Packages Section */
     .packages-section {
       background: rgba(255,255,255,.98);
       border-radius: 28px;
-      margin: 20px auto; /* ✅ تقليل المارجن */
-      padding: 30px 24px; /* ✅ تقليل البادنج */
+      margin: 40px auto;
+      padding: 50px 24px;
       max-width: 1200px;
       box-shadow: 0 20px 50px rgba(0,0,0,.12);
     }
 
     .section-title {
       text-align: center;
-      margin-bottom: 30px; /* ✅ تقليل المارجن */
+      margin-bottom: 40px;
     }
 
     .section-title h2 {
-      font-size: 2.3rem; /* ✅ تصغير قليلاً */
+      font-size: 2.6rem;
       font-weight: 900;
       margin: 0 0 1rem;
       background: linear-gradient(135deg, var(--primary), var(--imposter));
@@ -141,7 +135,7 @@
       line-height: 1.6;
     }
 
-    /* Scrollable Row - ✅ مثل خلية الحروف تماماً */
+    /* Scrollable Row */
     .scroll-row {
       display: flex;
       gap: 20px;
@@ -152,7 +146,7 @@
     }
 
     .scroll-row::-webkit-scrollbar {
-      height: 8px;
+      height: 10px;
     }
 
     .scroll-row::-webkit-scrollbar-thumb {
@@ -171,7 +165,7 @@
       margin: 0 20px;
     }
 
-    /* Package Card - ✅ مثل خلية الحروف */
+    /* Package Card */
     .pkg {
       min-width: 320px;
       max-width: 340px;
@@ -216,7 +210,7 @@
       transform: scaleX(1);
     }
 
-    /* Free Card - ✅ مثل خلية الحروف */
+    /* Free Card */
     .cardx.free {
       border: 3px dashed var(--success);
       background: linear-gradient(180deg, #f0fdf4, #ffffff 70%);
@@ -227,7 +221,7 @@
       box-shadow: 0 20px 48px rgba(34,197,94,.3);
     }
 
-    /* Ribbons & Badges - ✅ مثل خلية الحروف */
+    /* Ribbons & Badges */
     .ribbon {
       position: absolute;
       top: 16px;
@@ -261,7 +255,7 @@
       box-shadow: 0 4px 12px rgba(154, 52, 18, 0.15);
     }
 
-    /* Title - ✅ مثل خلية الحروف */
+    /* Title */
     .title {
       font-weight: 900;
       font-size: 1.4rem;
@@ -271,7 +265,7 @@
       letter-spacing: -0.5px;
     }
 
-    /* Badge Wrap - ✅ مثل خلية الحروف */
+    /* Badge Wrap */
     .badge-wrap {
       text-align: center;
       margin: 8px 0;
@@ -289,7 +283,7 @@
       letter-spacing: 0.3px;
     }
 
-    /* Pricing - ✅ مثل خلية الحروف */
+    /* Pricing */
     .pkg-pricing {
       margin: 12px 0;
       text-align: center;
@@ -342,7 +336,7 @@
       color: #ea580c;
     }
 
-    /* Info Row - ✅ مثل خلية الحروف لكن بدون صلاحية */
+    /* Info Row (بدل Trust Row بدون صلاحية) */
     .info-row {
       display: flex;
       align-items: center;
@@ -355,20 +349,20 @@
       flex-wrap: wrap;
     }
 
-    .game-count {
-      background: #f0f9ff;
-      color: #0369a1;
-      border: 2px solid #7dd3fc;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-weight: 800;
-      font-size: .85rem;
+    .info-row .pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      color: #334155;
+      font-size: .85rem;
+      white-space: nowrap;
     }
 
-    /* Buttons - ✅ مثل خلية الحروف */
+    /* Buttons */
     .btn-play {
       display: flex;
       align-items: center;
@@ -442,19 +436,44 @@
       z-index: 1;
     }
 
-    /* ✅ إصلاح: مثل خلية الحروف - مجانية أولاً ثم المدفوعة */
-    .free-package-section {
-      margin-bottom: 30px;
+    /* Loading Spinner */
+    .loading-spinner {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
     }
 
-    .paid-packages-section {
-      margin-top: 30px;
+    .btn-play.loading .btn-text {
+      opacity: 0;
     }
 
+    .btn-play.loading .loading-spinner {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #fff;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Section Header */
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-top: 50px;
       margin-bottom: 24px;
       padding-bottom: 16px;
       border-bottom: 3px solid rgba(139,92,246,.15);
@@ -481,46 +500,53 @@
       font-weight: 600;
     }
 
-    /* ✅ إصلاح: تحسينات للجوال */
+    /* Game Count Badge */
+    .game-count {
+      background: #f0f9ff;
+      color: #0369a1;
+      border: 2px solid #7dd3fc;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-weight: 800;
+      font-size: .85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 4px 0;
+    }
+
+    /* Responsive */
     @media (max-width: 992px) {
-      body {
-        padding-top: 60px; /* أقل للجوال */
-      }
-      
       .packages-section {
-        padding: 25px 16px;
-        margin: 15px auto;
-        border-radius: 20px;
+        padding: 40px 20px;
+        margin: 30px 16px;
+        border-radius: 24px;
       }
 
       .section-title h2 {
-        font-size: 1.8rem;
-        margin-top: 5px;
+        font-size: 2.2rem;
       }
 
       .pkg {
-        min-width: 280px;
-        max-width: 300px;
+        min-width: 300px;
+        max-width: 320px;
       }
     }
 
     @media (max-width: 768px) {
       body {
-        padding-top: 50px;
+        padding-top: 10px;
+        padding-bottom: 20px;
       }
 
       .packages-section {
-        padding: 20px 12px;
-        margin: 10px auto;
-        border-radius: 16px;
-      }
-
-      .section-title {
-        margin-bottom: 20px;
+        padding: 32px 16px;
+        margin: 20px 12px;
+        border-radius: 20px;
       }
 
       .section-title h2 {
-        font-size: 1.6rem;
+        font-size: 1.9rem;
       }
 
       .section-title p {
@@ -528,48 +554,58 @@
       }
 
       .scroll-row {
-        gap: 12px;
-        padding-bottom: 10px;
+        gap: 16px;
+        padding-bottom: 12px;
       }
 
       .pkg {
-        min-width: 260px;
-        max-width: 280px;
+        min-width: 280px;
+        max-width: 300px;
       }
 
       .cardx {
-        padding: 20px;
+        padding: 24px;
       }
 
       .title {
-        font-size: 1.2rem;
+        font-size: 1.25rem;
       }
 
       .section-header {
         flex-direction: column;
-        align-items: flex-start;
         gap: 8px;
-        margin-bottom: 16px;
+        align-items: flex-start;
+        margin-top: 40px;
       }
 
       .section-header h5 {
         font-size: 1.2rem;
       }
+
+      .success-banner {
+        margin: 16px 12px;
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .success-banner h3 {
+        font-size: 1.2rem;
+      }
+
+      .success-banner i {
+        font-size: 1.5rem;
+      }
     }
 
     @media (max-width: 576px) {
-      body {
-        padding-top: 40px;
-      }
-
       .packages-section {
-        border-radius: 12px;
-        padding: 16px 8px;
-        margin: 8px auto;
+        border-radius: 16px;
+        padding: 24px 12px;
+        margin: 16px 8px;
       }
 
       .section-title h2 {
-        font-size: 1.4rem;
+        font-size: 1.6rem;
       }
 
       .section-title p {
@@ -577,8 +613,16 @@
       }
 
       .pkg {
-        min-width: calc(100vw - 32px);
-        max-width: calc(100vw - 32px);
+        min-width: calc(100vw - 48px);
+        max-width: calc(100vw - 48px);
+      }
+
+      .scroll-row {
+        gap: 12px;
+      }
+
+      .cardx {
+        padding: 20px;
       }
 
       .price-new {
@@ -586,8 +630,18 @@
       }
 
       .btn-play {
-        padding: 14px 16px;
+        padding: 14px 20px;
         font-size: 1rem;
+      }
+
+      .ribbon {
+        font-size: .8rem;
+        padding: 8px 12px;
+      }
+
+      .used-before {
+        font-size: .72rem;
+        padding: 6px 10px;
       }
     }
 
@@ -614,14 +668,55 @@
       }
     }
 
+    /* Start Session Button */
+    .start-session-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 32px 0 16px;
+    }
+
+    .start-session-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
+      transition: all .25s ease;
+      letter-spacing: .3px;
+    }
+
+    .start-session-btn i {
+      font-size: 0.95rem;
+    }
+
+    .start-session-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 14px 32px rgba(34, 197, 94, 0.45);
+    }
+
+    .start-session-btn:active {
+      transform: translateY(0);
+    }
+
+    .start-session-btn:disabled {
+      background: #d1fae5;
+      color: #065f46;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
   </style>
 </head>
 <body>
 
   {% include 'header.html' %}
-
-  <!-- ✅ إصلاح: إضافة مسافة إضافية للهيدر -->
-  <div class="header-spacer d-block d-md-none"></div>
 
   <div class="container my-3">
     {% if messages %}
@@ -660,9 +755,8 @@
       <p>اكتشف المخبر بينكم واختر إحدى الحزم التالية للعب <strong>امبوستر</strong></p>
     </div>
 
-    <!-- ✅ إصلاح: هيكل مثل خلية الحروف - المجانية أولاً -->
+    <!-- Free Package -->
     {% if free_package %}
-    <div class="free-package-section">
       <div class="pkg mb-4" style="min-width:100%; max-width:100%;">
         <div class="cardx free">
           <span class="ribbon">مجانية</span>
@@ -671,6 +765,7 @@
             <span class="badge-imp">لعبة امبوستر</span>
           </div>
 
+          <!-- عدد الجولات -->
           <div class="info-row">
             <span class="game-count">
               <i class="fas fa-gamepad"></i>
@@ -697,78 +792,93 @@
           </div>
         </div>
       </div>
-    </div>
     {% endif %}
 
-    <!-- ✅ إصلاح: المدفوعة في سكرول جانبي -->
-    {% if paid_packages %}
-    <div class="paid-packages-section">
-      <div class="section-header">
-        <h5>
-          <i class="fas fa-user-secret"></i>
-          حزم امبوستر المدفوعة
-        </h5>
-        <small>ترتيب حسب رقم الحزمة</small>
-      </div>
-      <div class="scroll-row" role="region" aria-label="حزم امبوستر المدفوعة">
-        {% for package in paid_packages %}
-          <div class="pkg">
-            <div class="cardx">
+    <!-- All Packages (بدون تصنيف) -->
+    <div class="section-header">
+      <h5>
+        <i class="fas fa-user-secret"></i>
+        حزم امبوستر
+      </h5>
+      <small>ترتيب حسب رقم الحزمة</small>
+    </div>
+    <div class="scroll-row" role="region" aria-label="حزم امبوستر">
+      {% for package in packages %}
+        <div class="pkg">
+          <div class="cardx">
+            
+            {% if package.is_free or package.package_number == 0 %}
+              <span class="ribbon">مجانية</span>
+            {% endif %}
 
-              {% if package.id in purchased_packages %}
-                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> تم شراؤها مسبقاً</div>
+            {% if package.id in purchased_packages %}
+              <div class="used-before"><i class="fa-solid fa-rotate-left"></i> تم شراؤها مسبقاً</div>
+            {% endif %}
+
+            <div class="title">
+              {% if package.is_free or package.package_number == 0 %}
+                الحزمة التجريبية
+              {% else %}
+                حزمة رقم {{ package.package_number }}
               {% endif %}
+            </div>
+            
+            <div class="badge-wrap">
+              <span class="badge-imp">لعبة امبوستر</span>
+            </div>
 
-              <div class="title">حزمة رقم {{ package.package_number }}</div>
-              <div class="badge-wrap">
-                <span class="badge-imp">لعبة امبوستر</span>
-              </div>
-
-              <div class="info-row">
-                <span class="game-count">
-                  <i class="fas fa-gamepad"></i>
-                  {% if package.word_count %}
-                    {{ package.word_count }} جولة
-                  {% else %}
-                    {{ package.imposter_words.all|length }} جولة
-                  {% endif %}
-                </span>
-              </div>
-
-              <!-- السعر -->
-              {% if package.effective_price > 0 %}
-              <div class="pkg-pricing">
-                {% if package.has_discount %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                    <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
-                  <div class="text-center">
-                    <span class="save-badge"
-                          data-orig="{{ package.original_price|floatformat:2 }}"
-                          data-disc="{{ package.discounted_price|floatformat:2 }}">
-                      <i class="fa-solid fa-tag"></i>
-                      وفّر <b class="save-pct">—</b>
-                    </span>
-                  </div>
+            <!-- عدد الجولات -->
+            <div class="info-row">
+              <span class="game-count">
+                <i class="fas fa-gamepad"></i>
+                {% if package.word_count %}
+                  {{ package.word_count }} جولة
                 {% else %}
-                  <div class="price-wrap">
-                    <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:2 }}</span>
-                      <span class="icon-saudi_riyal"></span>
-                    </div>
-                  </div>
+                  {{ package.imposter_words.all|length }} جولة
                 {% endif %}
-              </div>
-              {% endif %}
+              </span>
+            </div>
 
-              <div style="margin-top:auto;">
+            <!-- السعر -->
+            {% if not package.is_free and package.effective_price > 0 %}
+            <div class="pkg-pricing">
+              {% if package.has_discount %}
+                <div class="price-wrap">
+                  <div class="price-new">
+                    <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                  <div class="price-old">
+                    <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                </div>
+                <div class="text-center">
+                  <span class="save-badge"
+                        data-orig="{{ package.original_price|floatformat:2 }}"
+                        data-disc="{{ package.discounted_price|floatformat:2 }}">
+                    <i class="fa-solid fa-tag"></i>
+                    وفّر <b class="save-pct">—</b>
+                  </span>
+                </div>
+              {% else %}
+                <div class="price-wrap">
+                  <div class="price-new">
+                    <span class="val">{{ package.price|floatformat:2 }}</span>
+                    <span class="icon-saudi_riyal"></span>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+            {% endif %}
+
+            <div style="margin-top:auto;">
+              {% if package.is_free or package.package_number == 0 %}
+                <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ابدأ الجولة المجانية</span>
+                </a>
+              {% else %}
                 {% if package.id in purchased_packages %}
                   <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
                     <i class="fas fa-play"></i>
@@ -781,14 +891,13 @@
                     <span class="btn-text">شراء</span>
                   </a>
                 {% endif %}
-              </div>
-
+              {% endif %}
             </div>
+
           </div>
-        {% endfor %}
-      </div>
+        </div>
+      {% endfor %}
     </div>
-    {% endif %}
 
   </section>
 

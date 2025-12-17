@@ -1060,23 +1060,25 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const header = document.querySelector('header, .site-header, .main-header');
 
-    if (!header) return;
+    const pageOffset = document.querySelector('.page-offset');
+    if (!pageOffset) return;
 
-    const setHeaderOffset = () => {
-        const h = header.offsetHeight;
-        document.documentElement.style.setProperty(
-            '--header-height',
-            h + 'px'
-        );
+    // نبحث عن أي عنصر fixed أعلى الصفحة
+    const fixedTopEl = Array.from(document.body.children).find(el => {
+        const style = window.getComputedStyle(el);
+        return style.position === 'fixed' && el.getBoundingClientRect().top === 0;
+    });
+
+    if (!fixedTopEl) return;
+
+    const applyOffset = () => {
+        const h = fixedTopEl.offsetHeight;
+        pageOffset.style.paddingTop = h + 'px';
     };
 
-    // أول تحميل
-    setHeaderOffset();
-
-    // عند تغيير حجم الشاشة (مهم للجوال)
-    window.addEventListener('resize', setHeaderOffset);
+    applyOffset();
+    window.addEventListener('resize', applyOffset);
 });
 </script>
 
