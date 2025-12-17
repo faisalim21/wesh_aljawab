@@ -339,4 +339,4 @@ TELR_RETURN_FAIL    = "https://wesh-aljawab.com/payments/telr/fail/"
 TELR_RETURN_CANCEL  = "https://wesh-aljawab.com/payments/telr/cancel/"
 
 # وضع الاختبار
-TELR_TEST_MODE = True
+TELR_TEST_MODE = False
