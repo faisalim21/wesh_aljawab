@@ -976,12 +976,13 @@
 
               <div style="margin-top:auto;">
                 {% if package.id in active_packages_ids %}
-                  <button
-                    class="btn-play btn-success start-paid-package-btn"
-                    data-package="{{ package.id }}">
+                  <a
+                    class="btn-play btn-success"
+                    href="{% url 'payments:start_payment' package.id %}">
                     <i class="fas fa-play"></i>
                     <span class="btn-text">ابدأ اللعب</span>
-                  </button>
+                  </a>
+
 
                 {% else %}
                   <a class="btn-play"
@@ -1007,27 +1008,26 @@ document.addEventListener('DOMContentLoaded', function () {
     /* =====================================================
        🧮 حساب نسبة الخصم (UI فقط)
     ===================================================== */
-    (function computeSavings() {
-        document.querySelectorAll('.save-badge').forEach(el => {
-            const o = parseFloat(el.dataset.orig || '0');
-            const d = parseFloat(el.dataset.disc || '0');
-            const pct =
-                (o > 0 && d > 0 && d < o)
-                    ? Math.round((1 - (d / o)) * 100)
-                    : 0;
+    document.querySelectorAll('.save-badge').forEach(el => {
+        const o = parseFloat(el.dataset.orig || '0');
+        const d = parseFloat(el.dataset.disc || '0');
+        const pct =
+            (o > 0 && d > 0 && d < o)
+                ? Math.round((1 - (d / o)) * 100)
+                : 0;
 
-            const tgt = el.querySelector('.save-pct');
-            if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
-        });
-    })();
+        const tgt = el.querySelector('.save-pct');
+        if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
+    });
 
     /* =====================================================
-       ▶️ زر "ابدأ اللعب" بعد الدفع (الأعلى)
+       ▶️ زر ابدأ اللعب (بعد الدفع – الزر العلوي)
+       يعتمد على session جاهزة
     ===================================================== */
-    const startPaidSessionBtn = document.getElementById('startPaidSessionBtn');
+    const startSessionBtn = document.getElementById('startPaidSessionBtn');
 
-    if (startPaidSessionBtn) {
-        startPaidSessionBtn.addEventListener('click', function () {
+    if (startSessionBtn) {
+        startSessionBtn.addEventListener('click', function () {
             const sessionId = this.dataset.session;
             if (!sessionId) {
                 alert("تعذر العثور على الجلسة");
@@ -1047,42 +1047,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    /* =====================================================
-       ▶️ زر "ابدأ اللعب" داخل الحزم (نفس السلوك 100%)
-    ===================================================== */
-    document.querySelectorAll('.start-paid-package-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-
-            const packageId = this.dataset.package;
-            if (!packageId) {
-                alert("تعذر تحديد الحزمة");
-                return;
-            }
-
-            // 1️⃣ فتح تبويب فوري (مهم جدًا)
-            const gameTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
-            if (!gameTab) {
-                alert("الرجاء السماح بفتح النوافذ المنبثقة");
-                return;
-            }
-
-            // 2️⃣ تجهيز الفورم وإرساله
-            const form = document.getElementById('lettersCreateForm');
-            const input = document.getElementById('lettersPkgId');
-
-            input.value = packageId;
-            form.target = gameTab.name || '_blank';
-            form.submit();
-
-            // UX
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري فتح الجلسة';
-        });
-    });
-
 });
 </script>
-
 
 </body>
 </html>
