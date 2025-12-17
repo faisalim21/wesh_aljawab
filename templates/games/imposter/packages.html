@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <title>اختر الحزمة — لعبة الإمبوستر</title>
+  <title>اختر الحزمة — لعبة المخبر</title>
 
   <!-- Favicon & App Icons -->
   <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
@@ -13,10 +13,10 @@
   <meta name="theme-color" content="#8b5cf6">
 
   <!-- Open Graph / SEO -->
-  <meta name="description" content="اختر حزمتك المفضلة من لعبة الإمبوستر - اكتشف المخبر بينكم في تحديات مثيرة">
+  <meta name="description" content="اختر حزمتك المفضلة من لعبة المخبر - اكتشف المخبر بينكم في تحديات مثيرة">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="لعبة الإمبوستر - اختر حزمتك | وش الجواب">
-  <meta property="og:description" content="العب الإمبوستر مع أصدقائك - اكتشف المخبر بينكم في تحديات مثيرة">
+  <meta property="og:title" content="لعبة المخبر - اختر حزمتك | وش الجواب">
+  <meta property="og:description" content="العب المخبر مع أصدقائك - اكتشف المخبر بينكم في تحديات مثيرة">
   <meta property="og:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
   <meta property="og:url" content="https://wesh-aljawab.onrender.com/games/imposter/">
 
@@ -56,7 +56,7 @@
     body {
       background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
-      padding-top: 20px;
+      padding-top: 80px; /* زيادة البادنج لتجنب الهيدر */
       padding-bottom: 40px;
     }
 
@@ -535,7 +535,7 @@
 
     @media (max-width: 768px) {
       body {
-        padding-top: 10px;
+        padding-top: 70px; /* تقليل البادنج للجوال */
         padding-bottom: 20px;
       }
 
@@ -547,6 +547,7 @@
 
       .section-title h2 {
         font-size: 1.9rem;
+        margin-top: 10px; /* تأكد من ظهور العنوان */
       }
 
       .section-title p {
@@ -598,6 +599,10 @@
     }
 
     @media (max-width: 576px) {
+      body {
+        padding-top: 60px; /* بادنج أقل للجوال الصغير */
+      }
+
       .packages-section {
         border-radius: 16px;
         padding: 24px 12px;
@@ -606,6 +611,7 @@
 
       .section-title h2 {
         font-size: 1.6rem;
+        margin-top: 0;
       }
 
       .section-title p {
@@ -751,8 +757,8 @@
     {% endif %}
 
     <div class="section-title">
-      <h2>لعبة الإمبوستر</h2>
-      <p>اكتشف المخبر بينكم واختر إحدى الحزم التالية للعب <strong>الإمبوستر</strong></p>
+      <h2>لعبة المخبر</h2>
+      <p>اكتشف المخبر بينكم واختر إحدى الحزم التالية للعب <strong>المخبر</strong></p>
     </div>
 
     <!-- Free Package -->
@@ -762,7 +768,7 @@
           <span class="ribbon">مجانية</span>
           <div class="title">جولة تجريبية</div>
           <div class="badge-wrap">
-            <span class="badge-imp">لعبة الإمبوستر</span>
+            <span class="badge-imp">لعبة المخبر</span>
           </div>
 
           <!-- عدد الجولات -->
@@ -799,11 +805,11 @@
       <div class="section-header">
         <h5>
           <i class="fas fa-user-secret"></i>
-          حزم الإمبوستر المدفوعة
+          حزم المخبر المدفوعة
         </h5>
         <small>ترتيب حسب رقم الحزمة</small>
       </div>
-      <div class="scroll-row" role="region" aria-label="حزم الإمبوستر">
+      <div class="scroll-row" role="region" aria-label="حزم المخبر">
         {% for package in packages %}
           {% if not package.is_free and package.package_number != 0 %}
           <div class="pkg">
@@ -815,7 +821,7 @@
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
               <div class="badge-wrap">
-                <span class="badge-imp">لعبة الإمبوستر</span>
+                <span class="badge-imp">لعبة المخبر</span>
               </div>
 
               <!-- عدد الجولات -->
@@ -836,18 +842,18 @@
                 {% if package.has_discount %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                     <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
                   <div class="text-center">
                     <span class="save-badge"
-                          data-orig="{{ package.original_price }}"
-                          data-disc="{{ package.discounted_price }}">
+                          data-orig="{{ package.original_price|floatformat:2 }}"
+                          data-disc="{{ package.discounted_price|floatformat:2 }}">
                       <i class="fa-solid fa-tag"></i>
                       وفّر <b class="save-pct">—</b>
                     </span>
@@ -855,7 +861,7 @@
                 {% else %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="val">{{ package.price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
