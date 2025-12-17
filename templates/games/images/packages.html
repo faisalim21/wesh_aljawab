@@ -1,280 +1,290 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <!-- ===============================
-       الأساسيات
-  ================================ -->
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-  <title>
-    {% block title %}{{ page_title|default:"وش الجواب - تحدي الصور | ألعاب جماعية تفاعلية" }}{% endblock %}
-  </title>
+  <title>اختر الحزمة — تحدي الصور</title>
 
-  <meta name="description"
-        content="{% block meta_description %}{{ page_description|default:'العب تحدي الصور مع أصدقائك في منصة وش الجواب – لعبة جماعية تفاعلية تعتمد على الذكاء والملاحظة.' }}{% endblock %}">
-  <meta name="robots" content="index,follow,max-image-preview:large">
+  <!-- Favicon & App Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <meta name="theme-color" content="#8b5cf6">
 
-  <link rel="canonical"
-        href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.com/games/images/{% endif %}">
-
-  <!-- ===============================
-       Open Graph
-  ================================ -->
-  <meta property="og:locale" content="ar_SA">
+  <!-- Open Graph / SEO -->
+  <meta name="description" content="اختر حزمتك المفضلة من لعبة تحدي الصور - أسئلة صورية مع تحديات مثيرة">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="وش الجواب">
-  <meta property="og:title"
-        content="{% block og_title %}{{ page_title|default:'وش الجواب - تحدي الصور' }}{% endblock %}">
-  <meta property="og:description"
-        content="{% block og_description %}{{ page_description|default:'تحدي الصور – العب مع أصدقائك واختبر سرعة ملاحظتك.' }}{% endblock %}">
-  <meta property="og:url"
-        content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.com/games/images/{% endif %}">
-  <meta property="og:image"
-        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:secure_url"
-        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt"
-        content="{% block og_image_alt %}{{ page_og_alt|default:'وش الجواب – تحدي الصور' }}{% endblock %}">
+  <meta property="og:title" content="تحدي الصور - اختر حزمتك | وش الجواب">
+  <meta property="og:description" content="العب تحدي الصور مع أصدقائك - اختر من بين الحزم المتنوعة">
+  <meta property="og:image" content="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <meta property="og:url" content="https://wesh-aljawab.onrender.com/games/images/">
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title"
-        content="{% block twitter_title %}{{ page_title|default:'وش الجواب - تحدي الصور' }}{% endblock %}">
-  <meta name="twitter:description"
-        content="{% block twitter_description %}{{ page_description|default:'تحدي الصور – لعبة جماعية ممتعة.' }}{% endblock %}">
-  <meta name="twitter:image"
-        content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-
-  <!-- ===============================
-       الهوية
-  ================================ -->
-  <meta name="theme-color" content="#4f46e5">
-  <link rel="icon" type="image/png" sizes="32x32"
-        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="icon" type="image/png" sizes="16x16"
-        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="apple-touch-icon"
-        href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-
-  <!-- ===============================
-       Fonts & CSS
-  ================================ -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
-  <!-- ===============================
-       Structured Data
-  ================================ -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "name": "تحدي الصور – وش الجواب",
-    "url": "https://wesh-aljawab.com/games/images/",
-    "inLanguage": "ar",
-    "isPartOf": {
-      "@type": "WebSite",
-      "name": "وش الجواب",
-      "url": "https://wesh-aljawab.com/"
-    }
-  }
-  </script>
-
-  {% block meta_overrides %}{% endblock %}
-
-  <!-- ===============================
-       CSS (كامل – بدون حذف)
-  ================================ -->
   <style>
     :root {
       --primary: #8b5cf6;
       --cyan: #06b6d4;
       --success: #22c55e;
-      --orange: #f59e0b;
+      --warning: #f59e0b;
       --bg-dark: #667eea;
       --bg-darker: #764ba2;
       --card-border: rgba(139,92,246,.12);
+      --img-bg: #f0f9ff;
+      --img-text: #0369a1;
+      --img-border: #7dd3fc;
       --muted: #64748b;
       --text: #1f2937;
       --radius: 18px;
       --transition: .35s cubic-bezier(.25,.8,.25,1);
-      --shadow-sm: 0 4px 12px rgba(0,0,0,.08);
       --shadow-md: 0 12px 24px rgba(0,0,0,.12);
       --shadow-lg: 0 20px 40px rgba(0,0,0,.15);
     }
 
     * {
       font-family: 'Tajawal', sans-serif;
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
 
     body {
       background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
       min-height: 100vh;
-      margin: 0;
-      padding: 0;
+      padding-top: 20px;
+      padding-bottom: 40px;
     }
 
+    /* Success Message */
+    .success-banner {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #fff;
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      margin: 20px auto;
+      max-width: 800px;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+      animation: slideDown 0.5s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .success-banner i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .success-banner h3 {
+      font-size: 1.5rem;
+      font-weight: 900;
+      margin-bottom: 8px;
+    }
+
+    .success-banner p {
+      font-size: 1rem;
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    /* Packages Section */
     .packages-section {
-      background: rgba(255,255,255,.97);
-      padding: 80px 0;
-      border-radius: 24px;
+      background: rgba(255,255,255,.98);
+      border-radius: 28px;
       margin: 40px auto;
+      padding: 50px 24px;
       max-width: 1200px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.1);
+      box-shadow: 0 20px 50px rgba(0,0,0,.12);
     }
 
     .section-title {
       text-align: center;
-      margin-bottom: 60px;
+      margin-bottom: 40px;
     }
 
     .section-title h2 {
       font-size: 2.6rem;
-      font-weight: 800;
+      font-weight: 900;
+      margin: 0 0 1rem;
       background: linear-gradient(135deg, var(--primary), var(--cyan));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 1rem;
       letter-spacing: -1px;
     }
 
     .section-title p {
       color: var(--muted);
-      font-size: 1.05rem;
       margin: 0;
+      font-size: 1.05rem;
       font-weight: 500;
+      line-height: 1.6;
     }
 
-    .packages-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 28px;
-      align-items: stretch;
+    /* Scrollable Row */
+    .scroll-row {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      scroll-behavior: smooth;
+      scroll-padding: 20px;
     }
 
+    .scroll-row::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    .scroll-row::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--primary), var(--cyan));
+      border-radius: 999px;
+      transition: var(--transition);
+    }
+
+    .scroll-row::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(90deg, var(--cyan), var(--primary));
+    }
+
+    .scroll-row::-webkit-scrollbar-track {
+      background: rgba(139,92,246,.08);
+      border-radius: 999px;
+      margin: 0 20px;
+    }
 
     /* Package Card */
-    .package-card {
+    .pkg {
+      min-width: 320px;
+      max-width: 340px;
+      flex: 0 0 auto;
+    }
+
+    .cardx {
       background: #fff;
+      border: 2px solid var(--card-border);
       border-radius: var(--radius);
-      padding: 2rem;
-      border: 1px solid var(--card-border);
-      box-shadow: var(--shadow-md);
-      transition: var(--transition);
+      padding: 28px;
       position: relative;
+      box-shadow: var(--shadow-md);
+      height: 100%;
       display: flex;
       flex-direction: column;
+      gap: 16px;
+      transition: var(--transition);
       overflow: hidden;
     }
 
-    .package-card::before {
+    .cardx::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
       right: 0;
-      height: 4px;
+      height: 5px;
       background: linear-gradient(90deg, var(--primary), var(--cyan));
       transform: scaleX(0);
-      transition: transform var(--transition);
+      transition: transform .5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
       transform-origin: right;
     }
 
-    .package-card:hover {
-      transform: translateY(-8px);
+    .cardx:hover {
+      transform: translateY(-10px) scale(1.02);
       box-shadow: var(--shadow-lg);
-      border-color: rgba(139,92,246,.2);
+      border-color: rgba(139,92,246,.3);
     }
 
-    .package-card:hover::before {
+    .cardx:hover::before {
       transform: scaleX(1);
-      transform-origin: right;
     }
 
     /* Free Card */
-    .free-card {
-      border: 2px dashed var(--success);
-      background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 70%);
-      box-shadow: 0 12px 32px rgba(34,197,94,.15);
+    .cardx.free {
+      border: 3px dashed var(--success);
+      background: linear-gradient(180deg, #f0fdf4, #ffffff 70%);
+      box-shadow: 0 12px 32px rgba(34,197,94,.2);
     }
 
+    .cardx.free:hover {
+      box-shadow: 0 20px 48px rgba(34,197,94,.3);
+    }
+
+    /* Ribbons & Badges */
     .ribbon {
       position: absolute;
-      top: 12px;
-      left: -10px;
+      top: 16px;
+      left: -12px;
       background: linear-gradient(135deg, var(--success), #16a34a);
       color: #fff;
-      padding: 8px 14px;
-      border-radius: 0 10px 10px 0;
+      padding: 10px 16px;
+      border-radius: 0 12px 12px 0;
       font-weight: 900;
-      font-size: .85rem;
-      box-shadow: 0 6px 16px rgba(34,197,94,.3);
+      font-size: .9rem;
+      box-shadow: 0 6px 20px rgba(34,197,94,.35);
       z-index: 10;
+      letter-spacing: 0.5px;
     }
 
     .used-before {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 8;
+      top: 16px;
+      right: 16px;
       background: #fff7ed;
       color: #9a3412;
-      border: 1px solid #fed7aa;
-      padding: 6px 12px;
-      border-radius: 10px;
+      border: 2px solid #fed7aa;
+      padding: 8px 14px;
+      border-radius: 12px;
       font-weight: 800;
-      font-size: .75rem;
+      font-size: .78rem;
       display: flex;
+      gap: 8px;
       align-items: center;
-      gap: 6px;
+      z-index: 8;
+      box-shadow: 0 4px 12px rgba(154, 52, 18, 0.15);
     }
 
-    .pkg-head {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 56px;
-      gap: .6rem;
-      margin-bottom: 1rem;
-    }
-
-    .package-title {
-      font-size: 1.3rem;
-      font-weight: 800;
+    /* Title */
+    .title {
+      font-weight: 900;
+      font-size: 1.4rem;
       text-align: center;
-      margin: 0;
+      margin: 8px 0;
       color: var(--text);
+      letter-spacing: -0.5px;
     }
 
-    .pkg-desc {
-      color: var(--muted);
+    /* Badge Wrap */
+    .badge-wrap {
       text-align: center;
-      margin: 1rem 0;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 3;
-      overflow: hidden;
-      font-size: .95rem;
-      line-height: 1.6;
+      margin: 8px 0;
     }
 
-    .pkg-desc.expanded {
-      -webkit-line-clamp: unset;
+    .badge-img {
+      background: var(--img-bg);
+      color: var(--img-text);
+      border: 2px solid var(--img-border);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: 800;
+      font-size: .85rem;
+      display: inline-block;
+      letter-spacing: 0.3px;
     }
 
     /* Pricing */
     .pkg-pricing {
-      margin-top: 1rem;
+      margin: 12px 0;
       text-align: center;
     }
 
@@ -284,11 +294,12 @@
       justify-content: center;
       gap: 12px;
       margin: 8px 0;
+      flex-wrap: wrap;
     }
 
     .price-new {
       font-weight: 900;
-      font-size: 1.4rem;
+      font-size: 1.5rem;
       color: #0ea5e9;
       display: flex;
       align-items: center;
@@ -302,27 +313,29 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: .95rem;
+      font-size: 1.1rem;
     }
 
     .save-badge {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #ecfdf5, #e0f2fe);
+      gap: 6px;
+      background: #ecfeff;
       color: #0369a1;
-      border: 1px solid #7dd3fc;
+      border: 2px solid #7dd3fc;
       font-weight: 800;
       border-radius: 999px;
-      padding: 4px 12px;
-      font-size: .8rem;
-      margin-top: .5rem;
+      padding: 6px 14px;
+      font-size: .85rem;
+      margin-top: 6px;
+      box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
     }
 
     .save-badge i {
       color: #0284c7;
     }
 
+    /* Trust Row */
     .trust-row {
       display: flex;
       align-items: center;
@@ -330,88 +343,123 @@
       gap: 12px;
       color: #0f172a;
       font-weight: 700;
-      font-size: .85rem;
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid rgba(139,92,246,.08);
+      font-size: .9rem;
+      margin: 8px 0;
+      flex-wrap: wrap;
     }
 
     .trust-row .pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 10px;
+      gap: 8px;
+      padding: 8px 14px;
       border-radius: 999px;
-      background: rgba(139,92,246,.06);
-      border: 1px solid rgba(139,92,246,.12);
-      color: #4f46e5;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      color: #334155;
+      font-size: .85rem;
+      white-space: nowrap;
     }
 
-    .pkg-actions {
-      margin-top: auto;
-      padding-top: 1.5rem;
-    }
-
+    /* Buttons */
     .btn-play {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       width: 100%;
-      background: linear-gradient(135deg, var(--primary), var(--cyan));
       color: #fff;
-      padding: 12px;
+      font-weight: 900;
+      font-size: 1.05rem;
       border: none;
-      border-radius: 12px;
-      font-size: 1rem;
-      font-weight: 800;
-      transition: var(--transition);
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      border-radius: 14px;
+      padding: 16px 24px;
       text-decoration: none;
-      text-align: center;
+      transition: var(--transition);
       position: relative;
       overflow: hidden;
       cursor: pointer;
+      margin-top: auto;
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
     }
 
     .btn-play::before {
       content: '';
       position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: rgba(255,255,255,.2);
-      transition: left var(--transition);
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: rgba(255,255,255,.3);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width .6s ease, height .6s ease;
     }
 
     .btn-play:hover {
-      box-shadow: 0 10px 24px rgba(139,92,246,.3);
       color: #fff;
+      box-shadow: 0 12px 32px rgba(139,92,246,.4);
       text-decoration: none;
+      transform: translateY(-3px);
     }
 
     .btn-play:hover::before {
-      left: 100%;
+      width: 400px;
+      height: 400px;
+    }
+
+    .btn-play:active {
+      transform: translateY(-1px);
+    }
+
+    .btn-play.btn-success {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.25);
+    }
+
+    .btn-play.btn-success:hover {
+      box-shadow: 0 12px 32px rgba(34, 197, 94, 0.4);
     }
 
     .btn-play:disabled {
       background: #e2e8f0 !important;
       color: #94a3b8 !important;
       cursor: not-allowed;
+      box-shadow: none !important;
+      transform: none !important;
     }
 
+    .btn-play .btn-text {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Loading Spinner */
     .loading-spinner {
       display: none;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+
+    .btn-play.loading .btn-text {
+      opacity: 0;
+    }
+
+    .btn-play.loading .loading-spinner {
+      display: block;
     }
 
     .spinner {
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #fff;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #fff;
       border-radius: 50%;
-      width: 16px;
-      height: 16px;
-      animation: spin 1s linear infinite;
+      width: 24px;
+      height: 24px;
+      animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
@@ -419,396 +467,471 @@
       100% { transform: rotate(360deg); }
     }
 
-    .note-line {
-      font-size: .85rem;
-      color: #9a3412;
-      text-align: center;
-      margin-top: .8rem;
+    /* Section Header */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 50px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 3px solid rgba(139,92,246,.15);
+    }
+
+    .section-header h5 {
+      margin: 0;
+      font-weight: 900;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text);
+    }
+
+    .section-header h5 i {
+      color: var(--primary);
+      font-size: 1.3rem;
+    }
+
+    .section-header small {
+      color: var(--muted);
+      font-size: .9rem;
       font-weight: 600;
     }
 
     /* Responsive */
-    @media (max-width: 768px) {
+    @media (max-width: 992px) {
       .packages-section {
         padding: 40px 20px;
-        margin: 20px auto;
+        margin: 30px 16px;
+        border-radius: 24px;
       }
 
       .section-title h2 {
-        font-size: 2rem;
+        font-size: 2.2rem;
       }
 
-      .packages-grid {
-        gap: 24px;
+      .pkg {
+        min-width: 300px;
+        max-width: 320px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding-top: 10px;
+        padding-bottom: 20px;
       }
 
-      .package-card {
-        padding: 1.5rem;
+      .packages-section {
+        padding: 32px 16px;
+        margin: 20px 12px;
+        border-radius: 20px;
+      }
+
+      .section-title h2 {
+        font-size: 1.9rem;
+      }
+
+      .section-title p {
+        font-size: 0.95rem;
+      }
+
+      .scroll-row {
+        gap: 16px;
+        padding-bottom: 12px;
+      }
+
+      .pkg {
+        min-width: 280px;
+        max-width: 300px;
+      }
+
+      .cardx {
+        padding: 24px;
+      }
+
+      .title {
+        font-size: 1.25rem;
+      }
+
+      .section-header {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+        margin-top: 40px;
+      }
+
+      .section-header h5 {
+        font-size: 1.2rem;
+      }
+
+      .success-banner {
+        margin: 16px 12px;
+        padding: 16px;
+        border-radius: 12px;
+      }
+
+      .success-banner h3 {
+        font-size: 1.2rem;
+      }
+
+      .success-banner i {
+        font-size: 1.5rem;
       }
     }
 
     @media (max-width: 576px) {
-      .packages-grid {
-        grid-template-columns: 1fr;
+      .packages-section {
+        border-radius: 16px;
+        padding: 24px 12px;
+        margin: 16px 8px;
       }
 
       .section-title h2 {
         font-size: 1.6rem;
       }
 
-      .packages-section {
-        border-radius: 0;
+      .section-title p {
+        font-size: 0.9rem;
+      }
+
+      .pkg {
+        min-width: calc(100vw - 48px);
+        max-width: calc(100vw - 48px);
+      }
+
+      .scroll-row {
+        gap: 12px;
+      }
+
+      .cardx {
+        padding: 20px;
+      }
+
+      .price-new {
+        font-size: 1.3rem;
+      }
+
+      .btn-play {
+        padding: 14px 20px;
+        font-size: 1rem;
+      }
+
+      .ribbon {
+        font-size: .8rem;
+        padding: 8px 12px;
+      }
+
+      .used-before {
+        font-size: .72rem;
+        padding: 6px 10px;
       }
     }
+
+    /* Animation on Load */
+    .pkg {
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .pkg:nth-child(1) { animation-delay: 0.1s; }
+    .pkg:nth-child(2) { animation-delay: 0.2s; }
+    .pkg:nth-child(3) { animation-delay: 0.3s; }
+    .pkg:nth-child(4) { animation-delay: 0.4s; }
+    .pkg:nth-child(5) { animation-delay: 0.5s; }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Start Session Button */
+    .start-session-wrapper {
+      display: flex;
+      justify-content: center;
+      margin: 32px 0 16px;
+    }
+
+    .start-session-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 28px;
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(34, 197, 94, 0.35);
+      transition: all .25s ease;
+      letter-spacing: .3px;
+    }
+
+    .start-session-btn i {
+      font-size: 0.95rem;
+    }
+
+    .start-session-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 14px 32px rgba(34, 197, 94, 0.45);
+    }
+
+    .start-session-btn:active {
+      transform: translateY(0);
+    }
+
+    .start-session-btn:disabled {
+      background: #d1fae5;
+      color: #065f46;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
   </style>
 </head>
 <body>
 
   {% include 'header.html' %}
 
-  <!-- ===============================
-       رسائل النظام
-  ================================ -->
-  <div class="container pt-4">
+  <div class="container my-3">
     {% if messages %}
-      <div class="mb-3">
-        {% for message in messages %}
-          <div class="alert alert-{{ message.tags|default:'info' }} mb-2 rounded-3 text-center fw-semibold" role="alert">
-            {{ message|safe }}
+      {% for m in messages %}
+        <div class="alert alert-{{ m.tags|default:'info' }} rounded-lg" role="alert">
+          {{ m|safe }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  {% if request.GET.session %}
+  <div class="start-session-wrapper">
+    <button
+      class="start-session-btn"
+      id="startPaidSessionBtn"
+      data-session="{{ request.GET.session }}">
+      <i class="fas fa-play"></i>
+      ابدأ اللعب
+    </button>
+  </div>
+  {% endif %}
+
+  <!-- Hidden Form -->
+  <form id="imagesCreateForm" method="post" action="{% url 'games:create_images_session' %}"
+      style="display:none" target="_blank">
+    {% csrf_token %}
+    <input type="hidden" name="package_id" id="imagesPkgId">
+    <button type="submit" id="hiddenSubmitBtnImg">go</button>
+  </form>
+
+  <section class="packages-section">
+
+    {% if request.GET.success %}
+    <div class="success-banner">
+      <i class="fas fa-check-circle"></i>
+      <h3>🎉 تم الدفع بنجاح!</h3>
+      <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
+    </div>
+    {% endif %}
+
+    <div class="section-title">
+      <h2>تحدي الصور</h2>
+      <p>ابدأ التحدي الآن واختر إحدى الحزم التالية للعب <strong>تحدي الصور</strong></p>
+    </div>
+
+    <!-- Free Package -->
+    {% if free_package %}
+      <div class="pkg mb-4" style="min-width:100%; max-width:100%;">
+        <div class="cardx free">
+          <span class="ribbon">مجانية</span>
+          <div class="title">جولة تجريبية</div>
+          <div class="badge-wrap">
+            <span class="badge-img">نوع الأسئلة: تحدي الصور</span>
+          </div>
+
+          <div class="trust-row">
+            <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة</span>
+          </div>
+
+          <div style="margin-top:auto;">
+            {% if request.user.is_authenticated %}
+              {% if free_active_session %}
+                <a class="btn-play btn-success" href="{% url 'games:images_session' free_active_session.id %}" target="_blank" rel="noopener">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ارجع إلى جلستك المجانية</span>
+                </a>
+              {% elif free_session_eligible %}
+                <form method="POST"
+                      action="{% url 'games:create_images_session' %}"
+                      target="_blank">
+                    {% csrf_token %}
+                    <input type="hidden" name="package_id" value="{{ free_package.id }}">
+                    <button type="submit" class="btn-play btn-success">
+                        <i class="fas fa-play"></i>
+                        <span class="btn-text">ابدأ الجولة المجانية</span>
+                    </button>
+                </form>
+              {% else %}
+                <button class="btn-play" disabled>
+                  <i class="fas fa-lock"></i>
+                  <span class="btn-text">غير متاح</span>
+                </button>
+                <div class="text-center text-warning small mt-2">{{ free_session_message }}</div>
+              {% endif %}
+            {% else %}
+              <a class="btn-play" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+                <i class="fas fa-sign-in-alt"></i>
+                <span class="btn-text">سجّل الدخول للتجربة</span>
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Paid Packages -->
+    {% if paid_packages %}
+      <div class="section-header">
+        <h5>
+          <i class="fas fa-images"></i>
+          حزم تحدي الصور
+        </h5>
+        <small>ترتيب حسب رقم الحزمة</small>
+      </div>
+      <div class="scroll-row" role="region" aria-label="حزم تحدي الصور">
+        {% for package in paid_packages %}
+          <div class="pkg">
+            <div class="cardx">
+
+              {% if package.id in expired_packages_ids %}
+                <div class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق لك شراء هذه</div>
+              {% endif %}
+
+              <div class="title">حزمة رقم {{ package.package_number }}</div>
+              <div class="badge-wrap">
+                <span class="badge-img">تحدي الصور</span>
+              </div>
+
+              <div class="pkg-pricing">
+                {% if package.has_discount %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                    <div class="price-old">
+                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <span class="save-badge"
+                          data-orig="{{ package.original_price }}"
+                          data-disc="{{ package.discounted_price }}">
+                      <i class="fa-solid fa-tag"></i>
+                      وفّر <b class="save-pct">—</b>
+                    </span>
+                  </div>
+                {% else %}
+                  <div class="price-wrap">
+                    <div class="price-new">
+                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="icon-saudi_riyal"></span>
+                    </div>
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="trust-row">
+                <span class="pill"><i class="fa-solid fa-clock"></i> صلاحية 72 ساعة</span>
+              </div>
+
+              <div style="margin-top:auto;">
+                {% if package.id in active_packages_ids %}
+                <form method="POST"
+                      action="{% url 'games:create_images_session' %}"
+                      target="_blank">
+                    {% csrf_token %}
+                    <input type="hidden" name="package_id" value="{{ package.id }}">
+                    <button type="submit" class="btn-play btn-success">
+                        <i class="fas fa-play"></i>
+                        <span class="btn-text">ابدأ اللعب</span>
+                    </button>
+                </form>
+                {% else %}
+                <a class="btn-play"
+                  href="{% url 'payments:start_payment' package.id %}">
+                  <i class="fas fa-shopping-cart"></i>
+                  <span class="btn-text">شراء</span>
+                </a>
+                {% endif %}
+              </div>
+
+            </div>
           </div>
         {% endfor %}
       </div>
     {% endif %}
-  </div>
 
-  <!-- ===============================
-       رسالة نجاح الدفع
-  ================================ -->
-  {% if request.GET.success %}
-    <div class="container mb-4">
-      <div class="alert alert-success text-center fw-bold rounded-4 shadow-sm">
-        🎉 تم الدفع بنجاح  
-        <div class="small fw-normal mt-1">
-          جاهز لبدء اللعب الآن
-        </div>
-      </div>
-    </div>
-  {% endif %}
-
-  <!-- ===============================
-       Hidden Form (لا يُلمس)
-  ================================ -->
-  <form id="imagesCreateForm"
-        method="post"
-        action="{% url 'games:create_images_session' %}"
-        target="_blank"
-        style="display:none">
-
-    {% csrf_token %}
-    <input type="hidden" name="package_id" id="imagesPkgId">
-    <button type="submit" id="hiddenSubmitBtnImg" style="display:none">Submit</button>
-  </form>
-
-  <!-- ===============================
-       قسم الحزم
-  ================================ -->
-  <section class="packages-section container">
-
-    <!-- العنوان -->
-    <div class="section-title">
-      <h2>تحدي الصور</h2>
-      <p>
-        اختر الحزمة المناسبة وابدأ اللعب مع أصدقائك في
-        <strong>تحدي الصور</strong>
-      </p>
-    </div>
-
-    <div class="packages-grid">
-
-      <!-- ===============================
-           الحزمة المجانية
-      ================================ -->
-      {% if free_package %}
-        <div>
-          <div class="package-card free-card">
-            <div class="ribbon">مجانية</div>
-
-            <div class="pkg-head">
-              <div class="package-title">جولة تجريبية</div>
-            </div>
-
-            {% if free_package.description %}
-              <p class="pkg-desc">{{ free_package.description }}</p>
-            {% endif %}
-
-            <div class="pkg-actions">
-              {% if request.user.is_authenticated %}
-
-                {% if free_active_session %}
-                  <a href="{% url 'games:images_session' free_active_session.id %}"
-                     class="btn-play">
-                    <span class="btn-text">العودة للجلسة المجانية</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </a>
-
-                {% elif free_session_eligible %}
-                  <button type="button"
-                          class="btn-play"
-                          onclick="createFreeImagesSession('{{ free_package.id }}')">
-                    <span class="btn-text">ابدأ الجولة المجانية</span>
-                    <div class="loading-spinner"><div class="spinner"></div></div>
-                  </button>
-
-                {% else %}
-                  <button type="button" class="btn-play" disabled>
-                    <span class="btn-text">غير متاح</span>
-                  </button>
-                  <div class="note-line mt-2">
-                    {{ free_session_message|default:"لقد استخدمت الجلسة المجانية الخاصة بك." }}
-                  </div>
-                {% endif %}
-
-              {% else %}
-                <a class="btn btn-outline-primary w-100 mt-2"
-                   href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
-                  سجّل الدخول للتجربة
-                </a>
-              {% endif %}
-            </div>
-          </div>
-        </div>
-      {% endif %}
-
-      <!-- ===============================
-           الحزم المدفوعة
-      ================================ -->
-      {% for package in paid_packages %}
-        <div>
-          <div class="package-card">
-
-            {% if package.id in expired_packages_ids %}
-              <div class="used-before">
-                <i class="fa-solid fa-rotate-left"></i>
-                سبق لك شراء هذه الحزمة
-              </div>
-            {% endif %}
-
-            <div class="pkg-head">
-              <div class="package-title">
-                حزمة رقم {{ package.package_number }}
-              </div>
-            </div>
-
-            <!-- السعر -->
-            <div class="pkg-pricing">
-              {% if package.has_discount %}
-                <div class="price-wrap">
-                  <div class="price-new">
-                    <span class="val">{{ package.discounted_price|floatformat:0 }}</span>
-                    <span class="icon-saudi_riyal"></span>
-                  </div>
-                  <div class="price-old">
-                    <span class="val">{{ package.original_price|floatformat:0 }}</span>
-                    <span class="icon-saudi_riyal"></span>
-                  </div>
-                </div>
-
-                <div class="text-center">
-                  <span class="save-badge"
-                        data-orig="{{ package.original_price }}"
-                        data-disc="{{ package.discounted_price }}">
-                    <i class="fa-solid fa-tag"></i>
-                    وفّر <b class="save-pct">—</b>
-                  </span>
-                </div>
-              {% else %}
-                <div class="price-wrap">
-                  <div class="price-new">
-                    <span class="val">{{ package.price|floatformat:0 }}</span>
-                    <span class="icon-saudi_riyal"></span>
-                  </div>
-                </div>
-              {% endif %}
-            </div>
-
-            {% if package.description %}
-              <p class="pkg-desc">{{ package.description }}</p>
-            {% endif %}
-
-            <div class="trust-row">
-              <span class="pill">
-                <i class="fa-solid fa-clock"></i>
-                صلاحية 72 ساعة
-              </span>
-            </div>
-
-            <div class="pkg-actions">
-
-              {% if package.id in active_packages_ids %}
-                <button type="button"
-                        class="btn-play"
-                        onclick="createImagesSession('{{ package.id }}')"
-                        style="background: linear-gradient(135deg, #22c55e, #16a34a);">
-                  ابدأ اللعب
-                </button>
-              {% else %}
-                <a class="btn-play purchase-link"
-                   href="{% url 'payments:start_payment' package.id %}">
-                  شراء
-                </a>
-              {% endif %}
-
-            </div>
-
-          </div>
-        </div>
-      {% endfor %}
-
-    </div>
   </section>
 
   {% include 'footer.html' %}
 
-
-<!-- Bootstrap (مرة واحدة فقط) -->
-<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* ===============================
-       إعدادات عامة
-    ================================ */
-    const IS_AUTH = {{ request.user.is_authenticated|yesno:"true,false" }};
-    const LOGIN_URL = "{% url 'accounts:login' %}";
-    const NEXT_URL = "{{ request.get_full_path|urlencode }}";
-    const API_ELIGIBILITY_URL =
-        "{% url 'games:api_check_free_session_eligibility' %}?game_type=images";
-
-    let sessionLocked = false;
-
-    /* ===============================
-       حساب الخصومات (UI فقط)
-    ================================ */
+    /* =====================================================
+       🧮 حساب نسبة الخصم (UI فقط)
+    ===================================================== */
     document.querySelectorAll('.save-badge').forEach(el => {
         const o = parseFloat(el.dataset.orig || '0');
         const d = parseFloat(el.dataset.disc || '0');
-        const pct = (o > 0 && d > 0 && d < o)
-            ? Math.round((1 - d / o) * 100)
-            : 0;
+        const pct =
+            (o > 0 && d > 0 && d < o)
+                ? Math.round((1 - (d / o)) * 100)
+                : 0;
 
         const tgt = el.querySelector('.save-pct');
         if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
     });
 
-    /* ===============================
-       أدوات مساعدة
-    ================================ */
-    function openSafeTab() {
-        const tab = window.open('', '_blank');
-        if (!tab) {
-            alert('الرجاء السماح بفتح النوافذ المنبثقة');
-            return null;
-        }
-        return tab;
-    }
+    /* =====================================================
+       ▶️ زر ابدأ اللعب (بعد الدفع – الزر العلوي)
+       يعتمد على session جاهزة
+    ===================================================== */
+    const startSessionBtn = document.getElementById('startPaidSessionBtn');
 
-    function toggleLoading(button, loading) {
-        if (!button) return;
-        const text = button.querySelector('.btn-text');
-        const spinner = button.querySelector('.loading-spinner');
-
-        if (text) text.style.display = loading ? 'none' : 'block';
-        if (spinner) spinner.style.display = loading ? 'block' : 'none';
-        button.disabled = loading;
-    }
-
-    function resetLock(button) {
-        sessionLocked = false;
-        toggleLoading(button, false);
-    }
-
-    /* ===============================
-       إنشاء جلسة (مدفوعة أو مجانية)
-    ================================ */
-    async function createSession({ packageId, isFree = false, button }) {
-
-        if (!IS_AUTH) {
-            window.location.href =
-                `${LOGIN_URL}?next=${encodeURIComponent(NEXT_URL)}`;
-            return;
-        }
-
-        if (sessionLocked) {
-            alert('انتظر قليلاً… يتم تجهيز الجلسة');
-            return;
-        }
-
-        if (!packageId) return;
-
-        // تحقق إضافي للجلسة المجانية
-        if (isFree) {
-            try {
-                const r = await fetch(API_ELIGIBILITY_URL, {
-                    credentials: 'same-origin'
-                });
-                const data = await r.json();
-                if (!data.success || !data.eligible) {
-                    alert(data.message || 'لا يمكنك بدء الجولة المجانية');
-                    return;
-                }
-            } catch {
-                alert('تعذر التحقق من الجلسة المجانية');
+    if (startSessionBtn) {
+        startSessionBtn.addEventListener('click', function () {
+            const sessionId = this.dataset.session;
+            if (!sessionId) {
+                alert("تعذر العثور على الجلسة");
                 return;
             }
-        }
 
-        sessionLocked = true;
-        toggleLoading(button, true);
+            const url = `/games/images/session/${sessionId}/`;
 
-        const tab = openSafeTab();
-        if (!tab) {
-            resetLock(button);
-            return;
-        }
+            const win = window.open(url, '_blank', 'noopener,noreferrer');
+            if (!win) {
+                alert("الرجاء السماح بفتح النوافذ المنبثقة");
+                return;
+            }
 
-        const form = document.getElementById('imagesCreateForm');
-        const input = document.getElementById('imagesPkgId');
-
-        input.value = packageId;
-        form.target = tab.name;
-
-        const safetyTimeout = setTimeout(() => {
-            resetLock(button);
-        }, 8000);
-
-        try {
-            form.submit();
-            clearTimeout(safetyTimeout);
-        } catch (e) {
-            clearTimeout(safetyTimeout);
-            alert('حدث خطأ أثناء إنشاء الجلسة');
-            resetLock(button);
-        }
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-check"></i> تم فتح الجلسة';
+        });
     }
-
-    /* ===============================
-       ربط الأزرار
-    ================================ */
-
-    // جلسة مدفوعة
-    window.createImagesSession = function (packageId) {
-        const button = event?.target.closest('.btn-play');
-        createSession({ packageId, isFree: false, button });
-    };
-
-    // جلسة مجانية
-    window.createFreeImagesSession = function (packageId) {
-        const button = event?.target.closest('.btn-play');
-        createSession({ packageId, isFree: true, button });
-    };
 
 });
 </script>
+
 </body>
 </html>
