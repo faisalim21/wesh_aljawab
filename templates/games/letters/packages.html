@@ -880,7 +880,7 @@
                 {% else %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val">{{ package.price|floatformat:0 }}</span>
+                      <span class="val">{{ package.price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
@@ -948,11 +948,11 @@
                 {% if package.has_discount %}
                   <div class="price-wrap">
                     <div class="price-new">
-                      <span class="val val-new">{{ package.discounted_price|floatformat:0 }}</span>
+                      <span class="val val-new">{{ package.discounted_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                     <div class="price-old">
-                      <span class="val val-old">{{ package.original_price|floatformat:0 }}</span>
+                      <span class="val val-old">{{ package.original_price|floatformat:2 }}</span>
                       <span class="icon-saudi_riyal"></span>
                     </div>
                   </div>
