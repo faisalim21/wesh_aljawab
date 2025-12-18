@@ -23,74 +23,47 @@ logger = logging.getLogger("payments")
 @login_required
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
-    now = timezone.now()
 
     # =========================================
-    # 1) لو عنده شراء نشط → لا تدفعه مرة ثانية
+    # 1️⃣ نحاول نجيب شراء غير مكتمل سابق لنفس الحزمة
+    # (حتى لا نكسر unique_active_purchase_per_package)
     # =========================================
-    active_purchase = (
+    purchase = (
         UserPurchase.objects
         .filter(
             user=request.user,
             package=package,
-            is_completed=True,
-            expires_at__gt=now
+            is_completed=False
         )
-        .order_by("-created_at")
+        .order_by("-purchase_date")  # ✅ الحقل الصحيح
         .first()
     )
 
-    if active_purchase:
-        # لو عنده جلسة بالفعل، ودّه مباشرة
-        session = (
-            GameSession.objects
-            .filter(purchase=active_purchase, is_active=True)
-            .first()
-        )
-
-        if session:
-            return redirect(
-                f"/games/{package.game_type}/?success=1&session={session.id}"
-            )
-
-        # لو ما فيه جلسة (نادر) أنشئها
-        session = _activate_purchase_and_session(active_purchase)
-        return redirect(
-            f"/games/{package.game_type}/?success=1&session={session.id}"
-        )
-
-    # ==================================================
-    # 2) لو عنده عملية pending قديمة → أعد استخدامها
-    # ==================================================
-    pending_tx = (
-        TelrTransaction.objects
-        .select_related("purchase")
-        .filter(
-            user=request.user,
-            package=package,
-            status="pending"
-        )
-        .order_by("-created_at")
-        .first()
-    )
-
-    if pending_tx:
-        purchase = pending_tx.purchase
-        cart_id = pending_tx.order_id
-
-    else:
-        # =========================================
-        # 3) إنشاء شراء جديد (آمن)
-        # =========================================
+    if not purchase:
         purchase = UserPurchase.objects.create(
             user=request.user,
             package=package,
             is_completed=False
         )
 
-        cart_id = f"local-{uuid.uuid4()}"
+    # =========================================
+    # 2️⃣ نبحث عن TelrTransaction معلقة
+    # =========================================
+    tx = (
+        TelrTransaction.objects
+        .filter(
+            purchase=purchase,
+            status="pending"
+        )
+        .order_by("-created_at")
+        .first()
+    )
 
-        pending_tx = TelrTransaction.objects.create(
+    if tx:
+        cart_id = tx.order_id
+    else:
+        cart_id = f"local-{uuid.uuid4()}"
+        tx = TelrTransaction.objects.create(
             order_id=cart_id,
             purchase=purchase,
             user=request.user,
@@ -101,36 +74,36 @@ def start_payment(request, package_id):
         )
 
     # =========================================
-    # 4) إنشاء رابط Telr
+    # 3️⃣ إنشاء طلب Telr
     # =========================================
     endpoint, data = generate_telr_url(purchase, request, cart_id)
-    logger.info("TELR REQUEST >>> " + json.dumps(data, ensure_ascii=False))
+    logger.info("TELR REQUEST >>> %s", json.dumps(data, ensure_ascii=False))
 
     try:
         response = requests.post(endpoint, data=data, timeout=20)
         result = response.json()
     except Exception as e:
         logger.exception("Telr create failed")
-        return render(
-            request,
-            "payments/error.html",
-            {"message": f"فشل الاتصال بـ Telr: {str(e)}"}
-        )
+        messages.error(request, "فشل الاتصال ببوابة الدفع، حاول مرة أخرى.")
+        return redirect(f"/games/{package.game_type}/")
 
     url = (result.get("order") or {}).get("url")
     if not url:
-        return render(
-            request,
-            "payments/error.html",
-            {"message": json.dumps(result, ensure_ascii=False, indent=2)}
-        )
+        logger.error("TELR ERROR RESPONSE: %s", result)
+        messages.error(request, "حدث خطأ أثناء إنشاء عملية الدفع.")
+        return redirect(f"/games/{package.game_type}/")
 
-    # Telr أحياناً يرجع cartid مختلف
+    # =========================================
+    # 4️⃣ تحديث cartid لو Telr غيّره
+    # =========================================
     telr_cartid = (result.get("order") or {}).get("cartid")
-    if telr_cartid and telr_cartid != pending_tx.order_id:
-        pending_tx.order_id = telr_cartid
-        pending_tx.save(update_fields=["order_id"])
+    if telr_cartid and telr_cartid != tx.order_id:
+        tx.order_id = telr_cartid
+        tx.save(update_fields=["order_id"])
 
+    # =========================================
+    # 5️⃣ عرض صفحة التحويل
+    # =========================================
     return render(
         request,
         "payments/processing.html",
