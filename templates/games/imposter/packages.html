@@ -821,13 +821,11 @@
             </a>
 
           {% elif package.id in active_packages_ids %}
-            <!-- ✅ الجديد - صحيح -->
-            
-              href="{% url 'games:imposter_setup' package.id %}"
-              class="btn-play btn-success">
-              <i class="fas fa-play"></i>
-              <span class="btn-text">ابدأ اللعب</span>
-            </a>
+          <!-- حزمة مدفوعة تم تفعيلها -->
+          <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+            <i class="fas fa-play"></i>
+            <span class="btn-text">ابدأ اللعب</span>
+          </a>
 
           {% else %}
             <!-- حزمة غير مشتراة -->
