@@ -602,47 +602,64 @@ def letters_contestants(request, contestants_link):
 def images_game_home(request):
     now = timezone.now()
 
+    # =========================
     # الحزمة المجانية
+    # =========================
     free_package = GamePackage.objects.filter(
-        game_type='images', is_free=True, is_active=True
+        game_type='images',
+        is_free=True,
+        is_active=True
     ).first()
 
+    # =========================
     # الحزم المدفوعة
+    # =========================
     paid_packages = GamePackage.objects.filter(
-        game_type='images', is_free=False, is_active=True
+        game_type='images',
+        is_free=False,
+        is_active=True
     ).order_by('package_number')
 
-    # ============================
-    #   منطق الشراء الجديد (المصحّح)
-    # ============================
-    active_packages_ids = set()        # شراء مكتمل وصالح → "ابدأ اللعب"
-    expired_packages_ids = set()       # شراء مكتمل وانتهى وقته → "سبق شراء"
-    used_before_ids = set()            # كل الحزم التي سبق شراؤها (للزينة فقط)
-    
+    # =========================
+    # الحالة الافتراضية
+    # =========================
+    active_packages_ids = set()     # زر "ابدأ اللعب"
+    expired_packages_ids = set()    # "سبق شراء"
+    used_before_ids = set()         # أي شراء سابق (للعرض فقط)
+
     free_session_eligible = False
     free_session_message = ""
     free_active_session = None
 
+    # =========================
+    # المستخدم مسجّل
+    # =========================
     if request.user.is_authenticated:
 
-        # تحقق من أهلية الجولة المجانية
+        # أهلية المجاني
         free_session_eligible, free_session_message, _ = check_free_session_eligibility(
             request.user, 'images'
         )
 
         # جلسة مجانية نشطة
         if free_package:
-            candidate = GameSession.objects.filter(
-                host=request.user,
-                package=free_package,
-                is_active=True,
-                game_type='images'
-            ).order_by('-created_at').first()
+            free_active_session = (
+                GameSession.objects
+                .filter(
+                    host=request.user,
+                    package=free_package,
+                    is_active=True,
+                    game_type='images'
+                )
+                .order_by('-created_at')
+                .first()
+            )
+            if free_active_session and free_active_session.is_time_expired:
+                free_active_session = None
 
-            if candidate and not candidate.is_time_expired:
-                free_active_session = candidate
-
-        # مشتريات المستخدم
+        # =========================
+        # المصدر الوحيد للحقيقة: UserPurchase
+        # =========================
         purchases = UserPurchase.objects.filter(
             user=request.user,
             package__game_type='images'
@@ -651,36 +668,34 @@ def images_game_home(request):
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            # ---- تجاهل المشتريات غير المكتملة (لا تظهر كسبق شراء) ----
+            # تجاهل أي شراء غير مكتمل
             if not p.is_completed:
                 continue
 
-            # ---- شراء مكتمل وصالح ----
+            # شراء صالح
             if p.expires_at and p.expires_at > now:
                 active_packages_ids.add(p.package_id)
-                continue
+            else:
+                expired_packages_ids.add(p.package_id)
 
-            # ---- شراء مكتمل وانتهت صلاحيته ----
-            expired_packages_ids.add(p.package_id)
-
+    # =========================
+    # تمرير البيانات للقالب
+    # =========================
     context = {
         'page_title': 'وش الجواب - تحدي الصور',
         'free_package': free_package,
         'paid_packages': paid_packages,
 
-        # القوائم المهمة
         'active_packages_ids': active_packages_ids,
         'expired_packages_ids': expired_packages_ids,
         'used_before_ids': used_before_ids,
 
-        # المجانية
         'free_session_eligible': free_session_eligible,
         'free_session_message': free_session_message,
         'free_active_session': free_active_session,
     }
 
     return render(request, 'games/images/packages.html', context)
-
 
 def quiz_game_home(request):
     free_package = GamePackage.objects.filter(
