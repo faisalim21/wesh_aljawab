@@ -76,18 +76,23 @@ from games.models import (
     GameSession,
 )
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from games.models import GamePackage, UserPurchase, GameSession
+
 
 @login_required
 def imposter_packages(request):
     """
     صفحة حزم لعبة امبوستر
-    - تدعم الشراء
-    - تدعم الجلسة الجاهزة بعد الدفع (?session=)
-    - تقلب زر الحزمة إلى (ابدأ اللعب) مباشرة
+    - دعم الشراء
+    - قلب زر الحزمة إلى (ابدأ اللعب) بعد الدفع مباشرة
     """
 
     # ===============================
-    # 1) جلب جميع حزم امبوستر
+    # 1) جميع حزم امبوستر
     # ===============================
     packages = (
         GamePackage.objects
@@ -95,11 +100,11 @@ def imposter_packages(request):
         .order_by("package_number")
     )
 
-    # ===============================
-    # 2) الحزم التي اشتراها المستخدم
-    # ===============================
     now = timezone.now()
 
+    # ===============================
+    # 2) مشتريات المستخدم
+    # ===============================
     purchases = (
         UserPurchase.objects
         .filter(
@@ -110,11 +115,9 @@ def imposter_packages(request):
         .select_related("package")
     )
 
-    active_purchases = purchases.filter(
-        expires_at__gt=now
-    )
+    active_purchases = purchases.filter(expires_at__gt=now)
 
-    active_packages_ids = set(
+    active_purchases_ids = set(
         active_purchases.values_list("package_id", flat=True)
     )
 
@@ -123,7 +126,7 @@ def imposter_packages(request):
     )
 
     # ===============================
-    # 3) الجلسة القادمة من الدفع (?session=)
+    # 3) جلسة قادمة من الدفع (?session=)
     # ===============================
     session_id = request.GET.get("session")
     paid_session = None
@@ -144,17 +147,17 @@ def imposter_packages(request):
 
         if paid_session:
             paid_package_id = paid_session.package_id
-            # نضيفها للحزم النشطة فورًا (UX)
-            active_packages_ids.add(paid_package_id)
+            # نضيفها فورًا للحزم النشطة (UX)
+            active_purchases_ids.add(paid_package_id)
 
     # ===============================
-    # 4) تجهيز الـ context
+    # 4) context
     # ===============================
     context = {
         "packages": packages,
 
-        # حزم
-        "active_packages": active_packages_ids,
+        # مستخدمة في القالب
+        "active_purchases": active_purchases_ids,
         "purchased_packages": purchased_packages_ids,
 
         # جلسة بعد الدفع
@@ -162,8 +165,8 @@ def imposter_packages(request):
         "paid_package_id": paid_package_id,
     }
 
-    return render(request, "games/imposter_packages.html", context)
-
+    # ⚠️ المسار الصحيح للقالب
+    return render(request, "games/imposter/packages.html", context)
 
 
 
