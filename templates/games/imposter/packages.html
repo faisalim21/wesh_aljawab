@@ -711,17 +711,6 @@
     {% endif %}
   </div>
 
-  {% if request.GET.success %}
-  <div class="start-session-wrapper">
-    <button
-      class="start-session-btn"
-      id="startPaidSessionBtn"
-      data-session="{{ request.GET.session }}">
-      <i class="fas fa-play"></i>
-      ابدأ اللعب
-    </button>
-  </div>
-  {% endif %}
 
   <section class="packages-section">
 
@@ -809,27 +798,33 @@
             </div>
             {% endif %}
 
-            <div style="margin-top:auto;">
+           <div style="margin-top:auto;">
+
               {% if package.is_free or package.package_number == 0 %}
+                <!-- حزمة مجانية -->
                 <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
                   <i class="fas fa-play"></i>
                   <span class="btn-text">ابدأ الجولة المجانية</span>
                 </a>
+
+              {% elif package.id in active_purchases %}
+                <!-- حزمة مدفوعة تم شراؤها -->
+                <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+                  <i class="fas fa-play"></i>
+                  <span class="btn-text">ابدأ اللعب</span>
+                </a>
+
               {% else %}
-                {% if package.id in purchased_packages %}
-                  <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
-                  </a>
-                {% else %}
-                  <a class="btn-play"
-                    href="{% url 'payments:start_payment' package.id %}">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="btn-text">شراء</span>
-                  </a>
-                {% endif %}
+                <!-- حزمة مدفوعة غير مشتراة -->
+                <a href="{% url 'payments:start_payment' package.id %}" class="btn-play">
+                  <i class="fas fa-shopping-cart"></i>
+                  <span class="btn-text">شراء</span>
+                </a>
+
               {% endif %}
+
             </div>
+
 
           </div>
         </div>

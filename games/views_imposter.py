@@ -59,7 +59,21 @@ from games.models import UserPurchase
 from django.db.models import Count
 from games.models import GamePackage, UserPurchase
 
+from django.shortcuts import render
+from django.utils import timezone
+from django.db.models import Count
+
+from games.models import GamePackage, UserPurchase
+
+
 def imposter_packages(request):
+    """
+    صفحة حزم لعبة امبوستر
+    - تعرض جميع الحزم
+    - تحدد الحزم التي اشتراها المستخدم وما زالت فعّالة
+    """
+
+    # جميع الحزم الفعّالة للعبة امبوستر
     packages = (
         GamePackage.objects
         .filter(game_type='imposter', is_active=True)
@@ -67,10 +81,11 @@ def imposter_packages(request):
         .order_by('package_number')
     )
 
-    purchased_packages = set()
+    # الحزم التي يملكها المستخدم (صالحة)
+    active_purchases = set()
 
     if request.user.is_authenticated:
-        purchased_packages = set(
+        active_purchases = set(
             UserPurchase.objects.filter(
                 user=request.user,
                 is_completed=True,
@@ -80,8 +95,10 @@ def imposter_packages(request):
 
     return render(request, "games/imposter/packages.html", {
         "packages": packages,
-        "purchased_packages": purchased_packages,
+        "active_purchases": active_purchases,
     })
+
+
 
 
 
