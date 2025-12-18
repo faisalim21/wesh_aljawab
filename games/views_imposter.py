@@ -11,43 +11,36 @@ from games.models import (
     UserPurchase,   # ✅ هذا الناقص
 )
 
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from games.models import GamePackage, UserPurchase
+
+
 @login_required
 def imposter_start(request, package_id):
     package = get_object_or_404(
         GamePackage,
         id=package_id,
-        game_type='imposter'
-    )
-
-    # لو الحزمة مجانية → مباشرة صفحة الإعداد
-    if package.is_free:
-        return redirect('games:imposter_setup', package_id=package.id)
-
-    # لو مدفوعة → نتحقق من الشراء
-    purchase = UserPurchase.objects.filter(
-        user=request.user,
-        package=package,
-        is_completed=False
-    ).first()
-
-    # ما اشترى → نرسله للدفع
-    if not purchase:
-        return redirect("payments:start_payment", package_id=package.id)
-
-    # اشترى → نوديه للإعداد
-    return redirect('games:imposter_setup', package_id=package.id)
-
-
-
-def imposter_home(request):
-    packages = GamePackage.objects.filter(
         game_type="imposter",
         is_active=True
-    ).order_by("package_number")
+    )
 
-    return render(request, "games/imposter/packages.html", {
-        "packages": packages
-    })
+    # الحزمة مجانية → مباشرة
+    if package.is_free or package.package_number == 0:
+        return redirect("games:imposter_setup", package_id=package.id)
+
+    # التحقق من الشراء المكتمل
+    has_purchase = UserPurchase.objects.filter(
+        user=request.user,
+        package=package,
+        is_completed=True
+    ).exists()
+
+    if not has_purchase:
+        return redirect("payments:start_payment", package_id=package.id)
+
+    return redirect("games:imposter_setup", package_id=package.id)
+
 
 
 from django.shortcuts import render
@@ -78,94 +71,38 @@ from games.models import (
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.utils import timezone
-
-from games.models import GamePackage, UserPurchase, GameSession
+from games.models import GamePackage, UserPurchase
 
 
 @login_required
 def imposter_packages(request):
     """
     صفحة حزم لعبة امبوستر
-    - دعم الشراء
-    - قلب زر الحزمة إلى (ابدأ اللعب) بعد الدفع مباشرة
+    - أي حزمة مدفوعة ومكتملة → يظهر زر (ابدأ اللعب)
     """
 
-    # ===============================
-    # 1) جميع حزم امبوستر
-    # ===============================
+    # جميع حزم امبوستر
     packages = (
         GamePackage.objects
         .filter(game_type="imposter", is_active=True)
         .order_by("package_number")
     )
 
-    now = timezone.now()
-
-    # ===============================
-    # 2) مشتريات المستخدم
-    # ===============================
-    purchases = (
-        UserPurchase.objects
-        .filter(
+    # الحزم التي اشتراها المستخدم (مكتملة)
+    active_packages = list(
+        UserPurchase.objects.filter(
             user=request.user,
             package__game_type="imposter",
-            is_completed=True,
-        )
-        .select_related("package")
+            is_completed=True
+        ).values_list("package_id", flat=True)
     )
 
-    active_purchases = purchases.filter(expires_at__gt=now)
-
-    active_purchases_ids = set(
-        active_purchases.values_list("package_id", flat=True)
-    )
-
-    purchased_packages_ids = set(
-        purchases.values_list("package_id", flat=True)
-    )
-
-    # ===============================
-    # 3) جلسة قادمة من الدفع (?session=)
-    # ===============================
-    session_id = request.GET.get("session")
-    paid_session = None
-    paid_package_id = None
-
-    if session_id:
-        paid_session = (
-            GameSession.objects
-            .filter(
-                id=session_id,
-                host=request.user,
-                is_active=True,
-                package__game_type="imposter",
-            )
-            .select_related("package")
-            .first()
-        )
-
-        if paid_session:
-            paid_package_id = paid_session.package_id
-            # نضيفها فورًا للحزم النشطة (UX)
-            active_purchases_ids.add(paid_package_id)
-
-    # ===============================
-    # 4) context
-    # ===============================
     context = {
         "packages": packages,
-
-        # مستخدمة في القالب
-        "active_purchases": active_purchases_ids,
-        "purchased_packages": purchased_packages_ids,
-
-        # جلسة بعد الدفع
-        "paid_session": paid_session,
-        "paid_package_id": paid_package_id,
+        "active_packages": active_packages,
+        "purchased_packages": active_packages,  # للشارة "تم شراؤها"
     }
 
-    # ⚠️ المسار الصحيح للقالب
     return render(request, "games/imposter/packages.html", context)
 
 

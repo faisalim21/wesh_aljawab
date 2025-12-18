@@ -738,13 +738,14 @@
 
   <section class="packages-section">
 
-    {% if request.GET.success %}
-    <div class="success-banner">
-      <i class="fas fa-check-circle"></i>
-      <h3>🎉 تم الدفع بنجاح!</h3>
-      <p>جاهز لبدء اللعب الآن — اضغط على زر "ابدأ اللعب" أدناه</p>
-    </div>
-    {% endif %}
+      {% if active_packages %}
+      <div class="success-banner">
+        <i class="fas fa-check-circle"></i>
+        <h3>🎉 تم تفعيل الحزمة بنجاح!</h3>
+        <p>يمكنك البدء باللعب مباشرة من الزر الأخضر داخل الحزمة</p>
+      </div>
+      {% endif %}
+
 
     <div class="section-title">
       <h2>تحدي الصور</h2>
