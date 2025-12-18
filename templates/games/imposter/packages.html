@@ -811,41 +811,33 @@
 
            <div style="margin-top:auto;">
 
-              {% if package.is_free or package.package_number == 0 %}
-                <!-- حزمة مجانية -->
-                <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
-                  <i class="fas fa-play"></i>
-                  <span class="btn-text">ابدأ الجولة المجانية</span>
-                </a>
+          {% if package.is_free or package.package_number == 0 %}
+            <!-- حزمة مجانية -->
+            <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+              <i class="fas fa-play"></i>
+              <span class="btn-text">ابدأ الجولة المجانية</span>
+            </a>
 
-              {% elif package.id in active_purchases or package.id == paid_package_id %}
-                <!-- حزمة مدفوعة تم شراؤها -->
-                {% if paid_session and package.id == paid_package_id %}
-                  <a
-                    href="{% url 'games:imposter_session' paid_session.id %}"
-                    target="_blank"
-                    class="btn-play btn-success">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
-                  </a>
-                {% else %}
-                  <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
-                    <i class="fas fa-play"></i>
-                    <span class="btn-text">ابدأ اللعب</span>
-                  </a>
-                {% endif %}
+          {% elif package.id in active_packages %}
+            <!-- حزمة مدفوعة تم تفعيلها -->
+            <a
+              href="{% url 'games:imposter_setup' package.id %}"
+              class="btn-play btn-success">
+              <i class="fas fa-play"></i>
+              <span class="btn-text">ابدأ اللعب</span>
+            </a>
 
+          {% else %}
+            <!-- حزمة غير مشتراة -->
+            <a href="{% url 'payments:start_payment' package.id %}" class="btn-play">
+              <i class="fas fa-shopping-cart"></i>
+              <span class="btn-text">شراء</span>
+            </a>
 
-              {% else %}
-                <!-- حزمة مدفوعة غير مشتراة -->
-                <a href="{% url 'payments:start_payment' package.id %}" class="btn-play">
-                  <i class="fas fa-shopping-cart"></i>
-                  <span class="btn-text">شراء</span>
-                </a>
+          {% endif %}
 
-              {% endif %}
+        </div>
 
-            </div>
 
 
           </div>

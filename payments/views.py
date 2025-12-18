@@ -152,89 +152,64 @@ import logging
 logger = logging.getLogger("payments")
 
 
+@login_required
 def telr_success(request):
     purchase_id = request.GET.get("purchase")
-    cartid = request.GET.get("cartid")
+    cart_id = request.GET.get("cartid")
     game_type = request.GET.get("type")
 
-    if not purchase_id:
-        messages.error(request, "بيانات الدفع ناقصة.")
+    if not purchase_id or not cart_id:
+        messages.error(request, "بيانات الدفع غير مكتملة")
         return redirect("/")
 
-    purchase = get_object_or_404(UserPurchase, id=purchase_id)
+    purchase = get_object_or_404(UserPurchase, id=purchase_id, user=request.user)
 
-    # لو cartid غير موجود نحاول نجيبه من آخر عملية
-    if not cartid:
-        tx = TelrTransaction.objects.filter(purchase=purchase).order_by("-created_at").first()
-        cartid = tx.order_id if tx else None
-
-    if not cartid:
-        messages.error(request, "تعذر العثور على رقم العملية.")
-        return redirect("/")
-
-    def _is_ok(status: str) -> bool:
-        status = (status or "").lower()
-        return any(x in status for x in [
-            "auth",
-            "authorised",
-            "authorized",
-            "paid",
-            "captured",
-            "success",
-            "accepted",
-        ])
-
-    # ===== 1) التحقق الأول =====
+    # ==================================================
+    # 1️⃣ التحقق من حالة الدفع من Telr (الحسم الحقيقي)
+    # ==================================================
     try:
-        check = telr_check(cartid)
+        result = telr_check(cart_id)
     except Exception:
-        logger.exception("Telr check failed (initial)")
-        messages.error(request, "تعذر التحقق من حالة الدفع. جرّب تحديث الصفحة.")
-        return redirect("/")
-
-    order = check.get("order", {})
-    status = (order.get("status") or order.get("auth") or "").lower()
-
-    TelrTransaction.objects.filter(order_id=cartid).update(
-        status=status or "unknown",
-        raw_response=check
-    )
-
-    ok = _is_ok(status)
-
-    # ===== 2) إعادة محاولة تلقائية لو الحالة متأخرة =====
-    if not ok:
-        time.sleep(2)
-
-        try:
-            check = telr_check(cartid)
-            order = check.get("order", {})
-            status = (order.get("status") or order.get("auth") or "").lower()
-            ok = _is_ok(status)
-
-            TelrTransaction.objects.filter(order_id=cartid).update(
-                status=status or "unknown",
-                raw_response=check
-            )
-        except Exception:
-            logger.exception("Telr check failed (retry)")
-
-    # ===== 3) فشل نهائي =====
-    if not ok:
         messages.warning(
             request,
-            "تم استلام عملية الدفع، لكن لم يتم اعتمادها بعد. "
-            "إذا تم الخصم سيتم التفعيل تلقائيًا خلال دقائق."
+            "تم استلام عملية الدفع لكن لم يتم اعتمادها بعد، سيتم التفعيل تلقائيًا خلال دقائق."
         )
-        return redirect(f"/games/{game_type}/" if game_type else "/")
+        return redirect(f"/games/{game_type}/")
 
-    # ===== 4) نجاح مؤكد → تفعيل آمن (Idempotent) =====
-    session = _activate_purchase_and_session(purchase)
-
-    # ===== 5) إعادة التوجيه مع session =====
-    return redirect(
-        f"/games/{purchase.package.game_type}/?success=1&session={session.id}"
+    status = (
+        result.get("order", {})
+        .get("status", {})
+        .get("code")
     )
+
+    # Telr code: 3 = Paid
+    if status != "3":
+        messages.warning(
+            request,
+            "تم استلام عملية الدفع لكن لم يتم اعتمادها بعد، سيتم التفعيل تلقائيًا خلال دقائق."
+        )
+        return redirect(f"/games/{game_type}/")
+
+    # ==================================================
+    # 2️⃣ تفعيل الشراء
+    # ==================================================
+    purchase.is_completed = True
+    purchase.save(update_fields=["is_completed"])
+
+    # ==================================================
+    # 3️⃣ إنشاء الجلسة (إذا لم تكن موجودة)
+    # ==================================================
+    if not purchase.game_session:
+        session = create_game_session_for_purchase(purchase)
+        purchase.game_session = session
+        purchase.save(update_fields=["game_session"])
+
+    messages.success(request, "🎉 تم الدفع بنجاح! يمكنك بدء اللعب الآن")
+
+    return redirect(
+        f"/games/{game_type}/?success=1&session={purchase.game_session.id}"
+    )
+
 
 
 def telr_failed(request):
