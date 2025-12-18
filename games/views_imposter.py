@@ -80,6 +80,7 @@ from django.utils import timezone
 
 from games.models import GamePackage, UserPurchase, GameSession
 
+from django.db import models
 
 @login_required
 def imposter_packages(request):
@@ -87,6 +88,7 @@ def imposter_packages(request):
     صفحة حزم لعبة امبوستر
     - عرض الحزم
     - قلب زر (شراء) إلى (ابدأ اللعب) للحزم المدفوعة عند وجود شراء مكتمل ونشط
+    - الأهم: نعتمد على "الجلسات النشطة" كمصدر حقيقة إضافي (لأن expires_at قد يكون NULL أو غير مضبوط)
     """
 
     # 1) جلب الحزم
@@ -98,45 +100,67 @@ def imposter_packages(request):
 
     now = timezone.now()
 
-    # 2) مشتريات المستخدم المكتملة والنشطة
-    purchases = (
-        UserPurchase.objects
-        .filter(
+    # 2) كل مشتريات المستخدم المكتملة (حتى لو منتهية) — فقط للوسم "سبق شراء"
+    purchased_packages = set(
+        UserPurchase.objects.filter(
             user=request.user,
             package__game_type="imposter",
             is_completed=True,
-            expires_at__gt=now,
-        )
-        .values_list("package_id", flat=True)
+        ).values_list("package_id", flat=True)
     )
 
-    # ✅ مصدر الحقيقة: IDs فقط
-    active_packages_ids = set(purchases)
+    # 3) المشتريات النشطة فعليًا:
+    #    - إما expires_at أكبر من الآن
+    #    - أو expires_at = NULL (احتياطًا إذا ما انحفظت)
+    active_purchase_packages = set(
+        UserPurchase.objects.filter(
+            user=request.user,
+            package__game_type="imposter",
+            is_completed=True,
+        ).filter(
+            models.Q(expires_at__gt=now) | models.Q(expires_at__isnull=True)
+        ).values_list("package_id", flat=True)
+    )
 
-    # 3) جلسة قادمة مباشرة بعد الدفع (?session=)
+    # 4) الجلسات النشطة (هذه أهم نقطة) — إذا الجلسة موجودة ونشطة، الحزمة تعتبر نشطة
+    active_session_packages = set(
+        GameSession.objects.filter(
+            host=request.user,
+            is_active=True,
+            package__game_type="imposter",
+        ).values_list("package_id", flat=True)
+    )
+
+    # ✅ المصدر النهائي للحزم النشطة
+    active_packages_ids = active_purchase_packages.union(active_session_packages)
+
+    # 5) جلسة قادمة مباشرة بعد الدفع (?session=)
     session_id = request.GET.get("session")
     paid_session = None
 
     if session_id:
         paid_session = (
-            GameSession.objects
-            .filter(
+            GameSession.objects.filter(
                 id=session_id,
                 host=request.user,
                 is_active=True,
                 package__game_type="imposter",
-            )
-            .select_related("package")
-            .first()
+            ).select_related("package").first()
         )
-
-        # UX: لو الجلسة موجودة نلوّن الحزمة فورًا
         if paid_session:
             active_packages_ids.add(paid_session.package_id)
 
+    # 6) context
     context = {
         "packages": packages,
-        "active_packages_ids": active_packages_ids,  # ✅ اسم موحّد
+
+        # ✅ نخليها باسمين عشان ما يتعطل قالبك الحالي
+        "active_packages": active_packages_ids,
+        "active_packages_ids": active_packages_ids,
+
+        # للقالب اللي يحط "تم شراؤها مسبقاً"
+        "purchased_packages": purchased_packages,
+
         "paid_session": paid_session,
     }
     return render(request, "games/imposter/packages.html", context)
