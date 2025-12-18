@@ -192,32 +192,14 @@ def telr_success(request):
         )
         return redirect(f"/games/{game_type}/")
 
-    # 2️⃣ تفعيل الشراء + مدة الصلاحية
-    now = timezone.now()
-    purchase.is_completed = True
-    purchase.expires_at = now + timedelta(hours=72)
-    purchase.save(update_fields=["is_completed", "expires_at"])
-
-    # 3️⃣ إنشاء جلسة إن لم تكن موجودة
-    if not purchase.game_session:
-        session = GameSession.objects.create(
-            host=request.user,
-            package=purchase.package,
-            game_type=purchase.package.game_type,
-            purchase=purchase,
-            is_active=True
-        )
-        purchase.game_session = session
-        purchase.save(update_fields=["game_session"])
-    else:
-        session = purchase.game_session
+    # ✅ 2️⃣ التفعيل من مكان واحد فقط
+    session = _activate_purchase_and_session(purchase)
 
     messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
 
-    # 4️⃣ رجوع لصفحة الحزم (الزر سيقلب أخضر)
-    return redirect(
-        f"/games/{game_type}/?success=1&session={session.id}"
-    )
+    # ❌ لا نعتمد على session في الواجهة
+    return redirect(f"/games/{game_type}/")
+
 
 
 
