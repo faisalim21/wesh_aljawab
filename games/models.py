@@ -295,15 +295,44 @@ class LettersGameQuestion(models.Model):
 # =========================
 
 class UserPurchase(models.Model):
-    """مشتريات المستخدمين — تنتهي صلاحية المدفوعة بعد 72 ساعة."""
+    """
+    مشتريات المستخدمين
+    - is_completed = تم الدفع (مفعّل)
+    - الانتهاء يُحسب فقط بالوقت (expires_at)
+    """
     EXPIRY_HOURS = 72
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="المستخدم")
-    package = models.ForeignKey(GamePackage, on_delete=models.CASCADE, verbose_name="الحزمة")
-    purchase_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الشراء")
-    expires_at = models.DateTimeField(blank=True, null=True, verbose_name="ينتهي في")
-    is_completed = models.BooleanField(default=False, verbose_name="مكتملة؟")
-    games_played = models.IntegerField(default=0, verbose_name="عدد الألعاب")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="المستخدم"
+    )
+    package = models.ForeignKey(
+        GamePackage,
+        on_delete=models.CASCADE,
+        verbose_name="الحزمة"
+    )
+
+    purchase_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="تاريخ الشراء"
+    )
+
+    expires_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="ينتهي في"
+    )
+
+    is_completed = models.BooleanField(
+        default=False,
+        verbose_name="تم الدفع؟"
+    )
+
+    games_played = models.IntegerField(
+        default=0,
+        verbose_name="عدد الألعاب"
+    )
 
     class Meta:
         verbose_name = "مشترى حزمة"
@@ -323,10 +352,13 @@ class UserPurchase(models.Model):
         ]
 
     def __str__(self):
-        status = "نشط" if not self.is_completed else "مكتمل"
+        status = "مفعل" if self.is_active else "منتهي"
         return f"{self.user} - {self.package} ({status})"
 
-    # أدوات مساعدة
+    # =========================
+    # خصائص منطقية فقط (بدون تعديل تلقائي)
+    # =========================
+
     @property
     def expiry_duration(self) -> timedelta:
         return timedelta(hours=self.EXPIRY_HOURS)
@@ -339,51 +371,46 @@ class UserPurchase(models.Model):
     @property
     def is_expired(self) -> bool:
         """
-        ترجع True إذا انتهت صلاحية الشراء.
-        وبشكل اختياري تقوم تلقائياً بتحديث is_completed (تحسين للنظام).
+        الشراء منتهي إذا:
+        - غير مكتمل (لم يتم الدفع) → منتهي
+        - أو انتهى الوقت
         """
-        now = timezone.now()
+        if not self.is_completed:
+            return True
+
         end = self.expires_at or self.computed_expires_at
+        return timezone.now() >= end
 
-        expired = now >= end
-
-        # تحسين إضافي: ختم الشراء مباشرة عند التحقق (بدون انتظار save)
-        if expired and not self.is_completed:
-            self.is_completed = True
-            # تحديث سريع بدون إعادة حساب أشياء أخرى
-            super(UserPurchase, self).save(update_fields=['is_completed'])
-
-        return expired
+    @property
+    def is_active(self) -> bool:
+        """
+        الشراء نشط إذا:
+        - تم الدفع
+        - ولم تنتهِ المدة
+        """
+        return self.is_completed and not self.is_expired
 
     @property
     def time_left(self) -> timedelta:
+        if not self.is_completed:
+            return timedelta(0)
+
         end = self.expires_at or self.computed_expires_at
         delta = end - timezone.now()
         return max(timedelta(0), delta)
 
-    def mark_expired_if_needed(self, auto_save=True) -> bool:
-        if not self.is_completed and self.is_expired:
-            self.is_completed = True
-            if auto_save:
-                self.save(update_fields=['is_completed'])
-            return True
-        return False
-
     def save(self, *args, **kwargs):
+        """
+        - لا نعدّل is_completed هنا إطلاقًا
+        - نضبط expires_at عند الإنشاء فقط
+        """
         is_create = self._state.adding
-
-        if not self.is_completed and self.expires_at and timezone.now() >= self.expires_at:
-            self.is_completed = True
 
         super().save(*args, **kwargs)
 
-        if is_create and self.expires_at is None:
+        if is_create and self.is_completed and self.expires_at is None:
             self.expires_at = self.purchase_date + self.expiry_duration
             super().save(update_fields=['expires_at'])
-
-        if not self.is_completed and self.is_expired:
-            self.is_completed = True
-            super().save(update_fields=['is_completed'])
 
 
 # =========================
