@@ -24,10 +24,9 @@ logger = logging.getLogger("payments")
 def start_payment(request, package_id):
     package = get_object_or_404(GamePackage, id=package_id)
 
-    # =========================================
-    # 1️⃣ نحاول نجيب شراء غير مكتمل سابق لنفس الحزمة
-    # (حتى لا نكسر unique_active_purchase_per_package)
-    # =========================================
+    # ==================================================
+    # 1️⃣ الحصول على عملية شراء غير مكتملة (إن وجدت)
+    # ==================================================
     purchase = (
         UserPurchase.objects
         .filter(
@@ -35,7 +34,7 @@ def start_payment(request, package_id):
             package=package,
             is_completed=False
         )
-        .order_by("-purchase_date")  # ✅ الحقل الصحيح
+        .order_by("-purchase_date")  # ✅ الصحيح
         .first()
     )
 
@@ -46,16 +45,16 @@ def start_payment(request, package_id):
             is_completed=False
         )
 
-    # =========================================
-    # 2️⃣ نبحث عن TelrTransaction معلقة
-    # =========================================
+    # ==================================================
+    # 2️⃣ الحصول على عملية Telr معلقة (إن وجدت)
+    # ==================================================
     tx = (
         TelrTransaction.objects
         .filter(
             purchase=purchase,
             status="pending"
         )
-        .order_by("-created_at")
+        .order_by("-id")  # ✅ بدون created_at
         .first()
     )
 
@@ -73,16 +72,16 @@ def start_payment(request, package_id):
             status="pending",
         )
 
-    # =========================================
+    # ==================================================
     # 3️⃣ إنشاء طلب Telr
-    # =========================================
+    # ==================================================
     endpoint, data = generate_telr_url(purchase, request, cart_id)
     logger.info("TELR REQUEST >>> %s", json.dumps(data, ensure_ascii=False))
 
     try:
         response = requests.post(endpoint, data=data, timeout=20)
         result = response.json()
-    except Exception as e:
+    except Exception:
         logger.exception("Telr create failed")
         messages.error(request, "فشل الاتصال ببوابة الدفع، حاول مرة أخرى.")
         return redirect(f"/games/{package.game_type}/")
@@ -93,17 +92,17 @@ def start_payment(request, package_id):
         messages.error(request, "حدث خطأ أثناء إنشاء عملية الدفع.")
         return redirect(f"/games/{package.game_type}/")
 
-    # =========================================
-    # 4️⃣ تحديث cartid لو Telr غيّره
-    # =========================================
+    # ==================================================
+    # 4️⃣ تحديث cartid إذا Telr غيّره
+    # ==================================================
     telr_cartid = (result.get("order") or {}).get("cartid")
     if telr_cartid and telr_cartid != tx.order_id:
         tx.order_id = telr_cartid
         tx.save(update_fields=["order_id"])
 
-    # =========================================
+    # ==================================================
     # 5️⃣ عرض صفحة التحويل
-    # =========================================
+    # ==================================================
     return render(
         request,
         "payments/processing.html",
