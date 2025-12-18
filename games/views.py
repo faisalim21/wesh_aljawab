@@ -1551,7 +1551,6 @@ def create_images_session(request):
                 messages.success(request, 'تم توجيهك إلى جلستك المجانية النشطة.')
                 return redirect('games:images_session', session_id=existing.id)
 
-
             session = GameSession.objects.create(
                 host=request.user,
                 package=package,
@@ -1569,60 +1568,45 @@ def create_images_session(request):
 
         with transaction.atomic():
             now = timezone.now()
+            
+            # ✅ الإصلاح الرئيسي: التحقق من الشراء الصحيح
             purchase = (UserPurchase.objects
                         .select_for_update()
-                        .filter(user=request.user, package=package, is_completed=False, expires_at__gt=now)
-                        .order_by('-purchase_date').first())
+                        .filter(
+                            user=request.user, 
+                            package=package, 
+                            is_completed=True,  # ✅ مكتمل
+                            expires_at__gt=now  # ✅ لم ينتهِ
+                        )
+                        .order_by('-purchase_date')
+                        .first())
 
             if not purchase:
-                # حدّث أي شراء قديم
-                stale = (UserPurchase.objects.select_for_update()
-                         .filter(user=request.user, package=package, is_completed=False)
-                         .order_by('-purchase_date').first())
-                if stale:
-                    stale.mark_expired_if_needed(auto_save=True)
                 messages.error(request, 'يجب شراء هذه الحزمة أولًا أو أن شراءك السابق انتهت صلاحيته.')
                 return redirect('games:images_home')
 
-            if purchase.mark_expired_if_needed(auto_save=True):
-                messages.error(request, 'انتهت صلاحية الشراء السابق. تحتاج شراء جديد.')
-                return redirect('games:images_home')
+            # ✅ استخدام get_or_create لتجنب التكرار
+            session, created = GameSession.objects.get_or_create(
+                purchase=purchase,
+                defaults={
+                    'host': request.user,
+                    'package': package,
+                    'game_type': 'images',
+                    'is_active': True
+                }
+            )
+            
+            # تأكد من وجود Progress
+            PictureGameProgress.objects.get_or_create(
+                session=session, 
+                defaults={'current_index': 1}
+            )
 
-            # جلسة مرتبطة بنفس الشراء؟
-            existing = GameSession.objects.filter(purchase=purchase, is_active=True).first()
-            if existing and not existing.is_time_expired:
-                messages.info(request, 'لديك جلسة نشطة لهذه الحزمة — تم توجيهك لها.')
-                return redirect('games:images_session', session_id=existing.id)
-
-
-            # أو جلسة نشطة لنفس الحزمة بعد وقت الشراء
-            existing2 = (GameSession.objects
-                         .filter(host=request.user, package=package, is_active=True,
-                                 created_at__gte=purchase.purchase_date)
-                         .order_by('-created_at').first())
-            if existing2 and not existing2.is_time_expired:
-                if existing2.purchase_id is None:
-                    existing2.purchase = purchase
-                    existing2.full_clean()
-                    existing2.save(update_fields=['purchase'])
-                messages.info(request, 'تم ربط جلستك الحالية بالشراء وإعادتك لها.')
-                return redirect('games:images_session', session_id=existing2.id)
-
-
-            # إنشاء جديدة
-            try:
-                session = GameSession.objects.create(
-                    host=request.user,
-                    package=package,
-                    game_type='images',
-                    purchase=purchase,
-                )
-            except IntegrityError:
-                session = GameSession.objects.get(purchase=purchase)
-
-            PictureGameProgress.objects.get_or_create(session=session, defaults={'current_index': 1})
-
-        messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! 🎉')
+        if created:
+            messages.success(request, 'تم إنشاء الجلسة المدفوعة بنجاح! 🎉')
+        else:
+            messages.success(request, 'تم إرجاعك إلى جلستك النشطة! 🎉')
+            
         return redirect('games:images_session', session_id=session.id)
 
     except Exception as e:
@@ -1630,8 +1614,10 @@ def create_images_session(request):
         messages.error(request, 'حدث خطأ أثناء إنشاء الجلسة، جرّب مرة أخرى.')
         return redirect('games:images_home')
     finally:
-        try: cache.delete(lock_key)
-        except Exception: pass
+        try: 
+            cache.delete(lock_key)
+        except Exception: 
+            pass
 
 
 
