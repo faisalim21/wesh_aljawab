@@ -365,13 +365,6 @@ def imposter_setup(request, package_id):
         if not purchase:
             return redirect("payments:start_payment", package_id=package.id)
 
-        # ✅ إزالة منطق "إعادة التوجيه للجلسة القديمة"
-        # القديم كان:
-        # existing_session = GameSession.objects.filter(...)
-        # if existing_session: return redirect(...)
-        
-        # ❌ لا تعيد توجيه، دع المستخدم يبدأ جلسة جديدة دائماً
-
     # =========================
     # 📋 عرض صفحة الإعداد (GET)
     # =========================
@@ -381,7 +374,7 @@ def imposter_setup(request, package_id):
         })
 
     # =========================
-    # 🎮 إنشاء الجلسة (POST)
+    # 🎮 إنشاء/جلب الجلسة (POST)
     # =========================
     if request.method == "POST":
         try:
@@ -406,15 +399,34 @@ def imposter_setup(request, package_id):
             })
 
         # =========================
-        # 🎮 إنشاء جلسة جديدة دائماً
+        # 🎮 الحصول على الجلسة أو إنشاء جديدة
         # =========================
-        session = GameSession.objects.create(
-            host=request.user,
-            package=package,
-            game_type="imposter",
-            purchase=purchase,
-            is_active=True
-        )
+        if purchase:
+            # للحزم المدفوعة: نستخدم get_or_create لتجنب التكرار
+            session, created = GameSession.objects.get_or_create(
+                purchase=purchase,
+                defaults={
+                    "host": request.user,
+                    "package": package,
+                    "game_type": "imposter",
+                    "is_active": True
+                }
+            )
+            
+            # لو الجلسة موجودة، نحذف البيانات القديمة من session
+            if not created:
+                old_key = f"imposter_{session.id}"
+                if old_key in request.session:
+                    del request.session[old_key]
+        else:
+            # للحزم المجانية: دائماً جلسة جديدة
+            session = GameSession.objects.create(
+                host=request.user,
+                package=package,
+                game_type="imposter",
+                purchase=None,
+                is_active=True
+            )
 
         # عدد الجولات
         rounds_count = 1 if package.is_free or package.package_number == 0 else min(3, words_qs.count())
