@@ -86,9 +86,11 @@ from django.db import models
 def imposter_packages(request):
     """
     صفحة حزم لعبة امبوستر
-    - عرض الحزم
-    - إظهار زر (ابدأ اللعب) للحزم المدفوعة عند وجود شراء نشط
+    - زر (ابدأ اللعب) يظهر فقط عند وجود شراء نشط (72 ساعة)
+    - شارة (سبق شراء) للحزم المنتهية
     """
+
+    now = timezone.now()
 
     packages = (
         GamePackage.objects
@@ -96,26 +98,41 @@ def imposter_packages(request):
         .order_by("package_number")
     )
 
-    now = timezone.now()
+    active_packages_ids = set()     # شراء مكتمل وصالح
+    expired_packages_ids = set()    # شراء مكتمل وانتهى
+    used_before_ids = set()         # أي حزمة سبق شراؤها (للعرض فقط)
 
-    active_packages = set(
-        UserPurchase.objects
-        .filter(
+    if request.user.is_authenticated:
+        purchases = UserPurchase.objects.filter(
             user=request.user,
-            package__game_type="imposter",
-            is_completed=True,
-            expires_at__gt=now,
+            package__game_type="imposter"
         )
-        .values_list("package_id", flat=True)
-    )
+
+        for p in purchases:
+            used_before_ids.add(p.package_id)
+
+            # تجاهل غير المكتمل
+            if not p.is_completed:
+                continue
+
+            # شراء نشط
+            if p.expires_at and p.expires_at > now:
+                active_packages_ids.add(p.package_id)
+                continue
+
+            # شراء منتهي
+            expired_packages_ids.add(p.package_id)
 
     context = {
         "packages": packages,
-        "active_packages": active_packages,
+
+        # منطق الواجهة
+        "active_packages_ids": active_packages_ids,
+        "expired_packages_ids": expired_packages_ids,
+        "used_before_ids": used_before_ids,
     }
 
     return render(request, "games/imposter/packages.html", context)
-
 
 
 
@@ -305,11 +322,11 @@ import random
 def imposter_setup(request, package_id):
     """
     إعداد لعبة امبوستر:
-    - اختيار عدد اللاعبين
-    - اختيار عدد الإمبوسترات
-    - اختيار كلمة عشوائية (من الأدمن)
-    - تجهيز الجلسة في session
+    - المجانية: جلسة بدون purchase
+    - المدفوعة: التحقق من شراء نشط وربط الجلسة به (72 ساعة)
     """
+
+    now = timezone.now()
 
     package = get_object_or_404(
         GamePackage,
@@ -329,6 +346,33 @@ def imposter_setup(request, package_id):
             "message": "لا توجد كلمات مضافة لهذه الحزمة."
         })
 
+    # =========================
+    # 🔐 التحقق من الشراء (للمدفوع فقط)
+    # =========================
+    purchase = None
+    if not package.is_free and package.package_number != 0:
+        purchase = UserPurchase.objects.filter(
+            user=request.user,
+            package=package,
+            is_completed=True,
+            expires_at__gt=now
+        ).order_by("-purchase_date").first()
+
+        if not purchase:
+            return redirect("payments:start_payment", package_id=package.id)
+
+        # لو عنده جلسة نشطة مرتبطة بنفس الشراء → رجّعه لها
+        existing_session = GameSession.objects.filter(
+            purchase=purchase,
+            is_active=True
+        ).order_by("-created_at").first()
+
+        if existing_session and not existing_session.is_time_expired:
+            return redirect("games:imposter_session", session_id=existing_session.id)
+
+    # =========================
+    # POST → إنشاء الجلسة
+    # =========================
     if request.method == "POST":
         try:
             players_count = int(request.POST.get("players_count"))
@@ -351,21 +395,19 @@ def imposter_setup(request, package_id):
                 "error": "عدد الإمبوسترات غير صالح."
             })
 
-        # إنشاء جلسة
+        # =========================
+        # 🎮 إنشاء الجلسة (مربوطة بالشراء إن وُجد)
+        # =========================
         session = GameSession.objects.create(
             host=request.user,
             package=package,
             game_type="imposter",
+            purchase=purchase,
             is_active=True
         )
 
-        # عدد الجولات:
-        # المجانية = كلمة وحدة
-        # المدفوعة = 3 كلمات (أو أقل لو ما توفر)
-        if package.is_free or package.package_number == 0:
-            rounds_count = 1
-        else:
-            rounds_count = min(3, words_qs.count())
+        # عدد الجولات
+        rounds_count = 1 if package.is_free or package.package_number == 0 else min(3, words_qs.count())
 
         # اختيار كلمات عشوائية
         words = random.sample(list(words_qs), rounds_count)
@@ -374,12 +416,12 @@ def imposter_setup(request, package_id):
         order = list(range(players_count))
         imposters = random.sample(order, imposters_count)
 
-        # حفظ كل شيء في session
+        # تخزين بيانات اللعبة في session
         request.session[f"imposter_{session.id}"] = {
             "players_count": players_count,
             "imposters_count": imposters_count,
             "imposters": imposters,
-            "words": [w.word for w in words],  # قائمة الكلمات (جولات)
+            "words": [w.word for w in words],
             "current_round": 0,
             "current_index": -1,
         }
