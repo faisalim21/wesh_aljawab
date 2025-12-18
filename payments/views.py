@@ -158,7 +158,7 @@ def telr_success(request):
     cart_id = request.GET.get("cartid")
     game_type = request.GET.get("type")
 
-    if not purchase_id or not cart_id or not game_type:
+    if not purchase_id or not cart_id:
         messages.error(request, "بيانات الدفع غير مكتملة")
         return redirect("/")
 
@@ -168,39 +168,53 @@ def telr_success(request):
         user=request.user
     )
 
-    # ==================================================
-    # 1️⃣ التحقق النهائي من Telr
-    # ==================================================
+    # 1️⃣ تأكيد الدفع من Telr
     try:
         result = telr_check(cart_id)
     except Exception:
         messages.warning(
             request,
-            "تم استلام عملية الدفع لكن لم يتم اعتمادها بعد، سيتم التفعيل تلقائيًا خلال دقائق."
+            "تم استلام الدفع ولكن لم يتم تأكيده بعد، سيتم التفعيل تلقائيًا."
         )
         return redirect(f"/games/{game_type}/")
 
-    status_code = (
+    status = (
         result.get("order", {})
         .get("status", {})
         .get("code")
     )
 
-    # Telr code: 3 = Paid
-    if status_code != "3":
+    # Telr: 3 = Paid
+    if status != "3":
         messages.warning(
             request,
-            "تم استلام عملية الدفع لكن لم يتم اعتمادها بعد، سيتم التفعيل تلقائيًا خلال دقائق."
+            "الدفع قيد المراجعة، سيتم التفعيل تلقائيًا خلال دقائق."
         )
         return redirect(f"/games/{game_type}/")
 
-    # ==================================================
-    # 2️⃣ تفعيل الشراء + إنشاء/جلب الجلسة (الصح)
-    # ==================================================
-    session = _activate_purchase_and_session(purchase)
+    # 2️⃣ تفعيل الشراء + مدة الصلاحية
+    now = timezone.now()
+    purchase.is_completed = True
+    purchase.expires_at = now + timedelta(hours=72)
+    purchase.save(update_fields=["is_completed", "expires_at"])
 
-    messages.success(request, "🎉 تم الدفع بنجاح! يمكنك بدء اللعب الآن")
+    # 3️⃣ إنشاء جلسة إن لم تكن موجودة
+    if not purchase.game_session:
+        session = GameSession.objects.create(
+            host=request.user,
+            package=purchase.package,
+            game_type=purchase.package.game_type,
+            purchase=purchase,
+            is_active=True
+        )
+        purchase.game_session = session
+        purchase.save(update_fields=["game_session"])
+    else:
+        session = purchase.game_session
 
+    messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
+
+    # 4️⃣ رجوع لصفحة الحزم (الزر سيقلب أخضر)
     return redirect(
         f"/games/{game_type}/?success=1&session={session.id}"
     )
