@@ -710,6 +710,17 @@
       {% endfor %}
     {% endif %}
   </div>
+  {% if request.GET.session %}
+  <div class="start-session-wrapper">
+    <button
+      class="start-session-btn"
+      id="startPaidSessionBtn"
+      data-session="{{ request.GET.session }}">
+      <i class="fas fa-play"></i>
+      ابدأ اللعب
+    </button>
+  </div>
+  {% endif %}
 
 
   <section class="packages-section">
@@ -807,12 +818,23 @@
                   <span class="btn-text">ابدأ الجولة المجانية</span>
                 </a>
 
-              {% elif package.id in active_purchases %}
+              {% elif package.id in active_purchases or package.id == paid_package_id %}
                 <!-- حزمة مدفوعة تم شراؤها -->
-                <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
-                  <i class="fas fa-play"></i>
-                  <span class="btn-text">ابدأ اللعب</span>
-                </a>
+                {% if paid_session and package.id == paid_package_id %}
+                  <a
+                    href="{% url 'games:imposter_session' paid_session.id %}"
+                    target="_blank"
+                    class="btn-play btn-success">
+                    <i class="fas fa-play"></i>
+                    <span class="btn-text">ابدأ اللعب</span>
+                  </a>
+                {% else %}
+                  <a href="{% url 'games:imposter_setup' package.id %}" class="btn-play btn-success">
+                    <i class="fas fa-play"></i>
+                    <span class="btn-text">ابدأ اللعب</span>
+                  </a>
+                {% endif %}
+
 
               {% else %}
                 <!-- حزمة مدفوعة غير مشتراة -->
@@ -853,6 +875,31 @@ document.addEventListener('DOMContentLoaded', function () {
         if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
     });
 
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('startPaidSessionBtn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        const sessionId = this.dataset.session;
+        if (!sessionId) {
+            alert("تعذر العثور على الجلسة");
+            return;
+        }
+
+        const url = `/games/imposter/session/${sessionId}/`;
+        const win = window.open(url, '_blank', 'noopener,noreferrer');
+
+        if (!win) {
+            alert("الرجاء السماح بفتح النوافذ المنبثقة");
+            return;
+        }
+
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-check"></i> تم فتح الجلسة';
+    });
 });
 </script>
 

@@ -1880,13 +1880,100 @@ def images_session(request, session_id):
 
 
 
-def imposter_packages(request):
-    packages = GamePackage.objects.filter(
-        game_type="imposter",
-        is_active=True
-    ).order_by("package_number")
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
-    return render(request, "imposter/packages.html", {
+from games.models import (
+    GamePackage,
+    UserPurchase,
+    GameSession,
+)
+
+
+@login_required
+def imposter_packages(request):
+    """
+    صفحة حزم لعبة امبوستر
+    - تدعم الشراء
+    - تدعم الجلسة الجاهزة بعد الدفع (?session=)
+    - تقلب زر الحزمة إلى (ابدأ اللعب) مباشرة
+    """
+
+    # ===============================
+    # 1) جلب جميع حزم امبوستر
+    # ===============================
+    packages = (
+        GamePackage.objects
+        .filter(game_type="imposter", is_active=True)
+        .order_by("package_number")
+    )
+
+    # ===============================
+    # 2) الحزم التي اشتراها المستخدم
+    # ===============================
+    now = timezone.now()
+
+    purchases = (
+        UserPurchase.objects
+        .filter(
+            user=request.user,
+            package__game_type="imposter",
+            is_completed=True,
+        )
+        .select_related("package")
+    )
+
+    active_purchases = purchases.filter(
+        expires_at__gt=now
+    )
+
+    active_packages_ids = set(
+        active_purchases.values_list("package_id", flat=True)
+    )
+
+    purchased_packages_ids = set(
+        purchases.values_list("package_id", flat=True)
+    )
+
+    # ===============================
+    # 3) الجلسة القادمة من الدفع (?session=)
+    # ===============================
+    session_id = request.GET.get("session")
+    paid_session = None
+    paid_package_id = None
+
+    if session_id:
+        paid_session = (
+            GameSession.objects
+            .filter(
+                id=session_id,
+                host=request.user,
+                is_active=True,
+                package__game_type="imposter",
+            )
+            .select_related("package")
+            .first()
+        )
+
+        if paid_session:
+            paid_package_id = paid_session.package_id
+            # نضيفها للحزم النشطة فورًا (UX)
+            active_packages_ids.add(paid_package_id)
+
+    # ===============================
+    # 4) تجهيز الـ context
+    # ===============================
+    context = {
         "packages": packages,
-        "page_title": "حزم لعبة امبوستر"
-    })
+
+        # حزم
+        "active_packages": active_packages_ids,
+        "purchased_packages": purchased_packages_ids,
+
+        # جلسة بعد الدفع
+        "paid_session": paid_session,
+        "paid_package_id": paid_package_id,
+    }
+
+    return render(request, "games/imposter_packages.html", context)
