@@ -335,7 +335,7 @@ TELR_AUTH_KEY = "wT45z-TDzZ3@hvvV"
 
 # روابط العودة من Telr
 TELR_RETURN_SUCCESS = "https://wesh-aljawab.com/payments/telr/success/"
-TELR_RETURN_FAIL    = "https://wesh-aljawab.com/payments/telr/fail/"
+TELR_RETURN_FAIL = "https://wesh-aljawab.com/payments/telr/failed/"
 TELR_RETURN_CANCEL  = "https://wesh-aljawab.com/payments/telr/cancel/"
 
 # وضع الاختبار
