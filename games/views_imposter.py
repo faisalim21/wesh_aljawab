@@ -346,10 +346,9 @@ def imposter_setup(request, package_id):
 
     if not words_qs.exists():
         return render(request, "payments/error.html", {
-            "message": "بيانات الجلسة غير موجودة.",
-            "back_url": reverse("games:imposter_packages")
+            "message": "لا توجد كلمات مضافة لهذه الحزمة.",
+            "back_url": "/games/imposter/"
         })
-
 
     # =========================
     # 🔐 التحقق من الشراء (للمدفوع فقط)
@@ -366,17 +365,23 @@ def imposter_setup(request, package_id):
         if not purchase:
             return redirect("payments:start_payment", package_id=package.id)
 
-        # لو عنده جلسة نشطة مرتبطة بنفس الشراء → رجّعه لها
-        existing_session = GameSession.objects.filter(
-            purchase=purchase,
-            is_active=True
-        ).order_by("-created_at").first()
-
-        if existing_session and not existing_session.is_time_expired:
-            return redirect("games:imposter_session", session_id=existing_session.id)
+        # ✅ إزالة منطق "إعادة التوجيه للجلسة القديمة"
+        # القديم كان:
+        # existing_session = GameSession.objects.filter(...)
+        # if existing_session: return redirect(...)
+        
+        # ❌ لا تعيد توجيه، دع المستخدم يبدأ جلسة جديدة دائماً
 
     # =========================
-    # POST → إنشاء الجلسة
+    # 📋 عرض صفحة الإعداد (GET)
+    # =========================
+    if request.method == "GET":
+        return render(request, "games/imposter/setup.html", {
+            "package": package,
+        })
+
+    # =========================
+    # 🎮 إنشاء الجلسة (POST)
     # =========================
     if request.method == "POST":
         try:
@@ -401,7 +406,7 @@ def imposter_setup(request, package_id):
             })
 
         # =========================
-        # 🎮 إنشاء الجلسة (مربوطة بالشراء إن وُجد)
+        # 🎮 إنشاء جلسة جديدة دائماً
         # =========================
         session = GameSession.objects.create(
             host=request.user,
@@ -433,7 +438,3 @@ def imposter_setup(request, package_id):
         request.session.modified = True
 
         return redirect("games:imposter_session", session_id=session.id)
-
-    return render(request, "games/imposter/setup.html", {
-        "package": package,
-    })

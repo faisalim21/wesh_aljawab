@@ -821,8 +821,8 @@
             </a>
 
           {% elif package.id in active_packages_ids %}
-            <!-- حزمة مدفوعة تم تفعيلها -->
-            <a
+            <!-- ✅ الجديد - صحيح -->
+            
               href="{% url 'games:imposter_setup' package.id %}"
               class="btn-play btn-success">
               <i class="fas fa-play"></i>
