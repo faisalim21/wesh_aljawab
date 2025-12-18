@@ -74,33 +74,81 @@ from django.contrib.auth.decorators import login_required
 from games.models import GamePackage, UserPurchase
 
 
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+from games.models import GamePackage, UserPurchase, GameSession
+
+
 @login_required
 def imposter_packages(request):
     """
     صفحة حزم لعبة امبوستر
-    - أي حزمة مدفوعة ومكتملة → يظهر زر (ابدأ اللعب)
+    - عرض الحزم
+    - قلب زر (شراء) إلى (ابدأ اللعب) للحزم المدفوعة
     """
 
-    # جميع حزم امبوستر
+    # ===============================
+    # 1) جلب الحزم
+    # ===============================
     packages = (
         GamePackage.objects
         .filter(game_type="imposter", is_active=True)
         .order_by("package_number")
     )
 
-    # الحزم التي اشتراها المستخدم (مكتملة)
-    active_packages = list(
-        UserPurchase.objects.filter(
+    now = timezone.now()
+
+    # ===============================
+    # 2) مشتريات المستخدم المكتملة والنشطة
+    # ===============================
+    purchases = (
+        UserPurchase.objects
+        .filter(
             user=request.user,
             package__game_type="imposter",
-            is_completed=True
-        ).values_list("package_id", flat=True)
+            is_completed=True,
+            expires_at__gt=now,
+        )
+        .select_related("package")
     )
 
+    # IDs الحزم النشطة (الزر الأخضر)
+    active_packages = set(
+        purchases.values_list("package_id", flat=True)
+    )
+
+    # ===============================
+    # 3) جلسة قادمة مباشرة بعد الدفع (?session=)
+    # ===============================
+    session_id = request.GET.get("session")
+    paid_session = None
+
+    if session_id:
+        paid_session = (
+            GameSession.objects
+            .filter(
+                id=session_id,
+                host=request.user,
+                is_active=True,
+                package__game_type="imposter",
+            )
+            .select_related("package")
+            .first()
+        )
+
+        if paid_session:
+            # نضيف الحزمة فورًا (UX)
+            active_packages.add(paid_session.package_id)
+
+    # ===============================
+    # 4) context
+    # ===============================
     context = {
         "packages": packages,
-        "active_packages": active_packages,
-        "purchased_packages": active_packages,  # للشارة "تم شراؤها"
+        "active_packages": active_packages,   # ✅ الاسم الصحيح
+        "paid_session": paid_session,
     }
 
     return render(request, "games/imposter/packages.html", context)
