@@ -1,56 +1,63 @@
 # payments/telr.py
 
-import uuid
 from django.conf import settings
-
-# إعدادات Telr
-TELR_STORE_ID = "34132"
-TELR_AUTH_KEY = "wT45z-TDzZ3@hvvV"
-TELR_TEST_MODE = "0"   # LIVE MODE
+from decimal import Decimal, ROUND_HALF_UP
 
 
-# دومينك الرسمي
 BASE_URL = "https://wesh-aljawab.com"
+
+
+def _format_amount(amount):
+    """
+    Telr يتطلب رقم بصيغة 0.00
+    """
+    return str(
+        Decimal(amount).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    )
 
 
 def generate_telr_url(purchase, request, order_id):
     """
-    إنشاء رابط الدفع عبر Telr مع روابط رجوع صحيحة تشمل نوع اللعبة
+    إنشاء رابط الدفع عبر Telr (Live / Test) بطريقة آمنة ومطابقة
     """
 
     package = purchase.package
 
-    # السعر الحقيقي
-    amount = str(package.discounted_price or package.price)
+    # ✅ السعر الحقيقي
+    amount = _format_amount(package.effective_price)
 
-    # نوع اللعبة letters / images
-    game_type = package.game_type  
+    game_type = package.game_type
 
-    # == RETURN URL WITH GAME TYPE ==
-    return_auth = f"{BASE_URL}/payments/telr/success/?purchase={purchase.id}&type={game_type}"
-    return_decl = f"{BASE_URL}/payments/telr/failed/?purchase={purchase.id}&type={game_type}"
-    return_cancl = f"{BASE_URL}/payments/telr/cancel/?purchase={purchase.id}&type={game_type}"
+    return_auth = (
+        f"{BASE_URL}/payments/telr/success/"
+        f"?purchase={purchase.id}&type={game_type}"
+    )
+    return_decl = (
+        f"{BASE_URL}/payments/telr/failed/"
+        f"?purchase={purchase.id}&type={game_type}"
+    )
+    return_cancl = (
+        f"{BASE_URL}/payments/telr/cancel/"
+        f"?purchase={purchase.id}&type={game_type}"
+    )
 
-    # == CALLBACK ==
     notify_url = f"{BASE_URL}/payments/telr/webhook/"
-
-    package_name = f"حزمة رقم {package.package_number}"
 
     payload = {
         "ivp_method": "create",
-        "ivp_store": TELR_STORE_ID,
-        "ivp_authkey": TELR_AUTH_KEY,
-        "ivp_test": TELR_TEST_MODE,
+        "ivp_store": settings.TELR_STORE_ID,
+        "ivp_authkey": settings.TELR_AUTH_KEY,
+        "ivp_test": "1" if settings.TELR_TEST_MODE else "0",
 
-        # رقم الطلب الحقيقي القادم من start_payment
+        # رقم الطلب
         "ivp_cart": order_id,
 
         "ivp_amount": amount,
         "ivp_currency": "SAR",
-        "ivp_desc": package_name,
+        "ivp_desc": f"حزمة رقم {package.package_number}",
         "ivp_lang": "ar",
 
-        # روابط الرجوع — الآن صحيحة 100%
+        # Return URLs
         "return_auth": return_auth,
         "return_decl": return_decl,
         "return_can": return_cancl,

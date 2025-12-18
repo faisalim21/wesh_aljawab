@@ -327,16 +327,22 @@ RAJHI_CONFIG = {
 
 
 
+# ========== TELR CONFIG ==========
+TELR_STORE_ID = config("TELR_STORE_ID")
+TELR_AUTH_KEY = config("TELR_AUTH_KEY")
 
-# ========== TELR TEST CONFIG ==========
-TELR_STORE_ID = "34132"
-TELR_AUTH_KEY = "wT45z-TDzZ3@hvvV"
+# True = Test | False = Live
+TELR_TEST_MODE = config("TELR_TEST_MODE", default=False, cast=bool)
 
-
-# روابط العودة من Telr
-TELR_RETURN_SUCCESS = "https://wesh-aljawab.com/payments/telr/success/"
-TELR_RETURN_FAIL = "https://wesh-aljawab.com/payments/telr/failed/"
-TELR_RETURN_CANCEL  = "https://wesh-aljawab.com/payments/telr/cancel/"
-
-# وضع الاختبار
-TELR_TEST_MODE = False
+TELR_RETURN_SUCCESS = config(
+    "TELR_RETURN_SUCCESS",
+    default="https://wesh-aljawab.com/payments/telr/success/"
+)
+TELR_RETURN_FAIL = config(
+    "TELR_RETURN_FAIL",
+    default="https://wesh-aljawab.com/payments/telr/failed/"
+)
+TELR_RETURN_CANCEL = config(
+    "TELR_RETURN_CANCEL",
+    default="https://wesh-aljawab.com/payments/telr/cancel/"
+)
