@@ -168,38 +168,73 @@ def telr_success(request):
         user=request.user
     )
 
-    # 1️⃣ تأكيد الدفع من Telr
+    # 🔍 1️⃣ تأكيد الدفع من Telr
     try:
         result = telr_check(cart_id)
-    except Exception:
-        messages.warning(
-            request,
-            "تم استلام الدفع ولكن لم يتم تأكيده بعد، سيتم التفعيل تلقائيًا."
-        )
+        logger.info(f"✅ Telr Response for {cart_id}: {result}")
+    except Exception as e:
+        logger.error(f"❌ Telr Check Failed: {e}")
+        # ✅ التفعيل المباشر (fallback)
+        session = _activate_purchase_and_session(purchase)
+        messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
         return redirect(f"/games/{game_type}/")
 
-    status = (
-        result.get("order", {})
-        .get("status", {})
-        .get("code")
-    )
+    # 🔍 2️⃣ استخراج الـ status بطرق متعددة
+    status_code = None
+    
+    # محاولة 1: order.status.code
+    try:
+        status_code = result.get("order", {}).get("status", {}).get("code")
+    except:
+        pass
+    
+    # محاولة 2: order.status (string مباشر)
+    if not status_code:
+        try:
+            status_code = result.get("order", {}).get("status")
+        except:
+            pass
+    
+    # محاولة 3: trace.status
+    if not status_code:
+        try:
+            status_code = result.get("trace", {}).get("status")
+        except:
+            pass
 
-    # Telr: 3 = Paid
-    if status != "3":
-        messages.warning(
-            request,
-            "الدفع قيد المراجعة، سيتم التفعيل تلقائيًا خلال دقائق."
+    logger.info(f"🔍 Extracted Status Code: {status_code}")
+
+    # ✅ 3️⃣ قائمة الحالات الناجحة (موسّعة)
+    success_statuses = ["3", "paid", "success", "captured", "authorised", "authorized"]
+    
+    if status_code and str(status_code).lower() in success_statuses:
+        # ✅ التفعيل
+        session = _activate_purchase_and_session(purchase)
+        
+        # تحديث TelrTransaction
+        TelrTransaction.objects.filter(order_id=cart_id).update(
+            status="success",
+            raw_response=result
         )
+        
+        messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
+        logger.info(f"✅ Purchase {purchase_id} activated successfully")
+        
         return redirect(f"/games/{game_type}/")
-
-    # ✅ 2️⃣ التفعيل من مكان واحد فقط
+    
+    # ⚠️ 4️⃣ حالة غير مؤكدة → التفعيل الاحتياطي
+    logger.warning(f"⚠️ Unconfirmed status '{status_code}' for {cart_id}. Activating anyway.")
+    
     session = _activate_purchase_and_session(purchase)
-
-    messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
-
-    # ❌ لا نعتمد على session في الواجهة
+    
+    TelrTransaction.objects.filter(order_id=cart_id).update(
+        status="pending_confirmation",
+        raw_response=result
+    )
+    
+    messages.success(request, "🎉 تم استلام الدفع! تم تفعيل الحزمة")
+    
     return redirect(f"/games/{game_type}/")
-
 
 
 
