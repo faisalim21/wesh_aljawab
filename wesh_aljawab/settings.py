@@ -346,3 +346,4 @@ TELR_RETURN_CANCEL = config(
     "TELR_RETURN_CANCEL",
     default="https://wesh-aljawab.com/payments/telr/cancel/"
 )
+TELR_BASE_URL = "https://wesh-aljawab.com"
