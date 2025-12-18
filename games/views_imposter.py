@@ -155,9 +155,11 @@ def imposter_session_view(request, session_id):
     data = request.session.get(session_key)
 
     if not data:
-        return render(request, "games/imposter/error.html", {
-            "message": "بيانات الجلسة غير موجودة."
+        return render(request, "payments/error.html", {
+            "message": "بيانات الجلسة غير موجودة.",
+            "back_url": reverse("games:imposter_packages")
         })
+
 
     players_count = data["players_count"]
     imposters = data["imposters"]
@@ -342,9 +344,11 @@ def imposter_setup(request, package_id):
     )
 
     if not words_qs.exists():
-        return render(request, "games/imposter/error.html", {
-            "message": "لا توجد كلمات مضافة لهذه الحزمة."
+        return render(request, "payments/error.html", {
+            "message": "بيانات الجلسة غير موجودة.",
+            "back_url": reverse("games:imposter_packages")
         })
+
 
     # =========================
     # 🔐 التحقق من الشراء (للمدفوع فقط)

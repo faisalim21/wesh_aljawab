@@ -47,14 +47,15 @@ def generate_telr_url(purchase, request, cart_id: str):
 
 def telr_check(cart_id: str) -> dict:
     """
-    يتحقق من حالة الطلب من Telr (لا نعتمد على return فقط).
+    يتحقق من حالة الطلب من Telr.
+    cart_id يجب أن يكون الـ ref اللي Telr رجعه، مو local-xxx
     """
     data = {
         "ivp_method": "check",
         "ivp_store": getattr(settings, "TELR_STORE_ID"),
         "ivp_authkey": getattr(settings, "TELR_AUTH_KEY"),
         "ivp_test": _telr_test_flag(),
-        "ivp_cart": cart_id,
+        "order_ref": cart_id,  # ✅ استخدام order_ref بدل ivp_cart
     }
     r = requests.post(TELR_ENDPOINT, data=data, timeout=20)
     r.raise_for_status()

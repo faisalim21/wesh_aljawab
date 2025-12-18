@@ -34,7 +34,7 @@ def start_payment(request, package_id):
             package=package,
             is_completed=False
         )
-        .order_by("-purchase_date")  # ✅ الصحيح
+        .order_by("-purchase_date")
         .first()
     )
 
@@ -46,59 +46,52 @@ def start_payment(request, package_id):
         )
 
     # ==================================================
-    # 2️⃣ الحصول على عملية Telr معلقة (إن وجدت)
+    # 2️⃣ إنشاء cart_id مؤقت
     # ==================================================
-    tx = (
-        TelrTransaction.objects
-        .filter(
-            purchase=purchase,
-            status="pending"
-        )
-        .order_by("-id")  # ✅ بدون created_at
-        .first()
-    )
-
-    if tx:
-        cart_id = tx.order_id
-    else:
-        cart_id = f"local-{uuid.uuid4()}"
-        tx = TelrTransaction.objects.create(
-            order_id=cart_id,
-            purchase=purchase,
-            user=request.user,
-            package=package,
-            amount=package.effective_price,
-            currency="SAR",
-            status="pending",
-        )
-
+    temp_cart_id = f"local-{uuid.uuid4()}"
+    
     # ==================================================
     # 3️⃣ إنشاء طلب Telr
     # ==================================================
-    endpoint, data = generate_telr_url(purchase, request, cart_id)
+    endpoint, data = generate_telr_url(purchase, request, temp_cart_id)
     logger.info("TELR REQUEST >>> %s", json.dumps(data, ensure_ascii=False))
 
     try:
         response = requests.post(endpoint, data=data, timeout=20)
         result = response.json()
-    except Exception:
+    except Exception as e:
         logger.exception("Telr create failed")
         messages.error(request, "فشل الاتصال ببوابة الدفع، حاول مرة أخرى.")
         return redirect(f"/games/{package.game_type}/")
 
     url = (result.get("order") or {}).get("url")
+    telr_cartid = (result.get("order") or {}).get("ref")  # ✅ Telr يرجع ref
+    
     if not url:
         logger.error("TELR ERROR RESPONSE: %s", result)
         messages.error(request, "حدث خطأ أثناء إنشاء عملية الدفع.")
         return redirect(f"/games/{package.game_type}/")
 
     # ==================================================
-    # 4️⃣ تحديث cartid إذا Telr غيّره
+    # 4️⃣ حفظ الـ cart_id الصحيح من Telr
     # ==================================================
-    telr_cartid = (result.get("order") or {}).get("cartid")
-    if telr_cartid and telr_cartid != tx.order_id:
-        tx.order_id = telr_cartid
-        tx.save(update_fields=["order_id"])
+    if not telr_cartid:
+        telr_cartid = temp_cart_id  # fallback
+    
+    # حفظ أو تحديث TelrTransaction
+    tx, created = TelrTransaction.objects.update_or_create(
+        purchase=purchase,
+        defaults={
+            "order_id": telr_cartid,
+            "user": request.user,
+            "package": package,
+            "amount": package.effective_price,
+            "currency": "SAR",
+            "status": "pending",
+        }
+    )
+    
+    logger.info(f"✅ Created Telr transaction: {telr_cartid}")
 
     # ==================================================
     # 5️⃣ عرض صفحة التحويل
@@ -155,10 +148,10 @@ logger = logging.getLogger("payments")
 @login_required
 def telr_success(request):
     purchase_id = request.GET.get("purchase")
-    cart_id = request.GET.get("cartid")
+    cart_id = request.GET.get("cartid")  # هذا local-xxx
     game_type = request.GET.get("type")
 
-    if not purchase_id or not cart_id:
+    if not purchase_id:
         messages.error(request, "بيانات الدفع غير مكتملة")
         return redirect("/")
 
@@ -168,10 +161,23 @@ def telr_success(request):
         user=request.user
     )
 
+    # 🔍 جلب الـ cart_id الصحيح من TelrTransaction
+    tx = TelrTransaction.objects.filter(purchase=purchase).order_by("-id").first()
+    
+    if not tx:
+        logger.error(f"❌ No TelrTransaction found for purchase {purchase_id}")
+        # ✅ تفعيل مباشر
+        session = _activate_purchase_and_session(purchase)
+        messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
+        return redirect(f"/games/{game_type}/")
+    
+    real_cart_id = tx.order_id
+    logger.info(f"🔍 Using cart_id: {real_cart_id}")
+
     # 🔍 1️⃣ تأكيد الدفع من Telr
     try:
-        result = telr_check(cart_id)
-        logger.info(f"✅ Telr Response for {cart_id}: {result}")
+        result = telr_check(real_cart_id)  # ✅ استخدام الـ cart_id الصحيح
+        logger.info(f"✅ Telr Response for {real_cart_id}: {result}")
     except Exception as e:
         logger.error(f"❌ Telr Check Failed: {e}")
         # ✅ التفعيل المباشر (fallback)
@@ -179,43 +185,32 @@ def telr_success(request):
         messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
         return redirect(f"/games/{game_type}/")
 
-    # 🔍 2️⃣ استخراج الـ status بطرق متعددة
+    # 🔍 2️⃣ استخراج الـ status
     status_code = None
     
-    # محاولة 1: order.status.code
     try:
         status_code = result.get("order", {}).get("status", {}).get("code")
     except:
         pass
     
-    # محاولة 2: order.status (string مباشر)
     if not status_code:
         try:
             status_code = result.get("order", {}).get("status")
         except:
             pass
-    
-    # محاولة 3: trace.status
-    if not status_code:
-        try:
-            status_code = result.get("trace", {}).get("status")
-        except:
-            pass
 
     logger.info(f"🔍 Extracted Status Code: {status_code}")
 
-    # ✅ 3️⃣ قائمة الحالات الناجحة (موسّعة)
+    # ✅ 3️⃣ قائمة الحالات الناجحة
     success_statuses = ["3", "paid", "success", "captured", "authorised", "authorized"]
     
     if status_code and str(status_code).lower() in success_statuses:
         # ✅ التفعيل
         session = _activate_purchase_and_session(purchase)
         
-        # تحديث TelrTransaction
-        TelrTransaction.objects.filter(order_id=cart_id).update(
-            status="success",
-            raw_response=result
-        )
+        tx.status = "success"
+        tx.raw_response = result
+        tx.save()
         
         messages.success(request, "🎉 تم الدفع بنجاح! يمكنك البدء باللعب الآن")
         logger.info(f"✅ Purchase {purchase_id} activated successfully")
@@ -223,19 +218,17 @@ def telr_success(request):
         return redirect(f"/games/{game_type}/")
     
     # ⚠️ 4️⃣ حالة غير مؤكدة → التفعيل الاحتياطي
-    logger.warning(f"⚠️ Unconfirmed status '{status_code}' for {cart_id}. Activating anyway.")
+    logger.warning(f"⚠️ Unconfirmed status '{status_code}' for {real_cart_id}. Activating anyway.")
     
     session = _activate_purchase_and_session(purchase)
     
-    TelrTransaction.objects.filter(order_id=cart_id).update(
-        status="pending_confirmation",
-        raw_response=result
-    )
+    tx.status = "pending_confirmation"
+    tx.raw_response = result
+    tx.save()
     
     messages.success(request, "🎉 تم استلام الدفع! تم تفعيل الحزمة")
     
     return redirect(f"/games/{game_type}/")
-
 
 
 

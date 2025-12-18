@@ -5,5 +5,20 @@
     <pre style="background:#eee;padding:20px;border-radius:10px;">
 {{ message }}
     </pre>
+
+    <!-- في نهاية الـ card-body -->
+<div class="mt-4">
+    {% if back_url %}
+        <a href="{{ back_url }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة
+        </a>
+    {% else %}
+        <a href="/" class="btn btn-primary btn-lg">
+            <i class="fas fa-home me-2"></i>
+            الصفحة الرئيسية
+        </a>
+    {% endif %}
+</div>
 </body>
 </html>
