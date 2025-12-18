@@ -158,14 +158,18 @@ def telr_success(request):
     cart_id = request.GET.get("cartid")
     game_type = request.GET.get("type")
 
-    if not purchase_id or not cart_id:
+    if not purchase_id or not cart_id or not game_type:
         messages.error(request, "بيانات الدفع غير مكتملة")
         return redirect("/")
 
-    purchase = get_object_or_404(UserPurchase, id=purchase_id, user=request.user)
+    purchase = get_object_or_404(
+        UserPurchase,
+        id=purchase_id,
+        user=request.user
+    )
 
     # ==================================================
-    # 1️⃣ التحقق من حالة الدفع من Telr (الحسم الحقيقي)
+    # 1️⃣ التحقق النهائي من Telr
     # ==================================================
     try:
         result = telr_check(cart_id)
@@ -176,14 +180,14 @@ def telr_success(request):
         )
         return redirect(f"/games/{game_type}/")
 
-    status = (
+    status_code = (
         result.get("order", {})
         .get("status", {})
         .get("code")
     )
 
     # Telr code: 3 = Paid
-    if status != "3":
+    if status_code != "3":
         messages.warning(
             request,
             "تم استلام عملية الدفع لكن لم يتم اعتمادها بعد، سيتم التفعيل تلقائيًا خلال دقائق."
@@ -191,24 +195,16 @@ def telr_success(request):
         return redirect(f"/games/{game_type}/")
 
     # ==================================================
-    # 2️⃣ تفعيل الشراء
+    # 2️⃣ تفعيل الشراء + إنشاء/جلب الجلسة (الصح)
     # ==================================================
-    purchase.is_completed = True
-    purchase.save(update_fields=["is_completed"])
-
-    # ==================================================
-    # 3️⃣ إنشاء الجلسة (إذا لم تكن موجودة)
-    # ==================================================
-    if not purchase.game_session:
-        session = create_game_session_for_purchase(purchase)
-        purchase.game_session = session
-        purchase.save(update_fields=["game_session"])
+    session = _activate_purchase_and_session(purchase)
 
     messages.success(request, "🎉 تم الدفع بنجاح! يمكنك بدء اللعب الآن")
 
     return redirect(
-        f"/games/{game_type}/?success=1&session={purchase.game_session.id}"
+        f"/games/{game_type}/?success=1&session={session.id}"
     )
+
 
 
 
