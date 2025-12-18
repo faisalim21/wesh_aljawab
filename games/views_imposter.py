@@ -86,12 +86,10 @@ def imposter_packages(request):
     """
     صفحة حزم لعبة امبوستر
     - عرض الحزم
-    - قلب زر (شراء) إلى (ابدأ اللعب) للحزم المدفوعة
+    - قلب زر (شراء) إلى (ابدأ اللعب) للحزم المدفوعة عند وجود شراء مكتمل ونشط
     """
 
-    # ===============================
     # 1) جلب الحزم
-    # ===============================
     packages = (
         GamePackage.objects
         .filter(game_type="imposter", is_active=True)
@@ -100,9 +98,7 @@ def imposter_packages(request):
 
     now = timezone.now()
 
-    # ===============================
     # 2) مشتريات المستخدم المكتملة والنشطة
-    # ===============================
     purchases = (
         UserPurchase.objects
         .filter(
@@ -111,17 +107,13 @@ def imposter_packages(request):
             is_completed=True,
             expires_at__gt=now,
         )
-        .select_related("package")
+        .values_list("package_id", flat=True)
     )
 
-    # IDs الحزم النشطة (الزر الأخضر)
-    active_packages = set(
-        purchases.values_list("package_id", flat=True)
-    )
+    # ✅ مصدر الحقيقة: IDs فقط
+    active_packages_ids = set(purchases)
 
-    # ===============================
     # 3) جلسة قادمة مباشرة بعد الدفع (?session=)
-    # ===============================
     session_id = request.GET.get("session")
     paid_session = None
 
@@ -138,19 +130,15 @@ def imposter_packages(request):
             .first()
         )
 
+        # UX: لو الجلسة موجودة نلوّن الحزمة فورًا
         if paid_session:
-            # نضيف الحزمة فورًا (UX)
-            active_packages.add(paid_session.package_id)
+            active_packages_ids.add(paid_session.package_id)
 
-    # ===============================
-    # 4) context
-    # ===============================
     context = {
         "packages": packages,
-        "active_packages": active_packages,   # ✅ الاسم الصحيح
+        "active_packages_ids": active_packages_ids,  # ✅ اسم موحّد
         "paid_session": paid_session,
     }
-
     return render(request, "games/imposter/packages.html", context)
 
 

@@ -725,7 +725,8 @@
 
   <section class="packages-section">
 
-    {% if active_packages %}
+    {% if active_packages_ids %}
+
     <div class="success-banner">
       <i class="fas fa-check-circle"></i>
       <h3>🎉 تم تفعيل الحزمة بنجاح!</h3>
@@ -819,7 +820,7 @@
               <span class="btn-text">ابدأ الجولة المجانية</span>
             </a>
 
-          {% elif package.id in active_packages %}
+          {% elif package.id in active_packages_ids %}
             <!-- حزمة مدفوعة تم تفعيلها -->
             <a
               href="{% url 'games:imposter_setup' package.id %}"
