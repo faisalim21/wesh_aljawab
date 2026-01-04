@@ -52,8 +52,12 @@
             --warning-color: #f59e0b;
 
             /* سطح المكتب */
-            --glass-bg: rgba(255, 255, 255, 0.12);
-            --glass-border: rgba(255, 255, 255, 0.22);
+            /* لون ثابت آمن لكل الأجهزة */
+            --auth-solid-bg: #1e1b4b;
+
+            /* Glass فقط كتحسين */
+            --auth-glass-bg: rgba(255,255,255,0.12);
+
 
             /* الجوال: أقل شفافية وأكثر راحة */
             --glass-bg-mobile: rgba(15, 18, 39, 0.88);
@@ -88,18 +92,22 @@
         @keyframes floatingBubbles { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-20px) scale(1.05)} }
 
         .auth-container {
-            background: var(--glass-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border);
+            /* fallback أساسي (ما فيه شفافية) */
+            background-color: var(--auth-solid-bg);
+
+            /* تحسين خفيف ثابت */
+            background-image: linear-gradient(
+                180deg,
+                rgba(255,255,255,0.08),
+                rgba(255,255,255,0.02)
+            );
+
             border-radius: 24px;
             padding: 44px 40px 32px;
-            width: 100%;
-            max-width: 520px; /* أكبر وأريح */
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
-            position: relative;
-            animation: slideIn .6s ease-out;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15),
+                        inset 0 1px 0 rgba(255,255,255,0.08);
         }
+
         @keyframes slideIn { from{opacity:0;transform:translateY(30px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
         .auth-header { text-align: center; margin-bottom: 28px; }
@@ -142,6 +150,12 @@
             transition: all .2s ease;
             backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
         }
+
+        .form-control {
+            background-color: #312e81;
+            color: #fff;
+        }
+
         .form-control:focus {
             outline:none; border-color: rgba(124,58,237,.95);
             background: rgba(255,255,255,.16);
@@ -227,7 +241,25 @@
         /* احترام تفضيل تقليل الحركة */
         @media (prefers-reduced-motion: reduce){
             *{ animation:none !important; transition:none !important; }
+
         }
+
+
+        @supports ((-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))) {
+            .auth-container {
+                background-color: var(--auth-glass-bg);
+                backdrop-filter: blur(18px);
+                -webkit-backdrop-filter: blur(18px);
+            }
+        }
+        @supports (-webkit-touch-callout: none) {
+            .auth-container {
+                background-color: #1f1c5c !important;
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+            }
+        }
+
     </style>
 </head>
 <body>
