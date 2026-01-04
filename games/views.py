@@ -35,8 +35,20 @@ logger = logging.getLogger('games')
 # Helpers: انتهاء الجلسة/الوقت
 # ===============================
 def _expired_text(session):
-    return 'انتهت صلاحية الجلسة المجانية (ساعة واحدة)' if session.package.is_free else 'انتهت صلاحية الجلسة (72 ساعة)'
-
+    """
+    رسالة انتهاء الصلاحية:
+    - المجاني: انتهت صلاحية الجلسة المجانية (ساعة واحدة)
+    - المدفوع: لا ينتهي
+    """
+    if not session.package:
+        return "انتهت صلاحية الجلسة"
+    
+    # المدفوع: لا ينتهي (هذا السطر نظرياً ما يوصل له لأن المدفوع ما ينتهي)
+    if not session.package.is_free:
+        return "الجلسة نشطة"
+    
+    # المجاني
+    return "انتهت صلاحية الجلسة المجانية (ساعة واحدة)"
 
 
 def get_session_time_remaining(session):
@@ -50,69 +62,38 @@ def get_session_time_remaining(session):
     return expiry_time - now
 
 def get_session_expiry_info(session):
-    now = timezone.now()
-    is_free = session.package.is_free
-    if is_free:
-        duration_hours = 1
-        duration_text = "ساعة واحدة"
-        expiry_time = session.created_at + timedelta(hours=1)
-    else:
-        duration_hours = 72
-        duration_text = "72 ساعة (3 أيام)"
-        expiry_time = session.created_at + timedelta(hours=72)
-
-    time_remaining = expiry_time - now if now < expiry_time else timedelta(0)
-    is_expired = now >= expiry_time
-
-    total_duration = timedelta(hours=duration_hours)
-    remaining_percentage = (time_remaining.total_seconds() / total_duration.total_seconds() * 100) if time_remaining.total_seconds() > 0 else 0
-
-    warning_message, warning_level = None, "info"
-    if not is_expired and time_remaining.total_seconds() > 0:
-        if is_free:
-            remaining_minutes = int(time_remaining.total_seconds() // 60)
-            if remaining_minutes <= 5:
-                warning_message = f"🚨 باقي {remaining_minutes} دقائق فقط!"
-                warning_level = "danger"
-            elif remaining_minutes <= 10:
-                warning_message = f"⚠️ باقي {remaining_minutes} دقيقة على انتهاء الجلسة"
-                warning_level = "warning"
-            elif remaining_minutes <= 30:
-                warning_message = f"ℹ️ باقي {remaining_minutes} دقيقة"
-                warning_level = "info"
-        else:
-            remaining_hours = int(time_remaining.total_seconds() // 3600)
-            remaining_days = remaining_hours // 24
-            if remaining_hours <= 3:
-                warning_message = f"🚨 باقي {remaining_hours} ساعات فقط!"
-                warning_level = "danger"
-            elif remaining_hours <= 12:
-                warning_message = f"⚠️ باقي {remaining_hours} ساعة على انتهاء الصلاحية"
-                warning_level = "warning"
-            elif remaining_days == 1:
-                warning_message = "ℹ️ باقي يوم واحد على انتهاء الصلاحية"
-                warning_level = "info"
-            elif remaining_days == 2:
-                warning_message = "ℹ️ باقي يومان"
-                warning_level = "info"
-            elif remaining_days >= 3:
-                warning_message = f"ℹ️ باقي {remaining_days} أيام"
-                warning_level = "info"
-
+    """
+    معلومات انتهاء صلاحية الجلسة:
+    - المجاني: ساعة واحدة
+    - المدفوع: لا ينتهي (صلاحية دائمة)
+    """
+    if not session.package:
+        return {'has_expiry': False, 'message': '', 'time_remaining': None}
+    
+    # المدفوع: لا ينتهي
+    if not session.package.is_free:
+        return {
+            'has_expiry': False,
+            'message': 'صلاحية دائمة',
+            'time_remaining': None
+        }
+    
+    # المجاني: ساعة واحدة
+    expiry_time = session.created_at + timezone.timedelta(hours=1)
+    time_remaining = expiry_time - timezone.now()
+    
+    if time_remaining.total_seconds() <= 0:
+        return {
+            'has_expiry': True,
+            'message': 'انتهت صلاحية الجلسة المجانية',
+            'time_remaining': None
+        }
+    
     return {
-        'is_free': is_free,
-        'session_type': 'مجانية' if is_free else 'مدفوعة',
-        'duration_text': duration_text,
-        'duration_hours': duration_hours,
-        'expiry_time': expiry_time,
-        'time_remaining': time_remaining,
-        'is_expired': is_expired,
-        'remaining_percentage': remaining_percentage,
-        'warning_message': warning_message,
-        'warning_level': warning_level,
-        'created_at': session.created_at,
+        'has_expiry': True,
+        'message': f'الوقت المتبقي: {int(time_remaining.total_seconds() / 60)} دقيقة',
+        'time_remaining': int(time_remaining.total_seconds())
     }
-
 # ===============================
 # Helpers: الحروف للجلسة
 # ===============================

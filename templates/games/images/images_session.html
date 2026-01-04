@@ -30,8 +30,8 @@
     .badges{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:10px }
     .badge-soft{ background:#f8fafc; border:1px solid #e5e7eb; border-radius:999px; padding:6px 10px; font-weight:800; font-size:.9rem }
     .badge-free{ background:#f0fdf4; border-color:#86efac; color:#166534 }
-    .badge-72{ background:#fffbeb; border-color:#fcd34d; color:#92400e }
-
+    .badge-permanent { color:#065f46; border-color:#34d399; background:#d1fae5; }
+    .badge-free { color:#166534; border-color:#86efac; background:#f0fdf4; }
     /* العارض + الأسهم */
     .viewer{
       display:grid; grid-template-columns:44px 1fr 44px; gap:10px; align-items:center;
@@ -141,9 +141,9 @@
     <div class="badges">
       <span class="badge-soft">حزمة رقم {{ session.package.package_number }}</span>
       {% if session.package.is_free %}
-        <span class="badge-soft badge-free">تجريبية مجانية</span>
+        <span class="badge-soft badge-free">⏳ ساعة واحدة</span>
       {% else %}
-        <span class="badge-soft badge-72">⏳ متاحة 72 ساعة من وقت الإنشاء</span>
+        <span class="badge-soft badge-permanent">♾️ صلاحية دائمة</span>
       {% endif %}
     </div>
 

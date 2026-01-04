@@ -300,7 +300,9 @@ class UserPurchase(models.Model):
     - is_completed = تم الدفع (مفعّل)
     - الانتهاء يُحسب فقط بالوقت (expires_at)
     """
-    EXPIRY_HOURS = 72
+    # ملاحظة: هذا الثابت لم يعد مستخدماً للحزم المدفوعة
+    # الحزم المجانية فقط لها حد زمني (ساعة واحدة)
+    EXPIRY_HOURS = 72  # deprecated - للتوافق الخلفي فقط
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -369,17 +371,22 @@ class UserPurchase(models.Model):
         return base + self.expiry_duration
 
     @property
-    def is_expired(self) -> bool:
+    def is_expired(self):
         """
-        الشراء منتهي إذا:
-        - غير مكتمل (لم يتم الدفع) → منتهي
-        - أو انتهى الوقت
+        التحقق من انتهاء صلاحية الجلسة:
+        - المجاني: ينتهي بعد ساعة واحدة من الإنشاء
+        - المدفوع: لا ينتهي أبداً (صلاحية دائمة)
         """
-        if not self.is_completed:
-            return True
-
-        end = self.expires_at or self.computed_expires_at
-        return timezone.now() >= end
+        if not self.package:
+            return False
+        
+        # المدفوع: لا ينتهي
+        if not self.package.is_free:
+            return False
+        
+        # المجاني: ساعة واحدة
+        expiry_time = self.created_at + timezone.timedelta(hours=1)
+        return timezone.now() >= expiry_time
 
     @property
     def is_active(self) -> bool:

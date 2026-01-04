@@ -111,6 +111,7 @@
     }
     .badge-pkg { color:#1d4ed8; border-color:#93c5fd; background:#eff6ff; }
     .badge-72 { color:#92400e; border-color:#fcd34d; background:#fffbeb; }
+    .badge-permanent { color:#065f46; border-color:#34d399; background:#d1fae5; }
     .badge-free { color:#166534; border-color:#86efac; background:#f0fdf4; }
 
     /* إشعار ضغط الزر */
@@ -208,14 +209,11 @@
     <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
 
     <!-- شارات أعلى الصفحة فقط -->
-    <div class="header-badges mb-3">
-      <span class="badge-soft badge-pkg">حزمة رقم {{ session.package.package_number }}</span>
-      {% if session.package.is_free %}
-        <span class="badge-soft badge-free">تجريبية مجانية</span>
-      {% else %}
-        <span class="badge-soft badge-72">⏳ متاحة لمدة 72 ساعة من وقت الإنشاء</span>
-      {% endif %}
-    </div>
+    {% if session.package.is_free %}
+      <span class="badge-soft badge-free">تجريبية مجانية (ساعة واحدة)</span>
+    {% else %}
+      <span class="badge-soft badge-permanent">♾️ صلاحية دائمة</span>
+    {% endif %}
     
     <!-- مؤقت الجلسة المجانية -->
     {% if session.package.is_free and time_remaining %}

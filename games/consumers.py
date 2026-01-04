@@ -344,10 +344,20 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             logger.error(f"Auto unlock error for session {self.session_id}: {e}")
 
     async def _is_session_expired(self, session: GameSession) -> bool:
-        if session.package and session.package.is_free:
-            expiry_time = session.created_at + timedelta(hours=1)
-        else:
-            expiry_time = session.created_at + timedelta(hours=72)
+        """
+        التحقق من انتهاء صلاحية الجلسة:
+        - المجاني: ساعة واحدة
+        - المدفوع: لا ينتهي أبداً
+        """
+        if not session.package:
+            return False
+        
+        # المدفوع: لا ينتهي
+        if not session.package.is_free:
+            return False
+        
+        # المجاني: ساعة واحدة
+        expiry_time = session.created_at + timedelta(hours=1)
         return timezone.now() >= expiry_time
 
     def _parse_qs(self):
@@ -746,8 +756,21 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             logger.error(f'auto unlock error: {e}')
 
     async def _is_session_expired(self, session: GameSession) -> bool:
-        expiry = session.created_at + (timedelta(hours=1) if session.package and session.package.is_free else timedelta(hours=72))
-        return timezone.now() >= expiry
+        """
+        التحقق من انتهاء صلاحية الجلسة:
+        - المجاني: ساعة واحدة
+        - المدفوع: لا ينتهي أبداً
+        """
+        if not session.package:
+            return False
+        
+        # المدفوع: لا ينتهي
+        if not session.package.is_free:
+            return False
+        
+        # المجاني: ساعة واحدة
+        expiry_time = session.created_at + timedelta(hours=1)
+        return timezone.now() >= expiry_time
 
     def _parse_qs(self):
         try:
@@ -1199,8 +1222,21 @@ class TimeGameConsumer(AsyncWebsocketConsumer):
         )()
 
     async def _is_session_expired(self, session: GameSession) -> bool:
-        expiry = session.created_at + (timedelta(hours=1) if session.package and session.package.is_free else timedelta(hours=72))
-        return timezone.now() >= expiry
+        """
+        التحقق من انتهاء صلاحية الجلسة:
+        - المجاني: ساعة واحدة
+        - المدفوع: لا ينتهي أبداً
+        """
+        if not session.package:
+            return False
+        
+        # المدفوع: لا ينتهي
+        if not session.package.is_free:
+            return False
+        
+        # المجاني: ساعة واحدة
+        expiry_time = session.created_at + timedelta(hours=1)
+        return timezone.now() >= expiry_time
 
     def _parse_qs(self):
         try:
