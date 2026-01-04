@@ -10,7 +10,7 @@ def home_view(request):
     return render(request, 'base.html')
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('control-9f7a2c4e8b/', admin.site.urls),
 
     # الصفحة الرئيسية
     path('', home_view, name='home'),
