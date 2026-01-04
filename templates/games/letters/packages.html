@@ -719,6 +719,14 @@
   box-shadow: none;
 }
 
+.pkg-desc {
+  font-size: 0.95rem;
+  color: #475569;
+  text-align: center;
+  line-height: 1.7;
+  margin: 6px 0 10px;
+  padding: 0 6px;
+}
 
   </style>
 </head>
@@ -850,6 +858,11 @@
               {% endif %}
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
+              {% if package.description %}
+                <div class="pkg-desc">
+                  {{ package.description|linebreaksbr }}
+                </div>
+              {% endif %}
               <div class="badge-wrap">
                 <span class="badge-mix">{{ package.get_question_theme_display }}</span>
               </div>
@@ -935,6 +948,11 @@
               {% endif %}
 
               <div class="title">حزمة رقم {{ package.package_number }}</div>
+              {% if package.description %}
+                <div class="pkg-desc">
+                  {{ package.description|linebreaksbr }}
+                </div>
+              {% endif %}
               <div class="badge-wrap">
                 <span class="badge-spr">{{ package.get_question_theme_display }}</span>
               </div>
