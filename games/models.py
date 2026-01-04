@@ -373,20 +373,28 @@ class UserPurchase(models.Model):
     @property
     def is_expired(self):
         """
-        التحقق من انتهاء صلاحية الجلسة:
-        - المجاني: ينتهي بعد ساعة واحدة من الإنشاء
+        التحقق من انتهاء صلاحية الشراء:
+        - المجاني: ينتهي بعد ساعة واحدة من الشراء
         - المدفوع: لا ينتهي أبداً (صلاحية دائمة)
         """
-        if not self.package:
-            return False
+        if not self.is_completed:
+            return True
         
         # المدفوع: لا ينتهي
-        if not self.package.is_free:
+        if self.package and not self.package.is_free:
             return False
         
         # المجاني: ساعة واحدة
-        expiry_time = self.created_at + timezone.timedelta(hours=1)
-        return timezone.now() >= expiry_time
+        if self.package and self.package.is_free:
+            if not self.expires_at:
+                return True
+            return timezone.now() >= self.expires_at
+        
+        # احتياطي: لو ما في package
+        if not self.expires_at:
+            return True
+        return timezone.now() >= self.expires_at
+
 
     @property
     def is_active(self) -> bool:
@@ -517,12 +525,21 @@ class GameSession(models.Model):
 
     @property
     def is_time_expired(self) -> bool:
+        """
+        التحقق من انتهاء صلاحية الجلسة:
+        - المدفوع: لا ينتهي (يعتمد على purchase.is_expired الذي دائماً False)
+        - المجاني: ساعة واحدة
+        """
+        # لو مربوطة بشراء، نعتمد على صلاحية الشراء
         if self.purchase_id:
             return self.purchase.is_expired
+        
+        # جلسات مجانية بدون شراء
         if self.letters_free_expires_at:
             return timezone.now() >= self.letters_free_expires_at
         if self.images_free_expires_at:
             return timezone.now() >= self.images_free_expires_at
+        
         return False
 
     def mark_session_expired_if_needed(self, auto_save=True) -> bool:
