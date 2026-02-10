@@ -201,12 +201,190 @@
       .timer-display { font-size: 2.5rem; }
       .question-panel { padding: 20px; margin: 20px 0; }
     }
+
+
+      /* ====== Presenter Guide Banner (always visible) ====== */
+    .guide-banner{
+      background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
+      border: 1px solid rgba(79,70,229,.18);
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.10);
+      padding: 14px 14px;
+      margin: 10px 0 14px;
+      position: relative;
+      overflow: hidden;
+    }
+    .guide-banner::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(circle at top right, rgba(79,70,229,.18), transparent 60%),
+                  radial-gradient(circle at bottom left, rgba(245,158,11,.18), transparent 60%);
+      pointer-events:none;
+    }
+    .guide-head{
+      position: relative;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .guide-title{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight: 900;
+      color: #1f2937;
+      font-size: 1.05rem;
+      margin: 0;
+    }
+    .guide-pill{
+      font-weight: 900;
+      font-size: .85rem;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(79,70,229,.25);
+      background: rgba(79,70,229,.10);
+      color: #3730a3;
+      white-space: nowrap;
+    }
+
+    .guide-grid{
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .guide-item{
+      border-radius: 14px;
+      padding: 12px 12px;
+      border: 1px solid rgba(0,0,0,.07);
+      background: #ffffff;
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+    }
+    .guide-ico{
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 1.25rem;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+    .ico-host{ background: rgba(79,70,229,.12); color:#4338ca; border:1px solid rgba(79,70,229,.22); }
+    .ico-display{ background: rgba(245,158,11,.14); color:#92400e; border:1px solid rgba(245,158,11,.25); }
+    .ico-contest{ background: rgba(34,197,94,.14); color:#166534; border:1px solid rgba(34,197,94,.25); }
+
+    .guide-item h6{
+      margin: 0 0 4px;
+      font-weight: 900;
+      color:#111827;
+      font-size: .98rem;
+    }
+    .guide-item p{
+      margin: 0;
+      color:#374151;
+      font-weight: 700;
+      line-height: 1.55;
+      font-size: .92rem;
+    }
+    .guide-item p small{
+      display:block;
+      margin-top: 6px;
+      font-weight: 900;
+      color:#111827;
+    }
+
+    .guide-foot{
+      position: relative;
+      margin-top: 10px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px dashed rgba(17,24,39,.18);
+      background: rgba(248,250,252,.85);
+      color:#111827;
+      font-weight: 800;
+      line-height: 1.6;
+      font-size: .92rem;
+    }
+    .guide-foot .dot{
+      display:inline-block;
+      width:8px; height:8px;
+      border-radius:999px;
+      background:#ef4444;
+      box-shadow: 0 0 0 4px rgba(239,68,68,.12);
+      margin-left: 6px;
+      transform: translateY(-1px);
+    }
+
+    @media (min-width: 769px){
+      .guide-grid{ grid-template-columns: 1fr 1fr 1fr; }
+      .guide-banner{ padding: 16px 16px; }
+      .guide-item{ height: 100%; }
+    }
+
   </style>
 </head>
 <body>
 
   <div class="container">
     <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
+
+          <!-- ====== 🔥 دليل الروابط (ثابت للجميع: مجاني + مدفوع) ====== -->
+      <div class="guide-banner" role="note" aria-label="دليل روابط الجلسة للمقدّم">
+        <div class="guide-head">
+          <h3 class="guide-title">
+            🧭 شرح طريقة اللعب في الموقع
+          </h3>
+          <span class="guide-pill">3 روابط • 3 أدوار</span>
+        </div>
+
+        <div class="guide-grid">
+          <div class="guide-item">
+            <div class="guide-ico ico-host">👨‍🏫</div>
+            <div>
+              <h6>رابط المقدّم</h6>
+              <p>
+                هذا الرابط لك أنت فقط لإدارة اللعبة: اختيار الحروف، تغيير ألوان الخلايا، والتحكم بالنقاط.
+              </p>
+            </div>
+          </div>
+
+          <div class="guide-item">
+            <div class="guide-ico ico-display">📺</div>
+            <div>
+              <h6>رابط شاشة العرض</h6>
+              <p>
+                اعرضه على التلفزيون/الآيباد أمام الجميع.
+                يعرض الحرف المختار، النقاط، واسم أول متسابق ضغط الزر — للعرض فقط.
+              </p>
+            </div>
+          </div>
+
+          <div class="guide-item">
+            <div class="guide-ico ico-contest">👥</div>
+            <div>
+              <h6>رابط المتسابقين</h6>
+              <p>
+                أرسله للاعبين.
+                المتسابق يكتب اسمه ثم ينتظر السؤال ويضغط الزر للإجابة.
+                <small>⚡ يُقبل أول لاعب فقط ويُرفض الباقي تلقائيًا.</small>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="guide-foot">
+          <span class="dot"></span>
+          عند ضغط الزر: يصلك تنبيه صوتي ومرئي باسم المتسابق وفريقه، ويظهر الاسم مباشرة في شاشة العرض، ويبدأ عدّاد الإجابة تلقائيًا.
+        </div>
+      </div>
 
     <!-- شارات أعلى الصفحة فقط -->
     {% if session.package.is_free %}
