@@ -132,11 +132,157 @@
       box-shadow: 0 12px 30px rgba(239, 68, 68, 0.25); z-index: 9999; font-size: 15px;
       border: 2px solid rgba(255,255,255,.25);
     }
+
+      .howto{
+        background: linear-gradient(135deg, rgba(255,255,255,.96), rgba(255,255,255,.90));
+        border: 1px solid rgba(139,92,246,.22);
+        border-radius: 18px;
+        box-shadow: 0 12px 28px rgba(0,0,0,.10);
+        padding: 14px;
+        margin: 10px 0 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .howto::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        background:
+          radial-gradient(circle at top right, rgba(139,92,246,.18), transparent 60%),
+          radial-gradient(circle at bottom left, rgba(6,182,212,.14), transparent 60%);
+        pointer-events:none;
+      }
+      .howto-head{
+        position: relative;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom: 10px;
+      }
+      .howto-title{
+        margin:0;
+        font-weight: 900;
+        color: #0f172a;
+        font-size: 1.05rem;
+      }
+      .howto-pill{
+        font-weight: 900;
+        font-size: .85rem;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(139,92,246,.25);
+        background: rgba(139,92,246,.10);
+        color: #5b21b6;
+        white-space: nowrap;
+      }
+      .howto-grid{
+        position: relative;
+        display:grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .howto-card{
+        background:#fff;
+        border:1px solid rgba(0,0,0,.07);
+        border-radius: 14px;
+        padding: 12px;
+        display:flex;
+        gap: 12px;
+        align-items:flex-start;
+      }
+      .howto-ico{
+        width: 42px; height: 42px;
+        border-radius: 12px;
+        display:flex; align-items:center; justify-content:center;
+        font-size: 1.2rem; font-weight: 900;
+        flex: 0 0 auto;
+        border: 1px solid rgba(0,0,0,.06);
+      }
+      .ico-host{ background: rgba(139,92,246,.12); color:#5b21b6; border-color: rgba(139,92,246,.22); }
+      .ico-cont{ background: rgba(34,197,94,.14); color:#166534; border-color: rgba(34,197,94,.24); }
+      .ico-display{ background: rgba(245,158,11,.14); color:#92400e; border-color: rgba(245,158,11,.24); }
+
+      .howto-card h6{ margin:0 0 4px; font-weight: 900; color:#0f172a; font-size:.98rem; }
+      .howto-card p{ margin:0; color:#334155; font-weight: 700; line-height: 1.6; font-size:.92rem; }
+      .howto-card p small{ display:block; margin-top: 6px; font-weight: 900; color:#0f172a; }
+
+      .howto-foot{
+        position: relative;
+        margin-top: 10px;
+        border-radius: 14px;
+        padding: 10px 12px;
+        border: 1px dashed rgba(15,23,42,.18);
+        background: rgba(248,250,252,.88);
+        color:#0f172a;
+        font-weight: 800;
+        line-height: 1.65;
+        font-size: .92rem;
+      }
+      .howto-foot .dot{
+        display:inline-block;
+        width:8px; height:8px;
+        border-radius:999px;
+        background:#ef4444;
+        box-shadow: 0 0 0 4px rgba(239,68,68,.12);
+        margin-left: 6px;
+        transform: translateY(-1px);
+      }
+
+      @media (min-width: 768px){
+        .howto-grid{ grid-template-columns: 1fr 1fr 1fr; }
+      }
+
   </style>
 </head>
 <body>
   <div class="shell">
     <h2 class="title">🖼️ تحدّي الصور — المقدم</h2>
+
+      <!-- 🧭 شرح طريقة اللعب في الموقع (ثابت للجميع) -->
+      <div class="howto" role="note" aria-label="شرح طريقة اللعب في الموقع">
+        <div class="howto-head">
+          <h3 class="howto-title">🧭 شرح طريقة اللعب في الموقع</h3>
+          <span class="howto-pill">3 روابط • 3 أدوار</span>
+        </div>
+
+        <div class="howto-grid">
+          <div class="howto-card">
+            <div class="howto-ico ico-host">🧑‍🏫</div>
+            <div>
+              <h6>رابط المقدّم</h6>
+              <p>هذا الرابط لك أنت فقط: تمرير الصور، مشاهدة التلميح والإجابة، والتحكم بالنقاط.</p>
+            </div>
+          </div>
+
+          <div class="howto-card">
+            <div class="howto-ico ico-cont">👥</div>
+            <div>
+              <h6>رابط المتسابقين (اللعبة على الجوال)</h6>
+              <p>
+                أرسله للاعبين: يكتب المتسابق اسمه وتظهر له نفس الصور التي تمرّرها أنت مع النقاط.
+                <small>⚡ عند الإجابة: يُقبل أول لاعب فقط يضغط الزر ويُرفض الباقي تلقائيًا.</small>
+              </p>
+            </div>
+          </div>
+
+          <div class="howto-card">
+            <div class="howto-ico ico-display">🖥️</div>
+            <div>
+              <h6>رابط شاشة العرض (اختياري)</h6>
+              <p>
+                إذا عندك شاشة/تلفزيون: اعرضه أمام الجميع لعرض الصور والنقاط واسم أول متسابق مع المؤقت.
+                <small>✅ اللعبة تعمل بدون شاشة العرض بالكامل — الكل يقدر يلعب من جواله.</small>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="howto-foot">
+          <span class="dot"></span>
+          عند ضغط الزر: يصلك تنبيه باسم المتسابق وفريقه، ويظهر الاسم عند الجميع (وفي شاشة العرض إن كانت مفتوحة)، ويبدأ عدّاد الإجابة تلقائيًا.
+        </div>
+      </div>
 
     <div class="badges">
       <span class="badge-soft">حزمة رقم {{ session.package.package_number }}</span>
