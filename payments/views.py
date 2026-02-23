@@ -119,8 +119,10 @@ def _activate_purchase_and_session(purchase: UserPurchase):
         if not purchase.is_completed:
             purchase.is_completed = True
 
-        if not purchase.expires_at or purchase.expires_at <= now:
-            purchase.expires_at = now + timedelta(hours=72)
+        # لا نضبط expires_at للمدفوع — صلاحية دائمة
+        if purchase.package.is_free:
+            if not purchase.expires_at or purchase.expires_at <= now:
+                purchase.expires_at = now + timedelta(hours=1)
 
         purchase.save(update_fields=["is_completed", "expires_at"])
 

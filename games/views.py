@@ -53,9 +53,8 @@ def _expired_text(session):
 
 def get_session_time_remaining(session):
     if not session.package.is_free:
-        expiry_time = session.created_at + timedelta(hours=72)
-    else:
-        expiry_time = session.created_at + timedelta(hours=1)
+        return None  # مدفوع = صلاحية دائمة
+    expiry_time = session.created_at + timedelta(hours=1)
     now = timezone.now()
     if now >= expiry_time:
         return timedelta(0)
@@ -353,7 +352,7 @@ def letters_game_home(request):
                 continue
 
             # شراء مكتمل وصالح
-            if p.expires_at and p.expires_at > now:
+            if not p.package.is_free:  # مدفوع = دائم
                 active_packages_ids.add(p.package_id)
                 continue
 
@@ -426,7 +425,6 @@ def create_letters_session(request):
             user=request.user,
             package=package,
             is_completed=True,
-            expires_at__gt=timezone.now()
         ).order_by("-id").first()
 
         if not purchase:
@@ -654,7 +652,7 @@ def images_game_home(request):
                 continue
 
             # شراء صالح
-            if p.expires_at and p.expires_at > now:
+            if not p.package.is_free:  # مدفوع = دائم
                 active_packages_ids.add(p.package_id)
             else:
                 expired_packages_ids.add(p.package_id)
@@ -1556,8 +1554,7 @@ def create_images_session(request):
                         .filter(
                             user=request.user, 
                             package=package, 
-                            is_completed=True,  # ✅ مكتمل
-                            expires_at__gt=now  # ✅ لم ينتهِ
+                            is_completed=True
                         )
                         .order_by('-purchase_date')
                         .first())
@@ -1616,8 +1613,7 @@ def images_create(request):
     purchase = UserPurchase.objects.filter(
         user=request.user,
         package=package,
-        is_completed=True,
-        expires_at__gt=timezone.now()
+        is_completed=True
     ).order_by("-purchase_date").first()
 
     if not purchase:
