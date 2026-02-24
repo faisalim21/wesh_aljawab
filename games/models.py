@@ -331,6 +331,12 @@ class UserPurchase(models.Model):
         verbose_name="تم الدفع؟"
     )
 
+    is_gift = models.BooleanField(
+        default=False,
+        verbose_name="هدية؟",
+        help_text="منحت هذه الحزمة كهدية بدون دفع"
+    )
+
     games_played = models.IntegerField(
         default=0,
         verbose_name="عدد الألعاب"

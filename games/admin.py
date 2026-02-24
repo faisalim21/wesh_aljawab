@@ -1029,8 +1029,8 @@ class QuizSessionAdmin(_BaseSessionAdmin):
 
 @admin.register(UserPurchase)
 class UserPurchaseAdmin(admin.ModelAdmin):
-    list_display = ('user', 'package_ref', 'is_completed', 'is_expired_badge', 'purchase_date', 'expires_at')
-    list_filter = ('is_completed', 'purchase_date', 'expires_at', 'package__game_type')
+    list_display = ('user', 'package_ref', 'is_completed', 'is_gift_badge', 'is_expired_badge', 'purchase_date', 'expires_at')
+    list_filter = ('is_completed', 'is_gift', 'purchase_date', 'expires_at', 'package__game_type')
     search_fields = ('user__username', 'package__package_number')
     date_hierarchy = 'purchase_date'
     ordering = ('-purchase_date',)
@@ -1039,6 +1039,11 @@ class UserPurchaseAdmin(admin.ModelAdmin):
     def package_ref(self, obj):
         return f"{obj.package.get_game_type_display()} / حزمة {obj.package.package_number}"
     package_ref.short_description = "الحزمة"
+    def is_gift_badge(self, obj):
+        if not obj.is_gift:
+            return "—"
+        return mark_safe('<span style="background:#fef9c3;color:#92400e;border:1px solid #fde68a;padding:2px 8px;border-radius:999px;font-weight:700;">🎁 هدية</span>')
+    is_gift_badge.short_description = "نوع"
     def is_expired_badge(self, obj):
         ok = obj.is_expired
         color = '#ef4444' if ok else '#10b981'
@@ -1053,8 +1058,119 @@ class UserPurchaseAdmin(admin.ModelAdmin):
         custom = [
             path("analytics/", self.admin_site.admin_view(self.analytics_view), name="games_purchases_analytics"),
             path("analytics.csv", self.admin_site.admin_view(self.analytics_csv_view), name="games_purchases_analytics_csv"),
+            path("grant-gift/", self.admin_site.admin_view(self.grant_gift_view), name="games_purchases_grant_gift"),
         ]
         return custom + urls
+
+    def grant_gift_view(self, request):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        success_msg = None
+        error_msg = None
+
+        if request.method == 'POST':
+            user_id = request.POST.get('user_id')
+            package_id = request.POST.get('package_id')
+            try:
+                user = User.objects.get(pk=user_id)
+                package = GamePackage.objects.get(pk=package_id, is_active=True)
+
+                # تحقق: هل يملك المستخدم هذه الحزمة مسبقاً؟
+                already = UserPurchase.objects.filter(
+                    user=user, package=package, is_completed=True
+                ).exists()
+                if already:
+                    error_msg = f"المستخدم {user.username} يملك هذه الحزمة مسبقاً."
+                else:
+                    UserPurchase.objects.create(
+                        user=user,
+                        package=package,
+                        is_completed=True,
+                        is_gift=True,
+                        expires_at=None,
+                    )
+                    success_msg = f"✅ تم منح حزمة «{package}» للمستخدم {user.username} كهدية."
+            except User.DoesNotExist:
+                error_msg = "المستخدم غير موجود."
+            except GamePackage.DoesNotExist:
+                error_msg = "الحزمة غير موجودة أو غير فعّالة."
+            except Exception as e:
+                error_msg = f"خطأ: {e}"
+
+        users = User.objects.all().order_by('username')
+        packages = GamePackage.objects.filter(is_active=True, is_free=False).order_by('game_type', 'package_number')
+
+        # آخر 10 هدايا
+        recent_gifts = UserPurchase.objects.filter(is_gift=True).select_related('user', 'package').order_by('-purchase_date')[:10]
+
+        gifts_rows = "".join(
+            f"<tr>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{g.user.username}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{g.package.get_game_type_display()} / حزمة {g.package.package_number}</td>"
+            f"<td style='padding:10px 12px;border-bottom:1px solid #1f2937;'>{g.purchase_date.strftime('%Y-%m-%d %H:%M')}</td>"
+            f"</tr>"
+            for g in recent_gifts
+        ) or "<tr><td colspan='3' style='padding:12px;color:#94a3b8;'>لا توجد هدايا بعد</td></tr>"
+
+        users_options = "".join(f'<option value="{u.id}">{u.username} ({u.email})</option>' for u in users)
+        packages_options = "".join(
+            f'<option value="{p.id}">[{p.get_game_type_display()}] حزمة {p.package_number} — {p.effective_price} ﷼</option>'
+            for p in packages
+        )
+
+        alert_html = ""
+        if success_msg:
+            alert_html = f'<div style="background:#d1fae5;border:1px solid #34d399;color:#065f46;padding:12px;border-radius:10px;margin-bottom:12px;font-weight:700;">{success_msg}</div>'
+        elif error_msg:
+            alert_html = f'<div style="background:#fee2e2;border:1px solid #f87171;color:#7f1d1d;padding:12px;border-radius:10px;margin-bottom:12px;font-weight:700;">{error_msg}</div>'
+
+        html = f"""
+        <div style="padding:16px 20px;max-width:700px;">
+          <h2 style="margin:0 0 16px;">🎁 منح هدية</h2>
+          {alert_html}
+          <div class="module" style="padding:16px;border-radius:12px;background:#0b1220;border:1px solid #1f2937;margin-bottom:20px;">
+            <form method="post" action="">
+              <input type="hidden" name="csrfmiddlewaretoken" value="{request.META.get('CSRF_COOKIE','')}" />
+              <div style="display:grid;gap:12px;">
+                <div>
+                  <label style="color:#cbd5e1;font-weight:700;display:block;margin-bottom:6px;">المستخدم</label>
+                  <select name="user_id" required style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+                    <option value="">— اختر مستخدم —</option>
+                    {users_options}
+                  </select>
+                </div>
+                <div>
+                  <label style="color:#cbd5e1;font-weight:700;display:block;margin-bottom:6px;">الحزمة</label>
+                  <select name="package_id" required style="width:100%;padding:10px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+                    <option value="">— اختر حزمة —</option>
+                    {packages_options}
+                  </select>
+                </div>
+                <button type="submit" class="button" style="background:#8b5cf6;color:#fff;padding:10px 20px;border-radius:8px;font-weight:700;border:none;cursor:pointer;width:fit-content;">
+                  🎁 منح الهدية
+                </button>
+              </div>
+            </form>
+          </div>
+          <h3 style="margin:0 0 8px;">آخر الهدايا الممنوحة</h3>
+          <div class="module" style="border-radius:12px;overflow:hidden;">
+            <table class="listing" style="width:100%;border-collapse:collapse;background:#0b1220;">
+              <thead style="background:#0f172a;color:#cbd5e1;">
+                <tr>
+                  <th style="padding:10px 12px;text-align:right;">المستخدم</th>
+                  <th style="padding:10px 12px;text-align:right;">الحزمة</th>
+                  <th style="padding:10px 12px;text-align:right;">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody style="color:#e2e8f0;">{gifts_rows}</tbody>
+            </table>
+          </div>
+        </div>
+        """
+
+        ctx = {**self.admin_site.each_context(request), "title": "منح هدية", "content": mark_safe(html)}
+        return TemplateResponse(request, "admin/simple_box.html", ctx)
 
     def analytics_view(self, request):
         days = int(request.GET.get("days", 30) or 30)
@@ -1064,7 +1180,8 @@ class UserPurchaseAdmin(admin.ModelAdmin):
         price_expr = _price_case_expr()
         period_purchases = UserPurchase.objects.filter(purchase_date__gte=start, purchase_date__lte=end)
         period_total = period_purchases.count()
-        period_revenue = period_purchases.aggregate(total=Coalesce(Sum(price_expr), 0))['total'] or Decimal("0.00")
+        period_revenue = period_purchases.filter(is_gift=False).aggregate(total=Coalesce(Sum(price_expr), 0))['total'] or Decimal("0.00")
+        gifts_count = period_purchases.filter(is_gift=True).count()
         period_users = set(period_purchases.values_list('user_id', flat=True))
         period_unique = len(period_users)
 
@@ -1129,6 +1246,7 @@ class UserPurchaseAdmin(admin.ModelAdmin):
             _kpi_card("إيراد تقديري الفترة", _sar(period_revenue), "يعتمد على سعر الحزمة الحالي", "info"),
             _kpi_card("معدّل إكمال الجلسات", f"{completion_rate:.1f}%", f"نشطة: {active_sessions} / مكتملة: {completed_sessions}", "ok" if completion_rate >= 60 else "warn"),
             _kpi_card("أكثر نوع هذه الفترة", most_type_label, "حسب عدد المشتريات", "info"),
+            _kpi_card("🎁 هدايا ممنوحة", str(gifts_count), "لا تُحتسب في الإيراد", "warn"),
             _kpi_card("عائد العملاء (مدى الحياة)", f"{lifetime_return_rate:.1f}%", "من اشتروا أكثر من مرة", "info"),
             _kpi_card("عودة عملاء الفترة", f"{period_return_rate:.1f}%", "من اشترى سابقًا ثم اشترى الآن", "info"),
         ]
@@ -1142,6 +1260,9 @@ class UserPurchaseAdmin(admin.ModelAdmin):
         html = f"""
         <div style="padding:16px 20px;">
           <h2 style="margin:0 0 10px;">📈 لوحة التحليلات</h2>
+          <div style="margin-bottom:12px;">
+            <a class="button" href="{reverse('admin:games_purchases_grant_gift')}" style="background:#8b5cf6;color:#fff;padding:8px 14px;border-radius:8px;text-decoration:none;font-weight:700;">🎁 منح هدية</a>
+          </div>
           <div style="margin:6px 0 14px;color:#94a3b8;font-size:13px;">
             المدة الحالية: آخر {days} يوم —
             <a href="?days=14">14</a> · <a href="?days=30">30</a> · <a href="?days=60">60</a> · <a href="?days=90">90</a>
