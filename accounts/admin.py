@@ -72,7 +72,8 @@ class UserProfileAdmin(admin.ModelAdmin):
     )
 
     def user_link(self, obj):
-        return format_html('<a href="/admin/auth/user/{}/change/">{}</a>', obj.user.id, obj.user.username)
+        url = reverse("admin:auth_user_change", args=[obj.user.id])
+        return format_html('<a href="{}">{}</a>', url, obj.user.username)
     user_link.short_description = "المستخدم"
 
     def account_type_badge(self, obj):

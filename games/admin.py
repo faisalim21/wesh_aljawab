@@ -1180,7 +1180,7 @@ class UserPurchaseAdmin(admin.ModelAdmin):
         price_expr = _price_case_expr()
         period_purchases = UserPurchase.objects.filter(purchase_date__gte=start, purchase_date__lte=end)
         period_total = period_purchases.count()
-        period_revenue = period_purchases.filter(is_gift=False).aggregate(total=Coalesce(Sum(price_expr), 0))['total'] or Decimal("0.00")
+        period_revenue = period_purchases.filter(is_gift=False).aggregate(total=Coalesce(Sum(price_expr), Decimal("0.00")))['total'] or Decimal("0.00")
         gifts_count = period_purchases.filter(is_gift=True).count()
         period_users = set(period_purchases.values_list('user_id', flat=True))
         period_unique = len(period_users)
