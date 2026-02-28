@@ -877,6 +877,15 @@
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
 
+      // إعادة ضبط الإجابات المكشوفة عند تغيير الحرف
+      document.querySelectorAll('.answer-text.revealed').forEach(el => {
+        el.classList.remove('revealed');
+        const revBtn = el.nextElementSibling;
+        if (revBtn && revBtn.classList.contains('reveal-btn')) {
+          revBtn.textContent = 'اكشف';
+          revBtn.classList.remove('done');
+        }
+      });
       if (isFreeSession) {
         // مجانية: سؤال الجولة الأولى (main) + بديل1 + بديل2
         document.getElementById('paidRounds').classList.add('d-none');
