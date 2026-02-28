@@ -329,6 +329,81 @@
       .guide-item{ height: 100%; }
     }
 
+    /* ===== وضع إخفاء الإجابات ===== */
+    .answers-hidden .answer-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .answers-hidden .answer-text {
+      filter: blur(6px);
+      user-select: none;
+      transition: filter 0.35s ease;
+    }
+    .answers-hidden .answer-text.revealed {
+      filter: none;
+      user-select: text;
+    }
+    .reveal-btn {
+      display: none;
+      margin-right: 8px;
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      vertical-align: middle;
+    }
+    .reveal-btn:hover { transform: scale(1.06); }
+    .answers-hidden .reveal-btn { display: inline-block; }
+    .answers-hidden .answer-text.revealed + .reveal-btn,
+    .answers-hidden .reveal-btn.done { background: #6b7280; }
+
+    /* زر التبديل الرئيسي */
+    .no-host-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-family: 'Tajawal', sans-serif;
+      width: 100%;
+      text-align: right;
+    }
+    .no-host-toggle:hover { border-color: #8b5cf6; background: #faf5ff; }
+    .no-host-toggle.active { border-color: #8b5cf6; background: linear-gradient(135deg,#faf5ff,#ede9fe); }
+    .toggle-icon {
+      width: 44px; height: 26px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .toggle-icon::after {
+      content: '';
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 20px; height: 20px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 1px 4px #0003;
+    }
+    .no-host-toggle.active .toggle-icon { background: #8b5cf6; }
+    .no-host-toggle.active .toggle-icon::after { transform: translateX(-18px); }
+    .toggle-label { font-weight: 800; font-size: 0.95rem; color: #374151; flex: 1; }
+    .toggle-sub { font-size: 0.8rem; color: #9ca3af; font-weight: 600; }
+    .no-host-toggle.active .toggle-label { color: #6d28d9; }
+          
   </style>
 </head>
 <body>
@@ -383,6 +458,32 @@
         <div class="guide-foot">
           <span class="dot"></span>
           عند ضغط الزر: يصلك تنبيه صوتي ومرئي باسم المتسابق وفريقه، ويظهر الاسم مباشرة في شاشة العرض، ويبدأ عدّاد الإجابة تلقائيًا.
+        </div>
+      </div>
+
+
+
+      <!-- ===== خيار إضافي: وضع بدون مقدم ===== -->
+      <div style="margin: 0 0 14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb);"></div>
+          <span style="font-size:0.78rem;font-weight:800;color:#9ca3af;white-space:nowrap;padding:0 6px;">خيار إضافي</span>
+          <div style="flex:1;height:1px;background:linear-gradient(90deg,#e5e7eb,transparent);"></div>
+        </div>
+
+        <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:14px;padding:12px 14px;">
+          <p style="margin:0 0 10px;font-size:0.88rem;font-weight:700;color:#6b7280;line-height:1.6;">
+            ⚠️ للحصول على أفضل تجربة ممكنة، <strong style="color:#111827;">يُنصح بوجود مقدم</strong> يدير اللعبة ويتحكم بالإجابات والنقاط.
+            <br>إذا كان عددكم قليلاً وتريدون اللعب بأنفسكم، يمكنكم إخفاء الإجابات وكشفها واحدة واحدة.
+          </p>
+
+          <button class="no-host-toggle" id="noHostToggle" onclick="toggleNoHostMode()" style="margin:0;">
+            <div>
+              <div class="toggle-label">🎭 وضع بدون مقدم</div>
+              <div class="toggle-sub">الإجابات ظاهرة — اضغط لإخفائها</div>
+            </div>
+            <div class="toggle-icon"></div>
+          </button>
         </div>
       </div>
 
@@ -469,21 +570,21 @@
           <div class="round-card h-100">
             <div class="round-title">🎯 الجولة 1</div>
             <div><strong>السؤال:</strong> <span id="r1Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r1Answer" class="answer">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span class="answer-wrap"><span id="r1Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="round-card h-100">
             <div class="round-title">🎯 الجولة 2</div>
             <div><strong>السؤال:</strong> <span id="r2Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r2Answer" class="answer">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span class="answer-wrap"><span id="r2Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></div>
           </div>
         </div>
         <div class="col-md-4">
           <div class="round-card h-100">
             <div class="round-title">🎯 الجولة 3</div>
             <div><strong>السؤال:</strong> <span id="r3Question">—</span></div>
-            <div class="mt-1"><strong>الإجابة:</strong> <span id="r3Answer" class="answer">—</span></div>
+            <div class="mt-1"><strong>الإجابة:</strong> <span class="answer-wrap"><span id="r3Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></div>
           </div>
         </div>
       </div>
@@ -493,7 +594,7 @@
         <div class="round-card">
           <div class="round-title">🎯 سؤال الجولة الأولى (1)</div>
           <div><strong>السؤال:</strong> <span id="mainQuestion">—</span></div>
-          <div class="mt-1"><strong>الإجابة:</strong> <span id="mainAnswer" class="answer">—</span></div>
+          <div class="mt-1"><strong>الإجابة:</strong> <span class="answer-wrap"><span id="mainAnswer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></div>
         </div>
       </div>
 
@@ -503,14 +604,14 @@
           <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 1</div>
             <div><span id="alt1Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt1Answer" class="answer">—</span></small></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span class="answer-wrap"><span id="alt1Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></small></div>
           </div>
         </div>
         <div class="col-md-6">
           <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 2</div>
             <div><span id="alt2Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt2Answer" class="answer">—</span></small></div>
+            <div class="mt-1"><small><strong>الإجابة:</strong> <span class="answer-wrap"><span id="alt2Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></small></div>
           </div>
         </div>
       </div>
@@ -521,14 +622,14 @@
           <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 1</div>
             <div><span id="alt3Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt3Answer" class="answer">—</span></small></div>
+                        <div class="mt-1"><small><strong>الإجابة:</strong> <span class="answer-wrap"><span id="alt3Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></small></div>
           </div>
         </div>
         <div class="col-md-6 d-none" id="alt4Col">
           <div class="alt-card h-100" style="cursor:pointer">
             <div class="alt-title mb-1">💡 سؤال بديل 2</div>
             <div><span id="alt4Question">—</span></div>
-            <div class="mt-1"><small><strong>الإجابة:</strong> <span id="alt4Answer" class="answer">—</span></small></div>
+                        <div class="mt-1"><small><strong>الإجابة:</strong> <span class="answer-wrap"><span id="alt4Answer" class="answer answer-text">—</span><button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button></span></small></div>
           </div>
         </div>
       </div>
@@ -1125,6 +1226,42 @@
       }
     }
   });
+
+  // ===== وضع بدون مقدم =====
+  let noHostMode = false;
+
+  function toggleNoHostMode() {
+    noHostMode = !noHostMode;
+    const btn = document.getElementById('noHostToggle');
+    const body = document.getElementById('questionPanel');
+
+    btn.classList.toggle('active', noHostMode);
+    btn.querySelector('.toggle-label').textContent = noHostMode
+      ? '🎭 وضع بدون مقدم'
+      : '🎭 وضع بدون مقدم';
+    btn.querySelector('.toggle-sub').textContent = noHostMode
+      ? 'الإجابات مخفية — اضغط على "اكشف" لكل سؤال'
+      : 'الإجابات ظاهرة — اضغط لإخفائها';
+
+    document.body.classList.toggle('answers-hidden', noHostMode);
+
+    // إعادة ضبط كل الإجابات المكشوفة عند التفعيل
+    if (noHostMode) {
+      document.querySelectorAll('.answer-text.revealed').forEach(el => {
+        el.classList.remove('revealed');
+        const btn = el.nextElementSibling;
+        if (btn) { btn.textContent = 'اكشف'; btn.classList.remove('done'); }
+      });
+    }
+  }
+
+  function revealAnswer(btn) {
+    const answerEl = btn.previousElementSibling;
+    if (!answerEl) return;
+    answerEl.classList.add('revealed');
+    btn.textContent = '✓';
+    btn.classList.add('done');
+  }
 </script>
 
 
