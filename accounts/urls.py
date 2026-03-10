@@ -6,8 +6,6 @@ from django.conf.urls.static import static
 from django.shortcuts import render
 from django.views.generic import TemplateView
 from django.http import JsonResponse
-from django.contrib.auth import get_user_model
-from games.models import GamePackage
 
 
 def home_view(request):
@@ -16,6 +14,8 @@ def home_view(request):
 
 def home_stats_view(request):
     try:
+        from django.contrib.auth import get_user_model
+        from games.models import GamePackage
         User = get_user_model()
         total_users = User.objects.count()
         active_packages = GamePackage.objects.filter(is_active=True).count()
