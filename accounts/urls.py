@@ -1,60 +1,26 @@
-# wesh_aljawab/urls.py
-from django.contrib import admin
-from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
-from django.shortcuts import render
-from django.views.generic import TemplateView
-from django.http import JsonResponse
+# accounts/urls.py
+from django.urls import path
+from . import views
+from django.contrib.auth import views as auth_views
 
-
-def home_view(request):
-    return render(request, 'base.html')
-
-
-def home_stats_view(request):
-    try:
-        from django.db import connection
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM auth_user")
-            total_users = cursor.fetchone()[0]
-            cursor.execute("SELECT COUNT(*) FROM games_gamepackage WHERE is_active = TRUE")
-            active_packages = cursor.fetchone()[0]
-        return JsonResponse({
-            'total_users': total_users,
-            'active_packages': active_packages,
-        })
-    except Exception:
-        return JsonResponse({
-            'total_users': 0,
-            'active_packages': 0,
-        })
-
+app_name = 'accounts'
 
 urlpatterns = [
-    path('control-9f7a2c4e8b/', admin.site.urls),
+    path('login/', views.login_view, name='login'),
+    path('register/', views.register_view, name='register'),
+    path('logout/', views.logout_view, name='logout'),
+    path('profile/', views.profile_view, name='profile'),
 
-    # الصفحة الرئيسية
-    path('', home_view, name='home'),
-
-    # إحصائيات الصفحة الرئيسية
-    path('api/stats/', home_stats_view, name='home_stats'),
-
-    # الألعاب
-    path('games/', include(('games.urls', 'games'), namespace='games')),
-
-    # الحسابات
-    path('accounts/', include(('accounts.urls', 'accounts'), namespace='accounts')),
-
-    # صفحات ثابتة
-    path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
-    path("returns/", TemplateView.as_view(template_name="returns.html"), name="returns"),
-
-    # المدفوعات
-    path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
+    path('password_reset/',
+         auth_views.PasswordResetView.as_view(),
+         name='password_reset'),
+    path('password_reset/done/',
+         auth_views.PasswordResetDoneView.as_view(),
+         name='password_reset_done'),
+    path('reset/<uidb64>/<token>/',
+         auth_views.PasswordResetConfirmView.as_view(),
+         name='password_reset_confirm'),
+    path('reset/done/',
+         auth_views.PasswordResetCompleteView.as_view(),
+         name='password_reset_complete'),
 ]
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    if getattr(settings, "STATICFILES_DIRS", None):
-        urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
