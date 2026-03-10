@@ -14,11 +14,12 @@ def home_view(request):
 
 def home_stats_view(request):
     try:
-        from django.contrib.auth import get_user_model
-        from games.models import GamePackage
-        User = get_user_model()
-        total_users = User.objects.count()
-        active_packages = GamePackage.objects.filter(is_active=True).count()
+        from django.db import connection
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) FROM auth_user")
+            total_users = cursor.fetchone()[0]
+            cursor.execute("SELECT COUNT(*) FROM games_gamepackage WHERE is_active = TRUE")
+            active_packages = cursor.fetchone()[0]
         return JsonResponse({
             'total_users': total_users,
             'active_packages': active_packages,
