@@ -100,6 +100,5 @@ path(
 
     # API تهيئة الحالة
     path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
-    path("games/images/create/", views.images_create, name="images_create"),
 
 ]
