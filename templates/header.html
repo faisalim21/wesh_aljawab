@@ -540,7 +540,7 @@ body {
   }
 }
 
-  @media (max-width: 991.98px){
+@media (max-width: 991.98px){
     .auth-buttons {
       display: flex !important;
       flex-direction: row !important;
@@ -561,6 +561,22 @@ body {
       gap: .4rem !important;
       padding: .6rem .8rem !important;
       font-size: .92rem !important;
+    }
+
+    /* ===== إصلاح زر دخول على خلفية بيضاء ===== */
+    .auth-buttons .btn-outline-light {
+      color: #6366f1 !important;
+      border-color: #6366f1 !important;
+      background: transparent !important;
+    }
+
+    .auth-buttons .btn-outline-light:hover {
+      background: #6366f1 !important;
+      color: #fff !important;
+    }
+
+    .auth-buttons .btn-outline-light span {
+      color: inherit !important;
     }
   }
   </style>
