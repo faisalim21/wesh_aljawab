@@ -341,7 +341,8 @@
                     <small class="text-danger d-block">{{ error }}</small>
                 {% endfor %}
             {% endif %}
-            <small class="text-muted d-block">يجب أن يبدأ الرقم بـ 05 ويتكون من 10 أرقام</small>
+            <small class="text-muted d-block">أدخل رقم جوالك</small>
+
         </div>
 
         <button type="submit" class="btn-register" id="registerBtn">
@@ -417,9 +418,10 @@
                 showAlert('البريد الإلكتروني غير صحيح', 'danger');
                 return;
             }
-            if (!/^05\d{8}$/.test(phone)){
+            const cleanPhone = phone.replace(/[\s\-]/g, '');
+            if (cleanPhone.length < 7 || !/^\+?[\d]+$/.test(cleanPhone)){
                 e.preventDefault();
-                showAlert('رقم الجوال غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام', 'danger');
+                showAlert('رقم الجوال غير صحيح', 'danger');
                 return;
             }
 

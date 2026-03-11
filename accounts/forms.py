@@ -35,7 +35,7 @@ class SimpleRegisterForm(forms.Form):
             'class': 'form-control',
             'inputmode': 'tel',
             'autocomplete': 'tel',
-            'pattern': '[0-9]{10}',
+            'pattern': '[0-9+\\-\\s]{7,15}',
         }),
     )
     
