@@ -63,18 +63,22 @@ class SimpleRegisterForm(forms.Form):
         phone = self.cleaned_data['phone_number'].strip()
         
         # إزالة المسافات والرموز الإضافية
-        phone = phone.replace(' ', '').replace('-', '').replace('+966', '0')
+        phone = phone.replace(' ', '').replace('-', '')
         
-        if not phone.startswith('05') or len(phone) != 10:
-            raise forms.ValidationError("رقم الجوال غير صحيح. يجب أن يبدأ بـ 05 ويتكون من 10 أرقام")
+        if not phone:
+            raise forms.ValidationError("رقم الجوال مطلوب")
         
-        if not phone.isdigit():
+        if len(phone) < 7 or len(phone) > 15:
+            raise forms.ValidationError("رقم الجوال يجب أن يكون بين 7 و 15 رقم")
+        
+        if not phone.lstrip('+').isdigit():
             raise forms.ValidationError("رقم الجوال يجب أن يحتوي على أرقام فقط")
         
         if UserProfile.objects.filter(phone_number=phone).exists():
             raise forms.ValidationError("رقم الجوال مستخدم مسبقاً")
         
         return phone
+
 
     def clean_first_name(self):
         """التحقق من الاسم"""

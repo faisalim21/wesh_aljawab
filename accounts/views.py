@@ -209,10 +209,10 @@ def profile_view(request):
             phone_number = request.POST.get('phone_number', '').strip()
             
             # التحقق من رقم الهاتف
-            if phone_number and not phone_number.startswith('05'):
-                messages.error(request, 'رقم الهاتف يجب أن يبدأ بـ 05')
+            if phone_number and (len(phone_number.lstrip('+')) < 7 or not phone_number.lstrip('+').isdigit()):
+                messages.error(request, 'رقم الهاتف غير صحيح')
                 return redirect('accounts:profile')
-            
+                        
             profile.phone_number = phone_number
             profile.notifications_enabled = 'notifications_enabled' in request.POST
             profile.email_notifications = 'email_notifications' in request.POST
