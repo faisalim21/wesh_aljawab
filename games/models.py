@@ -55,6 +55,20 @@ class GamePackage(models.Model):
         ('sports', 'رياضية'),
     ]
 
+    DIFFICULTY_LEVELS = [
+        ('mixed',  'متنوعة الصعوبة'),
+        ('easy',   'سهل'),
+        ('medium', 'متوسط'),
+        ('hard',   'صعب'),
+    ]
+    difficulty_level = models.CharField(
+        max_length=10,
+        choices=DIFFICULTY_LEVELS,
+        default='mixed',
+        verbose_name="مستوى الصعوبة",
+        help_text="مستوى صعوبة الأسئلة في هذه الحزمة"
+    )
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
     # نوع اللعبة

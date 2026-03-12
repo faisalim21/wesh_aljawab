@@ -219,6 +219,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
     list_display = (
         'package_info',
         'theme_badge',
+        'difficulty_badge',
         'questions_count_badge',
         'price_info',
         'is_free_icon',
@@ -241,7 +242,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
                 'is_active'
             )
         }),
-        ('المحتوى', {'fields': ('description', 'question_theme')}),
+        ('المحتوى', {'fields': ('description', 'question_theme', 'difficulty_level')}),
     )
 
     @admin.action(description="📊 فتح صفحة إحصائيات خلية الحروف")
@@ -262,6 +263,22 @@ class LettersPackageAdmin(admin.ModelAdmin):
             return format_html('<span style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
         return format_html('<span style="background:#e0e7ff;color:#4338ca;border:1px solid #a5b4fc;padding:2px 8px;border-radius:999px;font-weight:700;">{}</span>', label)
     theme_badge.short_description = "نوع الأسئلة"
+
+    def difficulty_badge(self, obj):
+        level = obj.difficulty_level or 'mixed'
+        styles = {
+            'mixed':  ('🎲', '#e0e7ff', '#4338ca', '#a5b4fc'),
+            'easy':   ('🟢', '#dcfce7', '#166534', '#86efac'),
+            'medium': ('🟡', '#fef9c3', '#854d0e', '#fde047'),
+            'hard':   ('🔴', '#fee2e2', '#991b1b', '#fca5a5'),
+        }
+        icon, bg, color, border = styles.get(level, styles['mixed'])
+        label = obj.get_difficulty_level_display()
+        return format_html(
+            '<span style="background:{};color:{};border:1px solid {};padding:2px 8px;border-radius:999px;font-weight:700;">{} {}</span>',
+            bg, color, border, icon, label
+        )
+    difficulty_badge.short_description = "الصعوبة"
 
     def questions_count_badge(self, obj):
         count = getattr(obj, '_qcount', 0)

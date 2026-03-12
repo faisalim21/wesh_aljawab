@@ -323,12 +323,20 @@ def letters_game_home(request):
     )
 
     paid_packages_mixed = paid_qs.filter(
-        question_theme='mixed'
+        question_theme='mixed',
+        difficulty_level='mixed'
     ).order_by('package_number')
+
+    paid_packages_leveled = paid_qs.filter(
+        question_theme='mixed'
+    ).exclude(
+        difficulty_level='mixed'
+    ).order_by('difficulty_level', 'package_number')
 
     paid_packages_sports = paid_qs.filter(
         question_theme='sports'
     ).order_by('package_number')
+
 
     # =========================
     # منطق الشراء المصحّح
@@ -370,6 +378,7 @@ def letters_game_home(request):
         "free_session_message": free_session_message,
 
         "paid_packages_mixed": paid_packages_mixed,
+        "paid_packages_leveled": paid_packages_leveled,
         "paid_packages_sports": paid_packages_sports,
 
         "active_packages_ids": active_packages_ids,
