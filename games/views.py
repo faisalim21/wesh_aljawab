@@ -590,46 +590,33 @@ def letters_contestants(request, contestants_link):
 def images_game_home(request):
     now = timezone.now()
 
-    # =========================
-    # الحزمة المجانية
-    # =========================
     free_package = GamePackage.objects.filter(
         game_type='images',
         is_free=True,
         is_active=True
     ).first()
 
-    # =========================
-    # الحزم المدفوعة
-    # =========================
     paid_packages = GamePackage.objects.filter(
         game_type='images',
         is_free=False,
         is_active=True
     ).order_by('package_number')
 
-    # =========================
-    # الحالة الافتراضية
-    # =========================
-    active_packages_ids = set()     # زر "ابدأ اللعب"
-    expired_packages_ids = set()    # "سبق شراء"
-    used_before_ids = set()         # أي شراء سابق (للعرض فقط)
+    active_packages_ids = set()
+    completed_packages_ids = set()
+    expired_packages_ids = set()
+    used_before_ids = set()
 
     free_session_eligible = False
     free_session_message = ""
     free_active_session = None
 
-    # =========================
-    # المستخدم مسجّل
-    # =========================
     if request.user.is_authenticated:
 
-        # أهلية المجاني
         free_session_eligible, free_session_message, _ = check_free_session_eligibility(
             request.user, 'images'
         )
 
-        # جلسة مجانية نشطة
         if free_package:
             free_active_session = (
                 GameSession.objects
@@ -645,9 +632,6 @@ def images_game_home(request):
             if free_active_session and free_active_session.is_time_expired:
                 free_active_session = None
 
-        # =========================
-        # المصدر الوحيد للحقيقة: UserPurchase
-        # =========================
         purchases = UserPurchase.objects.filter(
             user=request.user,
             package__game_type='images'
@@ -656,25 +640,22 @@ def images_game_home(request):
         for p in purchases:
             used_before_ids.add(p.package_id)
 
-            # تجاهل أي شراء غير مكتمل
             if not p.is_completed:
                 continue
 
-            # شراء صالح
             if not p.package.is_free:  # مدفوع = دائم
                 active_packages_ids.add(p.package_id)
+                completed_packages_ids.add(p.package_id)  # ← سبق شراؤها
             else:
                 expired_packages_ids.add(p.package_id)
 
-    # =========================
-    # تمرير البيانات للقالب
-    # =========================
     context = {
         'page_title': 'وش الجواب - تحدي الصور',
         'free_package': free_package,
         'paid_packages': paid_packages,
 
         'active_packages_ids': active_packages_ids,
+        'completed_packages_ids': completed_packages_ids,
         'expired_packages_ids': expired_packages_ids,
         'used_before_ids': used_before_ids,
 
@@ -1827,6 +1808,8 @@ def api_images_prev(request):
     return JsonResponse(payload)
 
 
+
+
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 
@@ -1865,3 +1848,37 @@ def images_session(request, session_id):
     })
 
 
+
+
+
+# =========================
+#  طلبات "عربي فقط"
+# =========================
+
+from .models import ArabicOnlyRequest
+
+@require_http_methods(["GET"])
+def api_arabic_request_count(request):
+    """يرجع عدد المستخدمين الذين طلبوا حزمة عربي فقط."""
+    count = ArabicOnlyRequest.objects.count()
+    return JsonResponse({'count': count})
+
+
+@csrf_exempt
+@login_required
+@require_http_methods(["POST"])
+def api_arabic_request_submit(request):
+    """يسجّل طلب المستخدم (مرة واحدة فقط)."""
+    try:
+        ArabicOnlyRequest.objects.create(user=request.user)
+        count = ArabicOnlyRequest.objects.count()
+        return JsonResponse({'count': count}, status=201)
+    except IntegrityError:
+        count = ArabicOnlyRequest.objects.count()
+        return JsonResponse(
+            {'message': 'سبق تسجيل طلبك', 'count': count},
+            status=409
+        )
+    except Exception as e:
+        logger.error(f'arabic_request_submit error: {e}')
+        return JsonResponse({'error': 'خطأ داخلي'}, status=500)

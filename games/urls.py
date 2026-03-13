@@ -49,6 +49,10 @@ urlpatterns = [
     path('api/images-set-index/', views.api_images_set_index, name='api_images_set_index'),
     path('api/images-next/', views.api_images_next, name='api_images_next'),
     path('api/images-prev/', views.api_images_prev, name='api_images_prev'),
+        # APIs لتحدّي الصور  ← أضف هذين بعد api_images_prev
+    path('images/arabic-request/count/', views.api_arabic_request_count, name='api_arabic_request_count'),
+    path('images/arabic-request/', views.api_arabic_request_submit, name='api_arabic_request_submit'),
+
 
 # =========================
 # امبوستر

@@ -894,3 +894,26 @@ class ImposterWord(models.Model):
 
 
 
+
+
+
+# =========================
+#  طلبات "عربي فقط" لتحدي الصور
+# =========================
+
+class ArabicOnlyRequest(models.Model):
+    """يسجّل طلب المستخدم لحزمة تحدي الصور بإجابات عربية فقط (طلب واحد لكل مستخدم)."""
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='arabic_only_request',
+        verbose_name="المستخدم"
+    )
+    requested_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الطلب")
+
+    class Meta:
+        verbose_name = "طلب عربي فقط"
+        verbose_name_plural = "طلبات عربي فقط"
+
+    def __str__(self):
+        return f"{self.user} — {self.requested_at:%Y-%m-%d}"
