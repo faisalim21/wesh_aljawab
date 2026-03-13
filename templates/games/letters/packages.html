@@ -132,6 +132,11 @@
     /* ── الكرت ── */
     .pkg { flex: 0 0 auto; width: 195px; scroll-snap-align: start; }
 
+    @media (min-width: 992px) {
+      .pkg { width: 260px; }
+      .pkg.free-pkg { width: 360px; }
+    }
+
     .cardx {
       background: #fff;
       border: 1.5px solid rgba(139,92,246,.12);
