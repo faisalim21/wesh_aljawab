@@ -98,7 +98,9 @@
     @media (min-width: 992px) {
       .pkg { width: 260px; }
       .pkg.free-pkg { width: 360px; }
+      .cardx { padding: 24px 20px; gap: 14px; }
     }
+
 
     .cardx {
       background: #fff; border: 1.5px solid rgba(139,92,246,.12);
@@ -335,14 +337,12 @@
         <div class="cardx">
           <div class="card-head">
             <span class="card-title">حزمة {{ package.package_number }}</span>
+            <span class="pkg-stat"><i class="fas fa-images"></i> 21 صورة</span>
+          </div>
 
           {% if package.description %}
             <div class="card-desc">{{ package.description }}</div>
           {% endif %}
-          <div class="pkg-stats">
-            <span class="pkg-stat"><i class="fas fa-images"></i> 21 صورة</span>
-            <span class="pkg-stat green"><i class="fas fa-infinity"></i> صلاحية دائمة</span>
-          </div>
           <div class="card-price">
             {% if package.has_discount %}
               <span class="price-new">{{ package.discounted_price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
