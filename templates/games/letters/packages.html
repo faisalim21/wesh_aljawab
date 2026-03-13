@@ -130,7 +130,7 @@
     }
 
     /* ── الكرت ── */
-    .pkg { flex: 0 0 auto; width: 240px; scroll-snap-align: start; }
+    .pkg { flex: 0 0 auto; width: 195px; scroll-snap-align: start; }
 
     .cardx {
       background: #fff;
@@ -448,15 +448,15 @@
       .packages-section { padding: 28px 14px; margin: 20px 10px; border-radius: 20px; }
       .section-title h2 { font-size: 1.9rem; }
       /* الكروت العادية: تظهر 80% + يبان جزء من الكرت التالي */
-      .pkg { width: 78vw; max-width: 300px; }
+      .pkg { width: 72vw; max-width: 260px; }
       /* الكرت المجاني عمودي وأكبر قليلاً */
-      .pkg.free-pkg { width: 82vw; max-width: 320px; }
+      .pkg.free-pkg { width: 78vw; max-width: 300px; }
     }
 
     @media (max-width: 480px) {
       .section-title h2 { font-size: 1.6rem; }
-      .pkg { width: 76vw; }
-      .pkg.free-pkg { width: 80vw; }
+      .pkg { width: 70vw; }
+      .pkg.free-pkg { width: 76vw; }
     }
   </style>
 </head>
@@ -528,9 +528,9 @@
 
           <!-- الإحصائيات [جديد] -->
           <div class="free-stats">
-            <span class="free-stat"><i class="fas fa-question-circle"></i> 81 سؤال</span>
-            <span class="free-stat blue"><i class="fas fa-font"></i> 27 حرف</span>
-            <span class="free-stat purple"><i class="fas fa-layer-group"></i> 3 أسئلة / حرف</span>
+            <span class="free-stat"><i class="fas fa-question-circle"></i> 84 سؤال</span>
+            <span class="free-stat blue"><i class="fas fa-font"></i> 28 حرف</span>
+            <span class="free-stat purple"><i class="fas fa-layer-group"></i> 3 أسئلة لكل حرف</span>
           </div>
 
           {% if free_package.description %}
@@ -572,7 +572,7 @@
     <!-- ══ أسئلة متنوعة ══ -->
     {% if paid_packages_mixed %}
     <div class="section-header">
-      <h5><i class="fas fa-dice"></i> أسئلة متنوعة</h5>
+      <h5><i class="fas fa-dice"></i> أسئلة عامة</h5>
       <small>صعوبة متنوعة</small>
     </div>
     <div class="scroll-row">
@@ -583,7 +583,6 @@
           <div class="card-head">
             <span class="card-title">حزمة {{ package.package_number }}</span>
             <div class="badges">
-              <span class="badge-theme badge-mixed">{{ package.get_question_theme_display }}</span>
               <span class="badge-diff diff-mixed">🎲 {{ package.get_difficulty_level_display }}</span>
             </div>
           </div>
@@ -630,7 +629,7 @@
 
     <!-- ══ اختر مستواك ══ -->
     <div class="section-header">
-      <h5><i class="fas fa-layer-group"></i> اختر مستواك</h5>
+      <h5><i class="fas fa-layer-group"></i> حدد مستوى الأسئلة</h5>
       <small>سهل / متوسط / صعب</small>
     </div>
     <div class="scroll-row">
