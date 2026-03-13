@@ -95,6 +95,8 @@
       margin: 0; font-weight: 900; font-size: 1.25rem;
       display: flex; align-items: center; gap: 10px; color: var(--text);
     }
+    .section-header h5 i { color: var(--primary); }
+
     .section-header small { color: var(--muted); font-size: .85rem; font-weight: 600; }
 
     .scroll-row {
@@ -243,13 +245,6 @@
     </div>
     {% endif %}
 
-    <div class="dev-banner">
-      <span class="dev-banner-icon">🚀</span>
-      <div class="dev-banner-text">
-        <strong>نحن نطوّر اللعبة باستمرار!</strong>
-        نسمع طلباتكم ونعمل على تحسين الأسئلة ونظام اللعب والخصائص اللي تبونها. خلك قريب وراجع تحديثاتنا 🎮
-      </div>
-    </div>
 
     <div class="section-title">
       <h2>لعبة امبوستر</h2>
@@ -260,7 +255,7 @@
     {% for package in packages %}
     {% if package.is_free or package.package_number == 0 %}
     <div class="section-header">
-      <h5><i class="fas fa-gift"></i> جرّب مجاناً</h5>
+      <h5><i class="fas fa-gift" style="color:#ef4444;"></i> جرّب مجاناً</h5>
     </div>
     <div class="scroll-row">
       <div class="pkg free-pkg">
@@ -317,11 +312,11 @@
           {% if package.effective_price > 0 %}
           <div class="card-price">
             {% if package.has_discount %}
-              <span class="price-new">{{ package.discounted_price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
-              <span class="price-old">{{ package.original_price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
+              <span class="price-new">{{ package.discounted_price|floatformat:2 }} <span class="icon-saudi_riyal"></span></span>
+              <span class="price-old">{{ package.original_price|floatformat:2 }} <span class="icon-saudi_riyal"></span></span>
               <span class="save-badge" data-orig="{{ package.original_price }}" data-disc="{{ package.discounted_price }}">وفّر <b class="save-pct">—</b></span>
             {% else %}
-              <span class="price-new">{{ package.price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
+              <span class="price-new">{{ package.price|floatformat:2 }} <span class="icon-saudi_riyal"></span></span>
             {% endif %}
           </div>
           {% endif %}
