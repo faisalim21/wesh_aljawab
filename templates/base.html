@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <meta name="description" content="{% block meta_description %}{{ page_description|default:'وش الجواب منصة ألعاب تفاعلية تجمع خلية الحروف، تحدي الصور، امبوستر، وتحديات جماعية ذكية. اختر لعبتك وابدأ التحدي مع أصدقائك.' }}{% endblock %}">
-  <meta name="keywords" content="وش الجواب, خلية الحروف, تحدي الصور, لعبة امبوستر, impostor, العاب تفاعلية, العاب ذكاء, العاب جماعية, تحدي الوقت, العاب عربية, ألعاب أونلاين">
+  <meta name="keywords" content="وش الجواب, خلية الحروف, تحدي الصور, لعبة امبوستر, impostor, العاب تفاعلية, العاب ذكاء, العاب جماعية, تحدي الوقت, فاميلي فيود, تحدي العائلات, family feud, سؤال وجواب, سين جيم, العاب عربية, ألعاب أونلاين, العاب جماعية سعودية">
   <meta name="robots" content="index,follow">
   <meta name="author" content="وش الجواب">
 
@@ -1052,11 +1052,11 @@
 
             <div class="games-grid">
                 <!-- 1. لعبة خلية الحروف -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                <article class="game-card" style="--card-color: #6d28d9; --card-color-light: rgba(109,40,217,0.06); border-color: rgba(109,40,217,0.12);" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="خلية الحروف">
                         <img src="https://i.imgur.com/iRwZgzE.jpeg" alt="لعبة خلية الحروف" width="180" height="180" loading="eager" decoding="async" itemprop="image">
                     </div>
-                    <h3 class="game-title" itemprop="name">خلية الحروف</h3>
+                    <h3 class="game-title" style="color: #6d28d9;" itemprop="name">خلية الحروف</h3>
                     <p class="game-description" itemprop="description">
                         خلية الحروف مع 140 سؤال، وشاشة عرض وزر للمتسابقين، تجربة كاملة ومتكاملة كما لو كنت في "حروف مع عزيز".
                     </p>
@@ -1066,7 +1066,7 @@
                         <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:letters_home' %}" class="play-button available" aria-label="ابدأ لعب خلية الحروف" itemprop="url">
+                    <a href="{% url 'games:letters_home' %}" class="play-button" style="background: linear-gradient(135deg, #6d28d9, #06b6d4); box-shadow: 0 8px 24px rgba(109,40,217,0.3); color:#fff;" aria-label="ابدأ لعب خلية الحروف" itemprop="url">
                         <i class="fas fa-play" aria-hidden="true"></i>
                         <span>ابدأ اللعب</span>
                     </a>
@@ -1307,10 +1307,10 @@
                 var timer = setInterval(function () {
                     start += step;
                     if (start >= target) {
-                        el.textContent = Math.floor(target).toLocaleString('ar-SA');
+                        el.textContent = Math.floor(target).toLocaleString('ar');
                         clearInterval(timer);
                     } else {
-                        el.textContent = Math.floor(start).toLocaleString('ar-SA');
+                        el.textContent = Math.floor(start).toLocaleString('ar');
                     }
                 }, 16);
             }
@@ -1326,7 +1326,7 @@
                         return res.json();
                     })
                     .then(function (data) {
-                        var players  = ((data && data.total_users)      || 0) * 7;
+                        var players = Math.floor((data && data.total_users) || 0) * 7;
                         var packages = (data  && data.active_packages)  || 0;
                         animateCounter(playersEl,  players);
                         animateCounter(packagesEl, packages);
