@@ -529,9 +529,9 @@
 
 
     /* تعويض الهيدر fixed-top */
+    /* تعويض الهيدر fixed-top */
     body {
       padding-top: 96px;
-      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
     }
 
     /* للجوال */
@@ -543,7 +543,7 @@
         padding: 6px 10px;
         border-radius: 14px;
       }
-      .logo-img {
+      .logo-img { 
         height: 44px;
       }
       .navbar {
@@ -605,10 +605,22 @@
     border-radius:6px;
     line-height:1;
   }
+
+  .navbar {
+    top: env(safe-area-inset-top, 0px);
+  }
   </style>
 </head>
 <body>
-
+<div style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: #6366f1;
+  z-index: 1041;
+"></div>
 <header class="main-header" role="banner">
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" aria-label="الشريط العلوي">
     <div class="container">
