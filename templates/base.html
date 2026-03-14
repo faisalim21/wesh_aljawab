@@ -1074,7 +1074,8 @@
 
                 <!-- 2. لعبة تحدي الصور -->
                 <article class="game-card" style="border: 1.5px solid rgba(21,128,61,0.3);" itemscope itemtype="https://schema.org/Game">
-                        <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="لعبة تحدي الصور" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
+                  <div class="game-icon" aria-label="تحدي الصور">
+                      <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="لعبة تحدي الصور" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
                     </div>
                     <h3 class="game-title" style="color: #15803d;" itemprop="name">تحدي الصور</h3>
                     <p class="game-description" itemprop="description">
@@ -1308,10 +1309,10 @@
                 var timer = setInterval(function () {
                     start += step;
                     if (start >= target) {
-                        el.textContent = target.toLocaleString('ar');
+                        el.textContent = target.toLocaleString('en-US');
                         clearInterval(timer);
                     } else {
-                        el.textContent = Math.floor(start).toLocaleString('ar');
+                        el.textContent = Math.floor(start).toLocaleString('en-US');
                     }
                 }, 16);
             }
