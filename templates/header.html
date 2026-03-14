@@ -18,20 +18,24 @@
 
   <style>
 
-    /* تصفير الهوامش ومنع الفراغ العلوي */
-    html, body {
-        margin: 0 !important;
-        padding: 0 !important;
-        border: 0 !important;
-        outline: 0 !important;
-        overflow-x: hidden;
+    html {
+        /* هذا يضمن أن أي فراغ يظهر عند السحب يكون بلون الهيدر */
+        background-color: #6366f1 !important; 
+        margin: 0;
+        padding: 0;
     }
 
-    /* حل مشكلة الفراغ في الجوال (iOS) */
     body {
-        padding-top: env(safe-area-inset-top);
-        /* اجعل لون خلفية الـ body نفس لون بداية الهيدر */
-        background-color: #8b5cf6; 
+        margin: 0 !important;
+        padding: 0 !important;
+        /* تعويض ارتفاع الهيدر للجوال والكمبيوتر */
+        padding-top: 100px !important; 
+    }
+
+    @media (max-width: 991px) {
+        body {
+            padding-top: 80px !important;
+        }
     }
 
     /* تأكد أن الهيدر لا يحتوي على margin-top */
@@ -631,20 +635,22 @@
   }
 
   .navbar {
-    top: env(safe-area-inset-top, 0px);
+      /* اجعل الهيدر يبدأ من الصفر المطلق */
+      top: 0 !important; 
+      
+      /* أضف مسافة داخلية علوية تساوي منطقة الساعة */
+      padding-top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+      
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+      backdrop-filter: blur(20px);
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+      z-index: 1040;
   }
   </style>
 </head>
 <body>
-<div style="
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background: #6366f1;
-  z-index: 1041;
-"></div>
+
 <header class="main-header" role="banner">
   <nav class="navbar navbar-expand-lg navbar-dark fixed-top" aria-label="الشريط العلوي">
     <div class="container">
