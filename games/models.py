@@ -274,7 +274,36 @@ class LettersGameQuestion(models.Model):
     )
     question = models.TextField(verbose_name="السؤال")
     answer = models.CharField(max_length=100, verbose_name="الإجابة")
-    category = models.CharField(max_length=50, verbose_name="التصنيف")
+    category = models.CharField(
+        max_length=50,
+        verbose_name="المجال",
+        blank=True,
+        default='',
+        choices=[
+            ('general', 'الثقافة العامة'),
+            ('religious', 'ديني'),
+            ('science', 'العلوم'),
+            ('geography', 'الجغرافيا'),
+            ('arabic', 'اللغة العربية'),
+            ('history', 'التاريخ'),
+            ('who_said', 'من القائل ⚠️'),
+            ('who_am_i', 'من أنا؟'),
+            ('sports', 'الرياضة'),
+            ('politics', 'السياسة'),
+        ]
+    )
+    difficulty = models.CharField(
+        max_length=15,
+        choices=[
+            ('easy', 'سهل'),
+            ('medium', 'متوسط'),
+            ('hard', 'صعب'),
+            ('unspecified', 'غير محدد'),
+        ],
+        default='unspecified',
+        blank=True,
+        verbose_name="مستوى الصعوبة"
+    )
 
     class Meta:
         verbose_name = "سؤال خلية حروف"

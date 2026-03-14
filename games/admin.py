@@ -173,10 +173,15 @@ class LettersPackageForm(forms.ModelForm):
 
 class LettersGameQuestionInline(admin.TabularInline):
     model = LettersGameQuestion
-    fk_name = 'package'     # مهم مع الـ Proxy
-    extra = 0
-    fields = ('letter', 'question_type', 'question', 'answer', 'category')
+    fk_name = 'package'
+    extra = 1
+    fields = ('letter', 'question_type_display', 'question', 'answer', 'category', 'difficulty')
     show_change_link = True
+
+    def question_type_display(self, obj):
+        map_ = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
+        return map_.get(obj.question_type, obj.question_type)
+    question_type_display.short_description = "الترتيب"
 
 # صور (تحدّي الصور)
 from .models import PictureRiddle, PictureGameProgress
@@ -644,20 +649,172 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
 @admin.register(LettersGameQuestion)
 class LettersGameQuestionAdmin(admin.ModelAdmin):
-    list_display = ('package_num', 'letter', 'question_type_ar', 'category', 'question_preview', 'answer')
-    list_filter = ('package__package_number', 'letter', 'question_type', 'category')
+    list_display = ('package_num', 'letter', 'question_order', 'category', 'difficulty_badge', 'question_preview', 'answer')
+    list_filter = ('package__package_number', 'letter', 'question_type', 'category', 'difficulty')
     search_fields = ('question', 'answer', 'letter', 'category')
     list_per_page = 30
     list_select_related = ('package',)
+
+    # الحقول في شاشة الإضافة/التعديل
+    fields = ('package', 'letter', 'question_type', 'question', 'answer', 'category', 'difficulty')
+    change_form_template = "admin/letters_question_change.html"
+    add_form_template = "admin/letters_question_change.html"
+    class Media:
+        css = {'all': []}
+        js = []
+
     def get_queryset(self, request):
         return super().get_queryset(request).filter(package__game_type='letters')
-    def package_num(self, obj): return f"حزمة {obj.package.package_number}"
+
+    def package_num(self, obj):
+        return f"حزمة {obj.package.package_number}"
     package_num.short_description = "الحزمة"
-    def question_type_ar(self, obj): return {'main': 'رئيسي', 'alt1': 'بديل 1', 'alt2': 'بديل 2', 'alt3': 'بديل 3', 'alt4': 'بديل 4'}.get(obj.question_type, obj.question_type)
-    question_type_ar.short_description = "النوع"
-    def question_preview(self, obj): return (obj.question[:50] + '...') if len(obj.question) > 50 else obj.question
+
+    def question_order(self, obj):
+        map_ = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
+        return map_.get(obj.question_type, obj.question_type)
+    question_order.short_description = "الترتيب"
+
+    def difficulty_badge(self, obj):
+        styles = {
+            'easy':        ('🟢', '#dcfce7', '#166534', '#86efac'),
+            'medium':      ('🟡', '#fef9c3', '#854d0e', '#fde047'),
+            'hard':        ('🔴', '#fee2e2', '#991b1b', '#fca5a5'),
+            'unspecified': ('⚪', '#f1f5f9', '#475569', '#cbd5e1'),
+        }
+        icon, bg, color, border = styles.get(obj.difficulty, styles['unspecified'])
+        label = obj.get_difficulty_display()
+        return format_html(
+            '<span style="background:{};color:{};border:1px solid {};padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;">{} {}</span>',
+            bg, color, border, icon, label
+        )
+    difficulty_badge.short_description = "الصعوبة"
+
+    def question_preview(self, obj):
+        return (obj.question[:50] + '...') if len(obj.question) > 50 else obj.question
     question_preview.short_description = "السؤال"
 
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path('search-similar/', self.admin_site.admin_view(self.search_similar_view), name='letters_question_search_similar'),
+        ]
+        return custom + urls
+
+    def search_similar_view(self, request):
+        """API بحث عن أسئلة مشابهة بالنص أو الإجابة"""
+        q = request.GET.get('q', '').strip()
+        results = []
+        if q and len(q) >= 2:
+            qs = LettersGameQuestion.objects.filter(
+                package__game_type='letters'
+            ).filter(
+                Q(question__icontains=q) | Q(answer__icontains=q)
+            ).select_related('package').order_by('package__package_number', 'letter')[:20]
+
+            for item in qs:
+                order_map = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
+                results.append({
+                    'id': str(item.id),
+                    'package': f"حزمة {item.package.package_number}",
+                    'letter': item.letter,
+                    'order': order_map.get(item.question_type, item.question_type),
+                    'question': item.question,
+                    'answer': item.answer,
+                    'category': item.category or '—',
+                    'difficulty': item.get_difficulty_display(),
+                })
+        from django.http import JsonResponse
+        return JsonResponse({'results': results, 'count': len(results)})
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        obj = self.get_object(request, object_id)
+        if obj:
+            # أسئلة نفس الحرف من كل الحزم
+            same_letter_qs = LettersGameQuestion.objects.filter(
+                package__game_type='letters',
+                letter=obj.letter
+            ).exclude(pk=obj.pk).select_related('package').order_by('package__package_number', 'question_type')
+
+            order_map = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
+            same_letter = []
+            for q in same_letter_qs:
+                same_letter.append({
+                    'package': f"حزمة {q.package.package_number}",
+                    'theme': q.package.get_question_theme_display(),
+                    'order': order_map.get(q.question_type, q.question_type),
+                    'question': q.question,
+                    'answer': q.answer,
+                    'category': q.category or '—',
+                    'difficulty': q.get_difficulty_display(),
+                })
+            extra_context['same_letter_questions'] = same_letter
+            extra_context['current_letter'] = obj.letter
+        return super().change_view(request, object_id, form_url, extra_context)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        letter = request.GET.get('letter', '') or request.POST.get('letter', '')
+        if letter:
+            same_letter_qs = LettersGameQuestion.objects.filter(
+                package__game_type='letters',
+                letter=letter
+            ).select_related('package').order_by('package__package_number', 'question_type')
+
+            order_map = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
+            same_letter = []
+            for q in same_letter_qs:
+                same_letter.append({
+                    'package': f"حزمة {q.package.package_number}",
+                    'theme': q.package.get_question_theme_display(),
+                    'order': order_map.get(q.question_type, q.question_type),
+                    'question': q.question,
+                    'answer': q.answer,
+                    'category': q.category or '—',
+                    'difficulty': q.get_difficulty_display(),
+                })
+            extra_context['same_letter_questions'] = same_letter
+            extra_context['current_letter'] = letter
+        return super().add_view(request, form_url, extra_context)
+
+    def save_model(self, request, obj, form, change):
+        """تنبيه التكرار عند الحفظ"""
+        # تحقق تطابق 100%
+        exact = LettersGameQuestion.objects.filter(
+            package__game_type='letters',
+            question__iexact=obj.question
+        ).exclude(pk=obj.pk).select_related('package').first()
+
+        if exact:
+            messages.error(
+                request,
+                f'⛔ مكرر: نفس السؤال موجود في حزمة {exact.package.package_number} / حرف {exact.letter}. لم يتم الحفظ.'
+            )
+            return  # لا نحفظ
+
+        # تحقق تشابه جزئي (كلمات مشتركة)
+        words = [w for w in obj.question.split() if len(w) > 2]
+        similar = None
+        if words:
+            q_filter = Q()
+            for w in words[:5]:
+                q_filter |= Q(question__icontains=w)
+            similar = LettersGameQuestion.objects.filter(
+                package__game_type='letters'
+            ).filter(q_filter).exclude(
+                pk=obj.pk
+            ).exclude(
+                question__iexact=obj.question
+            ).select_related('package').first()
+
+        if similar:
+            messages.warning(
+                request,
+                f'⚠️ تحذير تشابه: السؤال مشابه لسؤال في حزمة {similar.package.package_number} / حرف {similar.letter}: "{similar.question[:60]}..." — تم الحفظ.'
+            )
+
+        super().save_model(request, obj, form, change)
 # ========= Admin: حِزم الصور =========
 
 @admin.register(PictureRiddle)
