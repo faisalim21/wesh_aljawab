@@ -579,6 +579,20 @@ body {
       color: inherit !important;
     }
   }
+
+  .letters-icon{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    font-weight:800;
+    font-size:16px;
+    color:#6366f1;
+    background:rgba(99,102,241,.12);
+    border-radius:6px;
+    line-height:1;
+  }
   </style>
 </head>
 <body>
@@ -639,7 +653,7 @@ body {
                   href="{% url 'games:letters_home' %}" 
                   role="menuitem">
                   <span>
-                    <i class="fas fa-language"></i> 
+                    <span class="letters-icon">غ</span> 
                     خلية الحروف
                   </span>
                   <span class="game-status-badge available">متاح</span>
