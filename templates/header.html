@@ -636,10 +636,10 @@ body {
               <!-- 1. خلية الحروف -->
               <li role="none">
                 <a class="dropdown-item d-flex justify-content-between align-items-center" 
-                   href="{% url 'games:letters_home' %}" 
-                   role="menuitem">
+                  href="{% url 'games:letters_home' %}" 
+                  role="menuitem">
                   <span>
-                    <i class="fas fa-font"></i> 
+                    <i class="fas fa-language"></i> 
                     خلية الحروف
                   </span>
                   <span class="game-status-badge available">متاح</span>
@@ -649,8 +649,8 @@ body {
               <!-- 2. تحدي الصور -->
               <li role="none">
                 <a class="dropdown-item d-flex justify-content-between align-items-center" 
-                   href="{% url 'games:images_home' %}" 
-                   role="menuitem">
+                  href="{% url 'games:images_home' %}" 
+                  role="menuitem">
                   <span>
                     <i class="fas fa-images"></i> 
                     تحدي الصور
@@ -662,8 +662,8 @@ body {
               <!-- 3. امبوستر -->
               <li role="none">
                 <a class="dropdown-item d-flex justify-content-between align-items-center" 
-                   href="{% url 'games:imposter_packages' %}" 
-                   role="menuitem">
+                  href="{% url 'games:imposter_packages' %}" 
+                  role="menuitem">
                   <span>
                     <i class="fas fa-mask"></i> 
                     امبوستر
@@ -672,13 +672,28 @@ body {
                 </a>
               </li>
 
-              <!-- 4. تحدي الوقت -->
+              <!-- 4. تحدي العائلات -->
               <li role="none">
                 <a class="dropdown-item d-flex justify-content-between align-items-center disabled" 
-                   href="#" 
-                   role="menuitem" 
-                   aria-disabled="true" 
-                   tabindex="-1">
+                  href="#" 
+                  role="menuitem" 
+                  aria-disabled="true" 
+                  tabindex="-1">
+                  <span>
+                    <i class="fas fa-users"></i> 
+                    تحدي العائلات
+                  </span>
+                  <span class="game-status-badge coming-soon">قريباً</span>
+                </a>
+              </li>
+
+              <!-- 5. تحدي الوقت -->
+              <li role="none">
+                <a class="dropdown-item d-flex justify-content-between align-items-center disabled" 
+                  href="#" 
+                  role="menuitem" 
+                  aria-disabled="true" 
+                  tabindex="-1">
                   <span>
                     <i class="fas fa-clock"></i> 
                     تحدّي الوقت
@@ -687,13 +702,13 @@ body {
                 </a>
               </li>
 
-              <!-- 5. سؤال وجواب -->
+              <!-- 6. سؤال وجواب -->
               <li role="none">
                 <a class="dropdown-item d-flex justify-content-between align-items-center disabled" 
-                   href="#" 
-                   role="menuitem" 
-                   aria-disabled="true" 
-                   tabindex="-1">
+                  href="#" 
+                  role="menuitem" 
+                  aria-disabled="true" 
+                  tabindex="-1">
                   <span>
                     <i class="fas fa-question-circle"></i> 
                     سؤال وجواب
@@ -707,7 +722,7 @@ body {
           <!-- تواصل معنا -->
           <li class="nav-item" role="none">
             <a class="nav-link" href="#footer-contact" role="menuitem">
-              <i class="fas fa-envelope" aria-hidden="true"></i>
+              <i class="fas fa-headset" aria-hidden="true"></i>
               تواصل معنا
             </a>
           </li>
