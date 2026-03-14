@@ -175,7 +175,7 @@ class LettersGameQuestionInline(admin.TabularInline):
     model = LettersGameQuestion
     fk_name = 'package'
     extra = 1
-    fields = ('letter', 'question_type_display', 'question', 'answer', 'category', 'difficulty')
+    fields = ('letter', 'question_type', 'question', 'answer', 'category', 'difficulty')
     show_change_link = True
 
     def question_type_display(self, obj):
