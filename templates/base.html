@@ -1073,11 +1073,10 @@
                 </article>
 
                 <!-- 2. لعبة تحدي الصور -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
-                    <div class="game-icon" aria-label="تحدي الصور">
+                <article class="game-card" style="border: 1.5px solid rgba(21,128,61,0.3);" itemscope itemtype="https://schema.org/Game">
                         <img src="https://i.imgur.com/j6j3hJD.jpeg" alt="لعبة تحدي الصور" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
                     </div>
-                    <h3 class="game-title" itemprop="name">تحدي الصور</h3>
+                    <h3 class="game-title" style="color: #15803d;" itemprop="name">تحدي الصور</h3>
                     <p class="game-description" itemprop="description">
                         لعبة مقتبسة من السلسة الشهيرة "أتحداك تجيب الصورة"، مع زر للمتسابقين وشاشة للعرض.
                     </p>
@@ -1087,18 +1086,19 @@
                         <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:images_home' %}" class="play-button available" aria-label="ابدأ لعب تحدي الصور" itemprop="url">
+                    <a href="{% url 'games:images_home' %}" class="play-button" style="background: linear-gradient(135deg, #15803d, #4ade80); box-shadow: 0 8px 24px rgba(21,128,61,0.3); color:#fff;" aria-label="ابدأ لعب تحدي الصور" itemprop="url">
                         <i class="fas fa-play" aria-hidden="true"></i>
                         <span>ابدأ اللعب</span>
                     </a>
                 </article>
 
                 <!-- 3. لعبة امبوستر -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                <article class="game-card" style="border: 1.5px solid rgba(239,68,68,0.3);" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="لعبة امبوستر" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
                         <i class="fas fa-mask" aria-hidden="true"></i>
                     </div>
-                    <h3 class="game-title" itemprop="name">امبوستر</h3>
+                    <h3 class="game-title" style="color: #ef4444;" itemprop="name">امبوستر</h3>
+
                     <p class="game-description" itemprop="description">
                         هي لعبة ترند في التيك توك على اللاعبين اكتشاف الامبوستر منهم. تجربة مثيرة ومليئة بالمفاجآت!
                     </p>
@@ -1108,7 +1108,7 @@
                         <span>متاح الآن</span>
                         </span>
                     </div>
-                    <a href="{% url 'games:imposter_packages' %}" class="play-button available">
+                    <a href="{% url 'games:imposter_packages' %}" class="play-button" style="background: linear-gradient(135deg, #ef4444, #f97316); box-shadow: 0 8px 24px rgba(239,68,68,0.3); color:#fff;">
                         <i class="fas fa-play"></i>
                         <span>ابدأ اللعب</span>
                     </a>
@@ -1117,12 +1117,12 @@
 
 
                 <!-- كرت تحدي العائلات -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                <article class="game-card" style="border: 1.5px solid rgba(245,158,11,0.3);" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="تحدي العائلات">
                         <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1773263520/%D9%81%D8%A7%D9%85%D9%84%D9%8A_%D9%81%D9%8A%D9%88%D8%AF_jiygsg.webp"
                             alt="لعبة تحدي العائلات" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
                     </div>
-                    <h3 class="game-title" itemprop="name">تحدي العائلات</h3>
+                    <h3 class="game-title" style="color: #d97706;" itemprop="name">تحدي العائلات</h3>
                     <p class="game-description" itemprop="description">
                         مقتبسة من السلسلة الشهيرة "فاميلي فيود" — تنافس مع عائلتك وأصدقائك في أسئلة شعبية مثيرة واكتشف من يعرف أكثر!
                         <br><br>
@@ -1137,15 +1137,15 @@
                     </div>
                     <button class="play-button disabled" disabled aria-disabled="true">
                         <i class="fas fa-lock" aria-hidden="true"></i>
-                        <span>قريباً — pendings</span>
+                        <span>قريباً </span>
                     </button>
                 </article>
                 <!-- 4. لعبة تحدّي الوقت -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
+                <article class="game-card" style="border: 1.5px solid rgba(245,158,11,0.3);" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="تحدّي الوقت" style="background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);">
                         <i class="fas fa-stopwatch" aria-hidden="true"></i>
                     </div>
-                    <h3 class="game-title" itemprop="name">تحدّي الوقت</h3>
+                    <h3 class="game-title" style="color: #f59e0b;" itemprop="name">تحدّي الوقت</h3>
                     <p class="game-description" itemprop="description">
                         هي لعبة مقتبسة من سلسلة عادل "تحدي الوقت" اختر الفئات اللي تبيها وخلك سريع
                     </p>
@@ -1162,11 +1162,11 @@
                 </article>
 
                 <!-- 5. لعبة سؤال وجواب -->
-                <article class="game-card" itemscope itemtype="https://schema.org/Game">
-                    <div class="game-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <article class="game-card" style="border: 1.5px solid rgba(29,78,216,0.3);" itemscope itemtype="https://schema.org/Game">
+                    <div class="game-icon" style="background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);">
                         <i class="fas fa-question-circle" aria-hidden="true"></i>
                     </div>
-                    <h3 class="game-title" itemprop="name">سؤال وجواب</h3>
+                    <h3 class="game-title" style="color: #1d4ed8;" itemprop="name">سؤال وجواب</h3>
                     <p class="game-description" itemprop="description">
                         التحدي الكلاسيكي بطعم عصري! اختر التصنيفات المفضلة وتنافس في مجموعة متنوعة من الأسئلة.
                     </p>
@@ -1301,13 +1301,14 @@
             // ===== انيميشن العداد =====
             function animateCounter(el, target, duration) {
                 if (!el) return;
+                target = Math.floor(target);
                 duration = duration || 1800;
                 var start = 0;
                 var step = target / (duration / 16);
                 var timer = setInterval(function () {
                     start += step;
                     if (start >= target) {
-                        el.textContent = Math.floor(target).toLocaleString('ar');
+                        el.textContent = target.toLocaleString('ar');
                         clearInterval(timer);
                     } else {
                         el.textContent = Math.floor(start).toLocaleString('ar');
