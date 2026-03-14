@@ -16,7 +16,7 @@ def home_stats_view(request):
     try:
         from django.db import connection
         with connection.cursor() as cursor:
-            cursor.execute("SELECT COUNT(*) FROM auth_user")
+            cursor.execute("SELECT COUNT(*) FROM accounts_userprofile")
             total_users = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM games_gamepackage WHERE is_active = TRUE")
             active_packages = cursor.fetchone()[0]
