@@ -45,9 +45,19 @@
           </select>
         </div>
       </div>
+      <div style="margin-bottom:14px;">
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:5px;">الحزمة *</label>
+        <select id="genPackage" style="width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;">
+          <option value="">— اختر حزمة —</option>
+          {% for p in letters_packages %}
+          <option value="{{ p.id }}">حزمة {{ p.package_number }} — {{ p.get_question_theme_display }}</option>
+          {% endfor %}
+        </select>
+      </div>
       <button type="button" onclick="generateBulkForm()" style="background:linear-gradient(135deg,#6d28d9,#06b6d4);color:#fff;border:none;border-radius:9px;padding:10px 22px;font-weight:800;font-size:13px;cursor:pointer;">
         ⚡ توليد النموذج
       </button>
+
     </div>
 
     <!-- حاوية النموذج المولّد -->
@@ -186,7 +196,8 @@ function generateBulkForm() {
   const cat = document.getElementById('genCategory').value;
   const diff = document.getElementById('genDifficulty').value;
   const types = TYPES_BY_COUNT[count];
-  const pkgVal = document.querySelector('[name="package"]')?.value || '';
+  const pkgVal = document.getElementById('genPackage')?.value || '';
+  if (!pkgVal) { alert('اختر الحزمة أولاً'); return; }
 
   const catOptions = ['','general','religious','science','geography','arabic','history','who_said','who_am_i','sports','politics'];
   const catLabels = {'':'— غير محدد —','general':'الثقافة العامة','religious':'ديني','science':'العلوم','geography':'الجغرافيا','arabic':'اللغة العربية','history':'التاريخ','who_said':'من القائل ⚠️','who_am_i':'من أنا؟','sports':'الرياضة','politics':'السياسة'};

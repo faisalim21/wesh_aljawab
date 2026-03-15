@@ -869,11 +869,16 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         extra_context = extra_context or {}
-
+        extra_context['letters_packages'] = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
         # معالجة الحفظ بالجملة
         if request.method == 'POST' and request.POST.get('bulk_action') == '1':
-            package_id = request.POST.get('package')
+            package_id = request.POST.get('package', '').strip()
+            if not package_id:
+                messages.error(request, '⛔ يرجى اختيار الحزمة أولاً.')
+                return HttpResponseRedirect(request.path)
             package = get_object_or_404(GamePackage, pk=package_id, game_type='letters')
+
+            
             saved = skipped = 0
             for key, value in request.POST.items():
                 if not key.startswith('q_') or not key.endswith('_question'):
