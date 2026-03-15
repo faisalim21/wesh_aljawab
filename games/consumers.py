@@ -367,6 +367,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception:
             return {}
 
+    async def broadcast_settings_update(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'settings_updated',
+            'settings': event.get('settings', {})
+        }))
+
     async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
         if confirmed:
             await self.send(text_data=json.dumps({

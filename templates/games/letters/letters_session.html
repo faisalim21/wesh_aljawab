@@ -80,6 +80,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
+
+    :root {
+      --team1-color: #22c55e;
+      --team1-stroke: #15803d;
+      --team2-color: #f97316;
+      --team2-stroke: #c2410c;
+    }
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       font-family: 'Tajawal', sans-serif;
@@ -138,9 +145,9 @@
 
     .hex-cell { cursor: pointer; transition: all 0.3s ease; }
     .hex-cell:hover .hex-shape { fill: #f0f9ff; stroke-width: 4; transform: scale(1.05); }
-    .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
+    .hex-cell.team1 .hex-shape { fill: var(--team1-color, #22c55e); stroke: var(--team1-stroke, #15803d); stroke-width: 4; }
     .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
-    .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
+    .hex-cell.team2 .hex-shape { fill: var(--team2-color, #f97316); stroke: var(--team2-stroke, #c2410c); stroke-width: 4; }
     .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
     .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
     .hex-text { fill: #6b46c1; font-family: 'Tajawal', sans-serif; font-size: 130px; font-weight: 900; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -1965,6 +1972,9 @@
           break;
         case 'pong':
           break;
+        case 'settings_updated':
+          applySettingsLocally(d.settings);
+          break;
         default:
           break;
       }
@@ -2247,50 +2257,73 @@ async function saveSettings() {
   }
 }
  
-// ===== تطبيق الإعدادات محلياً فور الحفظ =====
 function applySettingsLocally(settings) {
   if (!settings) return;
- 
-  // تحديث أسماء الفريقين في الصفحة
-  if (settings.team1_name) {
-    document.querySelectorAll('[id$="team1Score"], .team1-score').forEach(el => {
-      // نحدث النص بدون المس الأرقام
-    });
-    window.sessionData = window.sessionData || {};
-    window.sessionData.team1Name = settings.team1_name;
-  }
-  if (settings.team2_name) {
-    window.sessionData = window.sessionData || {};
-    window.sessionData.team2Name = settings.team2_name;
-  }
- 
-  // تحديث ألوان الفريقين في CSS
+
+  // ===== ألوان الفريقين عبر CSS variables (يطبق على كل شيء دفعة واحدة) =====
   if (settings.team1_color) {
     document.documentElement.style.setProperty('--team1-color', settings.team1_color);
-    // تحديث خلايا الفريق الأول في الـ SVG
-    document.querySelectorAll('.hex-cell.team1 .hex-shape').forEach(el => {
-      el.style.fill = settings.team1_color;
+    // نولد لون stroke أغمق بـ 20%
+    document.documentElement.style.setProperty('--team1-stroke', settings.team1_color);
+    // خلفية SVG (أعلى + أسفل = فريق 1)
+    document.querySelectorAll('#honeycombSvg use[href="#greenTop"], #honeycombSvg use[href="#greenBottom"]').forEach(el => {
+      el.setAttribute('fill', settings.team1_color);
+    });
+    // كرت النقاط فريق 1
+    document.querySelectorAll('.team1-score').forEach(el => {
+      el.style.background = `linear-gradient(135deg, ${settings.team1_color}33, ${settings.team1_color}18)`;
+      el.style.borderColor = settings.team1_color;
+      el.style.color = settings.team1_color;
     });
   }
+
   if (settings.team2_color) {
     document.documentElement.style.setProperty('--team2-color', settings.team2_color);
-    document.querySelectorAll('.hex-cell.team2 .hex-shape').forEach(el => {
-      el.style.fill = settings.team2_color;
+    document.documentElement.style.setProperty('--team2-stroke', settings.team2_color);
+    // خلفية SVG (يمين + يسار = فريق 2)
+    document.querySelectorAll('#honeycombSvg use[href="#orangeLeft"], #honeycombSvg use[href="#orangeRight"]').forEach(el => {
+      el.setAttribute('fill', settings.team2_color);
+    });
+    // كرت النقاط فريق 2
+    document.querySelectorAll('.team2-score').forEach(el => {
+      el.style.background = `linear-gradient(135deg, ${settings.team2_color}33, ${settings.team2_color}18)`;
+      el.style.borderColor = settings.team2_color;
+      el.style.color = settings.team2_color;
     });
   }
- 
-  // تحديث مؤقت الزر عالمياً
+
+  // ===== أسماء الفريقين في كروت النقاط =====
+  if (settings.team1_name) {
+    window.sessionData = window.sessionData || {};
+    window.sessionData.team1Name = settings.team1_name;
+    // موبايل
+    const m1 = document.querySelector('.scores-mobile .team1-score');
+    if (m1) m1.childNodes[0].textContent = `🟢 ${settings.team1_name}: `;
+    // ديسكتوب
+    const d1 = document.querySelector('.d-none.d-md-flex .team1-score');
+    if (d1) d1.childNodes[0].textContent = `${settings.team1_name}: `;
+  }
+  if (settings.team2_name) {
+    window.sessionData.team2Name = settings.team2_name;
+    const m2 = document.querySelector('.scores-mobile .team2-score');
+    if (m2) m2.childNodes[0].textContent = `🟠 ${settings.team2_name}: `;
+    const d2 = document.querySelector('.d-none.d-md-flex .team2-score');
+    if (d2) d2.childNodes[0].textContent = `${settings.team2_name}: `;
+  }
+
+  // ===== مؤقت الزر =====
   if (settings.buzz_timer_seconds) {
     window.BUZZ_TIMER_SECONDS = settings.buzz_timer_seconds;
   }
- 
-  // تحديث حجم الشبكة لو تغير
+
+  // ===== حجم الشبكة =====
   if (settings.grid_size && settings.grid_size !== window.currentGridSize) {
     window.currentGridSize = settings.grid_size;
     applyGridSize(settings.grid_size);
   }
 }
- 
+
+
 // ===== تطبيق حجم الشبكة =====
 function applyGridSize(gridSize) {
   const sizeMap = { '3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36 };
