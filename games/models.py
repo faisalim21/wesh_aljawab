@@ -329,8 +329,7 @@ class LettersGameQuestion(models.Model):
             raise ValidationError("الحرف مطلوب.")
         if len(self.letter.strip()) > 3:
             raise ValidationError("الحرف يجب ألا يتجاوز 3 خانات.")
-        if self.package and self.package.game_type != 'letters':
-            raise ValidationError("هذه الحزمة ليست من نوع خلية الحروف.")
+
 
 
 # =========================
