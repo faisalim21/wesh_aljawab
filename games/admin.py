@@ -717,15 +717,17 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
         return custom + urls
 
     def search_similar_view(self, request):
-        """API بحث عن أسئلة مشابهة بالنص أو الإجابة"""
+        """API بحث عن أسئلة مشابهة بالنص أو الإجابة أو بالحرف مباشرة"""
         q = request.GET.get('q', '').strip()
         results = []
-        if q and len(q) >= 2:
+        if q and len(q) >= 1:
             qs = LettersGameQuestion.objects.filter(
                 package__game_type='letters'
             ).filter(
-                Q(question__icontains=q) | Q(answer__icontains=q)
-            ).select_related('package').order_by('package__package_number', 'letter')[:20]
+                Q(letter=q) | Q(question__icontains=q) | Q(answer__icontains=q)
+            ).select_related('package').order_by('package__package_number', 'letter')[:50]
+
+            
 
             for item in qs:
                 order_map = {'main': '١', 'alt1': '٢', 'alt2': '٣', 'alt3': '٤', 'alt4': '٥'}
@@ -878,7 +880,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                 return HttpResponseRedirect(request.path)
             package = get_object_or_404(GamePackage, pk=package_id, game_type='letters')
 
-            
+
             saved = skipped = 0
             for key, value in request.POST.items():
                 if not key.startswith('q_') or not key.endswith('_question'):
