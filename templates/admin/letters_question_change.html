@@ -95,11 +95,19 @@
     <!-- أسئلة نفس الحرف -->
     <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;max-height:70vh;overflow-y:auto;">
       <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:14px;font-weight:800;">
-        📚 أسئلة حرف
-        <span style="color:#06b6d4;">{{ current_letter|default:"—" }}</span>
-        في الحزم السابقة
-        <span style="color:#94a3b8;font-size:12px;font-weight:500;">({{ same_letter_questions|length }} سؤال)</span>
+        📚 أسئلة حرف في الحزم السابقة
       </h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="letterSearchInput" maxlength="3" placeholder="أدخل حرفاً..."
+          style="flex:1;padding:8px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:14px;text-align:center;"/>
+        <button onclick="searchByLetter()" style="background:#6d28d9;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;">بحث</button>
+      </div>
+      <div id="letterSearchResults">
+        {% if same_letter_questions %}
+          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">حرف {{ current_letter }} — {{ same_letter_questions|length }} سؤال</div>
+        {% endif %}
+
+
 
       {% if same_letter_questions %}
         {% for q in same_letter_questions %}
@@ -268,5 +276,38 @@ function checkSim(el, letter, qtype) {
     } catch(e) { w.innerHTML=''; }
   }, 600);
 }
+
+async function searchByLetter() {
+  const letter = document.getElementById('letterSearchInput').value.trim();
+  const container = document.getElementById('letterSearchResults');
+  if (!letter) { container.innerHTML = '<p style="color:#94a3b8;font-size:12px;">أدخل حرفاً</p>'; return; }
+  container.innerHTML = '<p style="color:#94a3b8;font-size:12px;">جاري البحث...</p>';
+  try {
+    const res = await fetch(`/control-9f7a2c4e8b/games/lettersgamequestion/search-similar/?q=${encodeURIComponent(letter)}`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      container.innerHTML = '<p style="color:#22c55e;font-size:12px;">لا توجد أسئلة لهذا الحرف</p>';
+      return;
+    }
+    let html = `<div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">${data.count} نتيجة</div>`;
+    data.results.forEach(item => {
+      html += `<div style="border:1px solid #1f2937;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#111827;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <span style="background:#1e3a8a;color:#93c5fd;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;">${item.package}</span>
+          <span style="background:#1e1b4b;color:#a5b4fc;border-radius:999px;padding:1px 7px;font-size:11px;">حرف ${item.letter} / ${item.order}</span>
+        </div>
+        <div style="color:#e2e8f0;font-size:12px;margin-bottom:3px;">${item.question}</div>
+        <div style="color:#22c55e;font-size:11px;font-weight:700;">✅ ${item.answer}</div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:12px;">حدث خطأ</p>';
+  }
+}
+
+document.getElementById('letterSearchInput')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') searchByLetter();
+});
 </script>
 {% endblock %}
