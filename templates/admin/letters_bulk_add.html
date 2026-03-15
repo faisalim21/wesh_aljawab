@@ -1,0 +1,212 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div style="max-width:1400px;margin:0 auto;padding:16px;">
+
+  <h2 style="margin:0 0 20px;color:#e2e8f0;">📝 إضافة أسئلة بالجملة — خلية الحروف</h2>
+
+  <!-- إعدادات التوليد -->
+  <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:20px;margin-bottom:20px;">
+    <h3 style="color:#06b6d4;margin:0 0 16px;font-size:15px;">⚙️ إعدادات النموذج</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+
+      <div>
+        <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">الحزمة *</label>
+        <select id="pkgSelect" style="width:100%;padding:9px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+          <option value="">— اختر حزمة —</option>
+          {% for p in packages %}
+          <option value="{{ p.id }}">حزمة {{ p.package_number }} — {{ p.get_question_theme_display }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">عدد الأسئلة لكل حرف</label>
+        <select id="countSelect" style="width:100%;padding:9px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+          <option value="1">١ سؤال</option>
+          <option value="2">٢ سؤال</option>
+          <option value="3">٣ أسئلة</option>
+          <option value="4">٤ أسئلة</option>
+          <option value="5" selected>٥ أسئلة</option>
+        </select>
+      </div>
+
+      <div>
+        <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">المجال الافتراضي</label>
+        <select id="categoryDefault" style="width:100%;padding:9px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+          {% for val, label in category_choices %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label style="color:#94a3b8;font-size:13px;display:block;margin-bottom:6px;">الصعوبة الافتراضية</label>
+        <select id="difficultyDefault" style="width:100%;padding:9px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;">
+          {% for val, label in difficulty_choices %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+    </div>
+
+    <div style="margin-top:16px;">
+      <button onclick="generateForm()" style="background:linear-gradient(135deg,#6d28d9,#06b6d4);color:#fff;border:none;border-radius:10px;padding:12px 24px;font-weight:800;font-size:14px;cursor:pointer;">
+        ⚡ توليد النموذج
+      </button>
+    </div>
+  </div>
+
+  <!-- النموذج الرئيسي -->
+  <form method="post" id="bulkForm" action="{% url 'admin:letters_question_bulk_add' %}">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save">
+    <input type="hidden" name="package_id" id="packageIdInput">
+
+    <div id="formContainer"></div>
+
+    <div id="submitBar" style="display:none;position:sticky;bottom:0;background:#0b1220;border-top:1px solid #1f2937;padding:14px 0;margin-top:20px;text-align:center;gap:12px;display:none;justify-content:center;">
+      <button type="submit" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:10px;padding:13px 32px;font-weight:800;font-size:15px;cursor:pointer;">
+        💾 حفظ الكل
+      </button>
+      <a href="{% url 'admin:games_lettersgamequestion_changelist' %}" style="background:#374151;color:#e2e8f0;border-radius:10px;padding:13px 24px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;">
+        إلغاء
+      </a>
+    </div>
+  </form>
+
+</div>
+
+<script>
+const ALL_LETTERS = {{ all_letters|safe }};
+const TYPE_MAP_AR = {{ type_map_ar|safe }};
+const CATEGORY_CHOICES = {{ category_choices|safe }};
+const DIFFICULTY_CHOICES = {{ difficulty_choices|safe }};
+
+// خريطة الأنواع حسب الترتيب
+const TYPES_BY_COUNT = {
+  1: ['main'],
+  2: ['main', 'alt1'],
+  3: ['main', 'alt1', 'alt2'],
+  4: ['main', 'alt1', 'alt2', 'alt3'],
+  5: ['main', 'alt1', 'alt2', 'alt3', 'alt4'],
+};
+
+function buildCategoryOptions(selected) {
+  return CATEGORY_CHOICES.map(([val, label]) =>
+    `<option value="${val}" ${val === selected ? 'selected' : ''}>${label}</option>`
+  ).join('');
+}
+
+function buildDifficultyOptions(selected) {
+  return DIFFICULTY_CHOICES.map(([val, label]) =>
+    `<option value="${val}" ${val === selected ? 'selected' : ''}>${label}</option>`
+  ).join('');
+}
+
+function generateForm() {
+  const pkg = document.getElementById('pkgSelect').value;
+  if (!pkg) { alert('اختر الحزمة أولاً'); return; }
+
+  document.getElementById('packageIdInput').value = pkg;
+
+  const count = parseInt(document.getElementById('countSelect').value);
+  const catDef = document.getElementById('categoryDefault').value;
+  const diffDef = document.getElementById('difficultyDefault').value;
+  const types = TYPES_BY_COUNT[count] || TYPES_BY_COUNT[5];
+
+  let html = '';
+
+  ALL_LETTERS.forEach((letter, li) => {
+    html += `
+    <div style="background:#0b1220;border:1px solid #1f2937;border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <span style="background:linear-gradient(135deg,#6d28d9,#06b6d4);color:#fff;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;flex-shrink:0;">${letter}</span>
+        <span style="color:#94a3b8;font-size:13px;">حرف ${letter} — ${count} سؤال</span>
+      </div>
+      <div style="display:grid;gap:10px;">
+    `;
+
+    types.forEach((qtype, qi) => {
+      const orderLabel = TYPE_MAP_AR[qtype] || qtype;
+      html += `
+      <div style="background:#111827;border:1px solid #1f2937;border-radius:10px;padding:12px;">
+        <div style="color:#a78bfa;font-size:12px;font-weight:700;margin-bottom:8px;">السؤال ${orderLabel}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto auto;gap:8px;align-items:start;">
+          <div>
+            <label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">السؤال *</label>
+            <textarea
+              name="q_${letter}_${qtype}_question"
+              id="inp_${letter}_${qtype}"
+              rows="2"
+              oninput="checkSimilar(this, '${letter}', '${qtype}')"
+              style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;resize:vertical;"
+              placeholder="أدخل السؤال..."
+            ></textarea>
+            <div id="warn_${letter}_${qtype}" style="font-size:11px;margin-top:3px;"></div>
+          </div>
+          <div>
+            <label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">الإجابة *</label>
+            <input
+              type="text"
+              name="q_${letter}_${qtype}_answer"
+              style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;"
+              placeholder="الإجابة..."
+            />
+          </div>
+          <div>
+            <label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">المجال</label>
+            <select name="q_${letter}_${qtype}_category" style="padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:12px;">
+              ${buildCategoryOptions(catDef)}
+            </select>
+          </div>
+          <div>
+            <label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">الصعوبة</label>
+            <select name="q_${letter}_${qtype}_difficulty" style="padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:12px;">
+              ${buildDifficultyOptions(diffDef)}
+            </select>
+          </div>
+        </div>
+      </div>
+      `;
+    });
+
+    html += `</div></div>`;
+  });
+
+  document.getElementById('formContainer').innerHTML = html;
+  document.getElementById('submitBar').style.display = 'flex';
+  document.getElementById('submitBar').style.display = 'flex';
+
+  // scroll للنموذج
+  document.getElementById('formContainer').scrollIntoView({behavior: 'smooth'});
+}
+
+// بحث تشابه مع debounce
+const debounceTimers = {};
+function checkSimilar(el, letter, qtype) {
+  const key = `${letter}_${qtype}`;
+  clearTimeout(debounceTimers[key]);
+  debounceTimers[key] = setTimeout(async () => {
+    const q = el.value.trim();
+    const warnEl = document.getElementById(`warn_${letter}_${qtype}`);
+    if (!q || q.length < 3) { warnEl.innerHTML = ''; return; }
+
+    try {
+      const res = await fetch(`/control-9f7a2c4e8b/games/lettersgamequestion/search-similar/?q=${encodeURIComponent(q)}`);
+      const data = await res.json();
+      if (data.count > 0) {
+        const first = data.results[0];
+        warnEl.innerHTML = `<span style="color:#f59e0b;">⚠️ مشابه: ${first.package} / حرف ${first.letter}: "${first.question.substring(0,40)}..."</span>`;
+      } else {
+        warnEl.innerHTML = `<span style="color:#22c55e;">✅ لا يوجد تشابه</span>`;
+      }
+    } catch(e) {
+      warnEl.innerHTML = '';
+    }
+  }, 600);
+}
+</script>
+{% endblock %}

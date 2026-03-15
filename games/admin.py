@@ -657,8 +657,22 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     # الحقول في شاشة الإضافة/التعديل
     fields = ('package', 'letter', 'question_type', 'question', 'answer', 'category', 'difficulty')
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'package':
+            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+
     change_form_template = "admin/letters_question_change.html"
     add_form_template = "admin/letters_question_change.html"
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['bulk_add_url'] = reverse('admin:letters_question_bulk_add')
+        return super().changelist_view(request, extra_context)
+
+        
     class Media:
         css = {'all': []}
         js = []
@@ -698,6 +712,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         custom = [
             path('search-similar/', self.admin_site.admin_view(self.search_similar_view), name='letters_question_search_similar'),
+            path('bulk-add/', self.admin_site.admin_view(self.bulk_add_view), name='letters_question_bulk_add'),
         ]
         return custom + urls
 
@@ -726,6 +741,105 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                 })
         from django.http import JsonResponse
         return JsonResponse({'results': results, 'count': len(results)})
+    
+    def bulk_add_view(self, request):
+        from django.http import JsonResponse
+
+        ALL_LETTERS = ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي']
+        TYPE_MAP = {'1': 'main', '2': 'alt1', '3': 'alt2', '4': 'alt3', '5': 'alt4'}
+        TYPE_MAP_AR = {'main': 'رئيسي', 'alt1': 'بديل ١', 'alt2': 'بديل ٢', 'alt3': 'بديل ٣', 'alt4': 'بديل ٤'}
+
+        packages = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+
+        if request.method == 'POST' and request.POST.get('action') == 'save':
+            package_id = request.POST.get('package_id')
+            package = get_object_or_404(GamePackage, pk=package_id, game_type='letters')
+            saved = 0
+            duplicates = []
+            errors = []
+
+            for key, value in request.POST.items():
+                if not key.startswith('q_'):
+                    continue
+                value = value.strip()
+                if not value:
+                    continue
+                parts = key.split('_')
+                if len(parts) < 4:
+                    continue
+                letter = parts[1]
+                qtype = parts[2]
+                field = parts[3]
+                if field != 'question':
+                    continue
+
+                answer_key = f'q_{letter}_{qtype}_answer'
+                category_key = f'q_{letter}_{qtype}_category'
+                difficulty_key = f'q_{letter}_{qtype}_difficulty'
+
+                answer = request.POST.get(answer_key, '').strip()
+                category = request.POST.get(category_key, '').strip()
+                difficulty = request.POST.get(difficulty_key, 'unspecified').strip()
+
+                if not answer:
+                    continue
+
+                # تحقق تكرار
+                exact = LettersGameQuestion.objects.filter(
+                    package__game_type='letters',
+                    question__iexact=value
+                ).first()
+                if exact:
+                    duplicates.append(f"{letter}: {value[:40]}")
+                    continue
+
+                try:
+                    LettersGameQuestion.objects.update_or_create(
+                        package=package,
+                        letter=letter,
+                        question_type=qtype,
+                        defaults={'question': value, 'answer': answer, 'category': category, 'difficulty': difficulty}
+                    )
+                    saved += 1
+                except Exception as e:
+                    errors.append(str(e))
+
+            if duplicates:
+                messages.warning(request, f'⚠️ تم تخطي {len(duplicates)} سؤال مكرر.')
+            if errors:
+                messages.error(request, f'❌ أخطاء: {len(errors)}')
+            if saved:
+                messages.success(request, f'✅ تم حفظ {saved} سؤال بنجاح.')
+
+            return HttpResponseRedirect(reverse('admin:games_lettersgamequestion_changelist'))
+
+        ctx = {
+            **self.admin_site.each_context(request),
+            'title': 'إضافة أسئلة بالجملة — خلية الحروف',
+            'packages': packages,
+            'all_letters': ALL_LETTERS,
+            'type_map_ar': TYPE_MAP_AR,
+            'category_choices': [
+                ('', '— غير محدد —'),
+                ('general', 'الثقافة العامة'),
+                ('religious', 'ديني'),
+                ('science', 'العلوم'),
+                ('geography', 'الجغرافيا'),
+                ('arabic', 'اللغة العربية'),
+                ('history', 'التاريخ'),
+                ('who_said', 'من القائل ⚠️'),
+                ('who_am_i', 'من أنا؟'),
+                ('sports', 'الرياضة'),
+                ('politics', 'السياسة'),
+            ],
+            'difficulty_choices': [
+                ('unspecified', 'غير محدد'),
+                ('easy', 'سهل'),
+                ('medium', 'متوسط'),
+                ('hard', 'صعب'),
+            ],
+        }
+        return TemplateResponse(request, 'admin/letters_bulk_add.html', ctx)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
