@@ -981,6 +981,41 @@
   .settings-body { padding: 16px 18px; }
   .settings-footer { padding: 14px 18px; }
 }
+
+.reset-section-btn {
+  margin-top: 10px;
+  background: none;
+  border: 1.5px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reset-section-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fff5f5;
+}
+.settings-reset-all-btn {
+  padding: 10px 16px;
+  border: 1.5px dashed #ef4444;
+  border-radius: 12px;
+  background: #fff;
+  color: #ef4444;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+.settings-reset-all-btn:hover {
+  background: #fff5f5;
+}
 </style>
  
 </head>
@@ -1131,6 +1166,10 @@
                   </div>
                 </div>
               </div>
+
+              <button type="button" class="reset-section-btn" onclick="resetTeamsToDefault()">
+                ↺ استعادة الافتراضي
+              </button>
             </div>
       
             <!-- ===== قسم 2: حجم الشبكة ===== -->
@@ -1300,6 +1339,9 @@
       
           <!-- Footer -->
           <div class="settings-footer">
+            <button class="settings-reset-all-btn" onclick="resetAllToDefault()" type="button">
+              ↺ إعادة كل الإعدادات
+            </button>
             <button class="settings-cancel-btn" onclick="closeSettings()" type="button">إلغاء</button>
             <button class="settings-save-btn" onclick="saveSettings()" type="button" id="saveSettingsBtn">
               <span id="saveSettingsBtnText">💾 حفظ الإعدادات</span>
@@ -2346,6 +2388,48 @@ function applyGridSize(gridSize) {
 // متغير عالمي لمدة قفل الزر (تُستخدم في WebSocket)
 window.BUZZ_TIMER_SECONDS = 3;
 window.currentGridSize = '5x5';
+
+const DEFAULTS = {
+  team1_name: 'الفريق الأخضر',
+  team2_name: 'الفريق البرتقالي',
+  team1_color: '#22c55e',
+  team2_color: '#f97316',
+  grid_size: '5x5',
+  buzz_timer_seconds: 3,
+  penalty_timer_enabled: false,
+  penalty_timer_seconds: 10,
+  show_grid_to_contestants: false,
+};
+
+function resetTeamsToDefault() {
+  document.getElementById('setting_team1_name').value = DEFAULTS.team1_name;
+  document.getElementById('setting_team2_name').value = DEFAULTS.team2_name;
+  document.getElementById('setting_team1_color').value = DEFAULTS.team1_color;
+  document.getElementById('setting_team2_color').value = DEFAULTS.team2_color;
+  document.getElementById('team1Dot').style.background = DEFAULTS.team1_color;
+  document.getElementById('team2Dot').style.background = DEFAULTS.team2_color;
+  document.getElementById('team1ColorHex').textContent = DEFAULTS.team1_color;
+  document.getElementById('team2ColorHex').textContent = DEFAULTS.team2_color;
+}
+
+function resetAllToDefault() {
+  if (!confirm('تأكيد إعادة جميع الإعدادات للافتراضي؟')) return;
+  resetTeamsToDefault();
+  // الشبكة
+  document.querySelectorAll('.grid-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.size === DEFAULTS.grid_size);
+  });
+  const radio = document.querySelector(`input[name="grid_size"][value="${DEFAULTS.grid_size}"]`);
+  if (radio) radio.checked = true;
+  // المؤقتات
+  document.getElementById('buzzTimerVal').textContent = DEFAULTS.buzz_timer_seconds;
+  document.getElementById('penaltyTimerVal').textContent = DEFAULTS.penalty_timer_seconds;
+  document.getElementById('penaltyEnabled').checked = DEFAULTS.penalty_timer_enabled;
+  togglePenaltyTimer(DEFAULTS.penalty_timer_enabled);
+  // خيارات العرض
+  document.getElementById('showGridToContestants').checked = DEFAULTS.show_grid_to_contestants;
+  document.getElementById('noHostModeToggle').checked = false;
+}
 </script>
 
 
