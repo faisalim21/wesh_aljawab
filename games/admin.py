@@ -672,7 +672,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
         extra_context['bulk_add_url'] = reverse('admin:letters_question_bulk_add')
         return super().changelist_view(request, extra_context)
 
-        
+
     class Media:
         css = {'all': []}
         js = []
@@ -869,6 +869,43 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         extra_context = extra_context or {}
+
+        # معالجة الحفظ بالجملة
+        if request.method == 'POST' and request.POST.get('bulk_action') == '1':
+            package_id = request.POST.get('package')
+            package = get_object_or_404(GamePackage, pk=package_id, game_type='letters')
+            saved = skipped = 0
+            for key, value in request.POST.items():
+                if not key.startswith('q_') or not key.endswith('_question'):
+                    continue
+                value = value.strip()
+                if not value:
+                    continue
+                parts = key.split('_')
+                if len(parts) < 4:
+                    continue
+                letter = parts[1]
+                qtype = parts[2]
+                answer = request.POST.get(f'q_{letter}_{qtype}_answer', '').strip()
+                category = request.POST.get(f'q_{letter}_{qtype}_category', '').strip()
+                difficulty = request.POST.get(f'q_{letter}_{qtype}_difficulty', 'unspecified').strip()
+                if not answer:
+                    continue
+                exact = LettersGameQuestion.objects.filter(package__game_type='letters', question__iexact=value).first()
+                if exact:
+                    skipped += 1
+                    continue
+                LettersGameQuestion.objects.update_or_create(
+                    package=package, letter=letter, question_type=qtype,
+                    defaults={'question': value, 'answer': answer, 'category': category, 'difficulty': difficulty}
+                )
+                saved += 1
+            if skipped:
+                messages.warning(request, f'⚠️ تم تخطي {skipped} سؤال مكرر.')
+            if saved:
+                messages.success(request, f'✅ تم حفظ {saved} سؤال بنجاح.')
+            return HttpResponseRedirect(reverse('admin:games_lettersgamequestion_changelist'))
+
         letter = request.GET.get('letter', '') or request.POST.get('letter', '')
         if letter:
             same_letter_qs = LettersGameQuestion.objects.filter(
