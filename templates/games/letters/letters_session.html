@@ -405,6 +405,577 @@
     .no-host-toggle.active .toggle-label { color: #6d28d9; }
           
   </style>
+
+
+<!-- ========== CSS الإعدادات ========== -->
+<style>
+/* ---- زر الفتح ---- */
+.settings-trigger-wrap {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 14px;
+}
+ 
+.settings-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b0764 0%, #4c1d95 60%, #1e3a8a 100%);
+  color: #fff;
+  border: 1.5px solid rgba(139,92,246,0.4);
+  border-radius: 999px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(59,7,100,0.25);
+  position: relative;
+}
+.settings-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139,92,246,0.35);
+  border-color: rgba(139,92,246,0.7);
+}
+.settings-trigger-icon {
+  display: flex;
+  align-items: center;
+  animation: spinSlow 8s linear infinite;
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.settings-trigger-btn:hover .settings-trigger-icon {
+  animation-duration: 1s;
+}
+.settings-trigger-badge {
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+ 
+/* ---- Overlay ---- */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,5,20,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+ 
+/* ---- Modal ---- */
+.settings-modal {
+  background: #fafafa;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.15);
+  transform: translateY(24px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+.settings-overlay.open .settings-modal {
+  transform: translateY(0) scale(1);
+}
+ 
+/* ---- Header ---- */
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, #3b0764, #4c1d95 50%, #1e3a8a);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+.settings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-header-icon {
+  font-size: 1.8rem;
+  animation: spinSlow 10s linear infinite;
+}
+.settings-header-title {
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+}
+.settings-header-sub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+}
+.settings-close-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  color: #fff;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+.settings-close-btn:hover { background: rgba(255,255,255,0.22); }
+ 
+/* ---- Body ---- */
+.settings-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-body::-webkit-scrollbar { width: 6px; }
+.settings-body::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 999px; }
+ 
+/* ---- Section ---- */
+.settings-section {
+  background: #fff;
+  border: 1.5px solid rgba(139,92,246,0.12);
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.settings-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #1f2937;
+  font-family: 'Tajawal', sans-serif;
+  margin-bottom: 5px;
+}
+.settings-section-icon { font-size: 1.15rem; }
+.settings-section-desc {
+  font-size: 0.83rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+ 
+/* ---- Teams Grid ---- */
+.teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.team-setting-card {
+  border-radius: 14px;
+  padding: 14px;
+  border: 1.5px solid;
+  background: #f9fafb;
+}
+.team1-card { border-color: rgba(34,197,94,0.3); background: linear-gradient(135deg,#f0fdf4,#f9fafb); }
+.team2-card { border-color: rgba(249,115,22,0.3); background: linear-gradient(135deg,#fff7ed,#f9fafb); }
+.team-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.team-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.team-card-label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #374151;
+  font-family: 'Tajawal', sans-serif;
+}
+.settings-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+  margin-bottom: 10px;
+  text-align: right;
+}
+.settings-input:focus { border-color: #8b5cf6; }
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+}
+.color-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.color-picker {
+  width: 36px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+}
+.color-hex {
+  font-size: 0.78rem;
+  font-family: monospace;
+  color: #374151;
+  font-weight: 700;
+}
+ 
+/* ---- Grid Size ---- */
+.grid-size-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.grid-option input { display: none; }
+.grid-option-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px 10px;
+  border-radius: 14px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 72px;
+}
+.grid-option:hover .grid-option-inner,
+.grid-option.selected .grid-option-inner {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg,#f5f3ff,#ede9fe);
+  box-shadow: 0 4px 12px rgba(139,92,246,0.15);
+}
+.grid-preview {
+  display: grid;
+  gap: 2px;
+}
+.grid-3x3 { grid-template-columns: repeat(3,10px); }
+.grid-4x4 { grid-template-columns: repeat(4,8px); }
+.grid-5x5 { grid-template-columns: repeat(5,7px); }
+.grid-6x6 { grid-template-columns: repeat(6,6px); }
+.grid-preview div {
+  border-radius: 2px;
+  background: #d1d5db;
+  transition: background 0.2s;
+}
+.grid-3x3 div { width:10px; height:10px; }
+.grid-4x4 div { width:8px; height:8px; }
+.grid-5x5 div { width:7px; height:7px; }
+.grid-6x6 div { width:6px; height:6px; }
+.grid-option.selected .grid-preview div,
+.grid-option:hover .grid-preview div { background: #8b5cf6; }
+.grid-option-label {
+  font-weight: 900;
+  font-size: 0.88rem;
+  color: #374151;
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.grid-option-sub {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 600;
+  font-family: 'Tajawal', sans-serif;
+}
+.default-badge {
+  background: #8b5cf6;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+ 
+/* ---- Timer Settings ---- */
+.timer-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.timer-setting:last-child { border-bottom: none; padding-bottom: 0; }
+.timer-setting-info { flex: 1; }
+.timer-setting-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #111827;
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.timer-setting-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.timer-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.timer-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #374151;
+  font-family: monospace;
+}
+.timer-btn:hover {
+  background: #ede9fe;
+  border-color: #8b5cf6;
+  color: #6d28d9;
+}
+.timer-display {
+  min-width: 52px;
+  text-align: center;
+  background: linear-gradient(135deg,#3b0764,#4c1d95);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-family: 'Tajawal', sans-serif;
+}
+.timer-display span:first-child { font-size: 1.2rem; font-weight: 900; }
+.timer-unit { font-size: 0.75rem; font-weight: 700; opacity: 0.8; margin-right: 2px; }
+ 
+/* ---- Recommend / Warn Pills ---- */
+.recommend-pill {
+  display: inline-block;
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+.warn-pill {
+  display: inline-block;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+.new-pill {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+ 
+/* ---- Toggle Settings ---- */
+.toggle-setting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.toggle-setting:last-child { border-bottom: none; padding-bottom: 0; }
+.toggle-setting-info { flex: 1; }
+.toggle-setting-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #111827;
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.toggle-setting-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  line-height: 1.6;
+}
+ 
+/* Big Toggle */
+.big-toggle { position: relative; flex-shrink: 0; cursor: pointer; margin-top: 2px; }
+.big-toggle input { display: none; }
+.big-toggle-track {
+  display: block;
+  width: 52px;
+  height: 28px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.3s;
+}
+.big-toggle input:checked + .big-toggle-track { background: #8b5cf6; }
+.big-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.big-toggle input:checked + .big-toggle-track .big-toggle-thumb {
+  transform: translateX(-24px);
+}
+ 
+/* Mini Toggle (inline) */
+.toggle-inline { display: inline-flex; align-items: center; }
+.mini-toggle { position: relative; cursor: pointer; }
+.mini-toggle input { display: none; }
+.mini-toggle-track {
+  display: block;
+  width: 38px;
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.25s;
+}
+.mini-toggle input:checked + .mini-toggle-track { background: #8b5cf6; }
+.mini-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.mini-toggle input:checked + .mini-toggle-track::after { transform: translateX(-18px); }
+ 
+/* ---- Footer ---- */
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+  flex-shrink: 0;
+}
+.settings-cancel-btn {
+  padding: 10px 20px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.settings-cancel-btn:hover { border-color: #9ca3af; color: #374151; }
+.settings-save-btn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b0764, #4c1d95 50%, #1e3a8a);
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 900;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(59,7,100,0.3);
+}
+.settings-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(139,92,246,0.4);
+}
+.settings-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+ 
+@media (max-width: 480px) {
+  .settings-modal { border-radius: 20px 20px 0 0; max-height: 92vh; }
+  .settings-overlay { align-items: flex-end; padding: 0; }
+  .teams-grid { grid-template-columns: 1fr; }
+  .grid-size-options { gap: 8px; }
+  .settings-header { padding: 16px 18px 14px; }
+  .settings-body { padding: 16px 18px; }
+  .settings-footer { padding: 14px 18px; }
+}
+</style>
+ 
 </head>
 <body>
 
@@ -463,27 +1034,271 @@
 
 
 
-      <!-- ===== خيار إضافي: وضع بدون مقدم ===== -->
-      <div style="margin: 0 0 14px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb);"></div>
-          <span style="font-size:0.78rem;font-weight:800;color:#9ca3af;white-space:nowrap;padding:0 6px;">خيار إضافي</span>
-          <div style="flex:1;height:1px;background:linear-gradient(90deg,#e5e7eb,transparent);"></div>
-        </div>
-
-        <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:14px;padding:12px 14px;">
-          <p style="margin:0 0 10px;font-size:0.88rem;font-weight:700;color:#6b7280;line-height:1.6;">
-            ⚠️ للحصول على أفضل تجربة ممكنة، <strong style="color:#111827;">يُنصح بوجود مقدم</strong> يدير اللعبة ويتحكم بالإجابات والنقاط.
-            <br>إذا كان عددكم قليلاً وتريدون اللعب بأنفسكم، يمكنكم إخفاء الإجابات وكشفها واحدة واحدة.
-          </p>
-
-          <button class="no-host-toggle" id="noHostToggle" onclick="toggleNoHostMode()" style="margin:0;">
-            <div>
-              <div class="toggle-label">🎭 وضع بدون مقدم</div>
-              <div class="toggle-sub">الإجابات ظاهرة — اضغط لإخفائها</div>
+      <!-- ⚙️ زر الإعدادات -->
+      <div class="settings-trigger-wrap">
+        <button class="settings-trigger-btn" onclick="openSettings()" type="button">
+          <span class="settings-trigger-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span>إعدادات الجلسة</span>
+          <span class="settings-trigger-badge" id="settingsChangedBadge" style="display:none">محدّث</span>
+        </button>
+      </div>
+      
+      <!-- ========== Modal الإعدادات ========== -->
+      <div id="settingsOverlay" class="settings-overlay" onclick="closeSettingsOnBackdrop(event)">
+        <div class="settings-modal" role="dialog" aria-modal="true" aria-label="إعدادات الجلسة">
+      
+          <!-- Header -->
+          <div class="settings-header">
+            <div class="settings-header-left">
+              <div class="settings-header-icon">⚙️</div>
+              <div>
+                <div class="settings-header-title">إعدادات الجلسة</div>
+                <div class="settings-header-sub">خصّص تجربة اللعبة على كيفك</div>
+              </div>
             </div>
-            <div class="toggle-icon"></div>
-          </button>
+            <button class="settings-close-btn" onclick="closeSettings()" type="button" aria-label="إغلاق">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+      
+          <!-- Body -->
+          <div class="settings-body">
+      
+            <!-- ===== قسم 1: الفريقان ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🏆</span>
+                الفريقان
+              </div>
+              <div class="settings-section-desc">اسم وكلور كل فريق — يظهر في جميع الشاشات فور الحفظ</div>
+      
+              <div class="teams-grid">
+                <!-- الفريق 1 -->
+                <div class="team-setting-card team1-card">
+                  <div class="team-card-header">
+                    <div class="team-dot" id="team1Dot" style="background:#22c55e;"></div>
+                    <span class="team-card-label">الفريق الأول</span>
+                  </div>
+                  <input
+                    type="text"
+                    id="setting_team1_name"
+                    class="settings-input"
+                    placeholder="الفريق الأخضر"
+                    maxlength="50"
+                  />
+                  <div class="color-row">
+                    <label class="color-label">اللون</label>
+                    <div class="color-picker-wrap">
+                      <input type="color" id="setting_team1_color" class="color-picker" value="#22c55e"
+                        oninput="document.getElementById('team1Dot').style.background=this.value; document.getElementById('team1ColorHex').textContent=this.value"/>
+                      <span class="color-hex" id="team1ColorHex">#22c55e</span>
+                    </div>
+                  </div>
+                </div>
+      
+                <!-- الفريق 2 -->
+                <div class="team-setting-card team2-card">
+                  <div class="team-card-header">
+                    <div class="team-dot" id="team2Dot" style="background:#f97316;"></div>
+                    <span class="team-card-label">الفريق الثاني</span>
+                  </div>
+                  <input
+                    type="text"
+                    id="setting_team2_name"
+                    class="settings-input"
+                    placeholder="الفريق البرتقالي"
+                    maxlength="50"
+                  />
+                  <div class="color-row">
+                    <label class="color-label">اللون</label>
+                    <div class="color-picker-wrap">
+                      <input type="color" id="setting_team2_color" class="color-picker" value="#f97316"
+                        oninput="document.getElementById('team2Dot').style.background=this.value; document.getElementById('team2ColorHex').textContent=this.value"/>
+                      <span class="color-hex" id="team2ColorHex">#f97316</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+      
+            <!-- ===== قسم 2: حجم الشبكة ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🔲</span>
+                حجم الشبكة
+              </div>
+              <div class="settings-section-desc">
+                عدد الخلايا في خلية الحروف — <strong>الافتراضي 5×5</strong> مناسب لمعظم الجلسات
+              </div>
+              <div class="grid-size-options">
+                <label class="grid-option" data-size="3x3">
+                  <input type="radio" name="grid_size" value="3x3" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-3x3">
+                      <div></div><div></div><div></div>
+                      <div></div><div></div><div></div>
+                      <div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">3×3</span>
+                    <span class="grid-option-sub">9 خلايا</span>
+                  </div>
+                </label>
+                <label class="grid-option" data-size="4x4">
+                  <input type="radio" name="grid_size" value="4x4" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-4x4">
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">4×4</span>
+                    <span class="grid-option-sub">16 خلية</span>
+                  </div>
+                </label>
+                <label class="grid-option selected" data-size="5x5">
+                  <input type="radio" name="grid_size" value="5x5" checked />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-5x5">
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">5×5 <span class="default-badge">افتراضي</span></span>
+                    <span class="grid-option-sub">25 خلية</span>
+                  </div>
+                </label>
+                <label class="grid-option" data-size="6x6">
+                  <input type="radio" name="grid_size" value="6x6" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-6x6">
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">6×6</span>
+                    <span class="grid-option-sub">36 خلية</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+      
+            <!-- ===== قسم 3: مؤقتات ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">⏱️</span>
+                المؤقتات
+              </div>
+      
+              <!-- مؤقت الزر -->
+              <div class="timer-setting">
+                <div class="timer-setting-info">
+                  <div class="timer-setting-title">مدة قفل زر الإجابة</div>
+                  <div class="timer-setting-desc">
+                    بعد ضغط المتسابق، يُقفل الزر لهذه المدة قبل فتحه للباقين.
+                    <span class="recommend-pill">⭐ الموصى به: 3 ثوانٍ</span>
+                  </div>
+                </div>
+                <div class="timer-control">
+                  <button class="timer-btn" onclick="adjustTimer('buzz', -1)" type="button">−</button>
+                  <div class="timer-display">
+                    <span id="buzzTimerVal">3</span>
+                    <span class="timer-unit">ث</span>
+                  </div>
+                  <button class="timer-btn" onclick="adjustTimer('buzz', 1)" type="button">+</button>
+                </div>
+              </div>
+      
+              <!-- مؤقت العقوبة -->
+              <div class="timer-setting">
+                <div class="timer-setting-info">
+                  <div class="timer-setting-title">
+                    مؤقت العقوبة بعد الإجابة الخاطئة
+                    <span class="toggle-inline">
+                      <label class="mini-toggle">
+                        <input type="checkbox" id="penaltyEnabled" onchange="togglePenaltyTimer(this.checked)"/>
+                        <span class="mini-toggle-track"></span>
+                      </label>
+                    </span>
+                  </div>
+                  <div class="timer-setting-desc">
+                    إذا أجاب فريق خطأ، يُمنع من الضغط لهذه المدة.
+                    <span class="recommend-pill">⭐ الموصى به: 10 ثوانٍ</span>
+                  </div>
+                </div>
+                <div class="timer-control" id="penaltyTimerControl" style="opacity:0.4;pointer-events:none;">
+                  <button class="timer-btn" onclick="adjustTimer('penalty', -1)" type="button">−</button>
+                  <div class="timer-display">
+                    <span id="penaltyTimerVal">10</span>
+                    <span class="timer-unit">ث</span>
+                  </div>
+                  <button class="timer-btn" onclick="adjustTimer('penalty', 1)" type="button">+</button>
+                </div>
+              </div>
+            </div>
+      
+            <!-- ===== قسم 4: خيارات العرض ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">📺</span>
+                خيارات العرض
+              </div>
+      
+              <!-- إظهار الخلية للمتسابقين -->
+              <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                  <div class="toggle-setting-title">إظهار الخلية في صفحة المتسابقين</div>
+                  <div class="toggle-setting-desc">
+                    يعرض شبكة الحروف مباشرة لكل المتسابقين على أجهزتهم — مفيد لو ما عندك شاشة عرض.
+                    <br><span class="warn-pill">⚠️ مناسب للجلسات بدون شاشة عرض خارجية</span>
+                  </div>
+                </div>
+                <label class="big-toggle">
+                  <input type="checkbox" id="showGridToContestants"/>
+                  <span class="big-toggle-track">
+                    <span class="big-toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+      
+              <!-- وضع بدون مقدم (انتقل من الخارج لهنا) -->
+              <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                  <div class="toggle-setting-title">وضع بدون مقدم <span class="new-pill">جديد</span></div>
+                  <div class="toggle-setting-desc">
+                    يخفي الإجابات ويسمح بكشفها واحدة واحدة — مناسب لو اللاعبون يديرون اللعبة بأنفسهم.
+                    <br><span class="recommend-pill">⭐ للحصول على أفضل تجربة، يُنصح بوجود مقدم</span>
+                  </div>
+                </div>
+                <label class="big-toggle">
+                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNoHostMode()"/>
+                  <span class="big-toggle-track">
+                    <span class="big-toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+      
+          </div><!-- /settings-body -->
+      
+          <!-- Footer -->
+          <div class="settings-footer">
+            <button class="settings-cancel-btn" onclick="closeSettings()" type="button">إلغاء</button>
+            <button class="settings-save-btn" onclick="saveSettings()" type="button" id="saveSettingsBtn">
+              <span id="saveSettingsBtnText">💾 حفظ الإعدادات</span>
+            </button>
+          </div>
+      
         </div>
       </div>
 
@@ -1276,6 +2091,229 @@
 
 
 
+<script>
+// ===== فتح/إغلاق الـ Modal =====
+function openSettings() {
+  loadCurrentSettings();
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+ 
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+ 
+function closeSettingsOnBackdrop(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+ 
+// ESC يغلق الـ modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+ 
+// ===== تحميل الإعدادات الحالية =====
+async function loadCurrentSettings() {
+  try {
+    const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`);
+    if (!r.ok) return;
+    const { settings } = await r.json();
+    if (!settings) return;
+ 
+    // الفريقان
+    document.getElementById('setting_team1_name').value = settings.team1_name || '';
+    document.getElementById('setting_team2_name').value = settings.team2_name || '';
+ 
+    const c1 = settings.team1_color || '#22c55e';
+    const c2 = settings.team2_color || '#f97316';
+    document.getElementById('setting_team1_color').value = c1;
+    document.getElementById('setting_team2_color').value = c2;
+    document.getElementById('team1Dot').style.background = c1;
+    document.getElementById('team2Dot').style.background = c2;
+    document.getElementById('team1ColorHex').textContent = c1;
+    document.getElementById('team2ColorHex').textContent = c2;
+ 
+    // حجم الشبكة
+    const gs = settings.grid_size || '5x5';
+    document.querySelectorAll('.grid-option').forEach(el => {
+      el.classList.toggle('selected', el.dataset.size === gs);
+    });
+    const radioEl = document.querySelector(`input[name="grid_size"][value="${gs}"]`);
+    if (radioEl) radioEl.checked = true;
+ 
+    // مؤقتات
+    document.getElementById('buzzTimerVal').textContent = settings.buzz_timer_seconds ?? 3;
+    document.getElementById('penaltyTimerVal').textContent = settings.penalty_timer_seconds ?? 10;
+ 
+    const penaltyEnabled = !!settings.penalty_timer_enabled;
+    document.getElementById('penaltyEnabled').checked = penaltyEnabled;
+    togglePenaltyTimer(penaltyEnabled);
+ 
+    // خيارات العرض
+    document.getElementById('showGridToContestants').checked = !!settings.show_grid_to_contestants;
+ 
+    // وضع بدون مقدم (يأخذ الحالة الحالية من المتغير العام)
+    document.getElementById('noHostModeToggle').checked = !!noHostMode;
+ 
+  } catch(e) {
+    console.error('loadCurrentSettings error:', e);
+  }
+}
+ 
+// ===== حجم الشبكة: تفعيل الاختيار البصري =====
+document.querySelectorAll('.grid-option').forEach(label => {
+  label.addEventListener('click', () => {
+    document.querySelectorAll('.grid-option').forEach(l => l.classList.remove('selected'));
+    label.classList.add('selected');
+  });
+});
+ 
+// ===== تعديل المؤقتات =====
+const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 } };
+ 
+function adjustTimer(type, delta) {
+  const el = document.getElementById(type === 'buzz' ? 'buzzTimerVal' : 'penaltyTimerVal');
+  const lim = timerLimits[type];
+  let val = parseInt(el.textContent || '0') + delta;
+  val = Math.max(lim.min, Math.min(lim.max, val));
+  el.textContent = val;
+ 
+  // إضافة نبضة بصرية
+  el.parentElement.style.transform = 'scale(1.15)';
+  setTimeout(() => el.parentElement.style.transform = '', 150);
+}
+ 
+// ===== تفعيل/تعطيل مؤقت العقوبة =====
+function togglePenaltyTimer(enabled) {
+  const ctrl = document.getElementById('penaltyTimerControl');
+  if (ctrl) {
+    ctrl.style.opacity = enabled ? '1' : '0.4';
+    ctrl.style.pointerEvents = enabled ? 'auto' : 'none';
+  }
+}
+ 
+// ===== حفظ الإعدادات =====
+async function saveSettings() {
+  const btn = document.getElementById('saveSettingsBtn');
+  const btnText = document.getElementById('saveSettingsBtnText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ جاري الحفظ...';
+ 
+  const selectedGrid = document.querySelector('.grid-option.selected')?.dataset.size
+    || document.querySelector('input[name="grid_size"]:checked')?.value
+    || '5x5';
+ 
+  const payload = {
+    session_id: sessionId,
+    team1_name: document.getElementById('setting_team1_name').value.trim(),
+    team2_name: document.getElementById('setting_team2_name').value.trim(),
+    team1_color: document.getElementById('setting_team1_color').value,
+    team2_color: document.getElementById('setting_team2_color').value,
+    grid_size: selectedGrid,
+    buzz_timer_seconds: parseInt(document.getElementById('buzzTimerVal').textContent),
+    penalty_timer_enabled: document.getElementById('penaltyEnabled').checked,
+    penalty_timer_seconds: parseInt(document.getElementById('penaltyTimerVal').textContent),
+    show_grid_to_contestants: document.getElementById('showGridToContestants').checked,
+  };
+ 
+  try {
+    const r = await fetch('/games/api/settings/save/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+ 
+    if (data.success) {
+      btnText.textContent = '✅ تم الحفظ!';
+ 
+      // تطبيق الإعدادات فوراً
+      applySettingsLocally(data.settings);
+ 
+      // إظهار شارة "محدّث" على الزر
+      document.getElementById('settingsChangedBadge').style.display = 'inline';
+ 
+      setTimeout(() => {
+        closeSettings();
+        btnText.textContent = '💾 حفظ الإعدادات';
+        btn.disabled = false;
+      }, 800);
+    } else {
+      btnText.textContent = '❌ خطأ، حاول مرة أخرى';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btnText.textContent = '❌ خطأ في الاتصال';
+    btn.disabled = false;
+  }
+}
+ 
+// ===== تطبيق الإعدادات محلياً فور الحفظ =====
+function applySettingsLocally(settings) {
+  if (!settings) return;
+ 
+  // تحديث أسماء الفريقين في الصفحة
+  if (settings.team1_name) {
+    document.querySelectorAll('[id$="team1Score"], .team1-score').forEach(el => {
+      // نحدث النص بدون المس الأرقام
+    });
+    window.sessionData = window.sessionData || {};
+    window.sessionData.team1Name = settings.team1_name;
+  }
+  if (settings.team2_name) {
+    window.sessionData = window.sessionData || {};
+    window.sessionData.team2Name = settings.team2_name;
+  }
+ 
+  // تحديث ألوان الفريقين في CSS
+  if (settings.team1_color) {
+    document.documentElement.style.setProperty('--team1-color', settings.team1_color);
+    // تحديث خلايا الفريق الأول في الـ SVG
+    document.querySelectorAll('.hex-cell.team1 .hex-shape').forEach(el => {
+      el.style.fill = settings.team1_color;
+    });
+  }
+  if (settings.team2_color) {
+    document.documentElement.style.setProperty('--team2-color', settings.team2_color);
+    document.querySelectorAll('.hex-cell.team2 .hex-shape').forEach(el => {
+      el.style.fill = settings.team2_color;
+    });
+  }
+ 
+  // تحديث مؤقت الزر عالمياً
+  if (settings.buzz_timer_seconds) {
+    window.BUZZ_TIMER_SECONDS = settings.buzz_timer_seconds;
+  }
+ 
+  // تحديث حجم الشبكة لو تغير
+  if (settings.grid_size && settings.grid_size !== window.currentGridSize) {
+    window.currentGridSize = settings.grid_size;
+    applyGridSize(settings.grid_size);
+  }
+}
+ 
+// ===== تطبيق حجم الشبكة =====
+function applyGridSize(gridSize) {
+  const sizeMap = { '3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36 };
+  const targetCount = sizeMap[gridSize] || 25;
+  const allLetters = getLetters();
+  const slicedLetters = allLetters.slice(0, targetCount);
+ 
+  // إعادة بناء الخلية بالحجم الجديد
+  window.sessionData.arabicLetters = slicedLetters;
+  rebuildHoneycomb(slicedLetters, false);
+ 
+  // تعديل حجم الـ SVG ليناسب الشبكة الجديدة
+  const svg = document.getElementById('honeycombSvg');
+  if (svg) {
+    const scaleMap = { '3x3': '0.6', '4x4': '0.75', '5x5': '0.85', '6x6': '1.0' };
+    svg.style.transform = `scale(${scaleMap[gridSize] || '0.85'})`;
+  }
+}
+ 
+// متغير عالمي لمدة قفل الزر (تُستخدم في WebSocket)
+window.BUZZ_TIMER_SECONDS = 3;
+window.currentGridSize = '5x5';
+</script>
 
 
 </body>
