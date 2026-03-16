@@ -356,6 +356,88 @@
     .penalty-contestant-team {
       font-size: 0.9rem; font-weight: 800; color: #fff; display: block; margin-bottom: 2px;
     }
+
+    /* ===== وضع بدون مقدم ===== */
+    .nohost-panel {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      display: none; flex-direction: column;
+      background: rgba(10,5,30,0.96); backdrop-filter: blur(12px);
+      border-top: 2px solid rgba(139,92,246,0.4);
+      max-height: 55vh; overflow-y: auto;
+    }
+    .nohost-panel.open { display: flex; }
+
+    .nohost-question-wrap {
+      padding: 16px 20px 8px;
+      font-family: 'Tajawal',sans-serif;
+    }
+    .nohost-letter-badge {
+      display: inline-block; background: linear-gradient(135deg,#7c3aed,#4c1d95);
+      color: #fff; font-size: 1.6rem; font-weight: 900;
+      padding: 4px 18px; border-radius: 999px; margin-bottom: 10px;
+    }
+    .nohost-question-text {
+      font-size: clamp(1rem,2.5vw,1.6rem); font-weight: 800; color: #fff;
+      line-height: 1.6; margin-bottom: 10px;
+    }
+    .nohost-question-text.progressive span {
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .nohost-question-text.progressive span.visible { opacity: 1; }
+
+    .nohost-answer-wrap {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .nohost-answer-text {
+      font-size: clamp(1rem,2.2vw,1.4rem); font-weight: 900; color: #22c55e;
+      filter: blur(8px); transition: filter 0.3s;
+    }
+    .nohost-answer-text.revealed { filter: none; }
+    .nohost-reveal-btn {
+      padding: 6px 16px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .nohost-controls {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 10px 20px 14px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .nohost-score-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .nohost-score-btn.t1 { border-color: var(--team1-color,#22c55e); color: var(--team1-color,#22c55e); background: transparent; }
+    .nohost-score-btn.t1:hover { background: var(--team1-color,#22c55e); color: #fff; }
+    .nohost-score-btn.t2 { border-color: var(--team2-color,#f97316); color: var(--team2-color,#f97316); background: transparent; }
+    .nohost-score-btn.t2:hover { background: var(--team2-color,#f97316); color: #fff; }
+    .nohost-penalty-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid rgba(139,92,246,0.5);
+      background: rgba(124,58,237,0.2); color: #c4b5fd;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .nohost-close-btn {
+      margin-right: auto; padding: 6px 14px; border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.2); background: transparent;
+      color: rgba(255,255,255,0.5); font-family: 'Tajawal',sans-serif;
+      font-weight: 700; font-size: 0.82rem; cursor: pointer;
+    }
+
+    /* زر تفعيل وضع بدون مقدم */
+    .nohost-toggle-btn {
+      position: fixed; bottom: 20px; left: 20px; z-index: 200;
+      background: rgba(124,58,237,0.5); border: 1.5px solid rgba(139,92,246,0.5);
+      border-radius: 12px; padding: 8px 14px;
+      color: #e9d5ff; font-family: 'Tajawal',sans-serif;
+      font-weight: 700; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.2s; display: none;
+    }
+    .nohost-toggle-btn.active {
+      background: rgba(124,58,237,0.9); border-color: #8b5cf6; color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -430,6 +512,38 @@
         <svg id="contestantHoneycombSvg" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
     </div>
+
+            <div id="contestantScoresWrap" style="display:none; margin-top:12px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div id="contestantTeam1ScoreCard" style="
+              background: rgba(255,255,255,0.95);
+              border: 2px solid #22c55e;
+              border-radius: 14px;
+              padding: 10px;
+              text-align: center;
+              color: #14532d;
+              font-family: 'Tajawal', sans-serif;
+              font-weight: 800;
+            ">
+              <div id="contestantTeam1Name" style="font-size:0.9rem; margin-bottom:4px;">{{ session.team1_name }}</div>
+              <div id="contestantTeam1Score" style="font-size:1.5rem; font-weight:900;">0</div>
+            </div>
+
+            <div id="contestantTeam2ScoreCard" style="
+              background: rgba(255,255,255,0.95);
+              border: 2px solid #f97316;
+              border-radius: 14px;
+              padding: 10px;
+              text-align: center;
+              color: #7c2d12;
+              font-family: 'Tajawal', sans-serif;
+              font-weight: 800;
+            ">
+              <div id="contestantTeam2Name" style="font-size:0.9rem; margin-bottom:4px;">{{ session.team2_name }}</div>
+              <div id="contestantTeam2Score" style="font-size:1.5rem; font-weight:900;">0</div>
+            </div>
+          </div>
+        </div>
   </main>
 
   <script>
@@ -549,17 +663,48 @@
             if (sub)  sub.textContent  = s.show_subtitle || '';
             if (header) header.style.display = 'block';
           }
+
           if (s && s.show_grid_to_contestants === false) {
             const wrap = document.getElementById('contestantGridWrap');
+            const scoresWrap = document.getElementById('contestantScoresWrap');
             if (wrap) wrap.style.display = 'none';
+            if (scoresWrap) scoresWrap.style.display = 'none';
+          }
+
+          if (s && s.show_grid_to_contestants === true) {
+            const wrap = document.getElementById('contestantGridWrap');
+            if (wrap) wrap.style.display = 'block';
+          }
+
+          if (s) {
+            renderContestantScores(
+              s.team1_name || '{{ session.team1_name|escapejs }}',
+              s.team2_name || '{{ session.team2_name|escapejs }}',
+              document.getElementById('contestantTeam1Score')?.textContent || 0,
+              document.getElementById('contestantTeam2Score')?.textContent || 0,
+              s.team1_color || contestantT1Color,
+              s.team2_color || contestantT2Color
+            );
           }
         } else if (d.type === 'grid_state') {
           if (d.show_grid) {
             document.getElementById('contestantGridWrap').style.display = 'block';
             buildContestantGrid(d.grid_size, d.letters, d.cell_states, d.team1_color, d.team2_color);
+
+            renderContestantScores(
+              d.team1_name,
+              d.team2_name,
+              d.team1_score,
+              d.team2_score,
+              d.team1_color,
+              d.team2_color
+            );
           }
         } else if (d.type === 'cell_state_updated') {
           updateContestantCell(d.letter, d.state, d.cell_index);
+        
+        } else if (d.type === 'scores_updated') {
+          updateContestantScores(d.team1_score, d.team2_score);
         } else if (d.type === 'penalty_start') {
           showPenaltyContestant(d.team_name, d.seconds);
         } else if (d.type === 'penalty_end') {
@@ -784,6 +929,42 @@
         state === 'team1' ? contestantT1Color :
         state === 'team2' ? contestantT2Color : 'white');
       if (txt)  txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
+    }
+
+    function renderContestantScores(team1Name, team2Name, team1Score, team2Score, team1Color, team2Color) {
+      const wrap = document.getElementById('contestantScoresWrap');
+      const c1 = document.getElementById('contestantTeam1ScoreCard');
+      const c2 = document.getElementById('contestantTeam2ScoreCard');
+      const n1 = document.getElementById('contestantTeam1Name');
+      const n2 = document.getElementById('contestantTeam2Name');
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+
+      if (!wrap || !c1 || !c2 || !n1 || !n2 || !s1 || !s2) return;
+
+      if (team1Name !== undefined) n1.textContent = team1Name || 'الفريق الأول';
+      if (team2Name !== undefined) n2.textContent = team2Name || 'الفريق الثاني';
+      if (team1Score !== undefined) s1.textContent = team1Score;
+      if (team2Score !== undefined) s2.textContent = team2Score;
+
+      if (team1Color) {
+        c1.style.borderColor = team1Color;
+        c1.style.background = `linear-gradient(135deg, ${team1Color}20, rgba(255,255,255,0.95))`;
+      }
+
+      if (team2Color) {
+        c2.style.borderColor = team2Color;
+        c2.style.background = `linear-gradient(135deg, ${team2Color}20, rgba(255,255,255,0.95))`;
+      }
+
+      wrap.style.display = 'block';
+    }
+
+    function updateContestantScores(team1Score, team2Score) {
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+      if (s1 && team1Score !== undefined) s1.textContent = team1Score;
+      if (s2 && team2Score !== undefined) s2.textContent = team2Score;
     }
     // استقبال grid_state من الـ WebS
     // ===== مؤقت العقوبة =====
