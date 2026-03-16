@@ -353,6 +353,34 @@
           color: #fff; border-radius: 12px; padding: 10px 24px;
           font-family: 'Tajawal',sans-serif; font-weight: 700; font-size: 14px; cursor: pointer;
         }
+
+
+        /* ===== مؤقت العقوبة - شاشة العرض ===== */
+        .penalty-display-bar {
+          position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+          background: linear-gradient(135deg, rgba(124,58,237,0.95), rgba(76,29,149,0.95));
+          backdrop-filter: blur(10px);
+          padding: 12px 24px;
+          display: none; align-items: center; justify-content: center; gap: 16px;
+          border-top: 2px solid rgba(139,92,246,0.5);
+        }
+        .penalty-display-bar.show { display: flex; }
+        .penalty-display-team {
+          font-size: 1.4rem; font-weight: 900; color: #fff;
+          padding: 6px 18px; border-radius: 999px;
+          border: 2px solid rgba(255,255,255,0.4);
+        }
+        .penalty-display-num {
+          font-size: 3rem; font-weight: 900; color: #FCD34D;
+          min-width: 60px; text-align: center;
+          text-shadow: 0 0 20px rgba(252,211,77,0.6);
+          font-family: monospace;
+          animation: penDisPulse 1s infinite;
+        }
+        @keyframes penDisPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        .penalty-display-label {
+          font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.7);
+        }
     </style>
 </head>
 <body>
@@ -671,9 +699,7 @@
                 window.currentGridSize = d.settings.grid_size;
                 rebuildHoneycomb(window.sessionData?.arabicLetters, false);
               }
-            }
-            break;
-            if (d.settings.show_name) {
+              if (d.settings.show_name) {
                 const btn = document.getElementById('dispLogoBtn');
                 const btnName = document.getElementById('dispLogoBtnName');
                 const fullName = document.getElementById('dispLogoFullName');
@@ -681,12 +707,16 @@
                 if (btn) btn.style.display = 'block';
                 if (btnName) btnName.textContent = d.settings.show_name;
                 if (fullName) fullName.textContent = d.settings.show_name;
-                
                 if (fullSub) fullSub.textContent = d.settings.show_subtitle || '';
               }
-          case 'pong':
+            }
             break;
-          default:
+
+          case 'penalty_start':
+            showPenaltyDisplay(d.team_name, d.seconds);
+            break;
+          case 'penalty_end':
+            hidePenaltyDisplay();
             break;
         } 
      };
@@ -1021,6 +1051,31 @@ function replayDispLogo() {
     document.querySelector('.dlg-sub').classList.add('dlg-go-f2');
   }));
 }
+
+
+let penaltyDisplayInterval = null;
+
+function showPenaltyDisplay(teamName, seconds) {
+  if (penaltyDisplayInterval) clearInterval(penaltyDisplayInterval);
+  const bar  = document.getElementById('penaltyDisplayBar');
+  const team = document.getElementById('penaltyDisplayTeam');
+  const num  = document.getElementById('penaltyDisplayNum');
+  if (teamName) team.textContent = teamName;
+  else team.textContent = '';
+  let left = seconds || 10;
+  num.textContent = left;
+  bar.classList.add('show');
+  penaltyDisplayInterval = setInterval(() => {
+    left--;
+    num.textContent = left;
+    if (left <= 0) hidePenaltyDisplay();
+  }, 1000);
+}
+
+function hidePenaltyDisplay() {
+  if (penaltyDisplayInterval) { clearInterval(penaltyDisplayInterval); penaltyDisplayInterval = null; }
+  document.getElementById('penaltyDisplayBar')?.classList.remove('show');
+}
 </script>
 
 
@@ -1047,6 +1102,14 @@ function replayDispLogo() {
   </div>
   <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
   <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
+</div>
+
+<!-- مؤقت العقوبة -->
+<div id="penaltyDisplayBar" class="penalty-display-bar">
+  <span class="penalty-display-label">⏱ عقوبة</span>
+  <span class="penalty-display-team" id="penaltyDisplayTeam"></span>
+  <span class="penalty-display-num" id="penaltyDisplayNum">10</span>
+  <span class="penalty-display-label">ثانية</span>
 </div>
 </body>
 </html>

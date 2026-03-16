@@ -186,6 +186,20 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                             "letter": letter
                         })
                     return
+                if message_type == "penalty_start":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_penalty_start",
+                        "team": data.get("team"),
+                        "team_name": data.get("team_name"),
+                        "seconds": data.get("seconds", 10),
+                    })
+                    return
+                if message_type == "penalty_end":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_penalty_end",
+                        "team": data.get("team"),
+                    })
+                    return
 
         except Exception as e:
             logger.error(f"WS handler error for {message_type}: {e}")
@@ -385,7 +399,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'type': 'settings_updated',
             'settings': settings
         }))
-        
+
         # لو متسابق والإعداد فُعِّل الآن، أرسل الخلية فوراً
         if self.role == 'contestant' and settings.get('show_grid_to_contestants'):
             await self._send_grid_to_contestant_if_enabled()
@@ -438,6 +452,29 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 }))
         except Exception as e:
             logger.error(f'Error sending grid to contestant: {e}')
+
+    
+
+    async def broadcast_penalty_start(self, event):
+        if self.role == 'host':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'penalty_start',
+            'team': event.get('team'),
+            'team_name': event.get('team_name'),
+            'seconds': event.get('seconds', 10),
+        }))
+
+    async def broadcast_penalty_end(self, event):
+        if self.role == 'host':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'penalty_end',
+            'team': event.get('team'),
+        }))
+
+
+        
 
 
 

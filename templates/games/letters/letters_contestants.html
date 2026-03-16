@@ -333,6 +333,29 @@
     .slh-sub    { color: rgba(255,255,255,0.5); font-size: 0.7rem;
                   font-family: 'Tajawal',sans-serif; display: block;
                   margin-top: 2px; }
+
+
+    /* ===== مؤقت العقوبة - المتسابق ===== */
+    .penalty-contestant-bar {
+      display: none;
+      background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(76,29,149,0.9));
+      border-radius: 14px; padding: 12px 18px;
+      text-align: center; width: 100%; max-width: 560px;
+    }
+    .penalty-contestant-bar.show { display: block; }
+    .penalty-contestant-num {
+      font-size: 2.5rem; font-weight: 900; color: #FCD34D;
+      font-family: monospace; display: block;
+      animation: penConPulse 1s infinite;
+    }
+    @keyframes penConPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .penalty-contestant-label {
+      font-size: 0.85rem; color: rgba(255,255,255,0.7);
+      font-family: 'Tajawal',sans-serif; font-weight: 700;
+    }
+    .penalty-contestant-team {
+      font-size: 0.9rem; font-weight: 800; color: #fff; display: block; margin-bottom: 2px;
+    }
   </style>
 </head>
 <body>
@@ -387,7 +410,16 @@
       </div>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
+
+
     </section>
+
+    <!-- مؤقت العقوبة -->
+    <div id="penaltyContestantBar" class="penalty-contestant-bar">
+      <span class="penalty-contestant-team" id="penConTeam"></span>
+      <span class="penalty-contestant-num" id="penConNum">10</span>
+      <span class="penalty-contestant-label">⏱ ثانية عقوبة</span>
+    </div>
 
     <!-- خلية الحروف للمتسابق (تظهر فقط لو الإعداد مفعّل) -->
     <div id="contestantGridWrap" style="display:none; width:100%; max-width:560px;">
@@ -521,16 +553,19 @@
             const wrap = document.getElementById('contestantGridWrap');
             if (wrap) wrap.style.display = 'none';
           }
-          } else if (d.type === 'grid_state') {
-            if (d.show_grid) {
-              document.getElementById('contestantGridWrap').style.display = 'block';
-              buildContestantGrid(d.grid_size, d.letters, d.cell_states, d.team1_color, d.team2_color);
-            }
-          } else if (d.type === 'cell_state_updated') {
-            updateContestantCell(d.letter, d.state, d.cell_index);
+        } else if (d.type === 'grid_state') {
+          if (d.show_grid) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+            buildContestantGrid(d.grid_size, d.letters, d.cell_states, d.team1_color, d.team2_color);
+          }
+        } else if (d.type === 'cell_state_updated') {
+          updateContestantCell(d.letter, d.state, d.cell_index);
+        } else if (d.type === 'penalty_start') {
+          showPenaltyContestant(d.team_name, d.seconds);
+        } else if (d.type === 'penalty_end') {
+          hidePenaltyContestant();
         }
       };
-
       socket.onclose = (e)=>{
         setConn(false);
         clearInterval(heartbeat);
@@ -750,8 +785,31 @@
         state === 'team2' ? contestantT2Color : 'white');
       if (txt)  txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
     }
-    // استقبال grid_state من الـ WebSocket
-    // أضف في socket.onmessage:
+    // استقبال grid_state من الـ WebS
+    // ===== مؤقت العقوبة =====
+    let penConInterval = null;
+
+    function showPenaltyContestant(teamName, seconds) {
+      if (penConInterval) clearInterval(penConInterval);
+      const bar  = document.getElementById('penaltyContestantBar');
+      const team = document.getElementById('penConTeam');
+      const num  = document.getElementById('penConNum');
+      if (teamName) team.textContent = teamName;
+      else team.textContent = '';
+      let left = seconds || 10;
+      num.textContent = left;
+      bar.classList.add('show');
+      penConInterval = setInterval(() => {
+        left--;
+        num.textContent = left;
+        if (left <= 0) hidePenaltyContestant();
+      }, 1000);
+    }
+
+function hidePenaltyContestant() {
+  if (penConInterval) { clearInterval(penConInterval); penConInterval = null; }
+  document.getElementById('penaltyContestantBar')?.classList.remove('show');
+}
 
     window.buzzAnswer = sendBuzz; // إن احتجت تناديها من HTML
   </script>

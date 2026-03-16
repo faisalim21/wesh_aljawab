@@ -1220,6 +1220,38 @@
   font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 14px;
   cursor: pointer;
 }
+
+
+/* ===== مؤقت العقوبة ===== */
+.penalty-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px;
+  padding: 10px 14px; margin: 10px 0;
+}
+.penalty-team-btns { display: flex; gap: 6px; }
+.penalty-team-btn {
+  padding: 6px 12px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+  background: #f9fafb; font-family: 'Tajawal',sans-serif; font-weight: 700;
+  font-size: 0.82rem; cursor: pointer; transition: all 0.2s; color: #374151;
+}
+.penalty-team-btn.active-t1 { background: var(--team1-color,#22c55e); border-color: var(--team1-color,#22c55e); color: #fff; }
+.penalty-team-btn.active-t2 { background: var(--team2-color,#f97316); border-color: var(--team2-color,#f97316); color: #fff; }
+.penalty-start-btn {
+  padding: 8px 16px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  color: #fff; font-family: 'Tajawal',sans-serif; font-weight: 800;
+  font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(124,58,237,.3);
+}
+.penalty-start-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(124,58,237,.4); }
+.penalty-start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.penalty-countdown {
+  font-size: 1.4rem; font-weight: 900; color: #7c3aed;
+  min-width: 40px; text-align: center; font-family: monospace;
+  display: none;
+}
+.penalty-countdown.running { display: block; animation: penaltyPulse 1s infinite; }
+@keyframes penaltyPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 </style>
  
 </head>
@@ -1706,6 +1738,23 @@
       <svg class="honeycomb-svg" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
       </svg>
     </div>
+
+    <!-- ===== مؤقت العقوبة ===== -->
+    {% if session.settings.penalty_timer_enabled or True %}
+    <div class="penalty-bar" id="penaltyBar">
+      <span style="font-weight:800;font-size:0.88rem;color:#374151;font-family:'Tajawal',sans-serif;">⏱ عقوبة:</span>
+      <div class="penalty-team-btns">
+        <button class="penalty-team-btn" id="penaltyT1Btn" onclick="togglePenaltyTeam('team1')" type="button">
+          {{ session.team1_name }}
+        </button>
+        <button class="penalty-team-btn" id="penaltyT2Btn" onclick="togglePenaltyTeam('team2')" type="button">
+          {{ session.team2_name }}
+        </button>
+      </div>
+      <button class="penalty-start-btn" id="penaltyStartBtn" onclick="startPenalty()" type="button">▶ ابدأ</button>
+      <span class="penalty-countdown" id="penaltyCountdown">10</span>
+    </div>
+    {% endif %}
 
     <!-- لوحة الأسئلة -->
     <div class="question-panel" id="questionPanel">
@@ -2609,6 +2658,10 @@ function applySettingsLocally(settings) {
     if (fn) fn.textContent = n || '—';
     if (fs) fs.textContent = s;
   }
+
+  if (settings.penalty_timer_seconds) {
+    window.PENALTY_TIMER_SECONDS = settings.penalty_timer_seconds;
+  }
 }
 
 
@@ -3029,6 +3082,68 @@ document.addEventListener('DOMContentLoaded', () => {
   const hex = document.getElementById('logoPreviewHex');
   if (hex) buildLogoHexBg(hex, 800, 200);
 });
+
+// ===== مؤقت العقوبة =====
+let penaltyTeam = null;
+let penaltyInterval = null;
+
+function togglePenaltyTeam(team) {
+  penaltyTeam = (penaltyTeam === team) ? null : team;
+  document.getElementById('penaltyT1Btn').className =
+    'penalty-team-btn' + (penaltyTeam === 'team1' ? ' active-t1' : '');
+  document.getElementById('penaltyT2Btn').className =
+    'penalty-team-btn' + (penaltyTeam === 'team2' ? ' active-t2' : '');
+}
+
+function startPenalty() {
+  if (penaltyInterval) {
+    clearInterval(penaltyInterval);
+    penaltyInterval = null;
+    document.getElementById('penaltyCountdown').classList.remove('running');
+    document.getElementById('penaltyStartBtn').textContent = '▶ ابدأ';
+    document.getElementById('penaltyStartBtn').disabled = false;
+    return;
+  }
+
+  const seconds = window.PENALTY_TIMER_SECONDS || 10;
+  let left = seconds;
+
+  const countEl = document.getElementById('penaltyCountdown');
+  const btnEl   = document.getElementById('penaltyStartBtn');
+
+  countEl.textContent = left;
+  countEl.classList.add('running');
+  btnEl.textContent = '⏹ إيقاف';
+
+  // بث عبر WebSocket
+  sendWS({
+    type: 'penalty_start',
+    team: penaltyTeam,
+    seconds: seconds,
+    team_name: penaltyTeam === 'team1'
+      ? (window.sessionData?.team1Name || 'الفريق 1')
+      : penaltyTeam === 'team2'
+        ? (window.sessionData?.team2Name || 'الفريق 2')
+        : null
+  }).catch(() => {});
+
+  penaltyInterval = setInterval(() => {
+    left--;
+    countEl.textContent = left;
+    if (left <= 0) {
+      clearInterval(penaltyInterval);
+      penaltyInterval = null;
+      countEl.classList.remove('running');
+      btnEl.textContent = '▶ ابدأ';
+      btnEl.disabled = false;
+      // بث انتهاء العقوبة
+      sendWS({ type: 'penalty_end', team: penaltyTeam }).catch(() => {});
+    }
+  }, 1000);
+}
+
+// تحديث مدة العقوبة من الإعدادات
+window.PENALTY_TIMER_SECONDS = 10;
 </script>
 
 
