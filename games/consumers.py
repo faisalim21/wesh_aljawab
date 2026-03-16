@@ -71,7 +71,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'cell_state_updated',
             'letter': event.get('letter'),
-            'state': event.get('state')
+            'state': event.get('state'),
+            'cell_index': event.get('cell_index'),
         }))
 
     async def broadcast_cell_update(self, event):
@@ -266,10 +267,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"DB update error (cell_state) in session {self.session_id}: {e}")
 
+        cell_index = data.get('cell_index')
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_cell_state',
             'letter': letter,
-            'state': state
+            'state': state,
+            'cell_index': cell_index,
         })
 
     async def handle_update_scores(self, data):
