@@ -129,7 +129,8 @@ def get_letters_for_session(session):
         return list(letters)
 
     # ترتيب ابتدائي بحسب نوع الحزمة
-    letters = get_free_order() if is_free else get_paid_order_fresh()
+    is_sports = getattr(session.package, 'question_theme', '') == 'sports'
+    letters = get_free_order() if is_free else get_paid_order_fresh(is_sports=is_sports)
     set_session_order(session.id, letters, is_free=is_free)
     return list(letters)
 
@@ -1331,7 +1332,8 @@ def letters_new_round(request):
         return JsonResponse({'success': False, 'error': 'الميزة متاحة للحزم المدفوعة فقط'}, status=403)
 
     # 1) بدّل ترتيب الحروف (لا علاقة للنقاط هنا)
-    new_letters = get_paid_order_fresh()
+    is_sports = getattr(session.package, 'question_theme', '') == 'sports'
+    new_letters = get_paid_order_fresh(is_sports=is_sports)
     set_session_order(session.id, new_letters, is_free=False)
 
     # 2) تصفير تقدّم الخلايا فقط
