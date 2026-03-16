@@ -81,6 +81,9 @@
 
   <style>
 
+
+    .grid-7x7 { grid-template-columns: repeat(7,5px); }
+    .grid-7x7 div { width:5px; height:5px; }
     :root {
       --team1-color: #22c55e;
       --team1-stroke: #15803d;
@@ -143,15 +146,85 @@
     .honeycomb-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 10px; }
     .honeycomb-svg { width: 100%; max-width: 100vw; height: auto; display: block; margin: 0 auto; }
 
-    .hex-cell { cursor: pointer; transition: all 0.3s ease; }
-    .hex-cell:hover .hex-shape { fill: #f0f9ff; stroke-width: 4; transform: scale(1.05); }
-    .hex-cell.team1 .hex-shape { fill: var(--team1-color, #22c55e); stroke: var(--team1-stroke, #15803d); stroke-width: 4; }
-    .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
-    .hex-cell.team2 .hex-shape { fill: var(--team2-color, #f97316); stroke: var(--team2-stroke, #c2410c); stroke-width: 4; }
-    .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
-    .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
-    .hex-text { fill: #6b46c1; font-family: 'Tajawal', sans-serif; font-size: 130px; font-weight: 900; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+    /* =====================================================
+      CSS محدّث للخلايا السداسية
+      استبدل الـ CSS الحالي المتعلق بـ hex-cell في كلا الملفين
+      ===================================================== */
 
+    /* الخلية الأساسية */
+    .hex-cell { cursor: pointer; transition: opacity 0.2s; }
+    .hex-cell:hover { opacity: 0.85; }
+
+    /* شكل الخلية */
+    .hex-shape {
+      fill: white;
+      stroke: #6b21a8;
+      stroke-width: 2;
+      transition: fill 0.25s, stroke 0.25s;
+    }
+
+    /* النص */
+    .hex-text {
+      fill: #4c1d95;
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* فريق 1 */
+    .hex-cell.team1 .hex-shape {
+      fill: var(--team1-color, #22c55e);
+      stroke: var(--team1-stroke, #15803d);
+      stroke-width: 3;
+    }
+    .hex-cell.team1 .hex-text { fill: white; }
+
+    /* فريق 2 */
+    .hex-cell.team2 .hex-shape {
+      fill: var(--team2-color, #f97316);
+      stroke: var(--team2-stroke, #c2410c);
+      stroke-width: 3;
+    }
+    .hex-cell.team2 .hex-text { fill: white; }
+
+    /* حالة التحديد (الحرف المختار) */
+    .hex-cell.selected .hex-shape {
+      stroke: #f59e0b;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px rgba(245,158,11,0.5));
+    }
+
+    /* CSS Variables الافتراضية */
+    :root {
+      --team1-color: #22c55e;
+      --team1-stroke: #15803d;
+      --team2-color: #f97316;
+      --team2-stroke: #c2410c;
+    }
+
+    /* حاوية الشبكة */
+    .honeycomb-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 15px 0;
+      padding: 5px;
+    }
+
+    .honeycomb-svg {
+      width: 100%;
+      max-width: 100vw;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 769px) {
+      .honeycomb-svg { max-width: 650px; }
+    }
     .info-panel { background: white; border-radius: 15px; padding: 12px; margin: 10px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
     /* لوحة الأسئلة */
@@ -167,8 +240,9 @@
     .btn-primary { background: linear-gradient(135deg, #4c51bf, #667eea); border: none; border-radius: 10px; padding: 8px 12px; font-weight: bold; font-size: 14px; }
 
     .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
-    .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
-    .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
+    /* بعد */
+    .team1-score { background: #fff; color: #1f2937; border: 2px solid #22c55e; border-right: 6px solid #22c55e; }
+    .team2-score { background: #fff; color: #1f2937; border: 2px solid #f97316; border-right: 6px solid #f97316; }
 
     .timer-display { font-size: 2rem; font-weight: bold; color: #dc2626; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
@@ -1236,6 +1310,22 @@
                     <span class="grid-option-sub">36 خلية</span>
                   </div>
                 </label>
+
+                <label class="grid-option" data-size="7x7">
+                  <input type="radio" name="grid_size" value="7x7" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-6x6">
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">7×7</span>
+                    <span class="grid-option-sub">49 خلية</span>
+                  </div>
+                </label>
               </div>
             </div>
       
@@ -1409,18 +1499,7 @@
              class="img-fluid">
       </div>
       
-      <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
-        <defs>
-          <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
-          <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
-          <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
-          <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
-        </defs>
-        <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
-        <use href="#orangeLeft" fill="#fb923c"/>
-        <use href="#orangeRight" fill="#fb923c"/>
-        <use href="#greenTop" fill="#4ade80"/>
-        <use href="#greenBottom" fill="#4ade80"/>
+      <svg class="honeycomb-svg" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
       </svg>
     </div>
 
@@ -1577,11 +1656,6 @@
   let pendingScoreAckUntil = 0;       // timestamp حتى متى ننتظر تأكيد
   let pendingScoreTimeoutId = null;   // timeout للمصالحة بعد 3 ثوانٍ
 
-  function getLetters(){
-    return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
-      ? window.sessionData.arabicLetters
-      : [];
-  }
 
   // ---------- نسخ الروابط ----------
   async function copyLink(text){
@@ -1625,70 +1699,7 @@
   function playUnlockSound(){ tone(520,160,0.35); }
 
   // ========= رسم خلية الحروف =========
-  function createHoneycombCells(){
-    const svg = document.getElementById('honeycombSvg');
-    const lettersArr = getLetters();
-    const P = [
-      {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
-      {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
-      {x:880,y:260,points:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
-      {x:1130,y:260,points:"1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-      {x:1380,y:260,points:"1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-      {x:505,y:440,points:"375,380 505,320 635,380 635,500 505,560 375,500"},
-      {x:755,y:440,points:"625,380 755,320 885,380 885,500 755,560 625,500"},
-      {x:1005,y:440,points:"875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-      {x:1255,y:440,points:"1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-      {x:1505,y:440,points:"1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-      {x:380,y:620,points:"250,560 380,500 510,560 510,680 380,740 250,680"},
-      {x:630,y:620,points:"500,560 630,500 760,560 760,680 630,740 500,680"},
-      {x:880,y:620,points:"750,560 880,500 1010,560 1010,680 880,740 750,680"},
-      {x:1130,y:620,points:"1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-      {x:1380,y:620,points:"1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-      {x:505,y:800,points:"375,740 505,680 635,740 635,860 505,920 375,860"},
-      {x:755,y:800,points:"625,740 755,680 885,740 885,860 755,920 625,860"},
-      {x:1005,y:800,points:"875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-      {x:1255,y:800,points:"1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-      {x:1505,y:800,points:"1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-      {x:380,y:980,points:"250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-      {x:630,y:980,points:"500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-      {x:880,y:980,points:"750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-      {x:1130,y:980,points:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-      {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
-    ];
 
-    for(let i=0;i<Math.min(25, lettersArr.length);i++){
-      const letter = lettersArr[i], pos = P[i];
-      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter', letter);
-
-      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      poly.setAttribute('class','hex-shape'); poly.setAttribute('points', pos.points);
-
-      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('class','hex-text'); txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y); txt.textContent = letter;
-
-      g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
-
-      g.addEventListener('click', () => onCellClick(g, letter));
-    }
-  }
-
-  function rebuildHoneycomb(letters, resetProgress=false){
-    const svg = document.getElementById('honeycombSvg');
-    [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
-
-    window.sessionData = window.sessionData || {};
-    window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
-
-    if (resetProgress) {
-      Object.keys(cellStates).forEach(k => delete cellStates[k]);
-      lastClickedLetter = null;
-      const qp = document.getElementById('questionPanel'); if (qp) qp.style.display = 'none';
-      const qd = document.getElementById('questionDisplay'); if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
-    }
-
-    createHoneycombCells();
-  }
 
   let lastClickAt = 0;
   function onCellClick(g, letter){
@@ -2308,31 +2319,37 @@ function applySettingsLocally(settings) {
     // نولد لون stroke أغمق بـ 20%
     document.documentElement.style.setProperty('--team1-stroke', settings.team1_color);
     // خلفية SVG (أعلى + أسفل = فريق 1)
-    document.querySelectorAll('#honeycombSvg use[href="#greenTop"], #honeycombSvg use[href="#greenBottom"]').forEach(el => {
-      el.setAttribute('fill', settings.team1_color);
-    });
+
     // كرت النقاط فريق 1
     document.querySelectorAll('.team1-score').forEach(el => {
-      el.style.background = `linear-gradient(135deg, ${settings.team1_color}33, ${settings.team1_color}18)`;
+      el.style.background = '#fff';
       el.style.borderColor = settings.team1_color;
-      el.style.color = settings.team1_color;
+      el.style.borderRightColor = settings.team1_color;
+      el.style.borderRightWidth = '6px';
+      el.style.color = '#1f2937';
     });
+
   }
 
   if (settings.team2_color) {
     document.documentElement.style.setProperty('--team2-color', settings.team2_color);
     document.documentElement.style.setProperty('--team2-stroke', settings.team2_color);
-    // خلفية SVG (يمين + يسار = فريق 2)
-    document.querySelectorAll('#honeycombSvg use[href="#orangeLeft"], #honeycombSvg use[href="#orangeRight"]').forEach(el => {
-      el.setAttribute('fill', settings.team2_color);
-    });
-    // كرت النقاط فريق 2
     document.querySelectorAll('.team2-score').forEach(el => {
-      el.style.background = `linear-gradient(135deg, ${settings.team2_color}33, ${settings.team2_color}18)`;
+      el.style.background = '#fff';
       el.style.borderColor = settings.team2_color;
-      el.style.color = settings.team2_color;
+      el.style.borderRightColor = settings.team2_color;
+      el.style.borderRightWidth = '6px';
+      el.style.color = '#1f2937';
     });
   }
+
+  // تحديث الخلفية — خارج الـ if، يشتغل دايماً
+  const svg = document.getElementById('honeycombSvg');
+  const vb = svg.getAttribute('viewBox').split(' ');
+  const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
+  const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
+  buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+
 
   // ===== أسماء الفريقين في كروت النقاط =====
   if (settings.team1_name) {
@@ -2365,24 +2382,210 @@ function applySettingsLocally(settings) {
   }
 }
 
+// ============================================================
+// محرك الشبكة السداسية الديناميكية
+// يُستخدم في: letters_session.html + letters_display.html
+// استبدل createHoneycombCells() و rebuildHoneycomb() الحاليتين بهذا
+// ============================================================
 
-// ===== تطبيق حجم الشبكة =====
-function applyGridSize(gridSize) {
-  const sizeMap = { '3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36 };
-  const targetCount = sizeMap[gridSize] || 25;
-  const allLetters = getLetters();
-  const slicedLetters = allLetters.slice(0, targetCount);
- 
-  // إعادة بناء الخلية بالحجم الجديد
-  window.sessionData.arabicLetters = slicedLetters;
-  rebuildHoneycomb(slicedLetters, false);
- 
-  // تعديل حجم الـ SVG ليناسب الشبكة الجديدة
-  const svg = document.getElementById('honeycombSvg');
-  if (svg) {
-    const scaleMap = { '3x3': '0.6', '4x4': '0.75', '5x5': '0.85', '6x6': '1.0' };
-    svg.style.transform = `scale(${scaleMap[gridSize] || '0.85'})`;
+// ===== ثوابت =====
+const ARABIC_28 = [
+  'أ','ب','ت','ث','ج','ح','خ','د','ذ','ر',
+  'ز','س','ش','ص','ض','ط','ظ','ع','غ','ف',
+  'ق','ك','ل','م','ن','هـ','و','ي'
+];
+
+// حجم الخلية حسب الشبكة (R = نصف القطر)
+const GRID_R = { '3x3':52, '4x4':42, '5x5':34, '6x6':28, '7x7':24 };
+
+// ===== حساب نقاط الخلية السداسية (flat-top) =====
+function hexPoints(cx, cy, r) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 3) * i;   // flat-top
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
   }
+  return pts.join(' ');
+}
+
+// ===== توزيع الحروف =====
+function getLettersForGrid(gridSize, baseLetters) {
+  const sizeMap = { '3x3':9, '4x4':16, '5x5':25, '6x6':36, '7x7':49 };
+  const count = sizeMap[gridSize] || 25;
+  const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
+
+  // لو الخلايا أكثر من الحروف المتاحة، نكرر عشوائياً
+  let result = [...src];
+  while (result.length < count) {
+    // نأخذ حروف عشوائية من المصدر الأصلي
+    const extra = [...src].sort(() => Math.random() - 0.5);
+    result = result.concat(extra);
+  }
+  return result.slice(0, count);
+}
+
+// ===== بناء الـ SVG الخلفية حسب الحجم =====
+function buildHexBackground(svg, viewW, viewH, color1, color2) {
+  // إزالة الخلفية القديمة
+  svg.querySelectorAll('.hex-bg').forEach(el => el.remove());
+
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // خلفية رئيسية
+  const mainRect = document.createElementNS(NS, 'rect');
+  mainRect.setAttribute('class', 'hex-bg');
+  mainRect.setAttribute('width', viewW);
+  mainRect.setAttribute('height', viewH);
+  mainRect.setAttribute('rx', '20');
+  mainRect.setAttribute('fill', color1);
+  svg.insertBefore(mainRect, svg.firstChild);
+
+  // المثلثات الجانبية (يمين + يسار = فريق 2)
+  const left = document.createElementNS(NS, 'polygon');
+  left.setAttribute('class', 'hex-bg');
+  left.setAttribute('points', `0,0 ${viewW*0.22},0 ${viewW*0.22},${viewH} 0,${viewH}`);
+  left.setAttribute('fill', color2);
+  svg.insertBefore(left, svg.children[1]);
+
+  const right = document.createElementNS(NS, 'polygon');
+  right.setAttribute('class', 'hex-bg');
+  right.setAttribute('points', `${viewW*0.78},0 ${viewW},0 ${viewW},${viewH} ${viewW*0.78},${viewH}`);
+  right.setAttribute('fill', color2);
+  svg.insertBefore(right, svg.children[2]);
+
+  // المثلثات العلوية والسفلية (أعلى + أسفل = فريق 1)
+  const depth = viewH * 0.18;
+  const top = document.createElementNS(NS, 'polygon');
+  top.setAttribute('class', 'hex-bg');
+  top.setAttribute('points', `0,0 ${viewW},0 ${viewW*0.78},${depth} ${viewW*0.22},${depth}`);
+  top.setAttribute('fill', color1);
+  svg.insertBefore(top, svg.children[3]);
+
+  const bottom = document.createElementNS(NS, 'polygon');
+  bottom.setAttribute('class', 'hex-bg');
+  bottom.setAttribute('points', `${viewW*0.22},${viewH-depth} ${viewW*0.78},${viewH-depth} ${viewW},${viewH} 0,${viewH}`);
+  bottom.setAttribute('fill', color1);
+  svg.insertBefore(bottom, svg.children[4]);
+}
+
+// ===== الدالة الرئيسية: بناء الشبكة =====
+function createHoneycombCells() {
+  const svg = document.getElementById('honeycombSvg');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // احصل على الإعدادات الحالية
+  const gridSize = window.currentGridSize || '5x5';
+  const t1Color  = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
+  const t2Color  = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
+
+  const sizeMap  = { '3x3':3, '4x4':4, '5x5':5, '6x6':6, '7x7':7 };
+  const cols     = sizeMap[gridSize] || 5;
+  const rows     = cols;
+  const R        = GRID_R[gridSize] || 34;
+
+  // flat-top hex dimensions
+  const hexW  = R * 2;           // عرض الخلية
+  const hexH  = R * Math.sqrt(3); // ارتفاع الخلية
+  const colStep = hexW * 0.75;   // خطوة أفقية (متلاصق)
+  const rowStep = hexH;          // خطوة رأسية
+
+  // حساب أبعاد الـ SVG
+  const totalW = colStep * (cols - 1) + hexW + 60;
+  const totalH = rowStep * (rows - 1) + hexH * 0.5 + 60;
+  const viewW  = Math.max(totalW, 400);
+  const viewH  = Math.max(totalH, 300);
+
+  svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+
+  // إزالة الخلايا القديمة
+  svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
+
+  // بناء الخلفية
+  buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
+
+  // توسيط الشبكة
+  const startX = (viewW - (colStep * (cols - 1) + hexW)) / 2 + R;
+  const startY = (viewH - (rowStep * (rows - 1) + hexH * 0.5)) / 2 + hexH / 2;
+
+  // الحروف
+  const letters = getLettersForGrid(
+    gridSize,
+    window.sessionData?.arabicLetters || ARABIC_28
+  );
+
+  let idx = 0;
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      const cx = startX + col * colStep;
+      const cy = startY + row * rowStep + (col % 2 === 0 ? 0 : hexH * 0.5);
+
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'hex-cell');
+      g.setAttribute('data-letter', letters[idx]);
+
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('class', 'hex-shape');
+      poly.setAttribute('points', hexPoints(cx, cy, R - 1.5));
+      g.appendChild(poly);
+
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('class', 'hex-text');
+      txt.setAttribute('x', cx.toFixed(1));
+      txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('dominant-baseline', 'central');
+      // حجم الخط حسب الـ R
+      txt.style.fontSize = `${Math.round(R * 0.72)}px`;
+      txt.textContent = letters[idx];
+      g.appendChild(txt);
+
+      // حدث الضغط (موجود في الصفحة)
+      if (typeof onCellClick === 'function') {
+        g.addEventListener('click', () => onCellClick(g, letters[idx]));
+      }
+
+      svg.appendChild(g);
+      idx++;
+    }
+  }
+}
+
+// ===== rebuildHoneycomb =====
+function rebuildHoneycomb(letters, resetProgress = false) {
+  window.sessionData = window.sessionData || {};
+  if (letters && letters.length) {
+    window.sessionData.arabicLetters = letters;
+  }
+
+  if (resetProgress) {
+    Object.keys(cellStates || {}).forEach(k => delete cellStates[k]);
+    if (typeof lastClickedLetter !== 'undefined') lastClickedLetter = null;
+    const qp = document.getElementById('questionPanel');
+    if (qp) qp.style.display = 'none';
+    const qd = document.getElementById('questionDisplay');
+    if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
+  }
+
+  createHoneycombCells();
+
+  // أعد تطبيق حالات الخلايا بعد إعادة البناء
+  if (!resetProgress && typeof cellStates !== 'undefined') {
+    Object.entries(cellStates).forEach(([ltr, st]) => {
+      if (typeof applyCellState === 'function') applyCellState(ltr, st);
+    });
+  }
+}
+
+// ===== applyGridSize (تُستدعى من الإعدادات) =====
+function applyGridSize(gridSize) {
+  window.currentGridSize = gridSize;
+  rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+}
+
+// ===== getLetters helper =====
+function getLetters() {
+  return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
+    ? window.sessionData.arabicLetters
+    : ARABIC_28;
 }
  
 // متغير عالمي لمدة قفل الزر (تُستخدم في WebSocket)
