@@ -90,15 +90,16 @@
 
     <style>
 
-
+      .grid-option.selected .grid-preview { color: #8b5cf6; }
+      .grid-option:hover .grid-preview { color: #8b5cf6; }
       /* =====================================================
         CSS محدّث للخلايا السداسية
         استبدل الـ CSS الحالي المتعلق بـ hex-cell في كلا الملفين
         ===================================================== */
 
       /* الخلية الأساسية */
-      .hex-cell { cursor: pointer; transition: opacity 0.2s; }
-      .hex-cell:hover { opacity: 0.85; }
+      .hex-cell { cursor: pointer; }
+      .hex-cell:hover .hex-shape { stroke: #f59e0b; stroke-width: 3.5; }
 
       /* شكل الخلية */
       .hex-shape {
@@ -640,6 +641,7 @@ const ARABIC_28 = [
 ];
 
 const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':21 };
+
 // نقاط الخلية السداسية - pointed-top (التعرج يمين/يسار)
 function hexPoints(cx, cy, r) {
   const pts = [];
@@ -664,27 +666,35 @@ function getLettersForGrid(gridSize, baseLetters) {
 
 function buildHexBackground(svg, viewW, viewH, color1, color2) {
   svg.querySelectorAll('.hex-bg').forEach(el => el.remove());
+  svg.querySelectorAll('#hexBgDefs').forEach(el => el.remove());
   const NS = 'http://www.w3.org/2000/svg';
-  const cx = viewW / 2, cy = viewH / 2;
+  const cx = viewW/2, cy = viewH/2;
 
-  const bg = document.createElementNS(NS, 'rect');
-  bg.setAttribute('class','hex-bg'); bg.setAttribute('width',viewW);
-  bg.setAttribute('height',viewH); bg.setAttribute('rx','14');
-  bg.setAttribute('fill', color2);
-  svg.insertBefore(bg, svg.firstChild);
+  const defs = document.createElementNS(NS, 'defs');
+  defs.setAttribute('id','hexBgDefs');
+  const cp = document.createElementNS(NS, 'clipPath');
+  cp.setAttribute('id','hexBgClip');
+  const cr = document.createElementNS(NS, 'rect');
+  cr.setAttribute('width',viewW); cr.setAttribute('height',viewH); cr.setAttribute('rx','14');
+  cp.appendChild(cr); defs.appendChild(cp);
+  svg.insertBefore(defs, svg.firstChild);
 
-  const top = document.createElementNS(NS, 'polygon');
-  top.setAttribute('class','hex-bg');
-  top.setAttribute('points', `0,0 ${viewW},0 ${cx},${cy}`);
-  top.setAttribute('fill', color1);
-  svg.insertBefore(top, svg.children[1]);
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class','hex-bg');
+  g.setAttribute('clip-path','url(#hexBgClip)');
 
-  const bot = document.createElementNS(NS, 'polygon');
-  bot.setAttribute('class','hex-bg');
-  bot.setAttribute('points', `0,${viewH} ${viewW},${viewH} ${cx},${cy}`);
-  bot.setAttribute('fill', color1);
-  svg.insertBefore(bot, svg.children[2]);
+  const tri = (pts, fill) => {
+    const p = document.createElementNS(NS,'polygon');
+    p.setAttribute('points',pts); p.setAttribute('fill',fill); g.appendChild(p);
+  };
+  tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
+  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
+  tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
+  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
+
+  svg.insertBefore(g, defs.nextSibling);
 }
+
 
 function createHoneycombCells() {
   const svg = document.getElementById('honeycombSvg');
@@ -694,29 +704,28 @@ function createHoneycombCells() {
   const t1Color = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
   const t2Color = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
 
-  const sizeMap = { '3x3':3, '4x4':4, '5x5':5, '6x6':6, '7x7':7 };
+  const sizeMap = { '3x3':3,'4x4':4,'5x5':5,'6x6':6,'7x7':7 };
   const cols = sizeMap[gridSize] || 5;
   const rows = cols;
-  const R = GRID_R[gridSize] || 34;
+  const R = GRID_R[gridSize] || 32;
 
   const hexW = R * Math.sqrt(3);
   const hexH = R * 2;
   const colStep = hexW;
   const rowStep = hexH * 0.75;
 
-  const pad = R * 1.5;
-  const totalW = colStep * (cols - 1) + hexW + pad * 2;
-  const totalH = rowStep * (rows - 1) + hexH * 0.5 + pad * 2;
-  const viewW = Math.ceil(Math.max(totalW, 350));
-  const viewH = Math.ceil(Math.max(totalH, 280));
+  const pad = R * 1.4;
+  const totalW = colStep * (cols + 0.5) + pad * 2;
+  const totalH = rowStep * (rows - 1) + hexH + pad * 2;
+  const viewW = Math.ceil(Math.max(totalW, 300));
+  const viewH = Math.ceil(Math.max(totalH, 240));
 
   svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
   svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
   buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
 
-  const gridW = colStep * (cols - 1) + hexW;
-  const gridH = rowStep * (rows - 1) + hexH * 0.5;
-  const startX = (viewW - gridW) / 2 + hexW / 2;
+  const startX = (viewW - colStep * (cols - 0.5)) / 2;
+  const gridH = rowStep * (rows - 1) + hexH;
   const startY = (viewH - gridH) / 2 + hexH / 2;
 
   const letters = getLettersForGrid(gridSize, window.sessionData?.arabicLetters || ARABIC_28);
@@ -727,23 +736,23 @@ function createHoneycombCells() {
     for (let col = 0; col < cols; col++) {
       const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
       const cy = startY + row * rowStep;
-
       const letter = letters[idx];
+
       const g = document.createElementNS(NS, 'g');
-      g.setAttribute('class', 'hex-cell');
+      g.setAttribute('class','hex-cell');
       g.setAttribute('data-letter', letter);
 
       const poly = document.createElementNS(NS, 'polygon');
-      poly.setAttribute('class', 'hex-shape');
+      poly.setAttribute('class','hex-shape');
       poly.setAttribute('points', hexPoints(cx, cy, R));
       g.appendChild(poly);
 
       const txt = document.createElementNS(NS, 'text');
-      txt.setAttribute('class', 'hex-text');
+      txt.setAttribute('class','hex-text');
       txt.setAttribute('x', cx.toFixed(1));
       txt.setAttribute('y', cy.toFixed(1));
-      txt.setAttribute('dominant-baseline', 'central');
-      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('dominant-baseline','central');
+      txt.setAttribute('text-anchor','middle');
       txt.style.fontSize = `${fontSize}px`;
       txt.textContent = letter;
       g.appendChild(txt);
@@ -759,6 +768,8 @@ function createHoneycombCells() {
     }
   }
 }
+
+
 function rebuildHoneycomb(letters, resetProgress = false) {
   window.sessionData = window.sessionData || {};
   if (letters && letters.length) window.sessionData.arabicLetters = letters;
@@ -807,6 +818,27 @@ window.currentGridSize = window.currentGridSize || '5x5';
       clearInterval(countdownInterval);
     });
   });
+
+
+function buildGridPreview(n) {
+  const r = 5, hw = r*Math.sqrt(3), hh = r*2;
+  const cs = hw, rs = hh*0.75;
+  const w = cs*(n+0.5)+4, h = (n-1)*rs+hh+4;
+  let p = '';
+  for (let row=0; row<n; row++) {
+    for (let col=0; col<n; col++) {
+      const cx = 2 + col*cs + (row%2===0?0:cs*0.5) + hw/2;
+      const cy = 2 + row*rs + hh/2;
+      const pts = [];
+      for (let i=0;i<6;i++){
+        const a=Math.PI/6+Math.PI/3*i;
+        pts.push(`${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`);
+      }
+      p += `<polygon points="${pts.join(' ')}" fill="currentColor"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${w.toFixed(1)} ${h.toFixed(1)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}">${p}</svg>`;
+}
 </script>
 
 

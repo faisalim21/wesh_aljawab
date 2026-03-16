@@ -1979,7 +1979,7 @@ def api_save_settings(request):
 
     # حجم الشبكة
     grid_size = data.get('grid_size')
-    valid_sizes = ['3x3', '4x4', '5x5', '6x6']
+    valid_sizes = ['3x3', '4x4', '5x5', '6x6','7x7']
     if grid_size in valid_sizes:
         settings.grid_size = grid_size
 
