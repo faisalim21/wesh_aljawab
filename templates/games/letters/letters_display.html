@@ -645,8 +645,8 @@ const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':22 };
 function hexPoints(cx, cy, r) {
   const pts = [];
   for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i + Math.PI / 6; // pointed-top
-    pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
+    const a = Math.PI / 3 * i;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
   }
   return pts.join(' ');
 }
@@ -701,16 +701,14 @@ function createHoneycombCells() {
   const sizeMap = { '3x3':3, '4x4':4, '5x5':5, '6x6':6, '7x7':7 };
   const cols = sizeMap[gridSize] || 5;
   const rows = cols;
-  const R = GRID_R[gridSize] || 32;
+  const R = GRID_R[gridSize] || 34;
 
-  // pointed-top hex: عرض = R*√3, ارتفاع = R*2
-  const hexW = R * Math.sqrt(3);
-  const hexH = R * 2;
-  const colStep = hexW;           // خطوة أفقية
-  const rowStep = hexH * 0.75;   // خطوة رأسية (متلاصق)
+  const hexW  = R * 2;
+  const hexH  = R * Math.sqrt(3);
+  const colStep = hexW * 0.75;
+  const rowStep = hexH;
 
-  // حساب الأبعاد الكلية مع padding
-  const pad = R * 1.5;
+  const pad = R * 1.2;
   const totalW = colStep * (cols - 1) + hexW + pad * 2;
   const totalH = rowStep * (rows - 1) + hexH * 0.5 + pad * 2;
   const viewW = Math.ceil(Math.max(totalW, 350));
@@ -721,7 +719,6 @@ function createHoneycombCells() {
 
   buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
 
-  // توسيط الشبكة
   const gridW = colStep * (cols - 1) + hexW;
   const gridH = rowStep * (rows - 1) + hexH * 0.5;
   const startX = (viewW - gridW) / 2 + hexW / 2;
@@ -733,9 +730,8 @@ function createHoneycombCells() {
   let idx = 0;
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
-      // التعرج على الأعمدة: الأعمدة الزوجية تنزل نصف خلية
       const cx = startX + col * colStep;
-      const cy = startY + row * rowStep + (col % 2 === 0 ? 0 : hexH * 0.375);
+      const cy = startY + row * rowStep + (row % 2 === 0 ? 0 : hexH * 0.5);
 
       const letter = letters[idx];
       const g = document.createElementNS(NS, 'g');
@@ -744,7 +740,7 @@ function createHoneycombCells() {
 
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class', 'hex-shape');
-      poly.setAttribute('points', hexPoints(cx, cy, R - 1));
+      poly.setAttribute('points', hexPoints(cx, cy, R - 1.5));
       g.appendChild(poly);
 
       const txt = document.createElementNS(NS, 'text');
@@ -757,7 +753,6 @@ function createHoneycombCells() {
       txt.textContent = letter;
       g.appendChild(txt);
 
-      // ربط حدث الضغط بـ closure صحيحة
       ;(function(el, ltr) {
         el.addEventListener('click', function() {
           if (typeof onCellClick === 'function') onCellClick(el, ltr);
