@@ -17,7 +17,7 @@
 
     {# ——— Canonical ——— #}
     <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-
+    <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
     {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
     <meta property="og:locale" content="ar_SA">
     <meta property="og:type" content="website">
@@ -280,6 +280,78 @@
             .buzzed-name { font-size: 3.2rem; }
             .team-indicator { font-size: 1.3rem; }
             .countdown { font-size: 6.2rem; }
+        }
+
+        /* ===== شعار الجلسة في شاشة العرض ===== */
+        .display-logo-btn {
+          position: fixed; bottom: 20px; right: 20px; z-index: 200;
+          background: linear-gradient(135deg, #3b0764, #4c1d95);
+          border: 1.5px solid rgba(139,92,246,0.5);
+          border-radius: 14px; padding: 8px 14px;
+          cursor: pointer; text-align: center;
+          font-family: 'Lalezar', sans-serif; line-height: 1.1;
+          box-shadow: 0 4px 16px rgba(59,7,100,0.4);
+          transition: transform 0.2s;
+        }
+        .display-logo-btn:hover { transform: scale(1.05); }
+        .display-logo-btn .dlb-haroof { color: #FCD34D; font-size: 1.1rem; display: block; }
+        .display-logo-btn .dlb-maa    { color: #22D3EE; font-size: 0.7rem; display: block; }
+        .display-logo-btn .dlb-name   { color: #F87171; font-size: 1.1rem; display: block; }
+        .display-logo-btn .dlb-hint   { color: rgba(255,255,255,0.4); font-size: 0.62rem; font-family: 'Tajawal',sans-serif; display: block; margin-top: 3px; }
+
+        /* ===== Overlay الشعار الكامل ===== */
+        .disp-logo-overlay {
+          position: fixed; inset: 0; background: #5b21b6;
+          z-index: 999999; display: none;
+          align-items: center; justify-content: center; flex-direction: column;
+        }
+        .disp-logo-overlay.open { display: flex; }
+        .disp-logo-full-hex { position: absolute; inset: 0; pointer-events: none; }
+        .disp-logo-group {
+          position: relative; z-index: 2;
+          text-align: center; line-height: 0.9;
+          font-family: 'Lalezar', sans-serif;
+          display: flex; flex-direction: column; align-items: center;
+        }
+        .dlg-haroof {
+          font-size: clamp(80px,15vw,200px); color: #FCD34D;
+          -webkit-text-stroke: 3px #1a0035; paint-order: stroke fill;
+          text-shadow: 5px 5px 0 #1a0035,10px 10px 0 #1a0035,15px 15px 0 #1a0035;
+          display: block; transform: translateX(150%); opacity: 0;
+        }
+        .dlg-maa {
+          font-size: clamp(36px,6vw,80px); color: #22D3EE;
+          -webkit-text-stroke: 2px #1a0035; paint-order: stroke fill;
+          display: block; margin: -0.05em 0; opacity: 0;
+        }
+        .dlg-name {
+          font-size: clamp(80px,15vw,200px); color: #F87171;
+          -webkit-text-stroke: 3px #1a0035; paint-order: stroke fill;
+          text-shadow: 5px 5px 0 #1a0035,10px 10px 0 #1a0035,15px 15px 0 #1a0035;
+          display: block; transform: translateX(-150%); opacity: 0;
+        }
+        .dlg-sub {
+          font-size: clamp(18px,3vw,42px); color: #22D3EE;
+          -webkit-text-stroke: 1.5px #1a0035; display: block; min-height: 1em; opacity: 0;
+        }
+        @keyframes dlg-fromR { to { transform: translateX(0); opacity: 1; } }
+        @keyframes dlg-fromL { to { transform: translateX(0); opacity: 1; } }
+        @keyframes dlg-pop   { to { opacity: 1; } }
+        .dlg-go-r  { animation: dlg-fromR .7s cubic-bezier(.34,1.56,.64,1) .05s forwards; }
+        .dlg-go-l  { animation: dlg-fromL .7s cubic-bezier(.34,1.56,.64,1) .3s forwards; }
+        .dlg-go-f1 { animation: dlg-pop .4s ease .45s forwards; }
+        .dlg-go-f2 { animation: dlg-pop .4s ease .85s forwards; }
+        .disp-logo-close {
+          position: fixed; top: 20px; left: 20px; z-index: 10;
+          background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.2);
+          color: #fff; border-radius: 12px; padding: 10px 18px;
+          font-family: 'Tajawal',sans-serif; font-weight: 700; font-size: 14px; cursor: pointer;
+        }
+        .disp-logo-replay {
+          position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+          background: rgba(139,92,246,.5); border: 1px solid rgba(139,92,246,.6);
+          color: #fff; border-radius: 12px; padding: 10px 24px;
+          font-family: 'Tajawal',sans-serif; font-weight: 700; font-size: 14px; cursor: pointer;
         }
     </style>
 </head>
@@ -601,6 +673,16 @@
               }
             }
             break;
+            if (d.settings.show_name) {
+                const btn = document.getElementById('dispLogoBtn');
+                const btnName = document.getElementById('dispLogoBtnName');
+                const fullName = document.getElementById('dispLogoFullName');
+                const fullSub = document.getElementById('dispLogoFullSub');
+                if (btn) btn.style.display = 'block';
+                if (btnName) btnName.textContent = d.settings.show_name;
+                if (fullName) fullName.textContent = d.settings.show_name;
+                if (fullSub) fullSub.textContent = d.settings.show_subtitle || '';
+              }
           case 'pong':
             break;
           default:
@@ -837,6 +919,17 @@ window.currentGridSize = window.currentGridSize || '5x5';
         const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
         const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
         buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+        // شعار الجلسة
+        if (s.show_name) {
+          const btn = document.getElementById('dispLogoBtn');
+          const btnName = document.getElementById('dispLogoBtnName');
+          const fullName = document.getElementById('dispLogoFullName');
+          const fullSub = document.getElementById('dispLogoFullSub');
+          if (btn) btn.style.display = 'block';
+          if (btnName) btnName.textContent = s.show_name;
+          if (fullName) fullName.textContent = s.show_name;
+          if (fullSub) fullSub.textContent = s.show_subtitle || '';
+        }
       })
       .catch(() => {});
 
@@ -867,6 +960,66 @@ function buildGridPreview(n) {
   }
   return `<svg viewBox="0 0 ${w.toFixed(1)} ${h.toFixed(1)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}">${p}</svg>`;
 }
+
+// ===== شعار شاشة العرض =====
+function buildDispLogoHexBg(svgEl, w, h) {
+  const NS = 'http://www.w3.org/2000/svg';
+  while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  const R = h * 0.38;
+  const hexW = R * Math.sqrt(3), hexH = R * 2;
+  const cols = Math.ceil(w / hexW) + 2, rows = Math.ceil(h / (hexH * 0.75)) + 2;
+  const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = -hexW + col * hexW + (row % 2 ? hexW * 0.5 : 0);
+      const cy = -hexH * 0.75 + row * hexH * 0.75;
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 6 + Math.PI / 3 * i;
+        pts.push(`${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`);
+      }
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('points', pts.join(' '));
+      poly.setAttribute('fill', 'rgba(74,20,140,0.45)');
+      poly.setAttribute('stroke', '#6b21a8');
+      poly.setAttribute('stroke-width', '1.5');
+      svgEl.appendChild(poly);
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('x', cx.toFixed(1)); txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('fill', '#7c3aed'); txt.setAttribute('font-size', Math.round(R * 0.5));
+      txt.setAttribute('font-family', 'Lalezar,Tajawal,sans-serif');
+      txt.textContent = letters[(row * cols + col) % letters.length];
+      svgEl.appendChild(txt);
+    }
+  }
+}
+
+function openDispLogo() {
+  buildDispLogoHexBg(document.getElementById('dispLogoHex'), 1600, 900);
+  replayDispLogo();
+  document.getElementById('dispLogoOverlay').classList.add('open');
+}
+
+function closeDispLogo() {
+  document.getElementById('dispLogoOverlay').classList.remove('open');
+}
+
+function replayDispLogo() {
+  const els = document.querySelectorAll('.dlg-haroof,.dlg-name,.dlg-maa,.dlg-sub');
+  els.forEach(el => {
+    el.classList.remove('dlg-go-r','dlg-go-l','dlg-go-f1','dlg-go-f2');
+    el.style.opacity = '0';
+    if (el.classList.contains('dlg-haroof')) el.style.transform = 'translateX(150%)';
+    if (el.classList.contains('dlg-name')) el.style.transform = 'translateX(-150%)';
+  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelector('.dlg-haroof').classList.add('dlg-go-r');
+    document.querySelector('.dlg-maa').classList.add('dlg-go-f1');
+    document.querySelector('.dlg-name').classList.add('dlg-go-l');
+    document.querySelector('.dlg-sub').classList.add('dlg-go-f2');
+  }));
+}
 </script>
 
 
@@ -874,6 +1027,25 @@ function buildGridPreview(n) {
 
 
 
+<!-- زر الشعار الصغير -->
+<div class="display-logo-btn" id="dispLogoBtn" onclick="openDispLogo()" style="display:none;">
+  <span class="dlb-haroof">حروف</span>
+  <span class="dlb-maa">مع</span>
+  <span class="dlb-name" id="dispLogoBtnName">—</span>
+  <span class="dlb-hint">اضغط للعرض الكامل</span>
+</div>
 
+<!-- Overlay الشعار كامل الشاشة -->
+<div id="dispLogoOverlay" class="disp-logo-overlay">
+  <svg class="disp-logo-full-hex" id="dispLogoHex" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="disp-logo-group">
+    <span class="dlg-haroof dlg-go-r">حروف</span>
+    <span class="dlg-maa dlg-go-f1">مع</span>
+    <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
+    <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
+  </div>
+  <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
+  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
+</div>
 </body>
 </html>
