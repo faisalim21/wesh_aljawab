@@ -104,8 +104,13 @@
 
     .main{
       min-height:100dvh;
-      display:flex; align-items:center; justify-content:center;
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      justify-content:center;
       padding: clamp(12px, 3vw, 28px);
+      padding-top: 80px; /* مسافة من الهيدر */
+      gap: 16px;
       position:relative;
     }
 
@@ -366,7 +371,7 @@
     </section>
 
     <!-- خلية الحروف للمتسابق (تظهر فقط لو الإعداد مفعّل) -->
-    <div id="contestantGridWrap" style="display:none; width:100%; margin-top:16px;">
+    <div id="contestantGridWrap" style="display:none; width:100%; max-width:560px;">
       <div style="background:rgba(255,255,255,0.08); border-radius:18px; padding:10px; text-align:center;">
         <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:6px; font-family:'Tajawal',sans-serif;">
           🔲 خلية الحروف
@@ -612,6 +617,23 @@
     const CGRID_R = { '3x3':38, '4x4':28, '5x5':22, '6x6':18, '7x7':15 };
     const ARABIC_28_C = ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي'];
 
+    function buildContestantHexBg(svg, viewW, viewH, color1, color2) {
+      svg.querySelectorAll('.chex-bg').forEach(el => el.remove());
+      const NS = 'http://www.w3.org/2000/svg';
+      const cx = viewW / 2, cy = viewH / 2;
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'chex-bg');
+      const tri = (pts, fill) => {
+        const p = document.createElementNS(NS, 'polygon');
+        p.setAttribute('points', pts); p.setAttribute('fill', fill); g.appendChild(p);
+      };
+      tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
+      tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
+      tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
+      tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
+      svg.insertBefore(g, svg.firstChild);
+    }
+
     function buildContestantGrid(gridSize, letters, cellStates, t1Color, t2Color) {
       // احفظ الألوان عند البناء
       if (t1Color) contestantT1Color = t1Color;
@@ -634,6 +656,8 @@
       const viewH = Math.ceil(Math.max(totalH, 160));
 
       svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+      // خلفية الفريقين
+      buildContestantHexBg(svg, viewW, viewH, contestantT1Color, contestantT2Color);
 
       const startX = (viewW - colStep * (cols - 0.5)) / 2;
       const startY = (viewH - (rowStep * (rows - 1) + hexH)) / 2 + hexH / 2;
