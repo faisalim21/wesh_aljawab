@@ -812,12 +812,34 @@ window.currentGridSize = window.currentGridSize || '5x5';
     loadSessionState();
     setupWebSocket();
 
-    window.addEventListener('beforeunload', () => {
-      try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
-      clearInterval(heartbeatTimer);
-      clearInterval(countdownInterval);
-    });
-  });
+    // تحميل الإعدادات عند فتح الصفحة أو التحديث
+    fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.json())
+      .then(data => {
+        const s = data.settings;
+        if (!s) return;
+        if (s.team1_color) {
+          document.documentElement.style.setProperty('--team1-color', s.team1_color);
+          const c1 = document.querySelector('.score-card.team1');
+          if (c1) c1.style.borderColor = s.team1_color;
+        }
+        if (s.team2_color) {
+          document.documentElement.style.setProperty('--team2-color', s.team2_color);
+          const c2 = document.querySelector('.score-card.team2');
+          if (c2) c2.style.borderColor = s.team2_color;
+        }
+        if (s.grid_size && s.grid_size !== window.currentGridSize) {
+          window.currentGridSize = s.grid_size;
+          rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+        }
+        // تحديث خلفية SVG بعد تطبيق الألوان
+        const svg = document.getElementById('honeycombSvg');
+        const vb = svg.getAttribute('viewBox').split(' ');
+        const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
+        const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
+        buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+      })
+      .catch(() => {});
 
 
 function buildGridPreview(n) {
