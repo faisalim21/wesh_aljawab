@@ -1584,7 +1584,7 @@
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
                 <div>
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
-                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: عزيز" maxlength="20">
+                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
                 </div>
                 <div>
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
@@ -1621,6 +1621,25 @@
         </div>
       </div>
 
+      <!-- ===== شعار الجلسة - عرض مصغر ===== -->
+      <div id="sessionLogoBar" style="
+        display:flex; align-items:center; gap:10px;
+        background: linear-gradient(135deg, #3b0764, #4c1d95);
+        border-radius: 14px; padding: 10px 16px; margin-bottom: 14px;
+        cursor: pointer;" onclick="openLogoOverlay()">
+        <div style="flex:1; font-family:'Lalezar',sans-serif; color:#fff; font-size:clamp(16px,3vw,26px); line-height:1;">
+          <span style="color:#FCD34D;">حروف</span>
+          <span style="color:#22D3EE; font-size:0.65em;"> مع </span>
+          <span id="sessionLogoBarName" style="color:#F87171;">—</span>
+          <span id="sessionLogoBarSub" style="color:#22D3EE; font-size:0.5em; display:block; margin-top:2px;"></span>
+        </div>
+        <div style="font-size:0.72rem; color:rgba(255,255,255,0.5); font-family:'Tajawal',sans-serif; text-align:left; white-space:nowrap;">
+          📺 فتح كامل<br>
+          <span style="font-size:0.68rem;">يمكن تغييره من الإعدادات</span>
+        </div>
+      </div>
+
+      
     <!-- شارات أعلى الصفحة فقط -->
     {% if session.package.is_free %}
       <span class="badge-soft badge-free">تجريبية مجانية (ساعة واحدة)</span>
@@ -2873,6 +2892,10 @@ function updateLogoPreview(name, subtitle) {
   if (sub) sub.textContent = subtitle || '';
   const hex = document.getElementById('logoPreviewHex');
   if (hex) buildLogoHexBg(hex, 800, 200);
+  const barName = document.getElementById('sessionLogoBarName');
+  const barSub = document.getElementById('sessionLogoBarSub');
+  if (barName) barName.textContent = name || '—';
+  if (barSub) barSub.textContent = subtitle || '';
 }
 
 function openLogoOverlay() {

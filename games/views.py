@@ -1941,20 +1941,10 @@ def api_get_settings(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_save_settings(request):
-    """
-    POST /games/api/settings/save/
-    Body JSON: { session_id, team1_name, team2_name, team1_color, team2_color,
-                 grid_size, buzz_timer_seconds, penalty_timer_enabled,
-                 penalty_timer_seconds, show_grid_to_contestants }
-    يحفظ الإعدادات ويبثها عبر WebSocket
-    """
     try:
         data = json.loads(request.body or '{}')
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'JSON غير صحيح'}, status=400)
-    
-    settings.show_name = data.get('show_name', '')[:50]
-    settings.show_subtitle = data.get('show_subtitle', '')[:50]
 
     session_id = data.get('session_id')
     if not session_id:
@@ -1967,9 +1957,6 @@ def api_save_settings(request):
 
     settings = GameSettings.get_or_create_for_session(session)
 
-    # ===== التحقق والحفظ =====
-
-    # أسماء الفريقين
     t1_name = (data.get('team1_name') or '').strip()
     t2_name = (data.get('team2_name') or '').strip()
     if t1_name:
@@ -1977,7 +1964,6 @@ def api_save_settings(request):
     if t2_name:
         settings.team2_name = t2_name[:50]
 
-    # ألوان الفريقين
     t1_color = (data.get('team1_color') or '').strip()
     t2_color = (data.get('team2_color') or '').strip()
     if t1_color and _validate_color(t1_color):
@@ -1985,40 +1971,37 @@ def api_save_settings(request):
     if t2_color and _validate_color(t2_color):
         settings.team2_color = t2_color
 
-    # حجم الشبكة
     grid_size = data.get('grid_size')
-    valid_sizes = ['3x3', '4x4', '5x5', '6x6','7x7']
+    valid_sizes = ['3x3', '4x4', '5x5', '6x6', '7x7']
     if grid_size in valid_sizes:
         settings.grid_size = grid_size
 
-    # مؤقت الزر
     buzz_timer = data.get('buzz_timer_seconds')
     if buzz_timer is not None:
         try:
-            bz = max(1, min(30, int(buzz_timer)))
-            settings.buzz_timer_seconds = bz
+            settings.buzz_timer_seconds = max(1, min(30, int(buzz_timer)))
         except (ValueError, TypeError):
             pass
 
-    # مؤقت العقوبة
     if 'penalty_timer_enabled' in data:
         settings.penalty_timer_enabled = bool(data['penalty_timer_enabled'])
 
     penalty_secs = data.get('penalty_timer_seconds')
     if penalty_secs is not None:
         try:
-            ps = max(1, min(120, int(penalty_secs)))
-            settings.penalty_timer_seconds = ps
+            settings.penalty_timer_seconds = max(1, min(120, int(penalty_secs)))
         except (ValueError, TypeError):
             pass
 
-    # إظهار الخلية للمتسابقين
     if 'show_grid_to_contestants' in data:
         settings.show_grid_to_contestants = bool(data['show_grid_to_contestants'])
 
+    # ← شعار الجلسة
+    settings.show_name = data.get('show_name', '')[:50]
+    settings.show_subtitle = data.get('show_subtitle', '')[:50]
+
     settings.save()
 
-    # تحديث أسماء الفريقين في الجلسة نفسها لو تغيرت
     changed_session = False
     if t1_name and session.team1_name != settings.team1_name:
         session.team1_name = settings.team1_name
@@ -2029,7 +2012,6 @@ def api_save_settings(request):
     if changed_session:
         session.save(update_fields=['team1_name', 'team2_name'])
 
-    # بث الإعدادات عبر WebSocket لتحديث شاشة العرض والمتسابقين فوراً
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -2047,6 +2029,8 @@ def api_save_settings(request):
                         "penalty_timer_enabled": settings.penalty_timer_enabled,
                         "penalty_timer_seconds": settings.penalty_timer_seconds,
                         "show_grid_to_contestants": settings.show_grid_to_contestants,
+                        "show_name": settings.show_name,
+                        "show_subtitle": settings.show_subtitle,
                     }
                 }
             )
@@ -2066,5 +2050,7 @@ def api_save_settings(request):
             'penalty_timer_enabled': settings.penalty_timer_enabled,
             'penalty_timer_seconds': settings.penalty_timer_seconds,
             'show_grid_to_contestants': settings.show_grid_to_contestants,
+            'show_name': settings.show_name,
+            'show_subtitle': settings.show_subtitle,
         }
     })
