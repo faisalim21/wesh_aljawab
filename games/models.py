@@ -973,6 +973,7 @@ class GameSettings(models.Model):
         ('4x4', '4×4 (16 خلية)'),
         ('5x5', '5×5 (25 خلية) — افتراضي'),
         ('6x6', '6×6 (36 خلية)'),
+        ('7x7', '7×7 (49 خلية)'),
     ]
     grid_size = models.CharField(
         max_length=5,
