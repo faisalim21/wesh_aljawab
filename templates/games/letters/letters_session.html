@@ -3102,6 +3102,8 @@ function startPenalty() {
     document.getElementById('penaltyCountdown').classList.remove('running');
     document.getElementById('penaltyStartBtn').textContent = '▶ ابدأ';
     document.getElementById('penaltyStartBtn').disabled = false;
+    sendWS({ type: 'penalty_end', team: penaltyTeam }).catch(() => {});
+
     return;
   }
 
