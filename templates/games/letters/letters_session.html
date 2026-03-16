@@ -1700,7 +1700,8 @@
   // ========= رسم خلية الحروف =========
 
 
-  let lastClickAt = 0;
+  let lastClickedIndex = null;
+
   function onCellClick(g, letter, cellIndex) {
     const now = Date.now();
     if (now - lastClickAt < 150) return;
@@ -1708,17 +1709,19 @@
 
     showQuestion(letter);
 
-    // تدوير اللون على الخلية المحددة فقط
-    let newState = 'team1';
-    if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
-    else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
-    else { g.classList.add('team1'); newState = 'team1'; }
+    // غيّر اللون فقط لو ضغطت على نفس الخلية مرتين
+    if (lastClickedIndex === cellIndex) {
+      let newState = 'team1';
+      if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
+      else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
+      else { g.classList.add('team1'); newState = 'team1'; }
 
-    // نحفظ الحالة بالـ index مب الحرف
-    cellStates[cellIndex] = newState;
-    sendWS({type:'update_cell_state', letter, state:newState, cell_index:cellIndex})
-      .catch(()=> updateCellStateAPI(letter, newState, cellIndex));
+      cellStates[cellIndex] = newState;
+      sendWS({type:'update_cell_state', letter, state:newState, cell_index:cellIndex})
+        .catch(()=> updateCellStateAPI(letter, newState, cellIndex));
+    }
 
+    lastClickedIndex = cellIndex;
     lastClickedLetter = letter;
   }
 
