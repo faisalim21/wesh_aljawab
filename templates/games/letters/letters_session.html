@@ -2411,7 +2411,7 @@ const ARABIC_28 = [
   'ق','ك','ل','م','ن','هـ','و','ي'
 ];
 
-const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':22 };
+const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':21 };
 
 // نقاط الخلية السداسية - pointed-top (التعرج يمين/يسار)
 function hexPoints(cx, cy, r) {
@@ -2437,29 +2437,25 @@ function getLettersForGrid(gridSize, baseLetters) {
 function buildHexBackground(svg, viewW, viewH, color1, color2) {
   svg.querySelectorAll('.hex-bg').forEach(el => el.remove());
   const NS = 'http://www.w3.org/2000/svg';
+  const cx = viewW / 2, cy = viewH / 2;
 
-  // خلفية رئيسية (فريق 1)
-  const mainRect = document.createElementNS(NS, 'rect');
-  mainRect.setAttribute('class', 'hex-bg');
-  mainRect.setAttribute('width', viewW);
-  mainRect.setAttribute('height', viewH);
-  mainRect.setAttribute('rx', '16');
-  mainRect.setAttribute('fill', color1);
-  svg.insertBefore(mainRect, svg.firstChild);
+  const bg = document.createElementNS(NS, 'rect');
+  bg.setAttribute('class','hex-bg'); bg.setAttribute('width',viewW);
+  bg.setAttribute('height',viewH); bg.setAttribute('rx','14');
+  bg.setAttribute('fill', color2);
+  svg.insertBefore(bg, svg.firstChild);
 
-  // مثلثات يمين/يسار (فريق 2)
-  const d = viewW * 0.2;
-  const leftTri = document.createElementNS(NS, 'polygon');
-  leftTri.setAttribute('class', 'hex-bg');
-  leftTri.setAttribute('points', `0,0 ${d},0 0,${viewH/2} ${d},${viewH} 0,${viewH}`);
-  leftTri.setAttribute('fill', color2);
-  svg.insertBefore(leftTri, svg.children[1]);
+  const top = document.createElementNS(NS, 'polygon');
+  top.setAttribute('class','hex-bg');
+  top.setAttribute('points', `0,0 ${viewW},0 ${cx},${cy}`);
+  top.setAttribute('fill', color1);
+  svg.insertBefore(top, svg.children[1]);
 
-  const rightTri = document.createElementNS(NS, 'polygon');
-  rightTri.setAttribute('class', 'hex-bg');
-  rightTri.setAttribute('points', `${viewW},0 ${viewW-d},0 ${viewW},${viewH/2} ${viewW-d},${viewH} ${viewW},${viewH}`);
-  rightTri.setAttribute('fill', color2);
-  svg.insertBefore(rightTri, svg.children[2]);
+  const bot = document.createElementNS(NS, 'polygon');
+  bot.setAttribute('class','hex-bg');
+  bot.setAttribute('points', `0,${viewH} ${viewW},${viewH} ${cx},${cy}`);
+  bot.setAttribute('fill', color1);
+  svg.insertBefore(bot, svg.children[2]);
 }
 
 function createHoneycombCells() {
@@ -2480,7 +2476,7 @@ function createHoneycombCells() {
   const colStep = hexW;
   const rowStep = hexH * 0.75;
 
-  const pad = R * 1.2;
+  const pad = R * 1.5;
   const totalW = colStep * (cols - 1) + hexW + pad * 2;
   const totalH = rowStep * (rows - 1) + hexH * 0.5 + pad * 2;
   const viewW = Math.ceil(Math.max(totalW, 350));
@@ -2511,7 +2507,7 @@ function createHoneycombCells() {
 
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class', 'hex-shape');
-      poly.setAttribute('points', hexPoints(cx, cy, R - 1.5));
+      poly.setAttribute('points', hexPoints(cx, cy, R));
       g.appendChild(poly);
 
       const txt = document.createElementNS(NS, 'text');
