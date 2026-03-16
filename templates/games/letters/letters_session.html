@@ -1235,7 +1235,12 @@
     <span class="logo-full-sub lf-go-f2" id="logoFullSub"></span>
   </div>
   <button class="logo-close-btn" onclick="closeLogoOverlay()">✕ إغلاق</button>
-  <button class="logo-save-btn" id="logoSaveBtn" onclick="saveLogoImage()">⬇ حفظ صورة</button>
+  <button class="logo-save-btn" id="logoSaveBtn" onclick="saveLogoImage('landscape')" style="right:20px;">
+    ⬇ حفظ عرضي (16:9)
+  </button>
+  <button class="logo-save-btn" id="logoSaveBtnP" onclick="saveLogoImage('portrait')" style="right:180px;">
+    ⬇ حفظ طولي (9:16)
+  </button>
   <button class="logo-replay-btn" onclick="replayLogoAnim()">↺ إعادة الأنيميشن</button>
 </div>
 
@@ -1328,6 +1333,43 @@
       
           <!-- Body -->
           <div class="settings-body">
+
+            <!-- ===== قسم 5: شعار الجلسة ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🎨</span>
+                شعار الجلسة
+              </div>
+              <div class="settings-section-desc">
+                شعار "حروف مع [اسمك]" — يظهر في شاشة العرض وصفحة المتسابقين، ويمكن حفظه كصورة للطباعة والتيك توك.
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
+                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
+                </div>
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
+                  <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2025" maxlength="20">
+                </div>
+              </div>
+
+              <!-- معاينة مصغرة -->
+              <div class="logo-preview-wrap" id="logoPreviewWrap">
+                <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div class="logo-title-group">
+                  <span class="logo-t-haroof">حروف</span>
+                  <span class="logo-t-maa">مع</span>
+                  <span class="logo-t-name" id="previewName">—</span>
+                  <span class="logo-t-sub" id="previewSub"></span>
+                </div>
+              </div>
+              <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
+                📺 فتح الشعار كامل الشاشة
+              </button>
+            </div>
+
       
             <!-- ===== قسم 1: الفريقان ===== -->
             <div class="settings-section">
@@ -1570,42 +1612,6 @@
             </div>
       
           </div><!-- /settings-body -->
-
-          <!-- ===== قسم 5: شعار الجلسة ===== -->
-            <div class="settings-section">
-              <div class="settings-section-label">
-                <span class="settings-section-icon">🎨</span>
-                شعار الجلسة
-              </div>
-              <div class="settings-section-desc">
-                شعار "حروف مع [اسمك]" — يظهر في شاشة العرض وصفحة المتسابقين، ويمكن حفظه كصورة للطباعة والتيك توك.
-              </div>
-
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-                <div>
-                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
-                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
-                </div>
-                <div>
-                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
-                  <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2025" maxlength="20">
-                </div>
-              </div>
-
-              <!-- معاينة مصغرة -->
-              <div class="logo-preview-wrap" id="logoPreviewWrap">
-                <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
-                <div class="logo-title-group">
-                  <span class="logo-t-haroof">حروف</span>
-                  <span class="logo-t-maa">مع</span>
-                  <span class="logo-t-name" id="previewName">—</span>
-                  <span class="logo-t-sub" id="previewSub"></span>
-                </div>
-              </div>
-              <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
-                📺 فتح الشعار كامل الشاشة
-              </button>
-            </div>
       
           <!-- Footer -->
           <div class="settings-footer">
@@ -1623,19 +1629,18 @@
 
       <!-- ===== شعار الجلسة - عرض مصغر ===== -->
       <div id="sessionLogoBar" style="
-        display:flex; align-items:center; gap:10px;
-        background: linear-gradient(135deg, #3b0764, #4c1d95);
-        border-radius: 14px; padding: 10px 16px; margin-bottom: 14px;
-        cursor: pointer;" onclick="openLogoOverlay()">
-        <div style="flex:1; font-family:'Lalezar',sans-serif; color:#fff; font-size:clamp(16px,3vw,26px); line-height:1;">
-          <span style="color:#FCD34D;">حروف</span>
-          <span style="color:#22D3EE; font-size:0.65em;"> مع </span>
-          <span id="sessionLogoBarName" style="color:#F87171;">—</span>
-          <span id="sessionLogoBarSub" style="color:#22D3EE; font-size:0.5em; display:block; margin-top:2px;"></span>
+        display:inline-flex; flex-direction:column; align-items:center;
+        background:linear-gradient(135deg,#3b0764,#4c1d95);
+        border-radius:14px; padding:12px 20px; margin-bottom:14px;
+        cursor:pointer; min-width:140px;" onclick="openLogoOverlay()">
+        <div style="font-family:'Lalezar',sans-serif; text-align:center; line-height:1.1;">
+          <span style="color:#FCD34D; font-size:clamp(20px,4vw,32px);">حروف</span><br>
+          <span style="color:#22D3EE; font-size:clamp(10px,1.8vw,16px);">مع</span><br>
+          <span id="sessionLogoBarName" style="color:#F87171; font-size:clamp(20px,4vw,32px);">—</span><br>
+          <span id="sessionLogoBarSub" style="color:#22D3EE; font-size:clamp(9px,1.5vw,13px);"></span>
         </div>
-        <div style="font-size:0.72rem; color:rgba(255,255,255,0.5); font-family:'Tajawal',sans-serif; text-align:left; white-space:nowrap;">
-          📺 فتح كامل<br>
-          <span style="font-size:0.68rem;">يمكن تغييره من الإعدادات</span>
+        <div style="margin-top:8px; font-size:0.7rem; color:rgba(255,255,255,0.5); font-family:'Tajawal',sans-serif; text-align:center;">
+          📺 اضغط لفتح كامل الشاشة<br>يمكن تغييره من الإعدادات
         </div>
       </div>
 
@@ -2936,27 +2941,82 @@ function replayLogoAnim() {
   }));
 }
 
-function saveLogoImage() {
+function saveLogoImage(orientation) {
   const btn = document.getElementById('logoSaveBtn');
   btn.textContent = '⏳ جاري...';
+
+  const isPortrait = orientation === 'portrait';
+
+  // نبني عنصر مؤقت بالأبعاد المطلوبة
+  const tmpWrap = document.createElement('div');
+  tmpWrap.style.cssText = `
+    position:fixed; top:-9999px; left:-9999px;
+    background:#5b21b6;
+    width:${isPortrait ? '900px' : '1600px'};
+    height:${isPortrait ? '1600px' : '900px'};
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; font-family:'Lalezar',sans-serif;
+    overflow:hidden;
+  `;
+
+  // خلفية سداسية SVG
+  const svgBg = document.createElement('div');
+  svgBg.style.cssText = 'position:absolute;inset:0;pointer-events:none;';
+  const svgEl = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svgEl.setAttribute('viewBox', `0 0 ${isPortrait ? '900 1600' : '1600 900'}`);
+  svgEl.setAttribute('width', isPortrait ? '900' : '1600');
+  svgEl.setAttribute('height', isPortrait ? '1600' : '900');
+  svgEl.style.cssText = 'position:absolute;inset:0;';
+  buildLogoHexBg(svgEl, isPortrait ? 900 : 1600, isPortrait ? 1600 : 900);
+  svgBg.appendChild(svgEl);
+  tmpWrap.appendChild(svgBg);
+
+  // النص
+  const name = document.getElementById('logoFullName')?.textContent || '—';
+  const sub  = document.getElementById('logoFullSub')?.textContent  || '';
+  const fs   = isPortrait ? '160px' : '130px';
+  const fsMaa = isPortrait ? '70px' : '60px';
+
+  const grp = document.createElement('div');
+  grp.style.cssText = 'position:relative;z-index:2;text-align:center;line-height:0.9;';
+  grp.innerHTML = `
+    <div style="font-size:${fs};color:#FCD34D;-webkit-text-stroke:4px #1a0035;paint-order:stroke fill;
+      text-shadow:6px 6px 0 #1a0035,12px 12px 0 #1a0035,18px 18px 0 #1a0035;">حروف</div>
+    <div style="font-size:${fsMaa};color:#22D3EE;-webkit-text-stroke:2px #1a0035;paint-order:stroke fill;">مع</div>
+    <div style="font-size:${fs};color:#F87171;-webkit-text-stroke:4px #1a0035;paint-order:stroke fill;
+      text-shadow:6px 6px 0 #1a0035,12px 12px 0 #1a0035,18px 18px 0 #1a0035;">${name}</div>
+    ${sub ? `<div style="font-size:${fsMaa};color:#22D3EE;-webkit-text-stroke:2px #1a0035;paint-order:stroke fill;">${sub}</div>` : ''}
+  `;
+  tmpWrap.appendChild(grp);
+  document.body.appendChild(tmpWrap);
+
   const go = () => {
-    html2canvas(document.getElementById('logoFullOverlay'), {
-      useCORS: true, scale: 2, backgroundColor: '#5b21b6'
+    html2canvas(tmpWrap, {
+      useCORS: true, scale: 2, backgroundColor: '#5b21b6',
+      width: isPortrait ? 900 : 1600,
+      height: isPortrait ? 1600 : 900,
     }).then(c => {
       const a = document.createElement('a');
-      a.download = 'haroof-logo.png'; a.href = c.toDataURL('image/png'); a.click();
+      a.download = isPortrait ? 'haroof-portrait.png' : 'haroof-landscape.png';
+      a.href = c.toDataURL('image/png');
+      a.click();
       btn.textContent = '⬇ حفظ صورة';
-    }).catch(() => { btn.textContent = '⬇ حفظ صورة'; });
+      document.body.removeChild(tmpWrap);
+    }).catch(() => {
+      btn.textContent = '⬇ حفظ صورة';
+      try { document.body.removeChild(tmpWrap); } catch {}
+    });
   };
+
   if (typeof html2canvas !== 'undefined') { go(); }
   else {
     const s = document.createElement('script');
     s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = go; s.onerror = () => { btn.textContent = '⬇ حفظ صورة'; };
+    s.onload = go;
+    s.onerror = () => { btn.textContent = '⬇ حفظ صورة'; };
     document.head.appendChild(s);
   }
 }
-
 // تهيئة المعاينة عند فتح الإعدادات
 document.getElementById('setting_show_name')?.addEventListener('input', function() {
   updateLogoPreview(this.value, document.getElementById('setting_show_subtitle')?.value || '');
