@@ -16,7 +16,7 @@
 
   {# ——— Canonical ——— #}
   <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
   <meta property="og:locale" content="ar_SA">
   <meta property="og:type" content="website">
@@ -285,10 +285,42 @@
       .card-ct{ padding: 20px 16px; border-radius: 20px; }
       .logo{ right: 10px; top: 10px; }
     }
+
+
+    /* ===== هيدر الشعار ===== */
+    .session-logo-header {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #3b0764, #4c1d95);
+      padding: 10px 16px;
+      text-align: center;
+      font-family: 'Lalezar', sans-serif;
+      line-height: 1;
+      position: sticky; top: 0; z-index: 5;
+      border-bottom: 1px solid rgba(139,92,246,0.3);
+    }
+    .slh-inner {
+      display: inline-flex; align-items: center; gap: 6px;
+      justify-content: center;
+    }
+    .slh-haroof { color: #FCD34D; font-size: clamp(18px, 5vw, 26px); }
+    .slh-maa    { color: #22D3EE; font-size: clamp(11px, 3vw, 15px); }
+    .slh-name   { color: #F87171; font-size: clamp(18px, 5vw, 26px); }
+    .slh-sub    { color: rgba(255,255,255,0.5); font-size: 0.7rem;
+                  font-family: 'Tajawal',sans-serif; display: block;
+                  margin-top: 2px; }
   </style>
 </head>
 <body>
-
+  <!-- هيدر شعار الجلسة -->
+  <div id="sessionLogoHeader" class="session-logo-header">
+    <div class="slh-inner">
+      <span class="slh-haroof">حروف</span>
+      <span class="slh-maa">مع</span>
+      <span class="slh-name" id="slhName">—</span>
+    </div>
+    <span class="slh-sub" id="slhSub"></span>
+  </div>
   <!-- لمبة الاتصال -->
   <div id="conn" class="conn disconnected">🔴 منقطع</div>
 
@@ -425,22 +457,28 @@
         try{ d = JSON.parse(ev.data || '{}'); }catch{ return; }
 
         if (d.type === 'buzz_confirmed'){
-          // ✅ نجاح ضغطتك
           showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
           tone(840, 220, .4);
           haptic(30);
-          // نترك الزر يرجع طبيعي بعد شوي
           setTimeout(()=> enableBuzz(), 900);
         } else if (d.type === 'buzz_rejected'){
-          // ❌ محجوز
           showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
           tone(360, 180, .25);
           haptic(40);
-          // نعيد تمكين الزر في الحال تقريباً
           setTimeout(()=> enableBuzz(), 400);
         } else if (d.type === 'error'){
           showMsg('err', d.message || 'حدث خطأ.', 3200);
           setTimeout(()=> enableBuzz(), 600);
+        } else if (d.type === 'settings_updated') {
+          const s = d.settings;
+          if (s && s.show_name) {
+            const header = document.getElementById('sessionLogoHeader');
+            const name   = document.getElementById('slhName');
+            const sub    = document.getElementById('slhSub');
+            if (name) name.textContent = s.show_name;
+            if (sub)  sub.textContent  = s.show_subtitle || '';
+            if (header) header.style.display = 'block';
+          }
         }
       };
 
@@ -517,6 +555,21 @@
       loadPrefs();
       connectWS();
 
+      // تحميل شعار الجلسة
+      fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+        .then(r => r.json())
+        .then(data => {
+          const s = data.settings;
+          if (!s || !s.show_name) return;
+          const header = document.getElementById('sessionLogoHeader');
+          const name   = document.getElementById('slhName');
+          const sub    = document.getElementById('slhSub');
+          if (name) name.textContent = s.show_name;
+          if (sub)  sub.textContent  = s.show_subtitle || '';
+          if (header) header.style.display = 'block';
+        })
+        .catch(() => {});
+
       // أحداث
       el.buzz.addEventListener('click', sendBuzz);
       el.name.addEventListener('keypress', (e)=>{ if (e.key === 'Enter') sendBuzz(); });
@@ -526,6 +579,8 @@
       // حالة أونلاين/أوفلاين
       window.addEventListener('online',  ()=> setConn(socket && socket.readyState===1));
       window.addEventListener('offline', ()=> setConn(false));
+
+
     });
 
     window.buzzAnswer = sendBuzz; // إن احتجت تناديها من HTML
