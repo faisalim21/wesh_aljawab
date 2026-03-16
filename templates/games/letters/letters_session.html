@@ -2109,6 +2109,14 @@
     setupWebSocket();
     setInterval(loadSessionState, 30000);
 
+    // تحميل الإعدادات عند فتح الصفحة أو التحديث
+    fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.settings) applySettingsLocally(data.settings);
+      })
+      .catch(() => {});
+
     document.querySelectorAll('.grid-option').forEach(label => {
       const n = parseInt(label.dataset.size);
       const preview = label.querySelector('.grid-preview');
