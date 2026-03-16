@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
@@ -1089,10 +1090,154 @@
 .settings-reset-all-btn:hover {
   background: #fff5f5;
 }
+
+
+
+
+
+
+
+/* ===== شعار حروف مع [الاسم] ===== */
+.logo-preview-wrap {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #5b21b6;
+  position: relative;
+  aspect-ratio: 16/5;
+  min-height: 90px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-hex-bg { position: absolute; inset: 0; pointer-events: none; }
+.logo-title-group {
+  position: relative; z-index: 2;
+  text-align: center; line-height: 0.95;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: 'Lalezar', sans-serif;
+}
+.logo-t-haroof {
+  font-size: clamp(22px,5vw,48px); color: #FCD34D;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
+}
+.logo-t-maa {
+  font-size: clamp(12px,2.5vw,22px); color: #22D3EE;
+  -webkit-text-stroke: 1px #1a0035; paint-order: stroke fill;
+  display: block; margin: -0.05em 0;
+}
+.logo-t-name {
+  font-size: clamp(22px,5vw,48px); color: #F87171;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
+}
+.logo-t-sub {
+  font-size: clamp(9px,1.8vw,16px); color: #22D3EE;
+  -webkit-text-stroke: 0.8px #1a0035; display: block; min-height: 0.8em;
+}
+.logo-open-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b21b6, #4c1d95);
+  color: #e9d5ff;
+  border: 1px solid rgba(139,92,246,.4);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logo-open-btn:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+
+/* ===== Overlay الشعار الكامل ===== */
+.logo-fullscreen-overlay {
+  position: fixed; inset: 0;
+  background: #5b21b6;
+  z-index: 999999;
+  display: none;
+  align-items: center; justify-content: center;
+  flex-direction: column;
+}
+.logo-fullscreen-overlay.open { display: flex; }
+.logo-full-hex-bg { position: absolute; inset: 0; pointer-events: none; }
+.logo-full-group {
+  position: relative; z-index: 2;
+  text-align: center; line-height: 0.9;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: 'Lalezar', sans-serif;
+}
+.logo-full-haroof {
+  font-size: clamp(80px,15vw,200px); color: #FCD34D;
+  -webkit-text-stroke: 3px #1a0035; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #1a0035,10px 10px 0 #1a0035,15px 15px 0 #1a0035;
+  display: block;
+  transform: translateX(150%); opacity: 0;
+}
+.logo-full-maa {
+  font-size: clamp(36px,6vw,80px); color: #22D3EE;
+  -webkit-text-stroke: 2px #1a0035; paint-order: stroke fill;
+  display: block; margin: -0.05em 0; opacity: 0;
+}
+.logo-full-name {
+  font-size: clamp(80px,15vw,200px); color: #F87171;
+  -webkit-text-stroke: 3px #1a0035; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #1a0035,10px 10px 0 #1a0035,15px 15px 0 #1a0035;
+  display: block;
+  transform: translateX(-150%); opacity: 0;
+}
+.logo-full-sub {
+  font-size: clamp(18px,3vw,42px); color: #22D3EE;
+  -webkit-text-stroke: 1.5px #1a0035; display: block; min-height: 1em; opacity: 0;
+}
+@keyframes lf-fromR { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-fromL { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-pop   { to { opacity: 1; } }
+.lf-go-r  { animation: lf-fromR .7s cubic-bezier(.34,1.56,.64,1) .05s forwards; }
+.lf-go-l  { animation: lf-fromL .7s cubic-bezier(.34,1.56,.64,1) .3s forwards; }
+.lf-go-f1 { animation: lf-pop .4s ease .45s forwards; }
+.lf-go-f2 { animation: lf-pop .4s ease .85s forwards; }
+.logo-close-btn {
+  position: fixed; top: 20px; left: 20px; z-index: 10;
+  background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 14px;
+  cursor: pointer;
+}
+.logo-save-btn {
+  position: fixed; top: 20px; right: 20px; z-index: 10;
+  background: rgba(0,0,0,.4); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 14px;
+  cursor: pointer;
+}
+.logo-replay-btn {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+  background: rgba(139,92,246,.5); border: 1px solid rgba(139,92,246,.6);
+  color: #fff; border-radius: 12px; padding: 10px 24px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700; font-size: 14px;
+  cursor: pointer;
+}
 </style>
  
 </head>
 <body>
+
+  <!-- ===== Overlay الشعار الكامل ===== -->
+<div id="logoFullOverlay" class="logo-fullscreen-overlay">
+  <svg class="logo-full-hex-bg" id="logoFullHex" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="logo-full-group" id="logoFullGroup">
+    <span class="logo-full-haroof lf-go-r">حروف</span>
+    <span class="logo-full-maa lf-go-f1">مع</span>
+    <span class="logo-full-name lf-go-l" id="logoFullName">—</span>
+    <span class="logo-full-sub lf-go-f2" id="logoFullSub"></span>
+  </div>
+  <button class="logo-close-btn" onclick="closeLogoOverlay()">✕ إغلاق</button>
+  <button class="logo-save-btn" id="logoSaveBtn" onclick="saveLogoImage()">⬇ حفظ صورة</button>
+  <button class="logo-replay-btn" onclick="replayLogoAnim()">↺ إعادة الأنيميشن</button>
+</div>
 
   <div class="container">
     <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
@@ -1425,6 +1570,42 @@
             </div>
       
           </div><!-- /settings-body -->
+
+          <!-- ===== قسم 5: شعار الجلسة ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🎨</span>
+                شعار الجلسة
+              </div>
+              <div class="settings-section-desc">
+                شعار "حروف مع [اسمك]" — يظهر في شاشة العرض وصفحة المتسابقين، ويمكن حفظه كصورة للطباعة والتيك توك.
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
+                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: عزيز" maxlength="20">
+                </div>
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
+                  <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2025" maxlength="20">
+                </div>
+              </div>
+
+              <!-- معاينة مصغرة -->
+              <div class="logo-preview-wrap" id="logoPreviewWrap">
+                <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div class="logo-title-group">
+                  <span class="logo-t-haroof">حروف</span>
+                  <span class="logo-t-maa">مع</span>
+                  <span class="logo-t-name" id="previewName">—</span>
+                  <span class="logo-t-sub" id="previewSub"></span>
+                </div>
+              </div>
+              <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
+                📺 فتح الشعار كامل الشاشة
+              </button>
+            </div>
       
           <!-- Footer -->
           <div class="settings-footer">
@@ -2208,11 +2389,10 @@ async function loadCurrentSettings() {
     if (!r.ok) return;
     const { settings } = await r.json();
     if (!settings) return;
- 
-    // الفريقان
+
     document.getElementById('setting_team1_name').value = settings.team1_name || '';
     document.getElementById('setting_team2_name').value = settings.team2_name || '';
- 
+
     const c1 = settings.team1_color || '#22c55e';
     const c2 = settings.team2_color || '#f97316';
     document.getElementById('setting_team1_color').value = c1;
@@ -2221,34 +2401,35 @@ async function loadCurrentSettings() {
     document.getElementById('team2Dot').style.background = c2;
     document.getElementById('team1ColorHex').textContent = c1;
     document.getElementById('team2ColorHex').textContent = c2;
- 
-    // حجم الشبكة
+
     const gs = settings.grid_size || '5x5';
     document.querySelectorAll('.grid-option').forEach(el => {
       el.classList.toggle('selected', el.dataset.size === gs);
     });
     const radioEl = document.querySelector(`input[name="grid_size"][value="${gs}"]`);
     if (radioEl) radioEl.checked = true;
- 
-    // مؤقتات
+
     document.getElementById('buzzTimerVal').textContent = settings.buzz_timer_seconds ?? 3;
     document.getElementById('penaltyTimerVal').textContent = settings.penalty_timer_seconds ?? 10;
- 
+
     const penaltyEnabled = !!settings.penalty_timer_enabled;
     document.getElementById('penaltyEnabled').checked = penaltyEnabled;
     togglePenaltyTimer(penaltyEnabled);
- 
-    // خيارات العرض
+
     document.getElementById('showGridToContestants').checked = !!settings.show_grid_to_contestants;
- 
-    // وضع بدون مقدم (يأخذ الحالة الحالية من المتغير العام)
     document.getElementById('noHostModeToggle').checked = !!noHostMode;
- 
+
+    // ← شعار الجلسة
+    document.getElementById('setting_show_name').value = settings.show_name || '';
+    document.getElementById('setting_show_subtitle').value = settings.show_subtitle || '';
+    updateLogoPreview(settings.show_name || '', settings.show_subtitle || '');
+
   } catch(e) {
     console.error('loadCurrentSettings error:', e);
   }
 }
- 
+
+
 // ===== حجم الشبكة: تفعيل الاختيار البصري =====
 document.querySelectorAll('.grid-option').forEach(label => {
   label.addEventListener('click', () => {
@@ -2303,6 +2484,8 @@ async function saveSettings() {
     penalty_timer_enabled: document.getElementById('penaltyEnabled').checked,
     penalty_timer_seconds: parseInt(document.getElementById('penaltyTimerVal').textContent),
     show_grid_to_contestants: document.getElementById('showGridToContestants').checked,
+    show_name: document.getElementById('setting_show_name').value.trim(),
+    show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
   };
  
   try {
@@ -2340,21 +2523,15 @@ async function saveSettings() {
 function applySettingsLocally(settings) {
   if (!settings) return;
 
-  // ===== ألوان الفريقين عبر CSS variables (يطبق على كل شيء دفعة واحدة) =====
   if (settings.team1_color) {
     document.documentElement.style.setProperty('--team1-color', settings.team1_color);
-    // نولد لون stroke أغمق بـ 20%
     document.documentElement.style.setProperty('--team1-stroke', settings.team1_color);
-    // خلفية SVG (أعلى + أسفل = فريق 1)
-
-    // كرت النقاط فريق 1
     document.querySelectorAll('.team1-score').forEach(el => {
       el.style.background = `linear-gradient(135deg, ${settings.team1_color}18, ${settings.team1_color}30)`;
       el.style.borderColor = settings.team1_color;
       el.style.borderRightColor = settings.team1_color;
       el.style.color = '#14532d';
     });
-
   }
 
   if (settings.team2_color) {
@@ -2368,22 +2545,17 @@ function applySettingsLocally(settings) {
     });
   }
 
-  // تحديث الخلفية — خارج الـ if، يشتغل دايماً
   const svg = document.getElementById('honeycombSvg');
   const vb = svg.getAttribute('viewBox').split(' ');
   const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
   const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
   buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
 
-
-  // ===== أسماء الفريقين في كروت النقاط =====
   if (settings.team1_name) {
     window.sessionData = window.sessionData || {};
     window.sessionData.team1Name = settings.team1_name;
-    // موبايل
     const m1 = document.querySelector('.scores-mobile .team1-score');
     if (m1) m1.childNodes[0].textContent = `🟢 ${settings.team1_name}: `;
-    // ديسكتوب
     const d1 = document.querySelector('.d-none.d-md-flex .team1-score');
     if (d1) d1.childNodes[0].textContent = `${settings.team1_name}: `;
   }
@@ -2395,15 +2567,24 @@ function applySettingsLocally(settings) {
     if (d2) d2.childNodes[0].textContent = `${settings.team2_name}: `;
   }
 
-  // ===== مؤقت الزر =====
   if (settings.buzz_timer_seconds) {
     window.BUZZ_TIMER_SECONDS = settings.buzz_timer_seconds;
   }
 
-  // ===== حجم الشبكة =====
   if (settings.grid_size && settings.grid_size !== window.currentGridSize) {
     window.currentGridSize = settings.grid_size;
     applyGridSize(settings.grid_size);
+  }
+
+  // ← شعار الجلسة
+  if (settings.show_name !== undefined || settings.show_subtitle !== undefined) {
+    const n = settings.show_name || '';
+    const s = settings.show_subtitle || '';
+    updateLogoPreview(n, s);
+    const fn = document.getElementById('logoFullName');
+    const fs = document.getElementById('logoFullSub');
+    if (fn) fn.textContent = n || '—';
+    if (fs) fs.textContent = s;
   }
 }
 
@@ -2650,6 +2831,122 @@ function buildGridPreview(n) {
   }
   return `<svg viewBox="0 0 ${w.toFixed(1)} ${h.toFixed(1)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}">${p}</svg>`;
 }
+
+// ===== شعار الجلسة =====
+function buildLogoHexBg(svgEl, w, h) {
+  const NS = 'http://www.w3.org/2000/svg';
+  while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+  const R = h * 0.38;
+  const hexW = R * Math.sqrt(3), hexH = R * 2;
+  const cols = Math.ceil(w / hexW) + 2, rows = Math.ceil(h / (hexH * 0.75)) + 2;
+  const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = -hexW + col * hexW + (row % 2 ? hexW * 0.5 : 0);
+      const cy = -hexH * 0.75 + row * hexH * 0.75;
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 6 + Math.PI / 3 * i;
+        pts.push(`${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`);
+      }
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('points', pts.join(' '));
+      poly.setAttribute('fill', 'rgba(74,20,140,0.45)');
+      poly.setAttribute('stroke', '#6b21a8');
+      poly.setAttribute('stroke-width', '1.5');
+      svgEl.appendChild(poly);
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('x', cx.toFixed(1)); txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('fill', '#7c3aed'); txt.setAttribute('font-size', Math.round(R * 0.5));
+      txt.setAttribute('font-family', 'Lalezar,Tajawal,sans-serif');
+      txt.textContent = letters[(row * cols + col) % letters.length];
+      svgEl.appendChild(txt);
+    }
+  }
+}
+
+function updateLogoPreview(name, subtitle) {
+  const el = document.getElementById('previewName');
+  const sub = document.getElementById('previewSub');
+  if (el) el.textContent = name || '—';
+  if (sub) sub.textContent = subtitle || '';
+  const hex = document.getElementById('logoPreviewHex');
+  if (hex) buildLogoHexBg(hex, 800, 200);
+}
+
+function openLogoOverlay() {
+  const name = document.getElementById('setting_show_name')?.value.trim()
+    || document.getElementById('previewName')?.textContent || '';
+  const sub = document.getElementById('setting_show_subtitle')?.value.trim()
+    || document.getElementById('previewSub')?.textContent || '';
+
+  document.getElementById('logoFullName').textContent = name || '—';
+  document.getElementById('logoFullSub').textContent = sub;
+
+  const hex = document.getElementById('logoFullHex');
+  buildLogoHexBg(hex, 1600, 900);
+
+  replayLogoAnim();
+  document.getElementById('logoFullOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLogoOverlay() {
+  document.getElementById('logoFullOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function replayLogoAnim() {
+  const els = document.querySelectorAll('.logo-full-haroof,.logo-full-name,.logo-full-maa,.logo-full-sub');
+  els.forEach(el => {
+    el.classList.remove('lf-go-r','lf-go-l','lf-go-f1','lf-go-f2');
+    el.style.opacity = '0';
+    if (el.classList.contains('logo-full-haroof')) el.style.transform = 'translateX(150%)';
+    if (el.classList.contains('logo-full-name')) el.style.transform = 'translateX(-150%)';
+  });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    document.querySelector('.logo-full-haroof').classList.add('lf-go-r');
+    document.querySelector('.logo-full-maa').classList.add('lf-go-f1');
+    document.querySelector('.logo-full-name').classList.add('lf-go-l');
+    document.querySelector('.logo-full-sub').classList.add('lf-go-f2');
+  }));
+}
+
+function saveLogoImage() {
+  const btn = document.getElementById('logoSaveBtn');
+  btn.textContent = '⏳ جاري...';
+  const go = () => {
+    html2canvas(document.getElementById('logoFullOverlay'), {
+      useCORS: true, scale: 2, backgroundColor: '#5b21b6'
+    }).then(c => {
+      const a = document.createElement('a');
+      a.download = 'haroof-logo.png'; a.href = c.toDataURL('image/png'); a.click();
+      btn.textContent = '⬇ حفظ صورة';
+    }).catch(() => { btn.textContent = '⬇ حفظ صورة'; });
+  };
+  if (typeof html2canvas !== 'undefined') { go(); }
+  else {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = go; s.onerror = () => { btn.textContent = '⬇ حفظ صورة'; };
+    document.head.appendChild(s);
+  }
+}
+
+// تهيئة المعاينة عند فتح الإعدادات
+document.getElementById('setting_show_name')?.addEventListener('input', function() {
+  updateLogoPreview(this.value, document.getElementById('setting_show_subtitle')?.value || '');
+});
+document.getElementById('setting_show_subtitle')?.addEventListener('input', function() {
+  updateLogoPreview(document.getElementById('setting_show_name')?.value || '', this.value);
+});
+
+// بناء خلفية المعاينة الصغيرة عند التحميل
+document.addEventListener('DOMContentLoaded', () => {
+  const hex = document.getElementById('logoPreviewHex');
+  if (hex) buildLogoHexBg(hex, 800, 200);
+});
 </script>
 
 

@@ -961,6 +961,9 @@ class GameSettings(models.Model):
         verbose_name="الجلسة"
     )
 
+    show_name = models.CharField(max_length=50, blank=True, default='')
+    show_subtitle = models.CharField(max_length=50, blank=True, default='')
+
     # ===== أسماء وألوان الفريقين =====
     team1_name = models.CharField(max_length=50, default="الفريق الأخضر", verbose_name="اسم الفريق الأول")
     team2_name = models.CharField(max_length=50, default="الفريق البرتقالي", verbose_name="اسم الفريق الثاني")

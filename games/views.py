@@ -1915,6 +1915,7 @@ def api_get_settings(request):
     except GameSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
 
+
     settings = GameSettings.get_or_create_for_session(session)
 
     return JsonResponse({
@@ -1929,7 +1930,11 @@ def api_get_settings(request):
             'penalty_timer_enabled': settings.penalty_timer_enabled,
             'penalty_timer_seconds': settings.penalty_timer_seconds,
             'show_grid_to_contestants': settings.show_grid_to_contestants,
+            'show_name': settings.show_name,
+            'show_subtitle': settings.show_subtitle,
         }
+
+    
     })
 
 
@@ -1947,6 +1952,9 @@ def api_save_settings(request):
         data = json.loads(request.body or '{}')
     except json.JSONDecodeError:
         return JsonResponse({'success': False, 'error': 'JSON غير صحيح'}, status=400)
+    
+    settings.show_name = data.get('show_name', '')[:50]
+    settings.show_subtitle = data.get('show_subtitle', '')[:50]
 
     session_id = data.get('session_id')
     if not session_id:
