@@ -61,13 +61,18 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             if self.role == 'contestant':
                 return
             await self.send(text_data=json.dumps({'type': 'buzz_reset_by_host'}))
-    async def broadcast_scores(self, event):
-        # alias للتوافق الخلفي
-        await self.broadcast_score_update(event)
         
     async def broadcast_cell_state(self, event):
         if self.role == 'contestant':
-            return
+            try:
+                from games.models import GameSettings
+                show = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                )()
+                if not show:
+                    return
+            except Exception:
+                return
         await self.send(text_data=json.dumps({
             'type': 'cell_state_updated',
             'letter': event.get('letter'),
@@ -121,6 +126,10 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        # لو متسابق وإعداد إظهار الخلية مفعّل، أرسل الحالة
+        if self.role == 'contestant':
+            await self._send_grid_to_contestant_if_enabled()
+
         logger.info(f"WS connected: session={self.session_id}, role={self.role}")
 
     async def disconnect(self, close_code):
@@ -371,10 +380,15 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             return {}
 
     async def broadcast_settings_update(self, event):
+        settings = event.get('settings', {})
         await self.send(text_data=json.dumps({
             'type': 'settings_updated',
-            'settings': event.get('settings', {})
+            'settings': settings
         }))
+        
+        # لو متسابق والإعداد فُعِّل الآن، أرسل الخلية فوراً
+        if self.role == 'contestant' and settings.get('show_grid_to_contestants'):
+            await self._send_grid_to_contestant_if_enabled()
 
     async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
         if confirmed:
@@ -396,6 +410,34 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': error
             }))
+
+    async def _send_grid_to_contestant_if_enabled(self):
+        try:
+            def _get_data():
+                from games.models import GameSettings, LettersGameProgress
+                from games.utils_letters import get_session_order
+                settings = GameSettings.get_or_create_for_session(self.session)
+                if not settings.show_grid_to_contestants:
+                    return None
+                letters = get_session_order(self.session.id, self.session.package.is_free) or []
+                progress = LettersGameProgress.objects.filter(session=self.session).first()
+                cell_states = progress.cell_states if (progress and isinstance(progress.cell_states, dict)) else {}
+                return {
+                    'show_grid': True,
+                    'grid_size': settings.grid_size,
+                    'letters': letters,
+                    'cell_states': cell_states,
+                    'team1_color': settings.team1_color,
+                    'team2_color': settings.team2_color,
+                }
+            data = await sync_to_async(_get_data)()
+            if data:
+                await self.send(text_data=json.dumps({
+                    'type': 'grid_state',
+                    **data
+                }))
+        except Exception as e:
+            logger.error(f'Error sending grid to contestant: {e}')
 
 
 
