@@ -643,134 +643,129 @@ const ARABIC_28 = [
 // حجم الخلية حسب الشبكة (R = نصف القطر)
 const GRID_R = { '3x3':52, '4x4':42, '5x5':34, '6x6':28, '7x7':24 };
 
-// ===== حساب نقاط الخلية السداسية (flat-top) =====
+
+
+
+
+
+
+// ============================================================
+// محرك الشبكة السداسية - النسخة المصححة
+// التعرج على الأعمدة (يمين/يسار) مب الصفوف
+// ============================================================
+
+const ARABIC_28 = [
+  'أ','ب','ت','ث','ج','ح','خ','د','ذ','ر',
+  'ز','س','ش','ص','ض','ط','ظ','ع','غ','ف',
+  'ق','ك','ل','م','ن','هـ','و','ي'
+];
+
+const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':22 };
+
+// نقاط الخلية السداسية - pointed-top (التعرج يمين/يسار)
 function hexPoints(cx, cy, r) {
   const pts = [];
   for (let i = 0; i < 6; i++) {
-    const a = (Math.PI / 3) * i;   // flat-top
+    const a = (Math.PI / 3) * i + Math.PI / 6; // pointed-top
     pts.push(`${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`);
   }
   return pts.join(' ');
 }
 
-// ===== توزيع الحروف =====
 function getLettersForGrid(gridSize, baseLetters) {
   const sizeMap = { '3x3':9, '4x4':16, '5x5':25, '6x6':36, '7x7':49 };
   const count = sizeMap[gridSize] || 25;
   const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
-
-  // لو الخلايا أكثر من الحروف المتاحة، نكرر عشوائياً
   let result = [...src];
   while (result.length < count) {
-    // نأخذ حروف عشوائية من المصدر الأصلي
-    const extra = [...src].sort(() => Math.random() - 0.5);
-    result = result.concat(extra);
+    result = result.concat([...src].sort(() => Math.random() - 0.5));
   }
   return result.slice(0, count);
 }
 
-// ===== بناء الـ SVG الخلفية حسب الحجم =====
 function buildHexBackground(svg, viewW, viewH, color1, color2) {
-  // إزالة الخلفية القديمة
   svg.querySelectorAll('.hex-bg').forEach(el => el.remove());
-
   const NS = 'http://www.w3.org/2000/svg';
 
-  // خلفية رئيسية
+  // خلفية رئيسية (فريق 1)
   const mainRect = document.createElementNS(NS, 'rect');
   mainRect.setAttribute('class', 'hex-bg');
   mainRect.setAttribute('width', viewW);
   mainRect.setAttribute('height', viewH);
-  mainRect.setAttribute('rx', '20');
+  mainRect.setAttribute('rx', '16');
   mainRect.setAttribute('fill', color1);
   svg.insertBefore(mainRect, svg.firstChild);
 
-  // المثلثات الجانبية (يمين + يسار = فريق 2)
-  const left = document.createElementNS(NS, 'polygon');
-  left.setAttribute('class', 'hex-bg');
-  left.setAttribute('points', `0,0 ${viewW*0.22},0 ${viewW*0.22},${viewH} 0,${viewH}`);
-  left.setAttribute('fill', color2);
-  svg.insertBefore(left, svg.children[1]);
+  // مثلثات يمين/يسار (فريق 2)
+  const d = viewW * 0.2;
+  const leftTri = document.createElementNS(NS, 'polygon');
+  leftTri.setAttribute('class', 'hex-bg');
+  leftTri.setAttribute('points', `0,0 ${d},0 0,${viewH/2} ${d},${viewH} 0,${viewH}`);
+  leftTri.setAttribute('fill', color2);
+  svg.insertBefore(leftTri, svg.children[1]);
 
-  const right = document.createElementNS(NS, 'polygon');
-  right.setAttribute('class', 'hex-bg');
-  right.setAttribute('points', `${viewW*0.78},0 ${viewW},0 ${viewW},${viewH} ${viewW*0.78},${viewH}`);
-  right.setAttribute('fill', color2);
-  svg.insertBefore(right, svg.children[2]);
-
-  // المثلثات العلوية والسفلية (أعلى + أسفل = فريق 1)
-  const depth = viewH * 0.18;
-  const top = document.createElementNS(NS, 'polygon');
-  top.setAttribute('class', 'hex-bg');
-  top.setAttribute('points', `0,0 ${viewW},0 ${viewW*0.78},${depth} ${viewW*0.22},${depth}`);
-  top.setAttribute('fill', color1);
-  svg.insertBefore(top, svg.children[3]);
-
-  const bottom = document.createElementNS(NS, 'polygon');
-  bottom.setAttribute('class', 'hex-bg');
-  bottom.setAttribute('points', `${viewW*0.22},${viewH-depth} ${viewW*0.78},${viewH-depth} ${viewW},${viewH} 0,${viewH}`);
-  bottom.setAttribute('fill', color1);
-  svg.insertBefore(bottom, svg.children[4]);
+  const rightTri = document.createElementNS(NS, 'polygon');
+  rightTri.setAttribute('class', 'hex-bg');
+  rightTri.setAttribute('points', `${viewW},0 ${viewW-d},0 ${viewW},${viewH/2} ${viewW-d},${viewH} ${viewW},${viewH}`);
+  rightTri.setAttribute('fill', color2);
+  svg.insertBefore(rightTri, svg.children[2]);
 }
 
-// ===== الدالة الرئيسية: بناء الشبكة =====
 function createHoneycombCells() {
   const svg = document.getElementById('honeycombSvg');
   const NS = 'http://www.w3.org/2000/svg';
 
-  // احصل على الإعدادات الحالية
   const gridSize = window.currentGridSize || '5x5';
-  const t1Color  = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
-  const t2Color  = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
+  const t1Color = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
+  const t2Color = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
 
-  const sizeMap  = { '3x3':3, '4x4':4, '5x5':5, '6x6':6, '7x7':7 };
-  const cols     = sizeMap[gridSize] || 5;
-  const rows     = cols;
-  const R        = GRID_R[gridSize] || 34;
+  const sizeMap = { '3x3':3, '4x4':4, '5x5':5, '6x6':6, '7x7':7 };
+  const cols = sizeMap[gridSize] || 5;
+  const rows = cols;
+  const R = GRID_R[gridSize] || 32;
 
-  // flat-top hex dimensions
-  const hexW  = R * 2;           // عرض الخلية
-  const hexH  = R * Math.sqrt(3); // ارتفاع الخلية
-  const colStep = hexW * 0.75;   // خطوة أفقية (متلاصق)
-  const rowStep = hexH;          // خطوة رأسية
+  // pointed-top hex: عرض = R*√3, ارتفاع = R*2
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const colStep = hexW;           // خطوة أفقية
+  const rowStep = hexH * 0.75;   // خطوة رأسية (متلاصق)
 
-  // حساب أبعاد الـ SVG
-  const totalW = colStep * (cols - 1) + hexW + 60;
-  const totalH = rowStep * (rows - 1) + hexH * 0.5 + 60;
-  const viewW  = Math.max(totalW, 400);
-  const viewH  = Math.max(totalH, 300);
+  // حساب الأبعاد الكلية مع padding
+  const pad = R * 1.5;
+  const totalW = colStep * (cols - 1) + hexW + pad * 2;
+  const totalH = rowStep * (rows - 1) + hexH * 0.5 + pad * 2;
+  const viewW = Math.ceil(Math.max(totalW, 350));
+  const viewH = Math.ceil(Math.max(totalH, 280));
 
   svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
-
-  // إزالة الخلايا القديمة
   svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
 
-  // بناء الخلفية
   buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
 
   // توسيط الشبكة
-  const startX = (viewW - (colStep * (cols - 1) + hexW)) / 2 + R;
-  const startY = (viewH - (rowStep * (rows - 1) + hexH * 0.5)) / 2 + hexH / 2;
+  const gridW = colStep * (cols - 1) + hexW;
+  const gridH = rowStep * (rows - 1) + hexH * 0.5;
+  const startX = (viewW - gridW) / 2 + hexW / 2;
+  const startY = (viewH - gridH) / 2 + hexH / 2;
 
-  // الحروف
-  const letters = getLettersForGrid(
-    gridSize,
-    window.sessionData?.arabicLetters || ARABIC_28
-  );
+  const letters = getLettersForGrid(gridSize, window.sessionData?.arabicLetters || ARABIC_28);
+  const fontSize = Math.round(R * 0.68);
 
   let idx = 0;
-  for (let col = 0; col < cols; col++) {
-    for (let row = 0; row < rows; row++) {
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      // التعرج على الأعمدة: الأعمدة الزوجية تنزل نصف خلية
       const cx = startX + col * colStep;
-      const cy = startY + row * rowStep + (col % 2 === 0 ? 0 : hexH * 0.5);
+      const cy = startY + row * rowStep + (col % 2 === 0 ? 0 : hexH * 0.375);
 
+      const letter = letters[idx];
       const g = document.createElementNS(NS, 'g');
       g.setAttribute('class', 'hex-cell');
-      g.setAttribute('data-letter', letters[idx]);
+      g.setAttribute('data-letter', letter);
 
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class', 'hex-shape');
-      poly.setAttribute('points', hexPoints(cx, cy, R - 1.5));
+      poly.setAttribute('points', hexPoints(cx, cy, R - 1));
       g.appendChild(poly);
 
       const txt = document.createElementNS(NS, 'text');
@@ -778,15 +773,17 @@ function createHoneycombCells() {
       txt.setAttribute('x', cx.toFixed(1));
       txt.setAttribute('y', cy.toFixed(1));
       txt.setAttribute('dominant-baseline', 'central');
-      // حجم الخط حسب الـ R
-      txt.style.fontSize = `${Math.round(R * 0.72)}px`;
-      txt.textContent = letters[idx];
+      txt.setAttribute('text-anchor', 'middle');
+      txt.style.fontSize = `${fontSize}px`;
+      txt.textContent = letter;
       g.appendChild(txt);
 
-      // حدث الضغط (موجود في الصفحة)
-      if (typeof onCellClick === 'function') {
-        g.addEventListener('click', () => onCellClick(g, letters[idx]));
-      }
+      // ربط حدث الضغط بـ closure صحيحة
+      ;(function(el, ltr) {
+        el.addEventListener('click', function() {
+          if (typeof onCellClick === 'function') onCellClick(el, ltr);
+        });
+      })(g, letter);
 
       svg.appendChild(g);
       idx++;
@@ -794,16 +791,13 @@ function createHoneycombCells() {
   }
 }
 
-// ===== rebuildHoneycomb =====
 function rebuildHoneycomb(letters, resetProgress = false) {
   window.sessionData = window.sessionData || {};
-  if (letters && letters.length) {
-    window.sessionData.arabicLetters = letters;
-  }
+  if (letters && letters.length) window.sessionData.arabicLetters = letters;
 
   if (resetProgress) {
-    Object.keys(cellStates || {}).forEach(k => delete cellStates[k]);
-    if (typeof lastClickedLetter !== 'undefined') lastClickedLetter = null;
+    if (typeof cellStates !== 'undefined') Object.keys(cellStates).forEach(k => delete cellStates[k]);
+    if (typeof lastClickedLetter !== 'undefined') window.lastClickedLetter = null;
     const qp = document.getElementById('questionPanel');
     if (qp) qp.style.display = 'none';
     const qd = document.getElementById('questionDisplay');
@@ -812,7 +806,6 @@ function rebuildHoneycomb(letters, resetProgress = false) {
 
   createHoneycombCells();
 
-  // أعد تطبيق حالات الخلايا بعد إعادة البناء
   if (!resetProgress && typeof cellStates !== 'undefined') {
     Object.entries(cellStates).forEach(([ltr, st]) => {
       if (typeof applyCellState === 'function') applyCellState(ltr, st);
@@ -820,18 +813,19 @@ function rebuildHoneycomb(letters, resetProgress = false) {
   }
 }
 
-// ===== applyGridSize (تُستدعى من الإعدادات) =====
 function applyGridSize(gridSize) {
   window.currentGridSize = gridSize;
   rebuildHoneycomb(window.sessionData?.arabicLetters, false);
 }
 
-// ===== getLetters helper =====
 function getLetters() {
   return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
     ? window.sessionData.arabicLetters
     : ARABIC_28;
 }
+
+window.BUZZ_TIMER_SECONDS = window.BUZZ_TIMER_SECONDS || 3;
+window.currentGridSize = window.currentGridSize || '5x5';
 
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', () => {
