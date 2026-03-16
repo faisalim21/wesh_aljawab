@@ -832,7 +832,6 @@ window.currentGridSize = window.currentGridSize || '5x5';
           window.currentGridSize = s.grid_size;
           rebuildHoneycomb(window.sessionData?.arabicLetters, false);
         }
-        // تحديث خلفية SVG بعد تطبيق الألوان
         const svg = document.getElementById('honeycombSvg');
         const vb = svg.getAttribute('viewBox').split(' ');
         const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
@@ -840,6 +839,13 @@ window.currentGridSize = window.currentGridSize || '5x5';
         buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
       })
       .catch(() => {});
+
+    window.addEventListener('beforeunload', () => {
+      try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
+      clearInterval(heartbeatTimer);
+      clearInterval(countdownInterval);
+    });
+  });
 
 
 function buildGridPreview(n) {
