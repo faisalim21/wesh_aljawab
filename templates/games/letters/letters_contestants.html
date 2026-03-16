@@ -109,11 +109,30 @@
       align-items:center;
       justify-content:center;
       padding: clamp(12px, 3vw, 28px);
-      padding-top: 80px; /* مسافة من الهيدر */
+      padding-top: 80px;
       gap: 16px;
       position:relative;
     }
 
+    @media (min-width: 769px) {
+      .main {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 100px;
+        gap: 24px;
+      }
+      .card-ct {
+        flex-shrink: 0;
+      }
+      #contestantGridWrap {
+        margin-top: 0 !important;
+        max-width: 420px;
+        align-self: flex-start;
+        position: sticky;
+        top: 80px;
+      }
+    }
     /* شِعار */
     .logo{
       position: fixed;
@@ -638,6 +657,7 @@
       // احفظ الألوان عند البناء
       if (t1Color) contestantT1Color = t1Color;
       if (t2Color) contestantT2Color = t2Color;
+
       const svg = document.getElementById('contestantHoneycombSvg');
       if (!svg) return;
       const NS = 'http://www.w3.org/2000/svg';
@@ -656,22 +676,30 @@
       const viewH = Math.ceil(Math.max(totalH, 160));
 
       svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
-      // خلفية الفريقين
+
+      // خلفية الفريقين — بعد حفظ الألوان مباشرة
       buildContestantHexBg(svg, viewW, viewH, contestantT1Color, contestantT2Color);
 
       const startX = (viewW - colStep * (cols - 0.5)) / 2;
       const startY = (viewH - (rowStep * (rows - 1) + hexH)) / 2 + hexH / 2;
       const fontSize = Math.round(R * 0.6);
 
-      let idx = 0;
-      const src = (letters && letters.length) ? letters : ARABIC_28_C;
+      // حساب عدد الخلايا المطلوب وتكرار الحروف إذا نقصت
+      const sizeMap2 = {'3x3':9,'4x4':16,'5x5':25,'6x6':36,'7x7':49};
+      const needed = sizeMap2[gridSize] || 25;
+      let src = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
+      while (src.length < needed) src = [...src, ...ARABIC_28_C];
+      src = src.slice(0, needed);
 
+      let idx = 0;
       for (let row = 0; row < rows; row++) {
         for (let col = 0; col < cols; col++) {
           const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
           const cy = startY + row * rowStep;
           const letter = src[idx] || '';
-          const state = cellStates ? (cellStates[String(idx)] || cellStates[letter] || 'normal') : 'normal';
+          const state = cellStates
+            ? (cellStates[String(idx)] || cellStates[letter] || 'normal')
+            : 'normal';
 
           const pts = [];
           for (let i = 0; i < 6; i++) {
@@ -680,9 +708,13 @@
           }
 
           const g = document.createElementNS(NS, 'g');
+
           const poly = document.createElementNS(NS, 'polygon');
           poly.setAttribute('points', pts.join(' '));
-          poly.setAttribute('fill', state === 'team1' ? (t1Color || '#22c55e') : state === 'team2' ? (t2Color || '#f97316') : 'white');
+          poly.setAttribute('fill',
+            state === 'team1' ? contestantT1Color :
+            state === 'team2' ? contestantT2Color : 'white'
+          );
           poly.setAttribute('stroke', '#6b21a8');
           poly.setAttribute('stroke-width', '1.5');
           g.appendChild(poly);
@@ -705,7 +737,6 @@
         }
       }
     }
-
     function updateContestantCell(letter, state, cellIndex) {
       const svg = document.getElementById('contestantHoneycombSvg');
       if (!svg) return;
