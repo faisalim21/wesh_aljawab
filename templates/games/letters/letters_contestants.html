@@ -208,18 +208,35 @@
       display: flex; align-items: center; justify-content: center;
       padding: 10px;
     }
-    .topt input:checked + .tbtn.team1{
-      border-color:#22c55e; color:#22c55e;
-      background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(34,197,94,.08));
-      box-shadow: 0 10px 25px rgba(34,197,94,.25);
-       box-sizing: border-box;
+    .tbtn {
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.08);
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-size: clamp(0.85rem, 2.8vw, 1rem);
+      line-height: 1.3;
+      min-height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px;
+      cursor: pointer;
     }
-    .topt input:checked + .tbtn.team2{
-      border-color:#f97316; color:#f97316;
-      background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
-      box-shadow: 0 10px 25px rgba(249,115,22,.25);
-       box-sizing: border-box;
+    .topt input:checked + .tbtn.team1 {
+      border-color: var(--team1-color, #22c55e);
+      color: var(--team1-color, #22c55e);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--team1-color, #22c55e) 25%, transparent), color-mix(in srgb, var(--team1-color, #22c55e) 8%, transparent));
+      box-shadow: 0 10px 25px color-mix(in srgb, var(--team1-color, #22c55e) 25%, transparent);
+      box-sizing: border-box;
     }
+    .topt input:checked + .tbtn.team2 {
+      border-color: var(--team2-color, #f97316);
+      color: var(--team2-color, #f97316);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--team2-color, #f97316) 25%, transparent), color-mix(in srgb, var(--team2-color, #f97316) 8%, transparent));
+      box-shadow: 0 10px 25px color-mix(in srgb, var(--team2-color, #f97316) 25%, transparent);
+      box-sizing: border-box;
+    }
+    @media (max-width: 380px){ .tbtn{ font-size: .95rem; min-height: 56px; } }
     @media (max-width: 380px){
       .tbtn{ font-size: .95rem; min-height: 56px; }
     }
@@ -696,6 +713,41 @@
       if (t) localStorage.setItem(LS_TEAM_KEY, t);
     }
 
+
+    function applyContestantTeamColors(team1Color, team2Color) {
+      if (team1Color) {
+        contestantT1Color = team1Color;
+        document.documentElement.style.setProperty('--team1-color', team1Color);
+      }
+
+      if (team2Color) {
+        contestantT2Color = team2Color;
+        document.documentElement.style.setProperty('--team2-color', team2Color);
+      }
+
+      // كروت النقاط أسفل الخلية
+      const c1 = document.getElementById('contestantTeam1ScoreCard');
+      const c2 = document.getElementById('contestantTeam2ScoreCard');
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+
+      if (c1 && team1Color) {
+        c1.style.borderColor = team1Color;
+        c1.style.boxShadow = `0 0 0 1px ${team1Color} inset`;
+        c1.style.background = `linear-gradient(135deg, color-mix(in srgb, ${team1Color} 22%, transparent), rgba(255,255,255,0.06))`;
+      }
+
+      if (c2 && team2Color) {
+        c2.style.borderColor = team2Color;
+        c2.style.boxShadow = `0 0 0 1px ${team2Color} inset`;
+        c2.style.background = `linear-gradient(135deg, color-mix(in srgb, ${team2Color} 22%, transparent), rgba(255,255,255,0.06))`;
+      }
+
+      if (s1 && team1Color) s1.style.color = team1Color;
+      if (s2 && team2Color) s2.style.color = team2Color;
+    }
+
+
     // ======== WebSocket ========
     function connectWS(){
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -739,18 +791,7 @@
           const s = d.settings;
           if (!s) return;
 
-          if (s.team1_color) {
-            contestantT1Color = s.team1_color;
-            document.documentElement.style.setProperty('--team1-color', s.team1_color);
-            const c1 = document.getElementById('contestantTeam1ScoreCard');
-            if (c1) c1.style.borderColor = s.team1_color;
-          }
-          if (s.team2_color) {
-            contestantT2Color = s.team2_color;
-            document.documentElement.style.setProperty('--team2-color', s.team2_color);
-            const c2 = document.getElementById('contestantTeam2ScoreCard');
-            if (c2) c2.style.borderColor = s.team2_color;
-          }
+         applyContestantTeamColors(s.team1_color, s.team2_color);
           if (s.show_name) {
             showSessionLogo(s.show_name, s.show_subtitle);
           }
@@ -875,14 +916,41 @@
       connectWS();
 
       // تحميل شعار الجلسة
+            // تحميل إعدادات الجلسة مباشرة عند فتح الصفحة
       fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
         .then(r => r.json())
         .then(data => {
           const s = data.settings;
-          // بعد
-          if (!s || !s.show_name) return;
-          showSessionLogo(s.show_name, s.show_subtitle);
-          if (s.buzz_timer_seconds) buzzTimerSeconds = s.buzz_timer_seconds;
+          if (!s) return;
+
+          // تحميل ألوان الفريقين فورًا
+          applyContestantTeamColors(s.team1_color, s.team2_color);
+
+          // تحديث كروت النقاط لو كانت موجودة
+          renderContestantScores(
+            s.team1_name || '{{ session.team1_name|escapejs }}',
+            s.team2_name || '{{ session.team2_name|escapejs }}',
+            document.getElementById('contestantTeam1Score')?.textContent || 0,
+            document.getElementById('contestantTeam2Score')?.textContent || 0,
+            s.team1_color || contestantT1Color,
+            s.team2_color || contestantT2Color
+          );
+
+          // إظهار/إخفاء الخلية حسب الإعداد
+          if (s.show_grid_to_contestants === false) {
+            document.getElementById('contestantGridWrap').style.display = 'none';
+            document.getElementById('contestantScoresWrap').style.display = 'none';
+          } else if (s.show_grid_to_contestants === true) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+          }
+
+          // الشعار والمؤقت
+          if (s.show_name) {
+            showSessionLogo(s.show_name, s.show_subtitle);
+          }
+          if (s.buzz_timer_seconds) {
+            buzzTimerSeconds = s.buzz_timer_seconds;
+          }
         })
         .catch(() => {});
 
@@ -1034,15 +1102,7 @@
       if (team1Score !== undefined) s1.textContent = team1Score;
       if (team2Score !== undefined) s2.textContent = team2Score;
 
-      if (team1Color) {
-        c1.style.borderColor = team1Color;
-        c1.style.background = `linear-gradient(135deg, ${team1Color}20, rgba(255,255,255,0.95))`;
-      }
-
-      if (team2Color) {
-        c2.style.borderColor = team2Color;
-        c2.style.background = `linear-gradient(135deg, ${team2Color}20, rgba(255,255,255,0.95))`;
-      }
+      applyContestantTeamColors(team1Color, team2Color);
 
       wrap.style.display = 'block';
     }

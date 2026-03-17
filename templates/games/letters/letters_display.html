@@ -255,22 +255,22 @@
         .score-card { background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 18px; text-align: center; border: 3px solid; min-width: 150px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
         .score-card.team1 {
           border-color: var(--team1-color, #22c55e);
-          background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.08));
-          box-shadow: 0 0 0 1px var(--team1-color, #22c55e) inset;
         }
-        .score-card.team1 .team-score { color: var(--team1-color, #4ade80); }
+        .score-card.team1 .team-score {
+          color: var(--team1-color, #22c55e);
+        }
 
         .score-card.team2 {
           border-color: var(--team2-color, #f97316);
-          background: linear-gradient(135deg, rgba(249,115,22,0.25), rgba(249,115,22,0.08));
-          box-shadow: 0 0 0 1px var(--team2-color, #f97316) inset;
         }
-        .score-card.team2 .team-score { color: var(--team2-color, #fb923c); }
+        .score-card.team2 .team-score {
+          color: var(--team2-color, #f97316);
+        }
         .team1 .team-name { color: var(--team1-color, #22c55e); }
         .team2 .team-name { color: var(--team2-color, #f97316); }
         .team-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
-        .team1 .team-name { color: #22c55e; }
-        .team2 .team-name { color: #f97316; }
+        .team1 .team-name { color: var(--team1-color, #6366f1); }
+        .team2 .team-name { color: var(--team2-color, #a855f7); }
         .team-score { font-size: 2.2rem; font-weight: 900; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.35); }
 
         .honeycomb-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
@@ -776,8 +776,8 @@
           background: rgba(255,255,255,0.08); border-radius: 14px;
           padding: 12px; border: 2px solid; text-align: center;
         }
-        .nhrp-score-card.t1 { border-color: var(--team1-color,#22c55e); }
-        .nhrp-score-card.t2 { border-color: var(--team2-color,#f97316); }
+        .nhrp-score-card.t1 { border-color: var(--team1-color, #6366f1); }
+        .nhrp-score-card.t2 { border-color: var(--team2-color, #a855f7); }
         .nhrp-score-name { font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.8); margin-bottom: 4px; font-family:'Tajawal',sans-serif; }
         .nhrp-score-val { font-size: 2.4rem; font-weight: 900; line-height: 1; margin-bottom: 8px; }
         .nhrp-score-btns { display: flex; gap: 6px; justify-content: center; }
@@ -849,19 +849,18 @@
 
         /* كرت فريق 1 — أخضر واضح */
         .nhrp-score-card.t1 {
-          border-color: var(--team1-color,#22c55e);
-          background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.08));
-          box-shadow: 0 0 0 1px var(--team1-color,#22c55e) inset;
+          border-color: var(--team1-color, #22c55e);
         }
-        .nhrp-score-card.t1 .nhrp-score-val { color: var(--team1-color,#4ade80); }
+        .nhrp-score-card.t1 .nhrp-score-val {
+          color: var(--team1-color, #22c55e);
+        }
 
-        /* كرت فريق 2 — برتقالي واضح */
         .nhrp-score-card.t2 {
-          border-color: var(--team2-color,#f97316);
-          background: linear-gradient(135deg, rgba(249,115,22,0.25), rgba(249,115,22,0.08));
-          box-shadow: 0 0 0 1px var(--team2-color,#f97316) inset;
+          border-color: var(--team2-color, #f97316);
         }
-        .nhrp-score-card.t2 .nhrp-score-val { color: var(--team2-color,#fb923c); }
+        .nhrp-score-card.t2 .nhrp-score-val {
+          color: var(--team2-color, #f97316);
+        }
 
         /* السؤال - أكبر */
         .nlp-question {
@@ -1058,6 +1057,115 @@
   let _dispLogoName = '';
   let _dispLogoSub  = '';
 
+  function hexToRgb(hex) {
+  if (!hex) return null;
+  let c = hex.replace('#', '').trim();
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  if (c.length !== 6) return null;
+
+  const num = parseInt(c, 16);
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255
+    };
+  }
+
+  function rgbaFromHex(hex, alpha = 1) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return `rgba(255,255,255,${alpha})`;
+    return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+  }
+
+  function darkenHex(hex, amount = 28) {
+    const rgb = hexToRgb(hex);
+    if (!rgb) return hex || '#000000';
+
+    const clamp = v => Math.max(0, Math.min(255, v));
+    const r = clamp(rgb.r - amount);
+    const g = clamp(rgb.g - amount);
+    const b = clamp(rgb.b - amount);
+
+    return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  function applyTeamColors(settings = {}) {
+    const team1Color = (settings.team1_color || getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#6366f1').trim();
+    const team2Color = (settings.team2_color || getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#a855f7').trim();
+
+    const team1Stroke = darkenHex(team1Color, 32);
+    const team2Stroke = darkenHex(team2Color, 32);
+
+    document.documentElement.style.setProperty('--team1-color', team1Color);
+    document.documentElement.style.setProperty('--team2-color', team2Color);
+    document.documentElement.style.setProperty('--team1-stroke', team1Stroke);
+    document.documentElement.style.setProperty('--team2-stroke', team2Stroke);
+
+    document.documentElement.style.setProperty('--team1-bg-strong', rgbaFromHex(team1Color, 0.25));
+    document.documentElement.style.setProperty('--team1-bg-soft', rgbaFromHex(team1Color, 0.08));
+    document.documentElement.style.setProperty('--team2-bg-strong', rgbaFromHex(team2Color, 0.25));
+    document.documentElement.style.setProperty('--team2-bg-soft', rgbaFromHex(team2Color, 0.08));
+
+    // كروت النقاط الرئيسية
+    const scoreCard1 = document.querySelector('.score-card.team1');
+    const scoreCard2 = document.querySelector('.score-card.team2');
+    const teamName1  = document.querySelector('.score-card.team1 .team-name');
+    const teamName2  = document.querySelector('.score-card.team2 .team-name');
+    const teamScore1 = document.querySelector('.score-card.team1 .team-score');
+    const teamScore2 = document.querySelector('.score-card.team2 .team-score');
+
+    if (scoreCard1) {
+      scoreCard1.style.borderColor = team1Color;
+      scoreCard1.style.background = `linear-gradient(135deg, ${rgbaFromHex(team1Color, 0.25)}, ${rgbaFromHex(team1Color, 0.08)})`;
+      scoreCard1.style.boxShadow = `0 0 0 1px ${team1Color} inset, 0 6px 18px rgba(0,0,0,0.25)`;
+    }
+    if (scoreCard2) {
+      scoreCard2.style.borderColor = team2Color;
+      scoreCard2.style.background = `linear-gradient(135deg, ${rgbaFromHex(team2Color, 0.25)}, ${rgbaFromHex(team2Color, 0.08)})`;
+      scoreCard2.style.boxShadow = `0 0 0 1px ${team2Color} inset, 0 6px 18px rgba(0,0,0,0.25)`;
+    }
+    if (teamName1) teamName1.style.color = team1Color;
+    if (teamName2) teamName2.style.color = team2Color;
+    if (teamScore1) teamScore1.style.color = team1Color;
+    if (teamScore2) teamScore2.style.color = team2Color;
+
+    // كروت النقاط في وضع بدون مقدم
+    const nohostCard1 = document.querySelector('.nhrp-score-card.t1');
+    const nohostCard2 = document.querySelector('.nhrp-score-card.t2');
+    const nohostVal1  = document.querySelector('.nhrp-score-card.t1 .nhrp-score-val');
+    const nohostVal2  = document.querySelector('.nhrp-score-card.t2 .nhrp-score-val');
+
+    if (nohostCard1) {
+      nohostCard1.style.borderColor = team1Color;
+      nohostCard1.style.background = `linear-gradient(135deg, ${rgbaFromHex(team1Color, 0.25)}, ${rgbaFromHex(team1Color, 0.08)})`;
+      nohostCard1.style.boxShadow = `0 0 0 1px ${team1Color} inset`;
+    }
+    if (nohostCard2) {
+      nohostCard2.style.borderColor = team2Color;
+      nohostCard2.style.background = `linear-gradient(135deg, ${rgbaFromHex(team2Color, 0.25)}, ${rgbaFromHex(team2Color, 0.08)})`;
+      nohostCard2.style.boxShadow = `0 0 0 1px ${team2Color} inset`;
+    }
+    if (nohostVal1) nohostVal1.style.color = team1Color;
+    if (nohostVal2) nohostVal2.style.color = team2Color;
+
+    // مؤشر الفريق في طبقة ضغطة المتسابق
+    const teamIndicator = document.getElementById('teamIndicator');
+    if (teamIndicator) {
+      if (teamIndicator.classList.contains('team1')) {
+        teamIndicator.style.background = team1Color;
+      } else if (teamIndicator.classList.contains('team2')) {
+        teamIndicator.style.background = team2Color;
+      }
+    }
+
+    // إعادة تلوين خلفية الخلية إذا كانت موجودة
+    const svg = document.getElementById('honeycombSvg');
+    if (svg && svg.getAttribute('viewBox')) {
+      const vb = svg.getAttribute('viewBox').split(' ');
+      buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), team1Color, team2Color);
+    }
+  }
+
   // تحديث شعار الجلسة في الكارت الثابت
   function updateSessionLogoCard() {
     const nameEl = document.getElementById('slcName');
@@ -1201,9 +1309,17 @@
   function showBuzz(name, team) {
     playBuzz();
     document.getElementById('buzzedName').textContent = name;
+
     const ind = document.getElementById('teamIndicator');
     ind.textContent = (team === 'team1') ? '{{ session.team1_name }}' : '{{ session.team2_name }}';
     ind.className = 'team-indicator ' + team;
+
+    if (team === 'team1') {
+      ind.style.background = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
+    } else {
+      ind.style.background = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
+    }
+
     document.getElementById('buzzedOverlay').classList.add('show');
     startCountdown();
   }
@@ -1322,49 +1438,42 @@
             break;
           case 'settings_updated':
             if (d.settings) {
-              if (d.settings.team1_color) {
-                document.documentElement.style.setProperty('--team1-color', d.settings.team1_color);
-                document.documentElement.style.setProperty('--team1-stroke', d.settings.team1_color);
-                const c1 = document.querySelector('.score-card.team1');
-                if (c1) c1.style.borderColor = d.settings.team1_color;
-              }
-              if (d.settings.team2_color) {
-                document.documentElement.style.setProperty('--team2-color', d.settings.team2_color);
-                document.documentElement.style.setProperty('--team2-stroke', d.settings.team2_color);
-                const c2 = document.querySelector('.score-card.team2');
-                if (c2) c2.style.borderColor = d.settings.team2_color;
-              }
+              applyTeamColors(d.settings);
+
               if (d.settings.buzz_timer_seconds) {
                 window.BUZZ_TIMER_SECONDS = d.settings.buzz_timer_seconds;
               }
-              const svg = document.getElementById('honeycombSvg');
-              const vb = svg.getAttribute('viewBox').split(' ');
-              const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
-              const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
-              buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+
               if (d.settings.grid_size && d.settings.grid_size !== window.currentGridSize) {
                 window.currentGridSize = d.settings.grid_size;
                 rebuildHoneycomb(window.sessionData?.arabicLetters, false);
               }
+
               if (d.settings.team1_name) {
-                document.querySelectorAll('.nh-t1-name').forEach(el => el.textContent = d.settings.team1_name);
-                const el = document.getElementById('nhrpT1Name');
-                if (el) el.textContent = d.settings.team1_name;
+                const el1 = document.querySelector('.score-card.team1 .team-name');
+                const el2 = document.getElementById('nhrpT1Name');
+                if (el1) el1.textContent = d.settings.team1_name;
+                if (el2) el2.textContent = d.settings.team1_name;
               }
+
               if (d.settings.team2_name) {
-                document.querySelectorAll('.nh-t2-name').forEach(el => el.textContent = d.settings.team2_name);
-                const el = document.getElementById('nhrpT2Name');
-                if (el) el.textContent = d.settings.team2_name;
+                const el1 = document.querySelector('.score-card.team2 .team-name');
+                const el2 = document.getElementById('nhrpT2Name');
+                if (el1) el1.textContent = d.settings.team2_name;
+                if (el2) el2.textContent = d.settings.team2_name;
               }
+
               if (d.settings.show_name) {
-                const btn     = document.getElementById('dispLogoBtn');
-                const btnName = document.getElementById('dispLogoBtnName');
-                if (btn)     btn.style.display = 'block';
-                if (btnName) btnName.textContent = d.settings.show_name;
                 _dispLogoName = d.settings.show_name;
                 _dispLogoSub  = d.settings.show_subtitle || '';
                 updateSessionLogoCard();
+
+                const n = document.getElementById('nhrpName');
+                const s = document.getElementById('nhrpSub');
+                if (n) n.textContent = _dispLogoName;
+                if (s) s.textContent = _dispLogoSub;
               }
+
               if (d.settings.nohost_mode !== undefined) {
                 const shouldEnable = !!d.settings.nohost_mode;
                 if (shouldEnable && !nohostMode) activateNohostMode(d.settings);
@@ -1571,69 +1680,43 @@ window.BUZZ_TIMER_SECONDS = window.BUZZ_TIMER_SECONDS || 3;
 window.currentGridSize = window.currentGridSize || '5x5';
 
   // ===================== تهيئة الصفحة =====================
-  document.addEventListener('DOMContentLoaded', () => {
-    createHoneycombCells();
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`);
+      const data = await r.json();
+      const s = data.settings || {};
+
+      // طبّق الألوان أول شيء قبل بناء الخلية
+      applyTeamColors(s);
+
+      if (s.grid_size) {
+        window.currentGridSize = s.grid_size;
+      }
+
+      if (s.buzz_timer_seconds) {
+        window.BUZZ_TIMER_SECONDS = s.buzz_timer_seconds;
+      }
+
+      if (s.show_name) {
+        _dispLogoName = s.show_name;
+        _dispLogoSub = s.show_subtitle || '';
+      } else if (s.show_subtitle) {
+        _dispLogoSub = s.show_subtitle;
+      }
+
+      updateSessionLogoCard();
+
+      createHoneycombCells();
+
+      if (s.nohost_mode) {
+        activateNohostMode(s);
+      }
+    } catch {
+      createHoneycombCells();
+    }
+
     loadSessionState();
     setupWebSocket();
-
-    // تحميل الإعدادات عند فتح الصفحة أو التحديث
-    fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
-      .then(r => r.json())
-      .then(data => {
-        const s = data.settings;
-        if (!s) return;
-        if (s.team1_color) {
-          document.documentElement.style.setProperty('--team1-color', s.team1_color);
-          document.documentElement.style.setProperty('--team1-stroke', s.team1_color);
-          const c1 = document.querySelector('.score-card.team1');
-          if (c1) {
-            c1.style.borderColor = s.team1_color;
-            c1.style.background = `linear-gradient(135deg, ${s.team1_color}44, ${s.team1_color}15)`;
-            c1.style.boxShadow  = `0 0 0 1px ${s.team1_color} inset`;
-          }
-          if (c1) c1.style.borderColor = s.team1_color;
-        }
-        if (s.team2_color) {
-          document.documentElement.style.setProperty('--team2-color', s.team2_color);
-          document.documentElement.style.setProperty('--team2-stroke', s.team2_color);
-          const c2 = document.querySelector('.score-card.team2');
-          if (c2) {
-            c2.style.borderColor = s.team2_color;
-            c2.style.background = `linear-gradient(135deg, ${s.team2_color}44, ${s.team2_color}15)`;
-            c2.style.boxShadow  = `0 0 0 1px ${s.team2_color} inset`;
-          }
-          if (c2) c2.style.borderColor = s.team2_color;
-        }
-        if (s.grid_size && s.grid_size !== window.currentGridSize) {
-          window.currentGridSize = s.grid_size;
-          rebuildHoneycomb(window.sessionData?.arabicLetters, false);
-        }
-        if (s.buzz_timer_seconds) window.BUZZ_TIMER_SECONDS = s.buzz_timer_seconds;
-        
-        const svg = document.getElementById('honeycombSvg');
-        const vb = svg.getAttribute('viewBox').split(' ');
-        const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
-        const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
-        buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
-
-        // شعار الجلسة
-        if (s.show_name) {
-          const btn     = document.getElementById('dispLogoBtn');
-          const btnName = document.getElementById('dispLogoBtnName');
-          if (btn)     btn.style.display = 'block';
-          if (btnName) btnName.textContent = s.show_name;
-          // ← تخزين عالمي
-          _dispLogoName = s.show_name;
-          _dispLogoSub  = s.show_subtitle || '';
-        }
-        // حتى لو ما في اسم، احفظ الـ subtitle
-        if (s.show_subtitle) _dispLogoSub = s.show_subtitle;
-        updateSessionLogoCard();
-
-        // وضع بدون مقدم
-        if (s.nohost_mode) activateNohostMode(s);
-      })
-      .catch(() => {});
 
     window.addEventListener('beforeunload', () => {
       try { socket && socket.readyState === WebSocket.OPEN && socket.close(1000, 'page unload'); } catch {}
