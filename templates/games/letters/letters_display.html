@@ -619,37 +619,7 @@
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
         }
 
-        /* ===== وضع بدون مقدم - تخطيط شاشة العرض ===== */
-        .nohost-right-panel {
-          position: fixed; right: 0; top: 0; bottom: 0;
-          width: 220px; z-index: 100;
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(16px);
-          border-left: 1px solid rgba(139,92,246,0.2);
-          display: none; flex-direction: column;
-          padding: 14px 12px; gap: 10px;
-        }
-        .nohost-left-panel {
-          position: fixed; left: 0; top: 0; bottom: 0;
-          width: 280px; z-index: 100;
-          background: rgba(0,0,0,0.6); backdrop-filter: blur(16px);
-          border-right: 1px solid rgba(139,92,246,0.2);
-          display: none; flex-direction: column;
-          padding: 16px 14px; gap: 10px;
-          pointer-events: auto;
-        }
 
-        body.nohost-active .nohost-right-panel { display: flex; }
-        body.nohost-active .nohost-left-panel  { display: flex; }
-        body.nohost-active .scores-container   { display: none !important; }
-        body.nohost-active .logo-container     { display: none !important; }
-        body.nohost-active .display-logo-btn   { display: none !important; }
-        body.nohost-active #nohostToggleBtn    { display: none !important; }
-        body.nohost-active #nohostPanel        { display: none !important; }
-        body.nohost-active .honeycomb-svg {
-          max-width: calc(100vw - 520px) !important;
-          max-height: 92vh !important;
-        }
-        body.nohost-active .hex-cell { cursor: pointer !important; }
 
         /* شعار اليمين */
         .nhrp-logo {
@@ -768,6 +738,106 @@
           padding: 6px 22px !important;
         }
 
+
+        /* ===== وضع بدون مقدم - تخطيط ثلاثي ===== */
+        .nohost-right-panel {
+          position: fixed; right: 0; top: 0; bottom: 0;
+          width: 200px; z-index: 100;
+          background: rgba(0,0,0,0.65); backdrop-filter: blur(16px);
+          border-left: 1px solid rgba(139,92,246,0.2);
+          display: none; flex-direction: column;
+          padding: 12px 10px; gap: 8px;
+        }
+        .nohost-question-panel {
+          position: fixed; right: 200px; top: 0; bottom: 0;
+          width: 320px; z-index: 100;
+          background: rgba(10,4,30,0.85); backdrop-filter: blur(16px);
+          border-left: 1px solid rgba(139,92,246,0.15);
+          display: none; flex-direction: column;
+          padding: 20px 16px; gap: 14px;
+        }
+        .nohost-left-panel {
+          position: fixed; left: 0; top: 0; bottom: 0;
+          right: 520px; z-index: 50;
+          display: none; align-items: center; justify-content: center;
+          pointer-events: auto;
+        }
+
+        body.nohost-active .nohost-right-panel    { display: flex; }
+        body.nohost-active .nohost-question-panel { display: flex; }
+        body.nohost-active .nohost-left-panel     { display: flex; }
+        body.nohost-active .scores-container      { display: none !important; }
+        body.nohost-active .logo-container        { display: none !important; }
+        body.nohost-active .display-logo-btn      { display: none !important; }
+        body.nohost-active #nohostToggleBtn       { display: none !important; }
+        body.nohost-active #nohostPanel           { display: none !important; }
+        body.nohost-active .main-container        { display: block !important; }
+        body.nohost-active .honeycomb-container   {
+          position: fixed; left: 0; top: 0; right: 520px; bottom: 0;
+          display: flex; align-items: center; justify-content: center;
+        }
+        body.nohost-active .honeycomb-svg {
+          width: calc(100vw - 540px) !important;
+          height: 94vh !important;
+          max-width: none !important; max-height: none !important;
+        }
+        body.nohost-active .hex-cell { cursor: pointer !important; }
+
+        /* بطاقة السؤال */
+        .nqp-empty {
+          margin: auto; text-align: center;
+          color: rgba(255,255,255,0.2); font-family: 'Tajawal',sans-serif;
+          font-size: 0.9rem; font-weight: 700; line-height: 2.5;
+        }
+        .nqp-letter-badge {
+          display: inline-block;
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: #fff; font-size: 2rem; font-weight: 900;
+          padding: 6px 28px; border-radius: 999px;
+          font-family: 'Tajawal',sans-serif;
+          box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+          flex-shrink: 0;
+        }
+        .nqp-question-text {
+          font-size: clamp(1rem,1.6vw,1.25rem);
+          font-weight: 900; color: #f1f5f9;
+          line-height: 1.8; font-family: 'Tajawal',sans-serif;
+          flex: 1; overflow-y: auto;
+          padding: 4px 0;
+        }
+        .nqp-answer-box {
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px; padding: 12px 14px;
+          flex-shrink: 0;
+        }
+        .nqp-answer-label {
+          font-size: 0.72rem; color: rgba(255,255,255,0.3);
+          font-family: 'Tajawal',sans-serif; margin-bottom: 6px;
+        }
+        .nqp-answer-text {
+          font-size: 1.2rem; font-weight: 900; color: #4ade80;
+          filter: blur(10px) brightness(0.15);
+          transition: filter 0.35s; user-select: none;
+          font-family: 'Tajawal',sans-serif; margin-bottom: 8px;
+        }
+        .nqp-answer-text.revealed { filter: none; user-select: text; }
+        .nqp-reveal-btn {
+          width: 100%; padding: 8px; border-radius: 8px; border: none;
+          background: linear-gradient(135deg,#8b5cf6,#6d28d9);
+          color: #fff; font-family: 'Tajawal',sans-serif;
+          font-weight: 800; font-size: 0.85rem; cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .nqp-reveal-btn:hover { transform: scale(1.02); }
+        .nqp-change-btn {
+          width: 100%; padding: 7px; border-radius: 8px; margin-top: 4px;
+          border: 1px solid rgba(255,255,255,0.15);
+          background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.5);
+          font-family: 'Tajawal',sans-serif; font-weight: 700;
+          font-size: 0.8rem; cursor: pointer;
+        }
+        .nqp-change-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
     </style>
 </head>
 <body>
@@ -1561,35 +1631,41 @@ function hidePenaltyDisplay() {
   if (penaltyDisplayInterval) { clearInterval(penaltyDisplayInterval); penaltyDisplayInterval = null; }
   document.getElementById('penaltyDisplayBar')?.classList.remove('show');
 }
-// ===== وضع بدون مقدم - شاشة العرض =====
+// ===== وضع بدون مقدم =====
 let nohostMode = false;
 let nohostPenaltyRunning = false;
 let nohostPenaltyTimeout = null;
 let nohostLastLetter = null;
 let nohostLastClickAt = 0;
+let nohostCurrentRound = 'main';
+let nohostCurrentData  = null;
+const nohostRounds     = ['main','alt1','alt2'];
+let nohostPenaltySeconds = 10;
 
 function activateNohostMode(settings) {
   nohostMode = true;
   document.body.classList.add('nohost-active');
-  if (settings?.show_name) {
-    const n = document.getElementById('nhrpName');
-    const s = document.getElementById('nhrpSub');
-    if (n) n.textContent = settings.show_name;
-    if (s) s.textContent = settings.show_subtitle || '';
-  }
+
+  // مزامنة النقاط
   const t1 = document.getElementById('team1Score')?.textContent || '0';
   const t2 = document.getElementById('team2Score')?.textContent || '0';
   const s1 = document.getElementById('nhrpT1Score');
   const s2 = document.getElementById('nhrpT2Score');
   if (s1) s1.textContent = t1;
   if (s2) s2.textContent = t2;
-  if (settings?.team1_name) {
-    const el = document.getElementById('nhrpT1Name');
-    if (el) el.textContent = settings.team1_name;
+
+  if (settings?.show_name) {
+    const n = document.getElementById('nhrpName');
+    const s = document.getElementById('nhrpSub');
+    if (n) n.textContent = settings.show_name;
+    if (s) s.textContent = settings.show_subtitle || '';
   }
-  if (settings?.team2_name) {
-    const el = document.getElementById('nhrpT2Name');
-    if (el) el.textContent = settings.team2_name;
+  if (settings?.team1_name) { const el = document.getElementById('nhrpT1Name'); if (el) el.textContent = settings.team1_name; }
+  if (settings?.team2_name) { const el = document.getElementById('nhrpT2Name'); if (el) el.textContent = settings.team2_name; }
+  if (settings?.penalty_timer_seconds) {
+    nohostPenaltySeconds = settings.penalty_timer_seconds;
+    const el = document.getElementById('nhrpPenaltySec');
+    if (el) el.textContent = nohostPenaltySeconds + 'ث';
   }
 }
 
@@ -1597,62 +1673,79 @@ function deactivateNohostMode() {
   nohostMode = false;
   document.body.classList.remove('nohost-active');
   if (nohostPenaltyRunning) stopNohostPenalty();
-  const nlpContent = document.getElementById('nlpContent');
-  const nlpEmpty   = document.getElementById('nlpEmpty');
-  if (nlpContent) nlpContent.style.display = 'none';
-  if (nlpEmpty)   nlpEmpty.style.display = 'block';
+  const nqpContent = document.getElementById('nqpContent');
+  const nqpEmpty   = document.getElementById('nqpEmpty');
+  if (nqpContent) nqpContent.style.display = 'none';
+  if (nqpEmpty)   nqpEmpty.style.display   = 'block';
+  nohostCurrentData = null;
+  nohostCurrentRound = 'main';
 }
 
 function nohostHandleCellClick(letter) {
   const now = Date.now();
   if (nohostLastLetter === letter && now - nohostLastClickAt < 600) {
-    // ضغطة ثانية سريعة = تغيير لون
+    // ضغطة ثانية = تغيير لون
     const cellEl = document.querySelector(`[data-letter="${letter}"]`);
     if (cellEl) {
       let newState = 'team1';
-      if (cellEl.classList.contains('team1'))      { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
+      if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
       else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
       else                                          { cellEl.classList.add('team1'); }
-      if (socket && socket.readyState === 1) {
+      if (socket && socket.readyState === 1)
         socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState }));
-      }
     }
   } else {
     // ضغطة أولى = عرض السؤال
     applySelectedHighlight(letter);
-    if (socket && socket.readyState === 1) {
+    if (socket && socket.readyState === 1)
       socket.send(JSON.stringify({ type: 'nohost_letter_select', letter }));
-    }
     nohostFetchQuestion(letter);
   }
-  nohostLastLetter = letter;
+  nohostLastLetter  = letter;
   nohostLastClickAt = now;
 }
 
-function startNohostPenalty() {
-  const seconds = nohostPenaltySeconds;
-  nohostPenaltyRunning = true;
-  const btn = document.getElementById('nhrpPenaltyBtn');
-  if (btn) { btn.textContent = '⏹ إيقاف'; btn.classList.add('running'); }
-  showPenaltyDisplay(null, seconds);
-  if (socket && socket.readyState === 1) {
-    socket.send(JSON.stringify({ type: 'penalty_start', seconds, team_name: null }));
-  }
-  nohostPenaltyTimeout = setTimeout(() => {
-    nohostPenaltyRunning = false;
-    if (btn) { btn.textContent = '⏱ بدء العقوبة'; btn.classList.remove('running'); }
-    nohostPenaltyTimeout = null;
-  }, seconds * 1000);
+async function nohostFetchQuestion(letter) {
+  try {
+    const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    nohostCurrentData  = data.questions || {};
+    nohostCurrentRound = 'main';
+    const q = nohostCurrentData.main || {};
+
+    const nqpEmpty    = document.getElementById('nqpEmpty');
+    const nqpContent  = document.getElementById('nqpContent');
+    const nqpLetter   = document.getElementById('nqpLetter');
+    const nqpQuestion = document.getElementById('nqpQuestion');
+    const nqpAnswer   = document.getElementById('nqpAnswer');
+
+    if (nqpLetter)   nqpLetter.textContent   = letter;
+    if (nqpQuestion) nqpQuestion.textContent = q.question || '—';
+    if (nqpAnswer)   { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+    if (nqpEmpty)    nqpEmpty.style.display   = 'none';
+    if (nqpContent)  nqpContent.style.display = 'flex';
+
+    if (socket && socket.readyState === 1)
+      socket.send(JSON.stringify({ type: 'nohost_question_broadcast', letter, question: q.question || '' }));
+  } catch {}
 }
-function nlpReveal() {
-  const el = document.getElementById('nlpAnswer');
+
+function nqpReveal() {
+  const el = document.getElementById('nqpAnswer');
   if (el) el.classList.add('revealed');
 }
 
-let nohostCurrentRound = 'main';
-const nohostRounds = ['main', 'alt1', 'alt2'];
-let nohostCurrentData = null;
-let nohostPenaltySeconds = window.PENALTY_TIMER_SECONDS || 10;
+function nohostChangeQuestion() {
+  if (!nohostCurrentData) return;
+  const idx = nohostRounds.indexOf(nohostCurrentRound);
+  nohostCurrentRound = nohostRounds[(idx + 1) % nohostRounds.length];
+  const q = nohostCurrentData[nohostCurrentRound] || {};
+  const nqpQuestion = document.getElementById('nqpQuestion');
+  const nqpAnswer   = document.getElementById('nqpAnswer');
+  if (nqpQuestion) nqpQuestion.textContent = q.question || '—';
+  if (nqpAnswer)   { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+}
 
 function nohostChangePenaltySec(delta) {
   nohostPenaltySeconds = Math.max(5, Math.min(120, nohostPenaltySeconds + delta));
@@ -1660,50 +1753,17 @@ function nohostChangePenaltySec(delta) {
   if (el) el.textContent = nohostPenaltySeconds + 'ث';
 }
 
-function nohostChangeQuestion() {
-  if (!nohostCurrentData) return;
-  const rounds = nohostRounds;
-  const idx = rounds.indexOf(nohostCurrentRound);
-  nohostCurrentRound = rounds[(idx + 1) % rounds.length];
-  const q = nohostCurrentData[nohostCurrentRound] || {};
-  const nlpQuestion = document.getElementById('nlpQuestion');
-  const nlpAnswer   = document.getElementById('nlpAnswer');
-  if (nlpQuestion) nlpQuestion.textContent = q.question || '—';
-  if (nlpAnswer)   { nlpAnswer.textContent = q.answer || '—'; nlpAnswer.classList.remove('revealed'); }
-}
-
-async function nohostNewRound() {
-  try {
-    const r = await fetch('/games/api/letters-new-round/', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ session_id: sessionId })
-    });
-    if (!r.ok) return;
-    const data = await r.json();
-    if (Array.isArray(data.letters)) {
-      rebuildHoneycomb(data.letters, !!data.reset_progress);
-    }
-    const nlpContent = document.getElementById('nlpContent');
-    const nlpEmpty   = document.getElementById('nlpEmpty');
-    if (nlpContent) nlpContent.style.display = 'none';
-    if (nlpEmpty)   nlpEmpty.style.display = 'block';
-    nohostCurrentData = null;
-    nohostCurrentRound = 'main';
-  } catch {}
-}
-
 function nohostAdjScore(team, delta) {
-  const t1 = parseInt(document.getElementById('team1Score').textContent || '0');
-  const t2 = parseInt(document.getElementById('team2Score').textContent || '0');
-  const newT1 = team === 'team1' ? Math.max(0, t1 + delta) : t1;
-  const newT2 = team === 'team2' ? Math.max(0, t2 + delta) : t2;
-  updateScores(newT1, newT2);
-  if (socket && socket.readyState === 1) {
-    socket.send(JSON.stringify({ type: 'update_scores', team1_score: newT1, team2_score: newT2 }));
-  }
+  const t1  = parseInt(document.getElementById('team1Score').textContent || '0');
+  const t2  = parseInt(document.getElementById('team2Score').textContent || '0');
+  const nT1 = team === 'team1' ? Math.max(0, t1 + delta) : t1;
+  const nT2 = team === 'team2' ? Math.max(0, t2 + delta) : t2;
+  updateScores(nT1, nT2);
+  if (socket && socket.readyState === 1)
+    socket.send(JSON.stringify({ type: 'update_scores', team1_score: nT1, team2_score: nT2 }));
   fetch('/games/api/update-scores/', {
     method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ session_id: sessionId, team1_score: newT1, team2_score: newT2 })
+    body: JSON.stringify({ session_id: sessionId, team1_score: nT1, team2_score: nT2 })
   }).catch(() => {});
 }
 
@@ -1712,14 +1772,13 @@ function nohostTogglePenalty() {
 }
 
 function startNohostPenalty() {
-  const seconds = window.PENALTY_TIMER_SECONDS || 10;
+  const seconds = nohostPenaltySeconds;  // ← يستخدم القيمة المحددة في شاشة العرض
   nohostPenaltyRunning = true;
   const btn = document.getElementById('nhrpPenaltyBtn');
-  if (btn) { btn.textContent = '⏹ إيقاف العقوبة'; btn.classList.add('running'); }
+  if (btn) { btn.textContent = '⏹ إيقاف'; btn.classList.add('running'); }
   showPenaltyDisplay(null, seconds);
-  if (socket && socket.readyState === 1) {
+  if (socket && socket.readyState === 1)
     socket.send(JSON.stringify({ type: 'penalty_start', seconds, team_name: null }));
-  }
   nohostPenaltyTimeout = setTimeout(() => {
     nohostPenaltyRunning = false;
     if (btn) { btn.textContent = '⏱ بدء العقوبة'; btn.classList.remove('running'); }
@@ -1731,21 +1790,39 @@ function stopNohostPenalty() {
   nohostPenaltyRunning = false;
   if (nohostPenaltyTimeout) { clearTimeout(nohostPenaltyTimeout); nohostPenaltyTimeout = null; }
   hidePenaltyDisplay();
-  if (socket && socket.readyState === 1) {
+  if (socket && socket.readyState === 1)
     socket.send(JSON.stringify({ type: 'penalty_end', team: null }));
-  }
   const btn = document.getElementById('nhrpPenaltyBtn');
   if (btn) { btn.textContent = '⏱ بدء العقوبة'; btn.classList.remove('running'); }
 }
 
-// دوال قديمة — نبقيها فارغة لتجنب أي خطأ
-function toggleNohostMode() {}
-function onCellClick() {}
-function fetchAndShowQuestion() {}
+async function nohostNewRound() {
+  try {
+    const r = await fetch('/games/api/letters-new-round/', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    if (Array.isArray(data.letters)) rebuildHoneycomb(data.letters, !!data.reset_progress);
+    const nqpContent = document.getElementById('nqpContent');
+    const nqpEmpty   = document.getElementById('nqpEmpty');
+    if (nqpContent) nqpContent.style.display = 'none';
+    if (nqpEmpty)   nqpEmpty.style.display   = 'block';
+    nohostCurrentData  = null;
+    nohostCurrentRound = 'main';
+  } catch {}
+}
+
+// دوال قديمة — فارغة لتجنب أي خطأ
+function toggleNohostMode()   {}
+function onCellClick()        {}
+function fetchAndShowQuestion(){}
 function revealNohostAnswer() {}
-function closeNohostPanel() {}
-function nohostScore() {}
-function nohostPenalty() {}
+function closeNohostPanel()   {}
+function nohostScore()        {}
+function nohostPenalty()      {}
+function nlpReveal()          { nqpReveal(); }
 
 
 // إغلاق القائمة عند الضغط في أي مكان آخر
@@ -2009,12 +2086,12 @@ function _roundRect(ctx, x, y, w, h, r) {
 </div>
 
 
+<!-- لوحة اليمين - شعار + نقاط + عقوبة -->
 <div id="nohostRightPanel" class="nohost-right-panel">
-  <!-- شعار وش الجواب -->
-  <div style="background:rgba(255,255,255,.95);border-radius:10px;padding:6px 8px;text-align:center;margin-bottom:2px;">
-    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" style="max-height:40px;width:auto;display:block;margin:0 auto;">
+  <div style="background:rgba(255,255,255,.95);border-radius:10px;padding:5px 6px;text-align:center;">
+    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" style="max-height:36px;width:auto;display:block;margin:0 auto;">
   </div>
-  <div class="nhrp-logo" onclick="openDispLogo()" style="cursor:pointer; transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.75'" onmouseleave="this.style.opacity='1'">
+  <div class="nhrp-logo" onclick="openDispLogo()" style="cursor:pointer;opacity:1;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.7'" onmouseleave="this.style.opacity='1'">
     <span class="lh">حروف</span>
     <span class="lm">مع</span>
     <span class="ln" id="nhrpName">—</span>
@@ -2036,47 +2113,41 @@ function _roundRect(ctx, x, y, w, h, r) {
       <button class="nhrp-adj-btn" onclick="nohostAdjScore('team2',-1)">−</button>
     </div>
   </div>
-  <!-- العقوبة مع التحكم في المدة -->
-  <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:8px;border:1px solid rgba(139,92,246,0.2);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-      <span style="font-size:0.72rem;color:rgba(255,255,255,0.5);font-family:'Tajawal',sans-serif;font-weight:700;">⏱ مدة العقوبة</span>
-      <div style="display:flex;align-items:center;gap:4px;">
-        <button onclick="nohostChangePenaltySec(-1)" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:0.75rem;cursor:pointer;">−</button>
-        <span id="nhrpPenaltySec" style="font-size:0.85rem;font-weight:900;color:#FCD34D;min-width:28px;text-align:center;font-family:monospace;">10ث</span>
-        <button onclick="nohostChangePenaltySec(1)" style="width:22px;height:22px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:0.75rem;cursor:pointer;">+</button>
+  <!-- مدة العقوبة -->
+  <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:7px;border:1px solid rgba(139,92,246,0.2);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+      <span style="font-size:0.68rem;color:rgba(255,255,255,0.45);font-family:'Tajawal',sans-serif;font-weight:700;">⏱ مدة العقوبة</span>
+      <div style="display:flex;align-items:center;gap:3px;">
+        <button onclick="nohostChangePenaltySec(-1)" style="width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:0.7rem;cursor:pointer;">−</button>
+        <span id="nhrpPenaltySec" style="font-size:0.82rem;font-weight:900;color:#FCD34D;min-width:26px;text-align:center;font-family:monospace;">10ث</span>
+        <button onclick="nohostChangePenaltySec(1)" style="width:20px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;font-size:0.7rem;cursor:pointer;">+</button>
       </div>
     </div>
     <button class="nhrp-penalty-btn" id="nhrpPenaltyBtn" onclick="nohostTogglePenalty()" style="margin-top:0;">⏱ بدء العقوبة</button>
   </div>
-  <!-- جولة جديدة -->
-  <button onclick="nohostNewRound()" style="width:100%;padding:7px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.5);font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;margin-top:auto;">🔁 جولة جديدة</button>
+  <button onclick="nohostNewRound()" style="width:100%;padding:6px;border-radius:8px;border:1.5px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.4);font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer;margin-top:auto;">🔁 جولة جديدة</button>
 </div>
 
-
-<div id="nohostLeftPanel" class="nohost-left-panel">
-  <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
-    <span class="nlp-letter" id="nlpLetter">أ</span>
-    <div style="margin-right:auto;display:flex;gap:6px;">
-      <button onclick="nohostChangeQuestion()" style="padding:4px 12px;border-radius:7px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-family:'Tajawal',sans-serif;font-size:0.75rem;font-weight:700;cursor:pointer;">🔀 غير السؤال</button>
+<!-- بطاقة السؤال - وسط -->
+<div id="nohostQuestionPanel" class="nohost-question-panel">
+  <div id="nqpEmpty" class="nqp-empty">اضغط على حرف<br>لعرض السؤال</div>
+  <div id="nqpContent" style="display:none;flex-direction:column;height:100%;gap:12px;">
+    <div style="text-align:center;">
+      <span class="nqp-letter-badge" id="nqpLetter">أ</span>
     </div>
-  </div>
-  <div id="nlpEmpty" class="nlp-empty" style="margin:0;">اضغط على حرف لعرض السؤال</div>
-  <div id="nlpContent" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-    <div class="nlp-question" id="nlpQuestion">—</div>
-    <div class="nlp-answer-wrap" style="flex-shrink:0;">
-      <div class="nlp-answer-label">الإجابة</div>
-      <div class="nlp-answer-text" id="nlpAnswer">—</div>
-      <button class="nlp-reveal-btn" onclick="nlpReveal()">👁 اكشف الإجابة</button>
+    <div class="nqp-question-text" id="nqpQuestion">—</div>
+    <div class="nqp-answer-box">
+      <div class="nqp-answer-label">الإجابة</div>
+      <div class="nqp-answer-text" id="nqpAnswer">—</div>
+      <button class="nqp-reveal-btn" onclick="nqpReveal()">👁 اكشف الإجابة</button>
+      <button class="nqp-change-btn" onclick="nohostChangeQuestion()">🔀 غير السؤال</button>
     </div>
   </div>
 </div>
-<!-- مؤقت العقوبة -->
-<div id="penaltyDisplayBar" class="penalty-display-bar">
-  <span class="penalty-display-label">⏱ عقوبة</span>
-  <span class="penalty-display-team" id="penaltyDisplayTeam"></span>
-  <span class="penalty-display-num" id="penaltyDisplayNum">10</span>
-  <span class="penalty-display-label">ثانية</span>
-</div>
+
+<!-- الخلية - يسار -->
+<div id="nohostLeftPanel" class="nohost-left-panel"></div>
+
 
 
 
