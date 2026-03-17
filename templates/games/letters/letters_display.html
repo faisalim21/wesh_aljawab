@@ -381,6 +381,232 @@
         .penalty-display-label {
           font-size: 1rem; font-weight: 700; color: rgba(255,255,255,0.7);
         }
+
+
+        /* ===== وضع بدون مقدم ===== */
+        .nohost-panel {
+          position: fixed;
+          left: 50%; bottom: 24px;
+          transform: translateX(-50%);
+          z-index: 400;
+          width: min(560px, 92vw);
+          background: rgba(15, 8, 35, 0.97);
+          backdrop-filter: blur(16px);
+          border: 1.5px solid rgba(139,92,246,0.4);
+          border-radius: 20px;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+          display: none; flex-direction: column;
+          overflow: hidden;
+          max-height: 50vh;
+        }
+        .nohost-panel.open { display: flex; }
+
+        .nohost-question-wrap {
+          padding: 16px 18px 10px;
+          overflow-y: auto;
+        }
+        .nohost-letter-badge {
+          display: inline-block;
+          background: linear-gradient(135deg,#7c3aed,#4c1d95);
+          color: #fff; font-size: 1.3rem; font-weight: 900;
+          padding: 3px 16px; border-radius: 999px;
+          margin-bottom: 8px; font-family: 'Tajawal',sans-serif;
+        }
+        .nohost-question-text {
+          font-size: clamp(0.95rem,2vw,1.3rem);
+          font-weight: 800; color: #f1f5f9;
+          line-height: 1.65; margin-bottom: 10px;
+          font-family: 'Tajawal',sans-serif;
+        }
+        .nohost-answer-wrap {
+          display: flex; align-items: center; gap: 8px;
+          margin-bottom: 4px; flex-wrap: wrap;
+        }
+        .nohost-answer-text {
+          font-size: 1.1rem; font-weight: 900;
+          color: #4ade80; filter: blur(7px);
+          transition: filter 0.3s; font-family: 'Tajawal',sans-serif;
+        }
+        .nohost-answer-text.revealed { filter: none; }
+        .nohost-reveal-btn {
+          padding: 5px 14px; border-radius: 8px; border: none;
+          background: linear-gradient(135deg,#8b5cf6,#6d28d9);
+          color: #fff; font-family: 'Tajawal',sans-serif;
+          font-weight: 800; font-size: 0.82rem; cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .nohost-reveal-btn:hover { transform: scale(1.05); }
+
+        .nohost-controls {
+          display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+          padding: 8px 14px 12px;
+          border-top: 1px solid rgba(139,92,246,0.2);
+          background: rgba(0,0,0,0.2);
+        }
+        .nohost-score-btn {
+          padding: 5px 12px; border-radius: 8px; border: 1.5px solid;
+          font-family: 'Tajawal',sans-serif; font-weight: 800;
+          font-size: 0.78rem; cursor: pointer; transition: all 0.15s;
+          background: transparent;
+        }
+        .nohost-score-btn.t1 {
+          border-color: var(--team1-color,#22c55e);
+          color: var(--team1-color,#22c55e);
+        }
+        .nohost-score-btn.t1:hover {
+          background: var(--team1-color,#22c55e); color: #fff;
+        }
+        .nohost-score-btn.t2 {
+          border-color: var(--team2-color,#f97316);
+          color: var(--team2-color,#f97316);
+        }
+        .nohost-score-btn.t2:hover {
+          background: var(--team2-color,#f97316); color: #fff;
+        }
+        .nohost-penalty-btn {
+          padding: 5px 12px; border-radius: 8px;
+          border: 1.5px solid rgba(139,92,246,0.5);
+          background: rgba(124,58,237,0.2); color: #c4b5fd;
+          font-family: 'Tajawal',sans-serif; font-weight: 800;
+          font-size: 0.78rem; cursor: pointer;
+        }
+        .nohost-close-btn {
+          margin-right: auto; padding: 5px 12px; border-radius: 8px;
+          border: 1.5px solid rgba(255,255,255,0.15);
+          background: transparent; color: rgba(255,255,255,0.4);
+          font-family: 'Tajawal',sans-serif; font-weight: 700;
+          font-size: 0.78rem; cursor: pointer;
+        }
+
+        /* زر تفعيل وضع بدون مقدم */
+        .nohost-toggle-btn {
+          position: fixed; top: 16px; left: 50%;
+          transform: translateX(-50%); z-index: 200;
+          background: rgba(30,10,60,0.75);
+          border: 1.5px solid rgba(139,92,246,0.4);
+          border-radius: 999px; padding: 7px 18px;
+          color: rgba(196,181,253,0.85);
+          font-family: 'Tajawal',sans-serif;
+          font-weight: 700; font-size: 0.82rem;
+          cursor: pointer; transition: all 0.2s;
+          display: none; backdrop-filter: blur(8px);
+        }
+        .nohost-toggle-btn:hover {
+          background: rgba(124,58,237,0.6);
+          border-color: #8b5cf6; color: #fff;
+        }
+        .nohost-toggle-btn.active {
+          background: rgba(124,58,237,0.85);
+          border-color: #a78bfa; color: #fff;
+        }
+
+        /* --- تصميم شعار حروف مع عزيز المطور --- */
+        .aziz-logo-wrapper {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-family: 'Lalezar', cursive;
+            perspective: 1000px;
+        }
+
+        .aziz-logo-inner {
+            background: rgba(91, 33, 182, 0.2); /* خلفية زجاجية خفيفة */
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .aziz-logo-inner:hover { transform: scale(1.05) rotate(-2deg); }
+
+        .logo-text-row { display: flex; align-items: center; gap: 8px; line-height: 1; }
+
+        /* تأثير الـ 3D والألوان من الصورة */
+        .logo-haroof {
+            color: #FCD34D; /* أصفر */
+            font-size: 45px;
+            text-shadow: 2px 2px 0 #3b0764, 4px 4px 0 #3b0764;
+            animation: slideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .logo-maa {
+            color: #22D3EE; /* سماوي */
+            font-size: 20px;
+            transform: rotate(-15deg);
+            margin-top: 10px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 0.6s forwards;
+        }
+
+        .logo-aziz {
+            color: #F87171; /* أحمر برتقالي */
+            font-size: 45px;
+            text-shadow: 2px 2px 0 #3b0764, 4px 4px 0 #3b0764;
+            animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .logo-ramadan {
+            background: #FCD34D;
+            color: #3b0764;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 1px 12px;
+            border-radius: 50px;
+            margin-top: -5px;
+            box-shadow: 0 4px 0 #d97706;
+        }
+
+        /* قائمة الخيارات */
+        .logo-options-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .logo-options-menu.show { display: flex; animation: popIn 0.3s ease; }
+        .logo-options-menu button {
+            border: none; background: #7c3aed; color: white;
+            padding: 8px 15px; border-radius: 8px; font-family: 'Tajawal';
+            font-weight: bold; white-space: nowrap; transition: 0.2s;
+        }
+        .logo-options-menu button:hover { background: #5b21b6; }
+
+        /* أوفرلاي العرض الكامل */
+        .full-logo-overlay {
+            position: fixed; inset: 0; background: #3b0764; 
+            z-index: 9999; display: none; align-items: center; justify-content: center;
+        }
+        .full-logo-overlay.open { display: flex; }
+        .logo-stage { 
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 30px 30px; /* شكل الحروف الخلفية بنسويها بالـ JS */
+        }
+
+        .close-overlay {
+            position: absolute; top: 20px; left: 20px; font-size: 40px;
+            color: white; border: none; background: none; cursor: pointer; z-index: 10;
+        }
+
+        /* أنميشن */
+        @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -699,6 +925,12 @@
                 window.currentGridSize = d.settings.grid_size;
                 rebuildHoneycomb(window.sessionData?.arabicLetters, false);
               }
+              if (d.settings.team1_name) {
+                document.querySelectorAll('.nh-t1-name').forEach(el => el.textContent = d.settings.team1_name);
+              }
+              if (d.settings.team2_name) {
+                document.querySelectorAll('.nh-t2-name').forEach(el => el.textContent = d.settings.team2_name);
+              }
               if (d.settings.show_name) {
                 const btn = document.getElementById('dispLogoBtn');
                 const btnName = document.getElementById('dispLogoBtnName');
@@ -872,7 +1104,7 @@ function createHoneycombCells() {
 
       ;(function(el, ltr) {
         el.addEventListener('click', function() {
-          if (typeof onCellClick === 'function') onCellClick(el, ltr);
+          if (nohostMode) fetchAndShowQuestion(ltr);
         });
       })(g, letter);
 
@@ -1163,6 +1395,44 @@ function nohostPenalty() {
     socket.send(JSON.stringify({ type: 'penalty_start', seconds, team_name: null }));
   }
 }
+
+
+function toggleLogoMenu() {
+    document.getElementById('logoMenu').classList.toggle('show');
+}
+
+function showFullLogo(mode) {
+    const overlay = document.getElementById('fullLogoOverlay');
+    const stage = document.getElementById('logoStage');
+    overlay.classList.add('open');
+    document.getElementById('logoMenu').classList.remove('show');
+    
+    // بناء محتوى اللوجو الكبير بناءً على النمط (طولي أو عرضي)
+    const fontSize = mode === 'portrait' ? 'clamp(80px, 15vw, 150px)' : 'clamp(100px, 20vw, 250px)';
+    const direction = mode === 'portrait' ? 'column' : 'row';
+    
+    stage.innerHTML = `
+        <div class="aziz-logo-large" style="display:flex; flex-direction:${direction}; align-items:center; gap:20px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <span class="logo-haroof" style="font-size:${fontSize}">حروف</span>
+                <span class="logo-maa" style="font-size:calc(${fontSize}/2.5)">مع</span>
+                <span class="logo-aziz" style="font-size:${fontSize}">عزيز</span>
+            </div>
+            <div class="logo-ramadan" style="font-size:24px; padding: 5px 30px;">رمضان 2025</div>
+        </div>
+    `;
+}
+
+function closeFullLogo() {
+    document.getElementById('fullLogoOverlay').classList.remove('open');
+}
+
+// إغلاق القائمة عند الضغط في أي مكان آخر
+window.onclick = function(event) {
+    if (!event.target.closest('.aziz-logo-wrapper')) {
+        document.getElementById('logoMenu').classList.remove('show');
+    }
+}
 </script>
 
 
@@ -1170,25 +1440,27 @@ function nohostPenalty() {
 
 
 
-<!-- زر الشعار الصغير -->
-<div class="display-logo-btn" id="dispLogoBtn" onclick="openDispLogo()" style="display:none;">
-  <span class="dlb-haroof">حروف</span>
-  <span class="dlb-maa">مع</span>
-  <span class="dlb-name" id="dispLogoBtnName">—</span>
-  <span class="dlb-hint">اضغط للعرض الكامل</span>
-</div>
+<div class="aziz-logo-wrapper" id="mainLogoContainer">
+            <div class="aziz-logo-inner" onclick="toggleLogoMenu()">
+                <div class="logo-text-row">
+                    <span class="logo-haroof">حروف</span>
+                    <span class="logo-maa">مع</span>
+                    <span class="logo-aziz">عزيز</span>
+                </div>
+                <div class="logo-ramadan">رمضان 2025</div>
+            </div>
+            
+            <div class="logo-options-menu" id="logoMenu">
+                <button onclick="showFullLogo('portrait')">📱 عرض طولي</button>
+                <button onclick="showFullLogo('landscape')">📺 عرض عرضي</button>
+            </div>
+        </div>
 
-<!-- Overlay الشعار كامل الشاشة -->
-<div id="dispLogoOverlay" class="disp-logo-overlay">
-  <svg class="disp-logo-full-hex" id="dispLogoHex" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
-  <div class="disp-logo-group">
-    <span class="dlg-haroof dlg-go-r">حروف</span>
-    <span class="dlg-maa dlg-go-f1">مع</span>
-    <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
-    <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
-  </div>
-  <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
-  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
+        <div id="fullLogoOverlay" class="full-logo-overlay">
+            <button class="close-overlay" onclick="closeFullLogo()">×</button>
+            <div id="logoStage" class="logo-stage">
+                </div>
+        </div>lass="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
 </div>
 
 <!-- مؤقت العقوبة -->
@@ -1216,10 +1488,10 @@ function nohostPenalty() {
     </div>
   </div>
   <div class="nohost-controls">
-    <button class="nohost-score-btn t1" onclick="nohostScore('team1',1)">+1 فريق 1</button>
-    <button class="nohost-score-btn t1" onclick="nohostScore('team1',-1)">-1 فريق 1</button>
-    <button class="nohost-score-btn t2" onclick="nohostScore('team2',1)">+1 فريق 2</button>
-    <button class="nohost-score-btn t2" onclick="nohostScore('team2',-1)">-1 فريق 2</button>
+    <button class="nohost-score-btn t1" onclick="nohostScore('team1',1)">+1 <span class="nh-t1-name">{{ session.team1_name }}</span></button>
+    <button class="nohost-score-btn t1" onclick="nohostScore('team1',-1)">-1 <span class="nh-t1-name">{{ session.team1_name }}</span></button>
+    <button class="nohost-score-btn t2" onclick="nohostScore('team2',1)">+1 <span class="nh-t2-name">{{ session.team2_name }}</span></button>
+    <button class="nohost-score-btn t2" onclick="nohostScore('team2',-1)">-1 <span class="nh-t2-name">{{ session.team2_name }}</span></button>
     <button class="nohost-penalty-btn" onclick="nohostPenalty()">⏱ عقوبة</button>
     <button class="nohost-close-btn" onclick="closeNohostPanel()">✕ إغلاق</button>
   </div>
