@@ -1369,7 +1369,8 @@
             <div>
               <h6>رابط المقدّم</h6>
               <p>
-                هذا الرابط لك أنت فقط لإدارة اللعبة: اختيار الحروف، تغيير ألوان الخلايا، والتحكم بالنقاط.
+               هذا الرابط خاص بك لإدارة اللعبة بالكامل، مثل:
+               اختيار الحروف، عرض الأسئلة، تعديل النقاط، تشغيل العقوبة، والتحكم في إعدادات الجلسة بشكل مفصل          
               </p>
             </div>
           </div>
@@ -1379,8 +1380,8 @@
             <div>
               <h6>رابط شاشة العرض</h6>
               <p>
-                اعرضه على التلفزيون/الآيباد أمام الجميع.
-                يعرض الحرف المختار، النقاط، واسم أول متسابق ضغط الزر — للعرض فقط.
+               هذا الرابط يُفتح على التلفزيون أو الآيباد أمام الجميع.
+                يعرض خلية الحروف، النقاط، الحرف المختار، واسم أول متسابق ضغط زر الإجابة, وفي حال وضعت في الإعدادات اللب بدون مقدم يمكنك التحكم في اللعبة من خلال شاشة العرض فقط
               </p>
             </div>
           </div>
@@ -1390,9 +1391,9 @@
             <div>
               <h6>رابط المتسابقين</h6>
               <p>
-                أرسله للاعبين.
-                المتسابق يكتب اسمه ثم ينتظر السؤال ويضغط الزر للإجابة.
-                <small>⚡ يُقبل أول لاعب فقط ويُرفض الباقي تلقائيًا.</small>
+               هذا الرابط ترسله للاعبين.
+                المتسابق يكتب اسمه، يختار فريقه، ثم يضغط زر الإجابة عند الحاجة.
+                ويُقبل أول لاعب فقط تلقائيًا. وتقدر تظهر النتيجة والخلية للاعبين من خلال الإعدادات وعندها تستغنون عن شاشة العرض
               </p>
             </div>
           </div>
@@ -1721,32 +1722,30 @@
 
               <!-- إعدادات فرعية لوضع بدون مقدم -->
               <div id="nohostSubSettings" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
-                <div style="font-size:0.82rem;font-weight:800;color:#374151;font-family:'Tajawal',sans-serif;margin-bottom:10px;">
-                  ⚙️ إعدادات وضع بدون مقدم
-                </div>
-
-                <!-- السماح بتغيير لون الخلية -->
-                <div class="toggle-setting" style="padding:8px 0; border-bottom:1px solid #f3f4f6;">
-                  <div class="toggle-setting-info">
-                    <div class="toggle-setting-title" style="font-size:0.85rem;">السماح بتغيير لون الخلية</div>
-                    <div class="toggle-setting-desc">الضغط مرتين على الحرف يغير لونه للفريق الفائز</div>
+                <div style="
+                  padding:14px 12px;
+                  border-radius:10px;
+                  background:linear-gradient(135deg,#faf5ff,#f5f3ff);
+                  border:1px dashed #c4b5fd;
+                  text-align:center;
+                  font-family:'Tajawal',sans-serif;
+                ">
+                  <div style="
+                    font-size:0.92rem;
+                    font-weight:900;
+                    color:#6d28d9;
+                    margin-bottom:4px;
+                  ">
+                    ✨ قريبًا إعدادات تفصيلية أكثر
                   </div>
-                  <label class="big-toggle">
-                    <input type="checkbox" id="nohostAllowCellColor" checked/>
-                    <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
-                  </label>
-                </div>
-
-                <!-- إخفاء الإجابة كامل -->
-                <div class="toggle-setting" style="padding:8px 0;">
-                  <div class="toggle-setting-info">
-                    <div class="toggle-setting-title" style="font-size:0.85rem;">إخفاء الإجابة بشكل كامل</div>
-                    <div class="toggle-setting-desc">الإجابة محجوبة تماماً حتى يضغط المقدم على "اكشف"</div>
+                  <div style="
+                    font-size:0.8rem;
+                    font-weight:700;
+                    color:#7c3aed;
+                    opacity:0.9;
+                  ">
+                    بطلب منكم
                   </div>
-                  <label class="big-toggle">
-                    <input type="checkbox" id="nohostHideAnswer" checked/>
-                    <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
-                  </label>
                 </div>
               </div>
             </div>
