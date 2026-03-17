@@ -201,7 +201,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                     return
 
             # المقدم فقط: أوامر التحكم
-            if self.role == "host":
+            if self.role in ("host", "display"):
                 if message_type == "update_cell_state":
                     await self.handle_update_cell_state(data)
                     return
