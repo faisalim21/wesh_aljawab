@@ -1586,12 +1586,22 @@ window.currentGridSize = window.currentGridSize || '5x5';
           document.documentElement.style.setProperty('--team1-color', s.team1_color);
           document.documentElement.style.setProperty('--team1-stroke', s.team1_color);
           const c1 = document.querySelector('.score-card.team1');
+          if (c1) {
+            c1.style.borderColor = s.team1_color;
+            c1.style.background = `linear-gradient(135deg, ${s.team1_color}44, ${s.team1_color}15)`;
+            c1.style.boxShadow  = `0 0 0 1px ${s.team1_color} inset`;
+          }
           if (c1) c1.style.borderColor = s.team1_color;
         }
         if (s.team2_color) {
           document.documentElement.style.setProperty('--team2-color', s.team2_color);
           document.documentElement.style.setProperty('--team2-stroke', s.team2_color);
           const c2 = document.querySelector('.score-card.team2');
+          if (c2) {
+            c2.style.borderColor = s.team2_color;
+            c2.style.background = `linear-gradient(135deg, ${s.team2_color}44, ${s.team2_color}15)`;
+            c2.style.boxShadow  = `0 0 0 1px ${s.team2_color} inset`;
+          }
           if (c2) c2.style.borderColor = s.team2_color;
         }
         if (s.grid_size && s.grid_size !== window.currentGridSize) {

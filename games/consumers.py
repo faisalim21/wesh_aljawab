@@ -389,7 +389,14 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
     async def _auto_unlock_after_3_seconds(self):
         try:
-            await asyncio.sleep(3)  # يمكن جعلها 4 لمطابقة HTTP
+            # اقرأ المدة من إعدادات الجلسة
+            def _get_timer():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                return s.buzz_timer_seconds or 3
+
+            timer = await sync_to_async(_get_timer)()
+            await asyncio.sleep(timer)
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             await sync_to_async(cache.delete)(buzz_lock_key)
             await self.channel_layer.group_send(self.group_name, {

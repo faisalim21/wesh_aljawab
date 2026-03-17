@@ -552,11 +552,17 @@
         <div class="team-grid">
           <label class="topt">
             <input id="t1" type="radio" name="team" value="team1" />
-            <div class="tbtn team1">🟢 {{ session.team1_name }}</div>
+            <div class="tbtn team1">
+              <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--team1-color,#22c55e);margin-left:6px;flex-shrink:0;"></span>
+              {{ session.team1_name }}
+            </div>
           </label>
           <label class="topt">
             <input id="t2" type="radio" name="team" value="team2" />
-            <div class="tbtn team2">🟠 {{ session.team2_name }}</div>
+            <div class="tbtn team2">
+              <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--team2-color,#f97316);margin-left:6px;flex-shrink:0;"></span>
+              {{ session.team2_name }}
+            </div>
           </label>
         </div>
       </div>
