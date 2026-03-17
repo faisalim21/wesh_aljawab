@@ -768,6 +768,7 @@
           if (s.show_grid_to_contestants === false) {
             document.getElementById('contestantGridWrap').style.display = 'none';
             document.getElementById('contestantScoresWrap').style.display = 'none';
+            if (s.buzz_timer_seconds) buzzTimerSeconds = s.buzz_timer_seconds;
           }
           if (s.show_grid_to_contestants === true) {
             document.getElementById('contestantGridWrap').style.display = 'block';
@@ -832,6 +833,7 @@
 
     // ======== إرسال الطنطيط ========
     let busy = false;
+    let buzzTimerSeconds = 3;
     function disableBuzz(permanent=false){
       busy = true;
       el.buzz.disabled = true;
@@ -870,7 +872,7 @@
           timestamp: new Date().toISOString()
         }));
         // لو ما وصل رد خلال ثانية، فكّ الزر (السيرفر عادة يرد فورًا)
-        setTimeout(()=>{ if (busy) enableBuzz(); }, 1200);
+        setTimeout(()=>{ if (busy) enableBuzz(); }, (buzzTimerSeconds * 1000) + 200);
         showMsg('info','⏳ تم الإرسال...', 1200);
       }catch{
         showMsg('err','تعذّر الإرسال، حاول مجددًا', 2500);
@@ -891,6 +893,7 @@
           // بعد
           if (!s || !s.show_name) return;
           showSessionLogo(s.show_name, s.show_subtitle);
+          if (s.buzz_timer_seconds) buzzTimerSeconds = s.buzz_timer_seconds;
         })
         .catch(() => {});
 

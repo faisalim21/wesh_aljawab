@@ -234,8 +234,8 @@
             margin-bottom: 32px;
             border: 4px solid rgba(255,255,255,0.85);
         }
-        .team-indicator.team1 { background: rgba(34, 197, 94, 0.9); color: white; }
-        .team-indicator.team2 { background: rgba(249, 115, 22, 0.9); color: white; }
+        .team-indicator.team1 { background: var(--team1-color, #22c55e); color: white; }
+        .team-indicator.team2 { background: var(--team2-color, #f97316); color: white; }
 
         .countdown {
             font-size: 9rem; font-weight: 900;
@@ -253,8 +253,18 @@
         .main-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
         .scores-container { position: fixed; top: 22px; left: 22px; z-index: 100; display: flex; flex-direction: column; gap: 14px; }
         .score-card { background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(16px); border-radius: 16px; padding: 14px 18px; text-align: center; border: 3px solid; min-width: 150px; box-shadow: 0 6px 18px rgba(0,0,0,0.25); }
-        .score-card.team1 { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(34,197,94,0.12)); }
-        .score-card.team2 { border-color: #f97316; background: linear-gradient(135deg, rgba(249,115,22,0.35), rgba(249,115,22,0.12)); }
+        .score-card.team1 {
+          border-color: var(--team1-color, #22c55e);
+          background: linear-gradient(135deg, rgba(34,197,94,0.25), rgba(34,197,94,0.08));
+          box-shadow: 0 0 0 1px var(--team1-color, #22c55e) inset;
+        }
+        .score-card.team2 {
+          border-color: var(--team2-color, #f97316);
+          background: linear-gradient(135deg, rgba(249,115,22,0.25), rgba(249,115,22,0.08));
+          box-shadow: 0 0 0 1px var(--team2-color, #f97316) inset;
+        }
+        .team1 .team-name { color: var(--team1-color, #22c55e); }
+        .team2 .team-name { color: var(--team2-color, #f97316); }
         .team-name { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
         .team1 .team-name { color: #22c55e; }
         .team2 .team-name { color: #f97316; }
@@ -1197,7 +1207,7 @@
 
   function startCountdown() {
     clearInterval(countdownInterval);
-    let n = 3;
+    let n = window.BUZZ_TIMER_SECONDS || 3;
     const el = document.getElementById('countdown');
     el.textContent = n;
     countdownInterval = setInterval(() => {
@@ -1321,6 +1331,9 @@
                 const c2 = document.querySelector('.score-card.team2');
                 if (c2) c2.style.borderColor = d.settings.team2_color;
               }
+              if (d.settings.buzz_timer_seconds) {
+                window.BUZZ_TIMER_SECONDS = d.settings.buzz_timer_seconds;
+              }
               const svg = document.getElementById('honeycombSvg');
               const vb = svg.getAttribute('viewBox').split(' ');
               const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
@@ -1332,9 +1345,13 @@
               }
               if (d.settings.team1_name) {
                 document.querySelectorAll('.nh-t1-name').forEach(el => el.textContent = d.settings.team1_name);
+                const el = document.getElementById('nhrpT1Name');
+                if (el) el.textContent = d.settings.team1_name;
               }
               if (d.settings.team2_name) {
                 document.querySelectorAll('.nh-t2-name').forEach(el => el.textContent = d.settings.team2_name);
+                const el = document.getElementById('nhrpT2Name');
+                if (el) el.textContent = d.settings.team2_name;
               }
               if (d.settings.show_name) {
                 const btn     = document.getElementById('dispLogoBtn');
@@ -1342,7 +1359,7 @@
                 if (btn)     btn.style.display = 'block';
                 if (btnName) btnName.textContent = d.settings.show_name;
                 _dispLogoName = d.settings.show_name;
-                _dispLogoSub = d.settings.show_subtitle || '';
+                _dispLogoSub  = d.settings.show_subtitle || '';
                 updateSessionLogoCard();
               }
               if (d.settings.nohost_mode !== undefined) {
@@ -1350,22 +1367,7 @@
                 if (shouldEnable && !nohostMode) activateNohostMode(d.settings);
                 else if (!shouldEnable && nohostMode) deactivateNohostMode();
               }
-              // تحديث أسماء الفريقين في لوحة بدون مقدم
-              if (d.settings.team1_name) {
-                const el = document.getElementById('nhrpT1Name');
-                if (el) el.textContent = d.settings.team1_name;
-              }
-              if (d.settings.team2_name) {
-                const el = document.getElementById('nhrpT2Name');
-                if (el) el.textContent = d.settings.team2_name;
-              }
             }
-            break;
-          case 'penalty_start':
-            showPenaltyDisplay(d.team_name, d.seconds);
-            break;
-          case 'penalty_end':
-            hidePenaltyDisplay();
             break;
         }
       };
@@ -1592,7 +1594,9 @@ window.currentGridSize = window.currentGridSize || '5x5';
         if (s.grid_size && s.grid_size !== window.currentGridSize) {
           window.currentGridSize = s.grid_size;
           rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+          if (s.buzz_timer_seconds) window.BUZZ_TIMER_SECONDS = s.buzz_timer_seconds;
         }
+        
         const svg = document.getElementById('honeycombSvg');
         const vb = svg.getAttribute('viewBox').split(' ');
         const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
