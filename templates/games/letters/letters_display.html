@@ -1126,8 +1126,6 @@ window.currentGridSize = window.currentGridSize || '5x5';
     createHoneycombCells();
     loadSessionState();
     setupWebSocket();
-    document.getElementById('nohostToggleBtn').style.display = 'block';
-
 
     // تحميل الإعدادات عند فتح الصفحة أو التحديث
     fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
@@ -1154,6 +1152,7 @@ window.currentGridSize = window.currentGridSize || '5x5';
         const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
         const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
         buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+
         // شعار الجلسة
         if (s.show_name) {
           const btn = document.getElementById('dispLogoBtn');
@@ -1164,6 +1163,16 @@ window.currentGridSize = window.currentGridSize || '5x5';
           if (btnName) btnName.textContent = s.show_name;
           if (fullName) fullName.textContent = s.show_name;
           if (fullSub) fullSub.textContent = s.show_subtitle || '';
+        }
+
+        // وضع بدون مقدم
+        if (s.nohost_mode) {
+          nohostMode = true;
+          const btn = document.getElementById('nohostToggleBtn');
+          if (btn) {
+            btn.classList.add('active');
+            btn.textContent = '✅ وضع بدون مقدم';
+          }
         }
       })
       .catch(() => {});
