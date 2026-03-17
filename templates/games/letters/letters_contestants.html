@@ -590,36 +590,19 @@
     </div>
 
             <div id="contestantScoresWrap" style="display:none; margin-top:12px;">
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-            <div id="contestantTeam1ScoreCard" style="
-              background: rgba(255,255,255,0.95);
-              border: 2px solid #22c55e;
-              border-radius: 14px;
-              padding: 10px;
-              text-align: center;
-              color: #14532d;
-              font-family: 'Tajawal', sans-serif;
-              font-weight: 800;
-            ">
-              <div id="contestantTeam1Name" style="font-size:0.9rem; margin-bottom:4px;">{{ session.team1_name }}</div>
-              <div id="contestantTeam1Score" style="font-size:1.5rem; font-weight:900;">0</div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div id="contestantTeam1ScoreCard" class="nhrp-score-card t1"
+                    style="background:rgba(255,255,255,0.08);border-radius:14px;padding:12px;border:2px solid var(--team1-color,#22c55e);text-align:center;box-shadow:0 0 0 1px var(--team1-color,#22c55e) inset;">
+                  <div id="contestantTeam1Name" class="nhrp-score-name">{{ session.team1_name }}</div>
+                  <div id="contestantTeam1Score" class="nhrp-score-val" style="color:var(--team1-color,#4ade80);">0</div>
+                </div>
+                <div id="contestantTeam2ScoreCard" class="nhrp-score-card t2"
+                    style="background:rgba(255,255,255,0.08);border-radius:14px;padding:12px;border:2px solid var(--team2-color,#f97316);text-align:center;box-shadow:0 0 0 1px var(--team2-color,#f97316) inset;">
+                  <div id="contestantTeam2Name" class="nhrp-score-name">{{ session.team2_name }}</div>
+                  <div id="contestantTeam2Score" class="nhrp-score-val" style="color:var(--team2-color,#fb923c);">0</div>
+                </div>
+              </div>
             </div>
-
-            <div id="contestantTeam2ScoreCard" style="
-              background: rgba(255,255,255,0.95);
-              border: 2px solid #f97316;
-              border-radius: 14px;
-              padding: 10px;
-              text-align: center;
-              color: #7c2d12;
-              font-family: 'Tajawal', sans-serif;
-              font-weight: 800;
-            ">
-              <div id="contestantTeam2Name" style="font-size:0.9rem; margin-bottom:4px;">{{ session.team2_name }}</div>
-              <div id="contestantTeam2Score" style="font-size:1.5rem; font-weight:900;">0</div>
-            </div>
-          </div>
-        </div>
   </main>
 
   <script>
