@@ -310,14 +310,7 @@
           position: absolute; inset: 0; pointer-events: none;
           width: 100%; height: 100%;
         }
-        .disp-logo-group {
-          position: relative; z-index: 2;
-          text-align: center;
-          font-family: 'Lalezar', sans-serif;
-          display: flex; flex-direction: column; align-items: center;
-          gap: 0; line-height: 0.85;
-          filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
-        }
+
         .dlg-haroof {
           font-size: clamp(90px,16vw,220px); color: #FCD34D;
           -webkit-text-stroke: 5px #1a0035; paint-order: stroke fill;
@@ -348,21 +341,36 @@
           display: block; transform: translateX(-120%); opacity: 0;
           letter-spacing: 4px; font-family: 'Lalezar', cursive;
         }
+        .disp-logo-group {
+          position: relative; z-index: 2;
+          text-align: center;
+          font-family: 'Lalezar', sans-serif;
+          display: flex; flex-direction: column; align-items: center;
+          gap: 0; line-height: 0.85;
+          filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
+        }
+        .dlg-name-wrap {
+          position: relative; display: inline-block;
+        }
         .dlg-sub {
-          font-size: clamp(18px,2.8vw,42px);
+          position: absolute;
+          bottom: -14px; left: -10px;
+          font-size: clamp(14px,1.8vw,28px);
           color: #1a0035;
-          display: inline-block; opacity: 0;
-          margin-top: 20px;
           background: #FCD34D;
-          border: 3px solid #92400e;
+          border: 2.5px solid #92400e;
           border-radius: 999px;
-          padding: 5px 36px;
+          padding: 3px 18px;
           font-family: 'Tajawal', sans-serif;
           font-weight: 900;
-          letter-spacing: 1px;
-          box-shadow: 0 5px 0 #78350f, 0 8px 20px rgba(0,0,0,0.4);
+          box-shadow: 0 4px 0 #78350f;
+          white-space: nowrap;
+          opacity: 0;
         }
-        /* إخفاء الـ sub إذا كان فارغاً */
+        .dlg-sub:empty { display: none !important; }
+        @keyframes dlg-badge { to { opacity: 1; } }
+
+/* إخفاء الـ sub إذا كان فارغاً */
         .dlg-sub:empty {
           display: none !important;
           opacity: 0 !important;
@@ -1468,16 +1476,56 @@ function buildDispLogoHexBg(svgEl, w, h) {
   }
   svgEl.appendChild(g);
 }
+
+let dispControlsVisible = false;
+function toggleDispControls() {
+  dispControlsVisible = !dispControlsVisible;
+  const ctrl = document.getElementById('dispLogoControls');
+  const hint = document.getElementById('dispLogoHint');
+  if (ctrl) { ctrl.style.opacity = dispControlsVisible ? '1' : '0'; ctrl.style.pointerEvents = dispControlsVisible ? 'auto' : 'none'; }
+  if (hint) hint.style.opacity = dispControlsVisible ? '0' : '1';
+}
+
 function openDispLogo() {
-  buildDispLogoHexBg(document.getElementById('dispLogoHex'), 1600, 900);
+  buildDispLogoHexBg(document.getElementById('dispLogoHex'), window.innerWidth, window.innerHeight);
   replayDispLogo();
+  dispControlsVisible = false;
+  const ctrl = document.getElementById('dispLogoControls');
+  if (ctrl) { ctrl.style.opacity = '0'; ctrl.style.pointerEvents = 'none'; }
   document.getElementById('dispLogoOverlay').classList.add('open');
 }
 
 function closeDispLogo() {
   document.getElementById('dispLogoOverlay').classList.remove('open');
+  stopAutoReplay();
 }
 
+// تكرار تلقائي
+let autoReplayInterval = null;
+let autoReplaySeconds = 10;
+
+function changeAutoReplay(delta) {
+  autoReplaySeconds = Math.max(5, Math.min(60, autoReplaySeconds + delta));
+  const el = document.getElementById('autoReplaySec');
+  if (el) el.textContent = autoReplaySeconds + 'ث';
+  if (autoReplayInterval) { stopAutoReplay(); toggleAutoReplay(); }
+}
+
+function toggleAutoReplay() {
+  const btn = document.getElementById('autoReplayBtn');
+  if (autoReplayInterval) {
+    stopAutoReplay();
+  } else {
+    autoReplayInterval = setInterval(() => replayDispLogo(), autoReplaySeconds * 1000);
+    if (btn) { btn.textContent = '⏹ إيقاف'; btn.style.background = 'rgba(239,68,68,0.3)'; btn.style.borderColor = 'rgba(239,68,68,0.5)'; btn.style.color = '#fca5a5'; }
+  }
+}
+
+function stopAutoReplay() {
+  if (autoReplayInterval) { clearInterval(autoReplayInterval); autoReplayInterval = null; }
+  const btn = document.getElementById('autoReplayBtn');
+  if (btn) { btn.textContent = '▶ تشغيل'; btn.style.background = 'rgba(124,58,237,0.3)'; btn.style.borderColor = 'rgba(139,92,246,0.5)'; btn.style.color = '#c4b5fd'; }
+}
 function replayDispLogo() {
   const els = document.querySelectorAll('.dlg-haroof,.dlg-name,.dlg-maa,.dlg-sub');
   els.forEach(el => {
@@ -1715,58 +1763,137 @@ window.onclick = function(event) {
 }
 
 
-function saveDispLogo(orientation) {
+async function saveDispLogo(orientation) {
+  // انتظر تحميل الخط بشكل صحيح
+  await document.fonts.ready;
+  try {
+    await Promise.all([
+      document.fonts.load('900 200px Lalezar'),
+      document.fonts.load('900 80px Tajawal'),
+    ]);
+  } catch {}
   const isPortrait = orientation === 'portrait';
-  const W = isPortrait ? 900 : 1600, H = isPortrait ? 1600 : 900;
+  const W = isPortrait ? 900 : 1600;
+  const H = isPortrait ? 1600 : 900;
   const name = document.getElementById('dispLogoFullName')?.textContent || '—';
   const sub  = document.getElementById('dispLogoFullSub')?.textContent  || '';
 
-  const tmp = document.createElement('div');
-  tmp.style.cssText = `position:fixed;top:-9999px;left:-9999px;width:${W}px;height:${H}px;
-    background:#2e1065;display:flex;align-items:center;justify-content:center;
-    flex-direction:column;font-family:'Lalezar',sans-serif;overflow:hidden;`;
+  // تحميل الخطوط
+  try {
+    await document.fonts.load('900 120px Lalezar');
+    await document.fonts.load('900 80px Tajawal');
+  } catch {}
 
-  const svgBg = document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svgBg.setAttribute('width',W); svgBg.setAttribute('height',H);
-  svgBg.style.cssText='position:absolute;inset:0;';
-  buildDispLogoHexBg(svgBg, W, H);
-  tmp.appendChild(svgBg);
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+  ctx.direction = 'rtl';
+  ctx.textAlign = 'center';
+  // خلفية
+  const grad = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.75);
+  grad.addColorStop(0,'#6b21a8'); grad.addColorStop(1,'#2e1065');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
 
-  const fs = isPortrait ? '150px' : '180px';
-  const fsMaa = isPortrait ? '65px' : '80px';
-  const grp = document.createElement('div');
-  grp.style.cssText='position:relative;z-index:2;text-align:center;line-height:0.85;';
-  grp.innerHTML = `
-    <div style="font-size:${fs};color:#FCD34D;-webkit-text-stroke:5px #1a0035;paint-order:stroke fill;
-      text-shadow:4px 4px 0 #1a0035,8px 8px 0 #1a0035,12px 12px 0 #1a0035;letter-spacing:3px;">حروف</div>
-    <div style="font-size:${fsMaa};color:#22D3EE;-webkit-text-stroke:3px #1a0035;paint-order:stroke fill;
-      transform:rotate(-8deg);display:inline-block;margin:0 10px;">مع</div>
-    <div style="font-size:${fs};color:#F87171;-webkit-text-stroke:5px #1a0035;paint-order:stroke fill;
-      text-shadow:4px 4px 0 #1a0035,8px 8px 0 #1a0035,12px 12px 0 #1a0035;letter-spacing:3px;">${name}</div>
-    ${sub ? `<div style="margin-top:20px;font-size:${fsMaa};color:#fff;
-      background:rgba(0,0,0,0.35);border:3px solid #FCD34D;border-radius:999px;
-      padding:6px 40px;display:inline-block;font-family:'Tajawal',sans-serif;font-weight:900;">${sub}</div>` : ''}
-  `;
-  tmp.appendChild(grp);
-  document.body.appendChild(tmp);
+  // خلايا سداسية
+  const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+  const R = Math.min(W,H)*0.038;
+  const hexW = R*Math.sqrt(3), hexH = R*2;
+  const cols = Math.ceil(W/hexW)+2, rows = Math.ceil(H/(hexH*0.75))+3;
+  for (let row=0;row<rows;row++){
+    for (let col=0;col<cols;col++){
+      const cx = -hexW*0.5+col*hexW+(row%2?hexW*0.5:0);
+      const cy = -hexH*0.25+row*hexH*0.75;
+      const op = 0.07 + (Math.abs(Math.sin(row*2.3+col*1.7))*0.18);
+      ctx.beginPath();
+      for(let i=0;i<6;i++){const a=Math.PI/6+Math.PI/3*i;i===0?ctx.moveTo(cx+R*Math.cos(a),cy+R*Math.sin(a)):ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));}
+      ctx.closePath();
+      ctx.fillStyle=`rgba(139,92,246,${op})`; ctx.fill();
+      ctx.strokeStyle=`rgba(167,139,250,${op*1.8})`; ctx.lineWidth=1; ctx.stroke();
+      if (Math.sin(row*3.7+col*2.3)>0.15){
+        ctx.fillStyle=`rgba(196,167,253,${op*1.4})`;
+        ctx.font=`900 ${Math.round(R*0.52)}px Lalezar`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(letters[(Math.abs(row*cols+col))%letters.length],cx,cy);
+      }
+    }
+  }
 
-  const go = () => {
-    html2canvas(tmp, { useCORS:true, scale:2, backgroundColor:'#2e1065', width:W, height:H })
-      .then(c => {
-        const a = document.createElement('a');
-        a.download = `haroof-${orientation}.png`;
-        a.href = c.toDataURL('image/png'); a.click();
-        document.body.removeChild(tmp);
-      }).catch(() => { try { document.body.removeChild(tmp); } catch {} });
+  // النص
+  const mainFS = isPortrait ? 160 : 200;
+  const maaFS  = isPortrait ? 65  : 80;
+  const subFS  = isPortrait ? 42  : 34;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+
+  const lineH1 = mainFS * 0.88;
+  const lineH2 = maaFS  * 0.7;
+  const lineH3 = mainFS * 0.88;
+  const subH   = sub ? (subFS * 1.8 + 20) : 0;
+  const totalH = lineH1 + lineH2 + lineH3 + subH;
+  let y = (H - totalH) / 2 + mainFS * 0.5;
+
+  const drawText = (text, x, yPos, fs, fill, stroke, sw) => {
+    ctx.font = `900 ${fs}px Lalezar`;
+    ctx.lineWidth = sw; ctx.lineJoin = 'round';
+    // ظل
+    ctx.fillStyle = stroke; ctx.fillText(text, x+sw*0.6, yPos+sw*0.6);
+    // حدود
+    ctx.strokeStyle = '#1a0035'; ctx.strokeText(text, x, yPos);
+    // لون
+    ctx.fillStyle = fill; ctx.fillText(text, x, yPos);
   };
 
-  if (typeof html2canvas !== 'undefined') { go(); }
-  else {
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-    s.onload = go; document.head.appendChild(s);
+  drawText('حروف', W/2, y, mainFS, '#FCD34D', '#92400e', mainFS*0.055);
+  y += lineH1 + lineH2*0.25;
+
+  // مع
+  ctx.font=`900 ${maaFS}px Lalezar`;
+  ctx.lineWidth=maaFS*0.07; ctx.lineJoin='round';
+  ctx.fillStyle='#0e7490'; ctx.fillText('مع',W/2+4,y+4);
+  ctx.strokeStyle='#164e63'; ctx.strokeText('مع',W/2,y);
+  ctx.fillStyle='#22D3EE'; ctx.fillText('مع',W/2,y);
+  y += lineH2 + lineH3*0.2;
+
+  drawText(name, W/2, y, mainFS, '#F87171', '#7f1d1d', mainFS*0.055);
+  y += lineH3*0.55;
+
+  if (sub && sub.trim()) {
+    y += subH*0.35;
+    ctx.font=`900 ${subFS}px Tajawal`;
+    const tw = ctx.measureText(sub).width;
+    const pw = tw + subFS*1.8, ph = subFS*1.5;
+    const bx = W/2-pw/2, by = y-ph/2;
+    // ظل الـ badge
+    ctx.fillStyle='#78350f';
+    _roundRect(ctx, bx+4, by+6, pw, ph, ph/2); ctx.fill();
+    // badge
+    ctx.fillStyle='#FCD34D';
+    _roundRect(ctx, bx, by, pw, ph, ph/2); ctx.fill();
+    ctx.strokeStyle='#92400e'; ctx.lineWidth=3;
+    _roundRect(ctx, bx, by, pw, ph, ph/2); ctx.stroke();
+    ctx.fillStyle='#1a0035'; ctx.textBaseline='middle';
+    ctx.fillText(sub, W/2, y);
   }
+
+  canvas.toBlob(blob=>{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=`haroof-${orientation}.png`;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  },'image/png');
 }
+
+function _roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y); ctx.arcTo(x+w,y,x+w,y+r,r);
+  ctx.lineTo(x+w,y+h-r); ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+  ctx.lineTo(x+r,y+h); ctx.arcTo(x,y+h,x,y+h-r,r);
+  ctx.lineTo(x,y+r); ctx.arcTo(x,y,x+r,y,r);
+  ctx.closePath();
+}
+
 </script>
 
 
@@ -1782,34 +1909,83 @@ function saveDispLogo(orientation) {
   <span class="dlb-hint">اضغط للعرض الكامل</span>
 </div>
 
-<!-- Overlay الشعار كامل الشاشة -->
-<div id="dispLogoOverlay" class="disp-logo-overlay">
+<div id="dispLogoOverlay" class="disp-logo-overlay" onclick="toggleDispControls()">
   <svg class="disp-logo-full-hex" id="dispLogoHex" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"></svg>
+
   <div class="disp-logo-group">
     <span class="dlg-haroof dlg-go-r">حروف</span>
-    <span class="dlg-maa dlg-go-f1">مع</span>
-    <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
-    <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
+    <span class="dlg-maa dlg-go-f1">مـع</span>
+    <div class="dlg-name-wrap">
+      <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
+      <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
+    </div>
   </div>
-  <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
-  <div style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;">
-    <button onclick="saveDispLogo('landscape')" style="
-      background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
-      color:#FCD34D;border-radius:12px;padding:10px 18px;
-      font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
-      backdrop-filter:blur(8px);">
-      📺 حفظ عرضي
+
+  <!-- شريط التحكم — مخفي افتراضياً -->
+  <div id="dispLogoControls" style="
+    position:fixed; inset:0; pointer-events:none;
+    opacity:0; transition:opacity 0.25s;
+  ">
+    <!-- إغلاق -->
+    <button onclick="event.stopPropagation();closeDispLogo()" class="disp-logo-close" style="pointer-events:auto;">
+      ✕ إغلاق
     </button>
-    <button onclick="saveDispLogo('portrait')" style="
-      background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
-      color:#FCD34D;border-radius:12px;padding:10px 18px;
-      font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
-      backdrop-filter:blur(8px);">
-      📱 حفظ طولي
-    </button>
+
+    <!-- حفظ -->
+    <div style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;pointer-events:auto;">
+      <button onclick="event.stopPropagation();saveDispLogo('landscape')" style="
+        background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
+        color:#FCD34D;border-radius:12px;padding:10px 18px;
+        font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
+        backdrop-filter:blur(8px);">📺 حفظ عرضي</button>
+      <button onclick="event.stopPropagation();saveDispLogo('portrait')" style="
+        background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
+        color:#FCD34D;border-radius:12px;padding:10px 18px;
+        font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
+        backdrop-filter:blur(8px);">📱 حفظ طولي</button>
+    </div>
+
+    <!-- تحكم أسفل -->
+    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+      display:flex;gap:10px;align-items:center;pointer-events:auto;">
+      <button onclick="event.stopPropagation();replayDispLogo()" class="disp-logo-replay" style="position:static;transform:none;">
+        ↺ إعادة
+      </button>
+      <!-- تكرار تلقائي -->
+      <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(139,92,246,0.5);
+        border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:8px;
+        backdrop-filter:blur(8px);">
+        <span style="color:rgba(255,255,255,0.6);font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;">🔁 كل</span>
+        <button onclick="event.stopPropagation();changeAutoReplay(-5)" style="
+          width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
+          background:rgba(255,255,255,0.1);color:#fff;font-size:0.8rem;cursor:pointer;">−</button>
+        <span id="autoReplaySec" style="color:#FCD34D;font-weight:900;font-family:monospace;font-size:13px;min-width:36px;text-align:center;">10ث</span>
+        <button onclick="event.stopPropagation();changeAutoReplay(5)" style="
+          width:24px;height:24px;border-radius:6px;border:1px solid rgba(255,255,255,0.2);
+          background:rgba(255,255,255,0.1);color:#fff;font-size:0.8rem;cursor:pointer;">+</button>
+        <button id="autoReplayBtn" onclick="event.stopPropagation();toggleAutoReplay()" style="
+          padding:5px 12px;border-radius:8px;border:1.5px solid rgba(139,92,246,0.5);
+          background:rgba(124,58,237,0.3);color:#c4b5fd;
+          font-family:'Tajawal',sans-serif;font-weight:700;font-size:12px;cursor:pointer;">▶ تشغيل</button>
+      </div>
+    </div>
+
+    <!-- مؤشر "اضغط للإخفاء" -->
+    <div style="position:fixed;bottom:90px;left:50%;transform:translateX(-50%);
+      color:rgba(255,255,255,0.25);font-family:'Tajawal',sans-serif;font-size:11px;font-weight:600;">
+      اضغط في أي مكان لإخفاء التحكم
+    </div>
   </div>
-  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
+
+  <!-- مؤشر "اضغط للتحكم" -->
+  <div id="dispLogoHint" style="
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    color:rgba(255,255,255,0.2);font-family:'Tajawal',sans-serif;
+    font-size:12px;font-weight:600;pointer-events:none;transition:opacity 0.3s;">
+    اضغط لإظهار خيارات الحفظ
+  </div>
 </div>
+
 
 <div id="nohostRightPanel" class="nohost-right-panel">
   <!-- شعار وش الجواب -->
