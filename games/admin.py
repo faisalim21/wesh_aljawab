@@ -660,7 +660,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'package':
-            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters').order_by('package_number')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
@@ -751,7 +751,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
         TYPE_MAP = {'1': 'main', '2': 'alt1', '3': 'alt2', '4': 'alt3', '5': 'alt4'}
         TYPE_MAP_AR = {'main': 'رئيسي', 'alt1': 'بديل ١', 'alt2': 'بديل ٢', 'alt3': 'بديل ٣', 'alt4': 'بديل ٤'}
 
-        packages = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+        packages = GamePackage.objects.filter(game_type='letters').order_by('package_number')
 
         if request.method == 'POST' and request.POST.get('action') == 'save':
             package_id = request.POST.get('package_id')
@@ -871,7 +871,8 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     def add_view(self, request, form_url='', extra_context=None):
         extra_context = extra_context or {}
-        extra_context['letters_packages'] = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+        extra_context['letters_packages'] = GamePackage.objects.filter(game_type='letters').order_by('package_number')
+
         # معالجة الحفظ بالجملة
         if request.method == 'POST' and request.POST.get('bulk_action') == '1':
             package_id = request.POST.get('package', '').strip()
