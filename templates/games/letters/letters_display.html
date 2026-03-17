@@ -548,18 +548,144 @@
           border-color: #a78bfa; color: #fff;
         }
 
-/* --- ستايل شعار حروف المطور 3D (فوق اللوجو الأصلي) --- */
+        /* --- ستايل شعار حروف المطور 3D (فوق اللوجو الأصلي) --- */
+                /* ===== شعار الجلسة الكبير - أعلى يمين ===== */
         .logo-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px; /* مسافة بين النص واللوجو اللي تحت */
+          position: fixed;
+          top: 16px; right: 16px;
+          z-index: 300;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          transition: transform 0.2s;
+        }
+        .logo-container:hover { transform: scale(1.03); }
+
+        /* كارت الشعار الرئيسي */
+        .session-logo-card {
+          background: linear-gradient(135deg, #2e1065 0%, #3b0764 50%, #1a0050 100%);
+          border: 1.5px solid rgba(139,92,246,0.5);
+          border-radius: 18px;
+          padding: 14px 20px 10px;
+          text-align: center;
+          box-shadow:
+            0 8px 32px rgba(59,7,100,0.6),
+            0 0 0 1px rgba(139,92,246,0.2) inset;
+          position: relative;
+          overflow: hidden;
+          min-width: 160px;
         }
 
+        /* خلفية سداسيات شفافة */
+        .session-logo-card::before {
+          content: '';
+          position: absolute; inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='46'%3E%3Cpolygon points='20,2 38,12 38,34 20,44 2,34 2,12' fill='none' stroke='rgba(139,92,246,0.15)' stroke-width='1'/%3E%3C/svg%3E");
+          background-size: 30px 34px;
+          pointer-events: none;
+          opacity: 0.6;
+        }
+
+        .session-logo-text {
+          position: relative; z-index: 2;
+          font-family: 'Lalezar', cursive;
+          line-height: 0.88;
+          filter: drop-shadow(0 3px 10px rgba(0,0,0,0.5));
+        }
+
+        .slc-haroof {
+          display: block;
+          font-size: clamp(32px, 4vw, 56px);
+          color: #FCD34D;
+          -webkit-text-stroke: 2.5px #1a0035;
+          paint-order: stroke fill;
+          text-shadow:
+            2px 2px 0 #92400e,
+            4px 4px 0 #78350f,
+            6px 6px 0 #451a03;
+          letter-spacing: 3px;
+        }
+
+        .slc-maa {
+          display: block;
+          font-size: clamp(16px, 1.8vw, 28px);
+          color: #22D3EE;
+          -webkit-text-stroke: 1.5px #164e63;
+          paint-order: stroke fill;
+          text-shadow: 1px 1px 0 #0e7490, 2px 2px 0 #155e75;
+          transform: rotate(-6deg);
+          margin: -2px 0;
+        }
+
+        .slc-name {
+          display: block;
+          font-size: clamp(32px, 4vw, 56px);
+          color: #F87171;
+          -webkit-text-stroke: 2.5px #1a0035;
+          paint-order: stroke fill;
+          text-shadow:
+            2px 2px 0 #991b1b,
+            4px 4px 0 #7f1d1d,
+            6px 6px 0 #450a0a;
+          letter-spacing: 3px;
+        }
+
+        .slc-name-wrap {
+          position: relative;
+          display: inline-block;
+        }
+
+        /* badge التاريخ/subtitle */
+        .slc-sub {
+          position: absolute;
+          bottom: -10px; left: -8px;
+          font-size: clamp(9px, 1vw, 13px);
+          color: #1a0035;
+          background: #FCD34D;
+          border: 1.5px solid #92400e;
+          border-radius: 999px;
+          padding: 1px 8px;
+          font-family: 'Tajawal', sans-serif;
+          font-weight: 900;
+          box-shadow: 0 2px 0 #78350f;
+          white-space: nowrap;
+          display: none;
+          direction: rtl;
+        }
+        .slc-sub.visible { display: inline-block; }
+
+        /* hint اضغط للعرض */
+        .session-logo-hint {
+          position: relative; z-index: 2;
+          margin-top: 10px;
+          font-size: 0.6rem;
+          color: rgba(255,255,255,0.35);
+          font-family: 'Tajawal', sans-serif;
+          font-weight: 700;
+        }
+
+        /* لوجو وش الجواب أسفل */
+        .wesh-logo-wrap {
+          background: rgba(255,255,255,0.95);
+          border-radius: 12px;
+          padding: 6px 10px;
+          box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+        }
+        .wesh-logo-wrap img {
+          max-height: 48px;
+          width: auto;
+          display: block;
+        }
+
+        @media (max-width: 768px) {
+          .logo-container { display: none; }
+        }
+        @media (min-width: 1400px) {
+          .slc-haroof, .slc-name { font-size: 64px; }
+          .slc-maa { font-size: 30px; }
+        }
         .haroof-group {
             font-family: 'Lalezar', cursive;
             display: flex;
@@ -868,11 +994,29 @@
             </div>
         </div>
 
-        <!-- اللوجو -->
-        <div class="logo-container" style="position:fixed;top:16px;right:16px;z-index:100;background:rgba(255,255,255,.97);padding:10px 14px;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.25);">
-            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="img-fluid" style="max-height:90px;width:auto;display:block;">
-        </div>
+        <!-- شعار الجلسة الكبير + لوجو وش الجواب -->
+        <div class="logo-container" onclick="openDispLogo()">
 
+          <!-- شعار الجلسة الرئيسي -->
+          <div class="session-logo-card">
+            <div class="session-logo-text">
+              <span class="slc-haroof">حروف</span>
+              <span class="slc-maa">مـــع</span>
+              <div class="slc-name-wrap">
+                <span class="slc-name" id="slcName">—</span>
+                <span class="slc-sub" id="slcSub"></span>
+              </div>
+            </div>
+            <div class="session-logo-hint">📺 اضغط للعرض الكامل</div>
+          </div>
+
+          <!-- لوجو وش الجواب أسفله -->
+          <div class="wesh-logo-wrap">
+            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png"
+                alt="وش الجواب">
+          </div>
+
+        </div>
         <!-- طبقة عرض اسم المتسابق -->
         <div id="buzzedOverlay" class="buzzed-overlay">
             <div id="buzzedName" class="buzzed-name">اسم المتسابق</div>
@@ -901,7 +1045,16 @@
   let _dispLogoName = '';
   let _dispLogoSub  = '';
 
-
+  // تحديث شعار الجلسة في الكارت الثابت
+  function updateSessionLogoCard() {
+    const nameEl = document.getElementById('slcName');
+    const subEl  = document.getElementById('slcSub');
+    if (nameEl) nameEl.textContent = _dispLogoName || '—';
+    if (subEl) {
+      subEl.textContent = _dispLogoSub || '';
+      subEl.classList.toggle('visible', !!_dispLogoSub);
+    }
+  }
 
   // ===================== فلتر تظليل داخلي قوي وواضح =====================
   function ensureInnerGlowFilter(){
@@ -1189,7 +1342,8 @@
                 if (btn)     btn.style.display = 'block';
                 if (btnName) btnName.textContent = d.settings.show_name;
                 _dispLogoName = d.settings.show_name;
-                _dispLogoSub  = d.settings.show_subtitle || '';
+                _dispLogoSub = d.settings.show_subtitle || '';
+                updateSessionLogoCard();
               }
               if (d.settings.nohost_mode !== undefined) {
                 const shouldEnable = !!d.settings.nohost_mode;
@@ -1292,10 +1446,10 @@ function buildHexBackground(svg, viewW, viewH, color1, color2) {
     p.setAttribute('points',pts); p.setAttribute('fill',fill); g.appendChild(p);
   };
   // بعد — خلفية موحدة داكنة بدون ألوان الفرق
-  tri(`0,0 ${viewW},0 ${cx},${cy}`, 'rgba(30,10,60,0.6)');
-  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, 'rgba(30,10,60,0.6)');
-  tri(`0,0 0,${viewH} ${cx},${cy}`, 'rgba(20,5,50,0.6)');
-  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, 'rgba(20,5,50,0.6)');
+  tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
+  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
+  tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
+  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
 
   svg.insertBefore(g, defs.nextSibling);
 }
@@ -1457,6 +1611,7 @@ window.currentGridSize = window.currentGridSize || '5x5';
         }
         // حتى لو ما في اسم، احفظ الـ subtitle
         if (s.show_subtitle) _dispLogoSub = s.show_subtitle;
+        updateSessionLogoCard();
 
         // وضع بدون مقدم
         if (s.nohost_mode) activateNohostMode(s);
