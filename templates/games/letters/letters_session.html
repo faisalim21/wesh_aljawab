@@ -1132,11 +1132,23 @@
   text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
   display: block;
 }
+/* ===== subtitle — badge موحد في كل الشعارات ===== */
 .logo-t-sub {
-  font-size: clamp(9px,1.8vw,16px); color: #22D3EE;
-  -webkit-text-stroke: 0.8px #1a0035; display: block; min-height: 0.8em;
+  display: inline-block;
+  background: #FCD34D;
+  color: #1a0035;
+  border: 1.5px solid #92400e;
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: clamp(8px, 1.4vw, 14px);
+  font-weight: 900;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 2px 0 #78350f;
+  margin-top: 4px;
+  white-space: nowrap;
+  min-height: 0;
 }
-.logo-open-btn {
+.logo-t-sub:empty { display: none; }.logo-open-btn {
   margin-top: 10px;
   width: 100%;
   padding: 10px;
@@ -1756,19 +1768,88 @@
       </div>
 
       <!-- ===== شعار الجلسة - عرض مصغر ===== -->
-      <div id="sessionLogoBar" style="
-        display:inline-flex; flex-direction:column; align-items:center;
-        background:linear-gradient(135deg,#3b0764,#4c1d95);
-        border-radius:14px; padding:12px 20px; margin-bottom:14px;
-        cursor:pointer; min-width:140px;" onclick="openLogoOverlay()">
-        <div style="font-family:'Lalezar',sans-serif; text-align:center; line-height:1.1;">
-          <span style="color:#FCD34D; font-size:clamp(20px,4vw,32px);">حروف</span><br>
-          <span style="color:#22D3EE; font-size:clamp(10px,1.8vw,16px);">مــــع</span><br>
-          <span id="sessionLogoBarName" style="color:#F87171; font-size:clamp(20px,4vw,32px);">—</span><br>
-          <span id="sessionLogoBarSub" style="color:#22D3EE; font-size:clamp(9px,1.5vw,13px);"></span>
+      <div id="sessionLogoBar" onclick="openLogoOverlay()" style="
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background: linear-gradient(135deg, #2e1065, #3b0764, #1a0050);
+        border-radius: 18px;
+        padding: 18px 28px 14px;
+        margin-bottom: 14px;
+        cursor: pointer;
+        min-width: 180px;
+        border: 1.5px solid rgba(139,92,246,0.4);
+        box-shadow: 0 8px 28px rgba(59,7,100,0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;"
+        onmouseenter="this.style.transform='scale(1.03)';this.style.boxShadow='0 12px 36px rgba(139,92,246,0.5)'"
+        onmouseleave="this.style.transform='';this.style.boxShadow='0 8px 28px rgba(59,7,100,0.5)'">
+
+        <!-- خلفية سداسيات صغيرة -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.15;pointer-events:none;"
+            xmlns="http://www.w3.org/2000/svg" id="sessionLogoBgSvg"></svg>
+
+        <!-- النص الرئيسي -->
+        <div style="
+          font-family: 'Lalezar', sans-serif;
+          text-align: center;
+          line-height: 0.88;
+          position: relative;
+          z-index: 2;
+          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+          <span style="
+            color: #FCD34D;
+            font-size: clamp(28px, 5vw, 52px);
+            -webkit-text-stroke: 2px #1a0035;
+            paint-order: stroke fill;
+            text-shadow: 2px 2px 0 #92400e, 4px 4px 0 #78350f;
+            display: block;
+            letter-spacing: 2px;">حروف</span>
+          <span style="
+            color: #22D3EE;
+            font-size: clamp(14px, 2.5vw, 26px);
+            -webkit-text-stroke: 1px #164e63;
+            paint-order: stroke fill;
+            display: block;
+            transform: rotate(-6deg);
+            margin: -2px 0;">مـــع</span>
+          <div style="position: relative; display: inline-block;">
+            <span id="sessionLogoBarName" style="
+              color: #F87171;
+              font-size: clamp(28px, 5vw, 52px);
+              -webkit-text-stroke: 2px #1a0035;
+              paint-order: stroke fill;
+              text-shadow: 2px 2px 0 #991b1b, 4px 4px 0 #7f1d1d;
+              display: block;
+              letter-spacing: 2px;">—</span>
+            <span id="sessionLogoBarSub" style="
+              position: absolute;
+              bottom: -10px; left: -10px;
+              background: #FCD34D;
+              color: #1a0035;
+              border: 1.5px solid #92400e;
+              border-radius: 999px;
+              padding: 1px 10px;
+              font-size: clamp(9px, 1.3vw, 14px);
+              font-weight: 900;
+              font-family: 'Tajawal', sans-serif;
+              box-shadow: 0 2px 0 #78350f;
+              white-space: nowrap;
+              display: none;"></span>
+          </div>
         </div>
-        <div style="margin-top:8px; font-size:0.7rem; color:rgba(255,255,255,0.5); font-family:'Tajawal',sans-serif; text-align:center;">
-          📺 اضغط لفتح كامل الشاشة<br>يمكن تغييره من الإعدادات
+
+        <!-- تلميح أسفل -->
+        <div style="
+          margin-top: 18px;
+          font-size: 0.68rem;
+          color: rgba(255,255,255,0.4);
+          font-family: 'Tajawal', sans-serif;
+          text-align: center;
+          position: relative;
+          z-index: 2;">
+          📺 اضغط للعرض الكامل
         </div>
       </div>
 
@@ -3090,18 +3171,29 @@ function buildLogoHexBg(svgEl, w, h) {
 }
 
 function updateLogoPreview(name, subtitle) {
-  const el = document.getElementById('previewName');
+  // المعاينة الداخلية (داخل الإعدادات)
+  const el  = document.getElementById('previewName');
   const sub = document.getElementById('previewSub');
-  if (el) el.textContent = name || '—';
+  if (el)  el.textContent  = name     || '—';
   if (sub) sub.textContent = subtitle || '';
+
+  // خلفية المعاينة
   const hex = document.getElementById('logoPreviewHex');
   if (hex) buildLogoHexBg(hex, 800, 200);
-  const barName = document.getElementById('sessionLogoBarName');
-  const barSub = document.getElementById('sessionLogoBarSub');
-  if (barName) barName.textContent = name || '—';
-  if (barSub) barSub.textContent = subtitle || '';
-}
 
+  // الشريط الخارجي الكبير
+  const barName = document.getElementById('sessionLogoBarName');
+  const barSub  = document.getElementById('sessionLogoBarSub');
+  if (barName) barName.textContent = name || '—';
+  if (barSub) {
+    barSub.textContent = subtitle || '';
+    barSub.style.display = subtitle ? 'inline-block' : 'none';
+  }
+
+  // خلفية الشريط الخارجي
+  const bgSvg = document.getElementById('sessionLogoBgSvg');
+  if (bgSvg) buildLogoHexBg(bgSvg, 200, 130);
+}
 // ===== فتح الـ Overlay =====
 function openLogoOverlay() {
   const name = document.getElementById('setting_show_name')?.value.trim()

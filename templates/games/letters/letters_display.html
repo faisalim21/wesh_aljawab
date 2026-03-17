@@ -897,7 +897,9 @@
 
   // الحرف الحالي المظلّل (يبقى حتى يحدث تغيير آخر)
   let selectedLetter = null;
-
+  // تخزين بيانات الشعار
+  let _dispLogoName = '';
+  let _dispLogoSub  = '';
 
 
 
@@ -1182,14 +1184,12 @@
                 document.querySelectorAll('.nh-t2-name').forEach(el => el.textContent = d.settings.team2_name);
               }
               if (d.settings.show_name) {
-                const btn = document.getElementById('dispLogoBtn');
+                const btn     = document.getElementById('dispLogoBtn');
                 const btnName = document.getElementById('dispLogoBtnName');
-                const fullName = document.getElementById('dispLogoFullName');
-                const fullSub = document.getElementById('dispLogoFullSub');
-                if (btn) btn.style.display = 'block';
+                if (btn)     btn.style.display = 'block';
                 if (btnName) btnName.textContent = d.settings.show_name;
-                if (fullName) fullName.textContent = d.settings.show_name;
-                if (fullSub) fullSub.textContent = d.settings.show_subtitle || '';
+                _dispLogoName = d.settings.show_name;
+                _dispLogoSub  = d.settings.show_subtitle || '';
               }
               if (d.settings.nohost_mode !== undefined) {
                 const shouldEnable = !!d.settings.nohost_mode;
@@ -1425,11 +1425,13 @@ window.currentGridSize = window.currentGridSize || '5x5';
         if (!s) return;
         if (s.team1_color) {
           document.documentElement.style.setProperty('--team1-color', s.team1_color);
+          document.documentElement.style.setProperty('--team1-stroke', s.team1_color);
           const c1 = document.querySelector('.score-card.team1');
           if (c1) c1.style.borderColor = s.team1_color;
         }
         if (s.team2_color) {
           document.documentElement.style.setProperty('--team2-color', s.team2_color);
+          document.documentElement.style.setProperty('--team2-stroke', s.team2_color);
           const c2 = document.querySelector('.score-card.team2');
           if (c2) c2.style.borderColor = s.team2_color;
         }
@@ -1445,15 +1447,16 @@ window.currentGridSize = window.currentGridSize || '5x5';
 
         // شعار الجلسة
         if (s.show_name) {
-          const btn = document.getElementById('dispLogoBtn');
+          const btn     = document.getElementById('dispLogoBtn');
           const btnName = document.getElementById('dispLogoBtnName');
-          const fullName = document.getElementById('dispLogoFullName');
-          const fullSub = document.getElementById('dispLogoFullSub');
-          if (btn) btn.style.display = 'block';
+          if (btn)     btn.style.display = 'block';
           if (btnName) btnName.textContent = s.show_name;
-          if (fullName) fullName.textContent = s.show_name;
-          if (fullSub) fullSub.textContent = s.show_subtitle || '';
+          // ← تخزين عالمي
+          _dispLogoName = s.show_name;
+          _dispLogoSub  = s.show_subtitle || '';
         }
+        // حتى لو ما في اسم، احفظ الـ subtitle
+        if (s.show_subtitle) _dispLogoSub = s.show_subtitle;
 
         // وضع بدون مقدم
         if (s.nohost_mode) activateNohostMode(s);
@@ -1567,14 +1570,21 @@ function toggleDispControls() {
 }
 
 function openDispLogo() {
-  buildDispLogoHexBg(document.getElementById('dispLogoHex'), window.innerWidth, window.innerHeight);
+  // تأكد من تحديث المحتوى قبل الفتح
+  const fn = document.getElementById('dispLogoFullName');
+  const fs = document.getElementById('dispLogoFullSub');
+  if (fn) fn.textContent = _dispLogoName || '—';
+  if (fs) fs.textContent = _dispLogoSub  || '';
+
+  const hexEl = document.getElementById('dispLogoHex');
+  hexEl.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+  buildDispLogoHexBg(hexEl, window.innerWidth, window.innerHeight);
   replayDispLogo();
   dispControlsVisible = false;
   const ctrl = document.getElementById('dispLogoControls');
   if (ctrl) { ctrl.style.opacity = '0'; ctrl.style.pointerEvents = 'none'; }
   document.getElementById('dispLogoOverlay').classList.add('open');
 }
-
 function closeDispLogo() {
   document.getElementById('dispLogoOverlay').classList.remove('open');
   stopAutoReplay();
