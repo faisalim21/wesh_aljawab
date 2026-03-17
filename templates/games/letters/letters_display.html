@@ -354,31 +354,24 @@
         }
         .dlg-sub {
           position: absolute;
-          bottom: -14px; left: -10px;
-          font-size: clamp(14px,1.8vw,28px);
+          bottom: -18px;
+          right: -16px;
+          font-size: clamp(12px,1.4vw,22px);
           color: #1a0035;
           background: #FCD34D;
-          border: 2.5px solid #92400e;
+          border: 2px solid #92400e;
           border-radius: 999px;
-          padding: 3px 18px;
+          padding: 2px 14px;
           font-family: 'Tajawal', sans-serif;
           font-weight: 900;
-          box-shadow: 0 4px 0 #78350f;
+          box-shadow: 0 3px 0 #78350f;
           white-space: nowrap;
           opacity: 0;
+          direction: rtl;
         }
-        .dlg-sub:empty { display: none !important; }
-        @keyframes dlg-badge { to { opacity: 1; } }
+        .dlg-sub:empty { display: none !important; opacity: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; }
+          @keyframes dlg-badge { to { opacity: 1; } }
 
-/* إخفاء الـ sub إذا كان فارغاً */
-        .dlg-sub:empty {
-          display: none !important;
-          opacity: 0 !important;
-          margin: 0 !important;
-          padding: 0 !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
         @keyframes dlg-fromR { to { transform: translateX(0); opacity: 1; } }
         @keyframes dlg-fromL { to { transform: translateX(0); opacity: 1; } }
         @keyframes dlg-pop   { to { opacity: 1; transform: rotate(-8deg) scale(1); } }
@@ -1764,124 +1757,153 @@ window.onclick = function(event) {
 
 
 async function saveDispLogo(orientation) {
-  // انتظر تحميل الخط بشكل صحيح
   await document.fonts.ready;
   try {
     await Promise.all([
-      document.fonts.load('900 200px Lalezar'),
+      document.fonts.load('900 220px Lalezar'),
       document.fonts.load('900 80px Tajawal'),
     ]);
   } catch {}
+
   const isPortrait = orientation === 'portrait';
   const W = isPortrait ? 900 : 1600;
   const H = isPortrait ? 1600 : 900;
-  const name = document.getElementById('dispLogoFullName')?.textContent || '—';
-  const sub  = document.getElementById('dispLogoFullSub')?.textContent  || '';
 
-  // تحميل الخطوط
-  try {
-    await document.fonts.load('900 120px Lalezar');
-    await document.fonts.load('900 80px Tajawal');
-  } catch {}
+  // حجم الخط بنفس clamp منطق CSS
+  const mainFS = Math.round(Math.min(220, Math.max(90,  W * 0.16)));
+  const maaFS  = Math.round(Math.min(80,  Math.max(38,  W * 0.06)));
+  const subFS  = Math.round(Math.min(22,  Math.max(12,  W * 0.014)));
+
+  const name = document.getElementById('dispLogoFullName')?.textContent || '—';
+  const sub  = (document.getElementById('dispLogoFullSub')?.textContent || '').trim();
 
   const canvas = document.createElement('canvas');
-  canvas.width = W * 2; canvas.height = H * 2;
+  canvas.width  = W * 2;
+  canvas.height = H * 2;
   const ctx = canvas.getContext('2d');
   ctx.scale(2, 2);
-  ctx.direction = 'rtl';
-  ctx.textAlign = 'center';
-  // خلفية
-  const grad = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.75);
-  grad.addColorStop(0,'#6b21a8'); grad.addColorStop(1,'#2e1065');
-  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
 
-  // خلايا سداسية
+  // ===== خلفية =====
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.75);
+  grad.addColorStop(0,   '#6b21a8');
+  grad.addColorStop(1,   '#2e1065');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // ===== نمط الخلايا =====
   const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
-  const R = Math.min(W,H)*0.038;
-  const hexW = R*Math.sqrt(3), hexH = R*2;
-  const cols = Math.ceil(W/hexW)+2, rows = Math.ceil(H/(hexH*0.75))+3;
-  for (let row=0;row<rows;row++){
-    for (let col=0;col<cols;col++){
-      const cx = -hexW*0.5+col*hexW+(row%2?hexW*0.5:0);
-      const cy = -hexH*0.25+row*hexH*0.75;
-      const op = 0.07 + (Math.abs(Math.sin(row*2.3+col*1.7))*0.18);
+  const R    = Math.min(W, H) * 0.042;
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const cols = Math.ceil(W / hexW) + 2;
+  const rows = Math.ceil(H / (hexH * 0.75)) + 3;
+
+  ctx.save();
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = -hexW * 0.5 + col * hexW + (row % 2 ? hexW * 0.5 : 0);
+      const cy = -hexH * 0.25 + row * hexH * 0.75;
+      const op = 0.07 + Math.abs(Math.sin(row * 2.3 + col * 1.7)) * 0.16;
       ctx.beginPath();
-      for(let i=0;i<6;i++){const a=Math.PI/6+Math.PI/3*i;i===0?ctx.moveTo(cx+R*Math.cos(a),cy+R*Math.sin(a)):ctx.lineTo(cx+R*Math.cos(a),cy+R*Math.sin(a));}
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 6 + Math.PI / 3 * i;
+        i === 0
+          ? ctx.moveTo(cx + R * Math.cos(a), cy + R * Math.sin(a))
+          : ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+      }
       ctx.closePath();
-      ctx.fillStyle=`rgba(139,92,246,${op})`; ctx.fill();
-      ctx.strokeStyle=`rgba(167,139,250,${op*1.8})`; ctx.lineWidth=1; ctx.stroke();
-      if (Math.sin(row*3.7+col*2.3)>0.15){
-        ctx.fillStyle=`rgba(196,167,253,${op*1.4})`;
-        ctx.font=`900 ${Math.round(R*0.52)}px Lalezar`;
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(letters[(Math.abs(row*cols+col))%letters.length],cx,cy);
+      ctx.fillStyle   = `rgba(139,92,246,${op})`;       ctx.fill();
+      ctx.strokeStyle = `rgba(167,139,250,${op * 1.8})`; ctx.lineWidth = 1; ctx.stroke();
+      if (Math.sin(row * 3.7 + col * 2.3) > 0.15) {
+        ctx.fillStyle = `rgba(196,167,253,${op * 1.3})`;
+        ctx.font = `900 ${Math.round(R * 0.52)}px Lalezar`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(letters[Math.abs(row * cols + col) % letters.length], cx, cy);
       }
     }
   }
+  ctx.restore();
 
-  // النص
-  const mainFS = isPortrait ? 160 : 200;
-  const maaFS  = isPortrait ? 65  : 80;
-  const subFS  = isPortrait ? 42  : 34;
-  ctx.textAlign='center'; ctx.textBaseline='middle';
+  // ===== دالة رسم النص بنفس ستايل CSS =====
+  const drawStyledText = (text, x, y, fs, fillColor, shadowColors) => {
+    ctx.font      = `900 ${fs}px Lalezar`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin  = 'round';
 
-  const lineH1 = mainFS * 0.88;
-  const lineH2 = maaFS  * 0.7;
-  const lineH3 = mainFS * 0.88;
-  const subH   = sub ? (subFS * 1.8 + 20) : 0;
-  const totalH = lineH1 + lineH2 + lineH3 + subH;
-  let y = (H - totalH) / 2 + mainFS * 0.5;
-
-  const drawText = (text, x, yPos, fs, fill, stroke, sw) => {
-    ctx.font = `900 ${fs}px Lalezar`;
-    ctx.lineWidth = sw; ctx.lineJoin = 'round';
-    // ظل
-    ctx.fillStyle = stroke; ctx.fillText(text, x+sw*0.6, yPos+sw*0.6);
+    // ظل متراكم (يحاكي text-shadow في CSS)
+    shadowColors.forEach(([ox, oy, color]) => {
+      ctx.fillStyle = color;
+      ctx.fillText(text, x + ox, y + oy);
+    });
     // حدود
-    ctx.strokeStyle = '#1a0035'; ctx.strokeText(text, x, yPos);
-    // لون
-    ctx.fillStyle = fill; ctx.fillText(text, x, yPos);
+    ctx.strokeStyle = '#1a0035';
+    ctx.lineWidth   = fs * 0.048;
+    ctx.strokeText(text, x, y);
+    // لون رئيسي
+    ctx.fillStyle = fillColor;
+    ctx.fillText(text, x, y);
   };
 
-  drawText('حروف', W/2, y, mainFS, '#FCD34D', '#92400e', mainFS*0.055);
-  y += lineH1 + lineH2*0.25;
+  // ===== ترتيب العناصر =====
+  const lineH1 = mainFS * 0.92;
+  const lineH2 = maaFS  * 0.85;
+  const lineH3 = mainFS * 0.92;
+  const subH   = sub ? subFS * 2.2 : 0;
+  const total  = lineH1 + lineH2 + lineH3 + subH;
+  let   y      = (H - total) / 2 + mainFS * 0.5;
 
-  // مع
-  ctx.font=`900 ${maaFS}px Lalezar`;
-  ctx.lineWidth=maaFS*0.07; ctx.lineJoin='round';
-  ctx.fillStyle='#0e7490'; ctx.fillText('مع',W/2+4,y+4);
-  ctx.strokeStyle='#164e63'; ctx.strokeText('مع',W/2,y);
-  ctx.fillStyle='#22D3EE'; ctx.fillText('مع',W/2,y);
-  y += lineH2 + lineH3*0.2;
+  // "حروف"
+  drawStyledText('حروف', W / 2, y, mainFS, '#FCD34D', [
+    [3, 3, '#92400e'], [6, 6, '#78350f'], [9, 9, '#451a03']
+  ]);
+  y += lineH1 + lineH2 * 0.1;
 
-  drawText(name, W/2, y, mainFS, '#F87171', '#7f1d1d', mainFS*0.055);
-  y += lineH3*0.55;
+  // "مع" (أو "مـع" مع مدّة)
+  const maaText = document.querySelector('.dlg-maa')?.textContent?.trim() || 'مع';
+  ctx.save();
+  ctx.translate(W / 2, y);
+  ctx.rotate(-8 * Math.PI / 180);
+  ctx.font = `900 ${maaFS}px Lalezar`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.fillStyle = '#0e7490'; ctx.fillText(maaText, 3, 3);
+  ctx.strokeStyle = '#164e63'; ctx.lineWidth = maaFS * 0.06; ctx.strokeText(maaText, 0, 0);
+  ctx.fillStyle = '#22D3EE'; ctx.fillText(maaText, 0, 0);
+  ctx.restore();
+  y += lineH2 + lineH3 * 0.1;
 
-  if (sub && sub.trim()) {
-    y += subH*0.35;
-    ctx.font=`900 ${subFS}px Tajawal`;
+  // الاسم
+  drawStyledText(name, W / 2, y, mainFS, '#F87171', [
+    [3, 3, '#991b1b'], [6, 6, '#7f1d1d'], [9, 9, '#450a0a']
+  ]);
+
+  // الـ badge (يمين أسفل)
+  if (sub) {
+    ctx.font = `900 ${subFS * 1.6}px Tajawal`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const tw = ctx.measureText(sub).width;
-    const pw = tw + subFS*1.8, ph = subFS*1.5;
-    const bx = W/2-pw/2, by = y-ph/2;
-    // ظل الـ badge
-    ctx.fillStyle='#78350f';
-    _roundRect(ctx, bx+4, by+6, pw, ph, ph/2); ctx.fill();
-    // badge
-    ctx.fillStyle='#FCD34D';
-    _roundRect(ctx, bx, by, pw, ph, ph/2); ctx.fill();
-    ctx.strokeStyle='#92400e'; ctx.lineWidth=3;
-    _roundRect(ctx, bx, by, pw, ph, ph/2); ctx.stroke();
-    ctx.fillStyle='#1a0035'; ctx.textBaseline='middle';
-    ctx.fillText(sub, W/2, y);
+    const pw = tw + subFS * 2.4;
+    const ph = subFS * 2.2;
+    // موضع: يمين أسفل الاسم
+    const bx = W / 2 + mainFS * 0.4;
+    const by = y + mainFS * 0.48;
+
+    ctx.fillStyle = '#78350f';
+    _roundRect(ctx, bx + 3, by + 4, pw, ph, ph / 2); ctx.fill();
+    ctx.fillStyle = '#FCD34D';
+    _roundRect(ctx, bx, by, pw, ph, ph / 2); ctx.fill();
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2.5;
+    _roundRect(ctx, bx, by, pw, ph, ph / 2); ctx.stroke();
+    ctx.fillStyle = '#1a0035';
+    ctx.fillText(sub, bx + pw / 2, by + ph / 2);
   }
 
-  canvas.toBlob(blob=>{
-    const a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download=`haroof-${orientation}.png`;
+  canvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `haroof-${orientation}.png`;
     a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
-  },'image/png');
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  }, 'image/png');
 }
 
 function _roundRect(ctx, x, y, w, h, r) {
@@ -1914,7 +1936,7 @@ function _roundRect(ctx, x, y, w, h, r) {
 
   <div class="disp-logo-group">
     <span class="dlg-haroof dlg-go-r">حروف</span>
-    <span class="dlg-maa dlg-go-f1">مـع</span>
+    <span class="dlg-maa dlg-go-f1">مـــع</span>
     <div class="dlg-name-wrap">
       <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
       <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
