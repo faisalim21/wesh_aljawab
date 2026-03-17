@@ -660,9 +660,8 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'package':
-            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters', is_active=True).order_by('package_number')
+            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters').order_by('package_number')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
-
 
     change_form_template = "admin/letters_question_change.html"
     add_form_template = "admin/letters_question_change.html"
