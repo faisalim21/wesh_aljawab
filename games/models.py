@@ -274,7 +274,36 @@ class LettersGameQuestion(models.Model):
     )
     question = models.TextField(verbose_name="السؤال")
     answer = models.CharField(max_length=100, verbose_name="الإجابة")
-    category = models.CharField(max_length=50, verbose_name="التصنيف")
+    category = models.CharField(
+        max_length=50,
+        verbose_name="المجال",
+        blank=True,
+        default='',
+        choices=[
+            ('general', 'الثقافة العامة'),
+            ('religious', 'ديني'),
+            ('science', 'العلوم'),
+            ('geography', 'الجغرافيا'),
+            ('arabic', 'اللغة العربية'),
+            ('history', 'التاريخ'),
+            ('who_said', 'من القائل ⚠️'),
+            ('who_am_i', 'من أنا؟'),
+            ('sports', 'الرياضة'),
+            ('politics', 'السياسة'),
+        ]
+    )
+    difficulty = models.CharField(
+        max_length=15,
+        choices=[
+            ('easy', 'سهل'),
+            ('medium', 'متوسط'),
+            ('hard', 'صعب'),
+            ('unspecified', 'غير محدد'),
+        ],
+        default='unspecified',
+        blank=True,
+        verbose_name="مستوى الصعوبة"
+    )
 
     class Meta:
         verbose_name = "سؤال خلية حروف"
@@ -300,8 +329,7 @@ class LettersGameQuestion(models.Model):
             raise ValidationError("الحرف مطلوب.")
         if len(self.letter.strip()) > 3:
             raise ValidationError("الحرف يجب ألا يتجاوز 3 خانات.")
-        if self.package and self.package.game_type != 'letters':
-            raise ValidationError("هذه الحزمة ليست من نوع خلية الحروف.")
+
 
 
 # =========================
@@ -917,3 +945,92 @@ class ArabicOnlyRequest(models.Model):
 
     def __str__(self):
         return f"{self.user} — {self.requested_at:%Y-%m-%d}"
+
+
+# =========================
+#  إعدادات جلسة اللعبة
+# =========================
+
+class GameSettings(models.Model):
+    """إعدادات جلسة خلية الحروف — مرتبطة بالجلسة"""
+
+    session = models.OneToOneField(
+        GameSession,
+        on_delete=models.CASCADE,
+        related_name='settings',
+        verbose_name="الجلسة"
+    )
+    nohost_mode = models.BooleanField(default=False)
+    nohost_mode = models.BooleanField(default=False)
+    nohost_allow_cell_color = models.BooleanField(default=True, verbose_name="السماح بتغيير لون الخلية")
+    nohost_hide_answer = models.BooleanField(default=True, verbose_name="إخفاء الإجابة كاملاً")
+
+    show_name = models.CharField(max_length=50, blank=True, default='')
+    show_subtitle = models.CharField(max_length=50, blank=True, default='')
+
+    # ===== أسماء وألوان الفريقين =====
+    team1_name = models.CharField(max_length=50, default="الفريق الأخضر", verbose_name="اسم الفريق الأول")
+    team2_name = models.CharField(max_length=50, default="الفريق البرتقالي", verbose_name="اسم الفريق الثاني")
+    team1_color = models.CharField(max_length=20, default="#22c55e", verbose_name="لون الفريق الأول")
+    team2_color = models.CharField(max_length=20, default="#f97316", verbose_name="لون الفريق الثاني")
+
+    # ===== حجم الشبكة =====
+    GRID_SIZES = [
+        ('3x3', '3×3 (9 خلايا)'),
+        ('4x4', '4×4 (16 خلية)'),
+        ('5x5', '5×5 (25 خلية) — افتراضي'),
+        ('6x6', '6×6 (36 خلية)'),
+        ('7x7', '7×7 (49 خلية)'),
+    ]
+    grid_size = models.CharField(
+        max_length=5,
+        choices=GRID_SIZES,
+        default='5x5',
+        verbose_name="حجم الشبكة"
+    )
+
+    # ===== مؤقت الزر (بالثواني) =====
+    buzz_timer_seconds = models.PositiveIntegerField(
+        default=3,
+        verbose_name="مدة قفل الزر (ثواني)",
+        help_text="المدة الافتراضية الموصى بها: 3 ثوانٍ"
+    )
+
+    # ===== مؤقت العقوبة بعد الإجابة الخاطئة =====
+    penalty_timer_enabled = models.BooleanField(
+        default=False,
+        verbose_name="تفعيل مؤقت العقوبة"
+    )
+    penalty_timer_seconds = models.PositiveIntegerField(
+        default=10,
+        verbose_name="مدة مؤقت العقوبة (ثواني)",
+        help_text="المدة الافتراضية الموصى بها: 10 ثوانٍ"
+    )
+
+    # ===== إظهار الخلية في صفحة المتسابقين =====
+    show_grid_to_contestants = models.BooleanField(
+        default=False,
+        verbose_name="إظهار الخلية للمتسابقين"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "إعدادات الجلسة"
+        verbose_name_plural = "إعدادات الجلسات"
+
+    def __str__(self):
+        return f"إعدادات جلسة {self.session_id}"
+
+    @classmethod
+    def get_or_create_for_session(cls, session):
+        """جلب أو إنشاء الإعدادات مع الأخذ من أسماء الجلسة الأصلية"""
+        obj, _ = cls.objects.get_or_create(
+            session=session,
+            defaults={
+                'team1_name': session.team1_name,
+                'team2_name': session.team2_name,
+            }
+        )
+        return obj

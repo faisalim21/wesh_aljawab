@@ -16,7 +16,7 @@
 
   {# ——— Canonical ——— #}
   <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   {# ——— Open Graph (فيسبوك/واتساب/تيليجرام... إلخ) ——— #}
   <meta property="og:locale" content="ar_SA">
   <meta property="og:type" content="website">
@@ -104,11 +104,35 @@
 
     .main{
       min-height:100dvh;
-      display:flex; align-items:center; justify-content:center;
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      justify-content:center;
       padding: clamp(12px, 3vw, 28px);
+      padding-top: 80px;
+      gap: 16px;
       position:relative;
     }
 
+    @media (min-width: 769px) {
+      .main {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 100px;
+        gap: 24px;
+      }
+      .card-ct {
+        flex-shrink: 0;
+      }
+      #contestantGridWrap {
+        margin-top: 0 !important;
+        max-width: 420px;
+        align-self: flex-start;
+        position: sticky;
+        top: 80px;
+      }
+    }
     /* شِعار */
     .logo{
       position: fixed;
@@ -184,18 +208,35 @@
       display: flex; align-items: center; justify-content: center;
       padding: 10px;
     }
-    .topt input:checked + .tbtn.team1{
-      border-color:#22c55e; color:#22c55e;
-      background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(34,197,94,.08));
-      box-shadow: 0 10px 25px rgba(34,197,94,.25);
-       box-sizing: border-box;
+    .tbtn {
+      border: 2px solid rgba(255,255,255,0.2);
+      border-radius: 14px;
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.08);
+      transition: all 0.2s;
+      white-space: nowrap;
+      font-size: clamp(0.85rem, 2.8vw, 1rem);
+      line-height: 1.3;
+      min-height: 56px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px;
+      cursor: pointer;
     }
-    .topt input:checked + .tbtn.team2{
-      border-color:#f97316; color:#f97316;
-      background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
-      box-shadow: 0 10px 25px rgba(249,115,22,.25);
-       box-sizing: border-box;
+    .topt input:checked + .tbtn.team1 {
+      border-color: var(--team1-color, #22c55e);
+      color: var(--team1-color, #22c55e);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--team1-color, #22c55e) 25%, transparent), color-mix(in srgb, var(--team1-color, #22c55e) 8%, transparent));
+      box-shadow: 0 10px 25px color-mix(in srgb, var(--team1-color, #22c55e) 25%, transparent);
+      box-sizing: border-box;
     }
+    .topt input:checked + .tbtn.team2 {
+      border-color: var(--team2-color, #f97316);
+      color: var(--team2-color, #f97316);
+      background: linear-gradient(135deg, color-mix(in srgb, var(--team2-color, #f97316) 25%, transparent), color-mix(in srgb, var(--team2-color, #f97316) 8%, transparent));
+      box-shadow: 0 10px 25px color-mix(in srgb, var(--team2-color, #f97316) 25%, transparent);
+      box-sizing: border-box;
+    }
+    @media (max-width: 380px){ .tbtn{ font-size: .95rem; min-height: 56px; } }
     @media (max-width: 380px){
       .tbtn{ font-size: .95rem; min-height: 56px; }
     }
@@ -285,10 +326,223 @@
       .card-ct{ padding: 20px 16px; border-radius: 20px; }
       .logo{ right: 10px; top: 10px; }
     }
+
+
+    /* ===== هيدر الشعار ===== */
+    /* ===== هيدر شعار الجلسة ===== */
+    .session-logo-header {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #2e1065 0%, #3b0764 50%, #1a0050 100%);
+      padding: 14px 16px 12px;
+      text-align: center;
+      font-family: 'Lalezar', sans-serif;
+      position: sticky; top: 0; z-index: 5;
+      border-bottom: 1.5px solid rgba(139,92,246,0.35);
+      box-shadow: 0 4px 20px rgba(59,7,100,0.4);
+    }
+
+    /* خلفية سداسيات خفيفة */
+    .session-logo-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='46'%3E%3Cpolygon points='20,2 38,12 38,34 20,44 2,34 2,12' fill='none' stroke='rgba(139,92,246,0.12)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 28px 32px;
+      pointer-events: none;
+    }
+
+    .slh-inner {
+      position: relative; z-index: 2;
+      display: inline-flex; align-items: center;
+      justify-content: center; gap: 4px;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+      line-height: 0.9;
+    }
+
+    .slh-haroof {
+      color: #FCD34D;
+      font-size: clamp(22px, 6vw, 38px);
+      -webkit-text-stroke: 1.5px #1a0035;
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 #92400e, 3px 3px 0 #78350f;
+      letter-spacing: 2px;
+    }
+    .slh-maa {
+      color: #22D3EE;
+      font-size: clamp(12px, 3vw, 20px);
+      -webkit-text-stroke: 1px #164e63;
+      paint-order: stroke fill;
+      display: inline-block;
+      transform: rotate(-6deg);
+      margin: 0 2px;
+    }
+    .slh-name {
+      color: #F87171;
+      font-size: clamp(22px, 6vw, 38px);
+      -webkit-text-stroke: 1.5px #1a0035;
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 #991b1b, 3px 3px 0 #7f1d1d;
+      letter-spacing: 2px;
+    }
+
+    /* badge التاريخ */
+    .slh-sub-wrap {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center;
+      margin-top: 4px;
+    }
+    .slh-sub {
+      display: none;
+      background: #FCD34D;
+      color: #1a0035;
+      border: 1.5px solid #92400e;
+      border-radius: 999px;
+      padding: 1px 10px;
+      font-size: clamp(9px, 2vw, 12px);
+      font-weight: 900;
+      font-family: 'Tajawal', sans-serif;
+      box-shadow: 0 2px 0 #78350f;
+      white-space: nowrap;
+    }
+    .slh-sub.visible { display: inline-block; }
+
+    /* أنيميشن دخول بسيط */
+    @keyframes slh-fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .session-logo-header.show {
+      animation: slh-fadeIn 0.4s ease forwards;
+    }
+    .slh-inner {
+      display: inline-flex; align-items: center; gap: 6px;
+      justify-content: center;
+    }
+    .slh-haroof { color: #FCD34D; font-size: clamp(18px, 5vw, 26px); }
+    .slh-maa    { color: #22D3EE; font-size: clamp(11px, 3vw, 15px); }
+    .slh-name   { color: #F87171; font-size: clamp(18px, 5vw, 26px); }
+    .slh-sub    { color: rgba(255,255,255,0.5); font-size: 0.7rem;
+                  font-family: 'Tajawal',sans-serif; display: block;
+                  margin-top: 2px; }
+
+
+    /* ===== مؤقت العقوبة - المتسابق ===== */
+    .penalty-contestant-bar {
+      display: none;
+      background: linear-gradient(135deg, rgba(124,58,237,0.9), rgba(76,29,149,0.9));
+      border-radius: 14px; padding: 12px 18px;
+      text-align: center; width: 100%; max-width: 560px;
+    }
+    .penalty-contestant-bar.show { display: block; }
+    .penalty-contestant-num {
+      font-size: 2.5rem; font-weight: 900; color: #FCD34D;
+      font-family: monospace; display: block;
+      animation: penConPulse 1s infinite;
+    }
+    @keyframes penConPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .penalty-contestant-label {
+      font-size: 0.85rem; color: rgba(255,255,255,0.7);
+      font-family: 'Tajawal',sans-serif; font-weight: 700;
+    }
+    .penalty-contestant-team {
+      font-size: 0.9rem; font-weight: 800; color: #fff; display: block; margin-bottom: 2px;
+    }
+
+    /* ===== وضع بدون مقدم ===== */
+    .nohost-panel {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      display: none; flex-direction: column;
+      background: rgba(10,5,30,0.96); backdrop-filter: blur(12px);
+      border-top: 2px solid rgba(139,92,246,0.4);
+      max-height: 55vh; overflow-y: auto;
+    }
+    .nohost-panel.open { display: flex; }
+
+    .nohost-question-wrap {
+      padding: 16px 20px 8px;
+      font-family: 'Tajawal',sans-serif;
+    }
+    .nohost-letter-badge {
+      display: inline-block; background: linear-gradient(135deg,#7c3aed,#4c1d95);
+      color: #fff; font-size: 1.6rem; font-weight: 900;
+      padding: 4px 18px; border-radius: 999px; margin-bottom: 10px;
+    }
+    .nohost-question-text {
+      font-size: clamp(1rem,2.5vw,1.6rem); font-weight: 800; color: #fff;
+      line-height: 1.6; margin-bottom: 10px;
+    }
+    .nohost-question-text.progressive span {
+      opacity: 0; transition: opacity 0.15s;
+    }
+    .nohost-question-text.progressive span.visible { opacity: 1; }
+
+    .nohost-answer-wrap {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .nohost-answer-text {
+      font-size: clamp(1rem,2.2vw,1.4rem); font-weight: 900; color: #22c55e;
+      filter: blur(8px); transition: filter 0.3s;
+    }
+    .nohost-answer-text.revealed { filter: none; }
+    .nohost-reveal-btn {
+      padding: 6px 16px; border-radius: 8px; border: none;
+      background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.88rem;
+      cursor: pointer;
+    }
+
+    .nohost-controls {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 10px 20px 14px; border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .nohost-score-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.82rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .nohost-score-btn.t1 { border-color: var(--team1-color,#22c55e); color: var(--team1-color,#22c55e); background: transparent; }
+    .nohost-score-btn.t1:hover { background: var(--team1-color,#22c55e); color: #fff; }
+    .nohost-score-btn.t2 { border-color: var(--team2-color,#f97316); color: var(--team2-color,#f97316); background: transparent; }
+    .nohost-score-btn.t2:hover { background: var(--team2-color,#f97316); color: #fff; }
+    .nohost-penalty-btn {
+      padding: 6px 14px; border-radius: 8px; border: 1.5px solid rgba(139,92,246,0.5);
+      background: rgba(124,58,237,0.2); color: #c4b5fd;
+      font-family: 'Tajawal',sans-serif; font-weight: 800; font-size: 0.82rem;
+      cursor: pointer;
+    }
+    .nohost-close-btn {
+      margin-right: auto; padding: 6px 14px; border-radius: 8px;
+      border: 1.5px solid rgba(255,255,255,0.2); background: transparent;
+      color: rgba(255,255,255,0.5); font-family: 'Tajawal',sans-serif;
+      font-weight: 700; font-size: 0.82rem; cursor: pointer;
+    }
+
+    /* زر تفعيل وضع بدون مقدم */
+    .nohost-toggle-btn {
+      position: fixed; bottom: 20px; left: 20px; z-index: 200;
+      background: rgba(124,58,237,0.5); border: 1.5px solid rgba(139,92,246,0.5);
+      border-radius: 12px; padding: 8px 14px;
+      color: #e9d5ff; font-family: 'Tajawal',sans-serif;
+      font-weight: 700; font-size: 0.78rem; cursor: pointer;
+      transition: all 0.2s; display: none;
+    }
+    .nohost-toggle-btn.active {
+      background: rgba(124,58,237,0.9); border-color: #8b5cf6; color: #fff;
+    }
   </style>
 </head>
 <body>
-
+  <!-- هيدر شعار الجلسة -->
+  <div id="sessionLogoHeader" class="session-logo-header">
+    <div class="slh-inner">
+      <span class="slh-haroof">حروف</span>
+      <span class="slh-maa">مــــع</span>
+      <span class="slh-name" id="slhName">—</span>
+    </div>
+    <div class="slh-sub-wrap">
+      <span class="slh-sub" id="slhSub"></span>
+    </div>
+  </div>
   <!-- لمبة الاتصال -->
   <div id="conn" class="conn disconnected">🔴 منقطع</div>
 
@@ -315,11 +569,17 @@
         <div class="team-grid">
           <label class="topt">
             <input id="t1" type="radio" name="team" value="team1" />
-            <div class="tbtn team1">🟢 {{ session.team1_name }}</div>
+            <div class="tbtn team1">
+              <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--team1-color,#22c55e);margin-left:6px;flex-shrink:0;"></span>
+              {{ session.team1_name }}
+            </div>
           </label>
           <label class="topt">
             <input id="t2" type="radio" name="team" value="team2" />
-            <div class="tbtn team2">🟠 {{ session.team2_name }}</div>
+            <div class="tbtn team2">
+              <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--team2-color,#f97316);margin-left:6px;flex-shrink:0;"></span>
+              {{ session.team2_name }}
+            </div>
           </label>
         </div>
       </div>
@@ -331,10 +591,48 @@
       </div>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
+
+
     </section>
+
+    <!-- مؤقت العقوبة -->
+    <div id="penaltyContestantBar" class="penalty-contestant-bar">
+      <span class="penalty-contestant-team" id="penConTeam"></span>
+      <span class="penalty-contestant-num" id="penConNum">10</span>
+      <span class="penalty-contestant-label">⏱ ثانية عقوبة</span>
+    </div>
+
+    <!-- خلية الحروف للمتسابق (تظهر فقط لو الإعداد مفعّل) -->
+    <div id="contestantGridWrap" style="display:none; width:100%; max-width:560px;">
+      <div style="background:rgba(255,255,255,0.08); border-radius:18px; padding:10px; text-align:center;">
+        <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-bottom:6px; font-family:'Tajawal',sans-serif;">
+          🔲 خلية الحروف
+        </div>
+        <svg id="contestantHoneycombSvg" style="width:100%;max-width:380px;height:auto;display:block;margin:0 auto;" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+
+            <div id="contestantScoresWrap" style="display:none; margin-top:12px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div id="contestantTeam1ScoreCard" class="nhrp-score-card t1"
+                    style="background:rgba(255,255,255,0.08);border-radius:14px;padding:12px;border:2px solid var(--team1-color,#22c55e);text-align:center;box-shadow:0 0 0 1px var(--team1-color,#22c55e) inset;">
+                  <div id="contestantTeam1Name" class="nhrp-score-name">{{ session.team1_name }}</div>
+                  <div id="contestantTeam1Score" class="nhrp-score-val" style="color:var(--team1-color,#4ade80);">0</div>
+                </div>
+                <div id="contestantTeam2ScoreCard" class="nhrp-score-card t2"
+                    style="background:rgba(255,255,255,0.08);border-radius:14px;padding:12px;border:2px solid var(--team2-color,#f97316);text-align:center;box-shadow:0 0 0 1px var(--team2-color,#f97316) inset;">
+                  <div id="contestantTeam2Name" class="nhrp-score-name">{{ session.team2_name }}</div>
+                  <div id="contestantTeam2Score" class="nhrp-score-val" style="color:var(--team2-color,#fb923c);">0</div>
+                </div>
+              </div>
+            </div>
   </main>
 
   <script>
+
+    // أضف هذين المتغيرين في أعلى السكريبت
+    let contestantT1Color = '#22c55e';
+    let contestantT2Color = '#f97316';
     // ======== ثوابت عامة ========
     const sessionId = '{{ session.id }}';
     const LS_NAME_KEY = `wjg_name_${sessionId}`;
@@ -355,6 +653,20 @@
       status: document.getElementById('status'),
       buzzText: document.getElementById('buzzText'),
     };
+
+    function showSessionLogo(name, subtitle) {
+      const header = document.getElementById('sessionLogoHeader');
+      const nameEl = document.getElementById('slhName');
+      const subEl  = document.getElementById('slhSub');
+      if (!header || !nameEl) return;
+      nameEl.textContent = name || '—';
+      if (subEl) {
+        subEl.textContent = subtitle || '';
+        subEl.classList.toggle('visible', !!(subtitle && subtitle.trim()));
+      }
+      header.style.display = 'block';
+      header.classList.add('show');
+    }
 
     // ======== أدوات واجهة ========
     function setConn(connected){
@@ -401,6 +713,41 @@
       if (t) localStorage.setItem(LS_TEAM_KEY, t);
     }
 
+
+    function applyContestantTeamColors(team1Color, team2Color) {
+      if (team1Color) {
+        contestantT1Color = team1Color;
+        document.documentElement.style.setProperty('--team1-color', team1Color);
+      }
+
+      if (team2Color) {
+        contestantT2Color = team2Color;
+        document.documentElement.style.setProperty('--team2-color', team2Color);
+      }
+
+      // كروت النقاط أسفل الخلية
+      const c1 = document.getElementById('contestantTeam1ScoreCard');
+      const c2 = document.getElementById('contestantTeam2ScoreCard');
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+
+      if (c1 && team1Color) {
+        c1.style.borderColor = team1Color;
+        c1.style.boxShadow = `0 0 0 1px ${team1Color} inset`;
+        c1.style.background = `linear-gradient(135deg, color-mix(in srgb, ${team1Color} 22%, transparent), rgba(255,255,255,0.06))`;
+      }
+
+      if (c2 && team2Color) {
+        c2.style.borderColor = team2Color;
+        c2.style.boxShadow = `0 0 0 1px ${team2Color} inset`;
+        c2.style.background = `linear-gradient(135deg, color-mix(in srgb, ${team2Color} 22%, transparent), rgba(255,255,255,0.06))`;
+      }
+
+      if (s1 && team1Color) s1.style.color = team1Color;
+      if (s2 && team2Color) s2.style.color = team2Color;
+    }
+
+
     // ======== WebSocket ========
     function connectWS(){
       const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -425,25 +772,75 @@
         try{ d = JSON.parse(ev.data || '{}'); }catch{ return; }
 
         if (d.type === 'buzz_confirmed'){
-          // ✅ نجاح ضغطتك
           showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
           tone(840, 220, .4);
           haptic(30);
-          // نترك الزر يرجع طبيعي بعد شوي
           setTimeout(()=> enableBuzz(), 900);
+
         } else if (d.type === 'buzz_rejected'){
-          // ❌ محجوز
           showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
           tone(360, 180, .25);
           haptic(40);
-          // نعيد تمكين الزر في الحال تقريباً
           setTimeout(()=> enableBuzz(), 400);
+
         } else if (d.type === 'error'){
           showMsg('err', d.message || 'حدث خطأ.', 3200);
           setTimeout(()=> enableBuzz(), 600);
+
+        } else if (d.type === 'settings_updated'){
+          const s = d.settings;
+          if (!s) return;
+
+         applyContestantTeamColors(s.team1_color, s.team2_color);
+          if (s.show_name) {
+            showSessionLogo(s.show_name, s.show_subtitle);
+          }
+          if (s.show_grid_to_contestants === false) {
+            document.getElementById('contestantGridWrap').style.display = 'none';
+            document.getElementById('contestantScoresWrap').style.display = 'none';
+            if (s.buzz_timer_seconds) buzzTimerSeconds = s.buzz_timer_seconds;
+          }
+          if (s.show_grid_to_contestants === true) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+          }
+          renderContestantScores(
+            s.team1_name || '{{ session.team1_name|escapejs }}',
+            s.team2_name || '{{ session.team2_name|escapejs }}',
+            document.getElementById('contestantTeam1Score')?.textContent || 0,
+            document.getElementById('contestantTeam2Score')?.textContent || 0,
+            s.team1_color || contestantT1Color,
+            s.team2_color || contestantT2Color
+          );
+
+        } else if (d.type === 'grid_state'){
+          if (d.team1_color) { contestantT1Color = d.team1_color; document.documentElement.style.setProperty('--team1-color', d.team1_color); }
+          if (d.team2_color) { contestantT2Color = d.team2_color; document.documentElement.style.setProperty('--team2-color', d.team2_color); }
+          if (d.show_grid) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+            buildContestantGrid(d.grid_size, d.letters, d.cell_states, d.team1_color, d.team2_color);
+            renderContestantScores(
+              d.team1_name,
+              d.team2_name,
+              d.team1_score,
+              d.team2_score,
+              d.team1_color,
+              d.team2_color
+            );
+          }
+
+        } else if (d.type === 'cell_state_updated'){
+          updateContestantCell(d.letter, d.state, d.cell_index);
+
+        } else if (d.type === 'scores_updated'){
+          updateContestantScores(d.team1_score, d.team2_score);
+
+        } else if (d.type === 'penalty_start'){
+          showPenaltyContestant(d.team_name, d.seconds);
+
+        } else if (d.type === 'penalty_end'){
+          hidePenaltyContestant();
         }
       };
-
       socket.onclose = (e)=>{
         setConn(false);
         clearInterval(heartbeat);
@@ -466,6 +863,7 @@
 
     // ======== إرسال الطنطيط ========
     let busy = false;
+    let buzzTimerSeconds = 3;
     function disableBuzz(permanent=false){
       busy = true;
       el.buzz.disabled = true;
@@ -504,7 +902,7 @@
           timestamp: new Date().toISOString()
         }));
         // لو ما وصل رد خلال ثانية، فكّ الزر (السيرفر عادة يرد فورًا)
-        setTimeout(()=>{ if (busy) enableBuzz(); }, 1200);
+        setTimeout(()=>{ if (busy) enableBuzz(); }, (buzzTimerSeconds * 1000) + 200);
         showMsg('info','⏳ تم الإرسال...', 1200);
       }catch{
         showMsg('err','تعذّر الإرسال، حاول مجددًا', 2500);
@@ -517,6 +915,45 @@
       loadPrefs();
       connectWS();
 
+      // تحميل شعار الجلسة
+            // تحميل إعدادات الجلسة مباشرة عند فتح الصفحة
+      fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+        .then(r => r.json())
+        .then(data => {
+          const s = data.settings;
+          if (!s) return;
+
+          // تحميل ألوان الفريقين فورًا
+          applyContestantTeamColors(s.team1_color, s.team2_color);
+
+          // تحديث كروت النقاط لو كانت موجودة
+          renderContestantScores(
+            s.team1_name || '{{ session.team1_name|escapejs }}',
+            s.team2_name || '{{ session.team2_name|escapejs }}',
+            document.getElementById('contestantTeam1Score')?.textContent || 0,
+            document.getElementById('contestantTeam2Score')?.textContent || 0,
+            s.team1_color || contestantT1Color,
+            s.team2_color || contestantT2Color
+          );
+
+          // إظهار/إخفاء الخلية حسب الإعداد
+          if (s.show_grid_to_contestants === false) {
+            document.getElementById('contestantGridWrap').style.display = 'none';
+            document.getElementById('contestantScoresWrap').style.display = 'none';
+          } else if (s.show_grid_to_contestants === true) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+          }
+
+          // الشعار والمؤقت
+          if (s.show_name) {
+            showSessionLogo(s.show_name, s.show_subtitle);
+          }
+          if (s.buzz_timer_seconds) {
+            buzzTimerSeconds = s.buzz_timer_seconds;
+          }
+        })
+        .catch(() => {});
+
       // أحداث
       el.buzz.addEventListener('click', sendBuzz);
       el.name.addEventListener('keypress', (e)=>{ if (e.key === 'Enter') sendBuzz(); });
@@ -526,7 +963,181 @@
       // حالة أونلاين/أوفلاين
       window.addEventListener('online',  ()=> setConn(socket && socket.readyState===1));
       window.addEventListener('offline', ()=> setConn(false));
+
+
     });
+
+    // ===== خلية الحروف للمتسابق =====
+    const CGRID_R = { '3x3':38, '4x4':28, '5x5':22, '6x6':18, '7x7':15 };
+    const ARABIC_28_C = ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي'];
+
+    function buildContestantHexBg(svg, viewW, viewH, color1, color2) {
+      svg.querySelectorAll('.chex-bg').forEach(el => el.remove());
+      const NS = 'http://www.w3.org/2000/svg';
+      const cx = viewW / 2, cy = viewH / 2;
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'chex-bg');
+      const tri = (pts, fill) => {
+        const p = document.createElementNS(NS, 'polygon');
+        p.setAttribute('points', pts); p.setAttribute('fill', fill); g.appendChild(p);
+      };
+      tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
+      tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
+      tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
+      tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
+      svg.insertBefore(g, svg.firstChild);
+    }
+
+    function buildContestantGrid(gridSize, letters, cellStates, t1Color, t2Color) {
+      // احفظ الألوان عند البناء
+      if (t1Color) contestantT1Color = t1Color;
+      if (t2Color) contestantT2Color = t2Color;
+
+      const svg = document.getElementById('contestantHoneycombSvg');
+      if (!svg) return;
+      const NS = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+
+      const sizeMap = {'3x3':3,'4x4':4,'5x5':5,'6x6':6,'7x7':7};
+      const cols = sizeMap[gridSize] || 5;
+      const rows = cols;
+      const R = CGRID_R[gridSize] || 22;
+      const hexW = R * Math.sqrt(3), hexH = R * 2;
+      const colStep = hexW, rowStep = hexH * 0.75;
+      const pad = R * 1.2;
+      const totalW = colStep * (cols + 0.5) + pad * 2;
+      const totalH = rowStep * (rows - 1) + hexH + pad * 2;
+      const viewW = Math.ceil(Math.max(totalW, 200));
+      const viewH = Math.ceil(Math.max(totalH, 160));
+
+      svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+
+      // خلفية الفريقين — بعد حفظ الألوان مباشرة
+      buildContestantHexBg(svg, viewW, viewH, contestantT1Color, contestantT2Color);
+
+      const startX = (viewW - colStep * (cols - 0.5)) / 2;
+      const startY = (viewH - (rowStep * (rows - 1) + hexH)) / 2 + hexH / 2;
+      const fontSize = Math.round(R * 0.6);
+
+      // حساب عدد الخلايا المطلوب وتكرار الحروف إذا نقصت
+      const sizeMap2 = {'3x3':9,'4x4':16,'5x5':25,'6x6':36,'7x7':49};
+      const needed = sizeMap2[gridSize] || 25;
+      let src = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
+      while (src.length < needed) src = [...src, ...ARABIC_28_C];
+      src = src.slice(0, needed);
+
+      let idx = 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
+          const cy = startY + row * rowStep;
+          const letter = src[idx] || '';
+          const state = cellStates
+            ? (cellStates[String(idx)] || cellStates[letter] || 'normal')
+            : 'normal';
+
+          const pts = [];
+          for (let i = 0; i < 6; i++) {
+            const a = Math.PI / 6 + Math.PI / 3 * i;
+            pts.push(`${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`);
+          }
+
+          const g = document.createElementNS(NS, 'g');
+
+          const poly = document.createElementNS(NS, 'polygon');
+          poly.setAttribute('points', pts.join(' '));
+          poly.setAttribute('fill',
+            state === 'team1' ? contestantT1Color :
+            state === 'team2' ? contestantT2Color : 'white'
+          );
+          poly.setAttribute('stroke', '#6b21a8');
+          poly.setAttribute('stroke-width', '1.5');
+          g.appendChild(poly);
+
+          const txt = document.createElementNS(NS, 'text');
+          txt.setAttribute('x', cx.toFixed(1));
+          txt.setAttribute('y', cy.toFixed(1));
+          txt.setAttribute('text-anchor', 'middle');
+          txt.setAttribute('dominant-baseline', 'central');
+          txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
+          txt.setAttribute('font-size', fontSize);
+          txt.setAttribute('font-family', 'Tajawal,sans-serif');
+          txt.setAttribute('font-weight', '900');
+          txt.setAttribute('pointer-events', 'none');
+          txt.textContent = letter;
+          g.appendChild(txt);
+
+          svg.appendChild(g);
+          idx++;
+        }
+      }
+    }
+    function updateContestantCell(letter, state, cellIndex) {
+      const svg = document.getElementById('contestantHoneycombSvg');
+      if (!svg) return;
+      if (cellIndex === undefined || cellIndex === null) return;
+      const g = svg.querySelectorAll('g')[cellIndex];
+      if (!g) return;
+      const poly = g.querySelector('polygon');
+      const txt  = g.querySelector('text');
+      if (poly) poly.setAttribute('fill',
+        state === 'team1' ? contestantT1Color :
+        state === 'team2' ? contestantT2Color : 'white');
+      if (txt)  txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
+    }
+
+    function renderContestantScores(team1Name, team2Name, team1Score, team2Score, team1Color, team2Color) {
+      const wrap = document.getElementById('contestantScoresWrap');
+      const c1 = document.getElementById('contestantTeam1ScoreCard');
+      const c2 = document.getElementById('contestantTeam2ScoreCard');
+      const n1 = document.getElementById('contestantTeam1Name');
+      const n2 = document.getElementById('contestantTeam2Name');
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+
+      if (!wrap || !c1 || !c2 || !n1 || !n2 || !s1 || !s2) return;
+
+      if (team1Name !== undefined) n1.textContent = team1Name || 'الفريق الأول';
+      if (team2Name !== undefined) n2.textContent = team2Name || 'الفريق الثاني';
+      if (team1Score !== undefined) s1.textContent = team1Score;
+      if (team2Score !== undefined) s2.textContent = team2Score;
+
+      applyContestantTeamColors(team1Color, team2Color);
+
+      wrap.style.display = 'block';
+    }
+
+    function updateContestantScores(team1Score, team2Score) {
+      const s1 = document.getElementById('contestantTeam1Score');
+      const s2 = document.getElementById('contestantTeam2Score');
+      if (s1 && team1Score !== undefined) s1.textContent = team1Score;
+      if (s2 && team2Score !== undefined) s2.textContent = team2Score;
+    }
+    // استقبال grid_state من الـ WebS
+    // ===== مؤقت العقوبة =====
+    let penConInterval = null;
+
+    function showPenaltyContestant(teamName, seconds) {
+      if (penConInterval) clearInterval(penConInterval);
+      const bar  = document.getElementById('penaltyContestantBar');
+      const team = document.getElementById('penConTeam');
+      const num  = document.getElementById('penConNum');
+      if (teamName) team.textContent = teamName;
+      else team.textContent = '';
+      let left = seconds || 10;
+      num.textContent = left;
+      bar.classList.add('show');
+      penConInterval = setInterval(() => {
+        left--;
+        num.textContent = left;
+        if (left <= 0) hidePenaltyContestant();
+      }, 1000);
+    }
+
+function hidePenaltyContestant() {
+  if (penConInterval) { clearInterval(penConInterval); penConInterval = null; }
+  document.getElementById('penaltyContestantBar')?.classList.remove('show');
+}
 
     window.buzzAnswer = sendBuzz; // إن احتجت تناديها من HTML
   </script>

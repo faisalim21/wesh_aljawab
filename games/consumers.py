@@ -61,17 +61,23 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             if self.role == 'contestant':
                 return
             await self.send(text_data=json.dumps({'type': 'buzz_reset_by_host'}))
-    async def broadcast_scores(self, event):
-        # alias للتوافق الخلفي
-        await self.broadcast_score_update(event)
         
     async def broadcast_cell_state(self, event):
         if self.role == 'contestant':
-            return
+            try:
+                from games.models import GameSettings
+                show = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                )()
+                if not show:
+                    return
+            except Exception:
+                return
         await self.send(text_data=json.dumps({
             'type': 'cell_state_updated',
             'letter': event.get('letter'),
-            'state': event.get('state')
+            'state': event.get('state'),
+            'cell_index': event.get('cell_index'),
         }))
 
     async def broadcast_cell_update(self, event):
@@ -79,8 +85,22 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         await self.broadcast_cell_state(event)
 
     async def broadcast_score_update(self, event):
+        """
+        بثّ النقاط:
+        - المقدم/شاشة العرض: دائمًا يستقبلون التحديث
+        - المتسابق: يستقبل التحديث فقط إذا كان خيار إظهار الخلية للمتسابقين مفعّل
+        """
         if self.role == 'contestant':
-            return
+            try:
+                from games.models import GameSettings
+                show = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                )()
+                if not show:
+                    return
+            except Exception:
+                return
+
         await self.send(text_data=json.dumps({
             'type': 'scores_updated',
             'team1_score': event.get('team1_score'),
@@ -120,6 +140,10 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        # لو متسابق وإعداد إظهار الخلية مفعّل، أرسل الحالة
+        if self.role == 'contestant':
+            await self._send_grid_to_contestant_if_enabled()
+
         logger.info(f"WS connected: session={self.session_id}, role={self.role}")
 
     async def disconnect(self, close_code):
@@ -131,7 +155,6 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
     # ============================== Receive ================================
     async def receive(self, text_data: str):
-        # إغلاق أنيق لو انتهت الصلاحية
         if await self._is_session_expired(self.session) or not self.session.is_active:
             try:
                 await self.send(text_data=json.dumps({'type': 'error', 'message': 'انتهت صلاحية الجلسة'}))
@@ -156,25 +179,56 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 await self.handle_contestant_buzz_instant(data)
                 return
 
-            # المقدم: أوامر التحكم
-            if self.role == "host":
-                if message_type == "update_cell_state":
-                    await self.handle_update_cell_state(data)
-                    return
-                if message_type == "update_scores":
-                    await self.handle_update_scores(data)
-                    return
-                if message_type == "buzz_reset":
-                    await self.handle_buzz_reset()
-                    return
-                if message_type == "letter_selected":
-                    # 👈 جديد: استقبل اختيار الحرف من المقدم ثم ابثّه للجميع (ما عدا المتسابقين)
+            # المقدم أو شاشة العرض: أوامر وضع بدون مقدم
+            if self.role in ("host", "display"):
+                if message_type == "nohost_letter_select":
                     letter = (data.get('letter') or '').strip()
                     if letter:
                         await self.channel_layer.group_send(self.group_name, {
                             "type": "broadcast_letter_selected",
                             "letter": letter
                         })
+                    return
+                if message_type == "nohost_question_broadcast":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_nohost_question",
+                        "letter": data.get("letter"),
+                        "question": data.get("question"),
+                    })
+                    return
+                if message_type == "update_scores":
+                    await self.handle_update_scores(data)
+                    return
+
+            # المقدم فقط: أوامر التحكم
+            if self.role in ("host", "display"):
+                if message_type == "update_cell_state":
+                    await self.handle_update_cell_state(data)
+                    return
+                if message_type == "buzz_reset":
+                    await self.handle_buzz_reset()
+                    return
+                if message_type == "letter_selected":
+                    letter = (data.get('letter') or '').strip()
+                    if letter:
+                        await self.channel_layer.group_send(self.group_name, {
+                            "type": "broadcast_letter_selected",
+                            "letter": letter
+                        })
+                    return
+                if message_type == "penalty_start":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_penalty_start",
+                        "team": data.get("team"),
+                        "team_name": data.get("team_name"),
+                        "seconds": data.get("seconds", 10),
+                    })
+                    return
+                if message_type == "penalty_end":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_penalty_end",
+                        "team": data.get("team"),
+                    })
                     return
 
         except Exception as e:
@@ -266,10 +320,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f"DB update error (cell_state) in session {self.session_id}: {e}")
 
+        cell_index = data.get('cell_index')
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_cell_state',
             'letter': letter,
-            'state': state
+            'state': state,
+            'cell_index': cell_index,
         })
 
     async def handle_update_scores(self, data):
@@ -333,7 +389,14 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
     async def _auto_unlock_after_3_seconds(self):
         try:
-            await asyncio.sleep(3)  # يمكن جعلها 4 لمطابقة HTTP
+            # اقرأ المدة من إعدادات الجلسة
+            def _get_timer():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                return s.buzz_timer_seconds or 3
+
+            timer = await sync_to_async(_get_timer)()
+            await asyncio.sleep(timer)
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             await sync_to_async(cache.delete)(buzz_lock_key)
             await self.channel_layer.group_send(self.group_name, {
@@ -367,6 +430,17 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception:
             return {}
 
+    async def broadcast_settings_update(self, event):
+        settings = event.get('settings', {})
+        await self.send(text_data=json.dumps({
+            'type': 'settings_updated',
+            'settings': settings
+        }))
+
+        # لو متسابق والإعداد فُعِّل الآن، أرسل الخلية فوراً
+        if self.role == 'contestant' and settings.get('show_grid_to_contestants'):
+            await self._send_grid_to_contestant_if_enabled()
+
     async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
         if confirmed:
             await self.send(text_data=json.dumps({
@@ -387,6 +461,75 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': error
             }))
+
+    async def _send_grid_to_contestant_if_enabled(self):
+        try:
+            def _get_data():
+                from games.models import GameSettings, LettersGameProgress
+                from games.utils_letters import get_session_order
+
+                settings = GameSettings.get_or_create_for_session(self.session)
+                if not settings.show_grid_to_contestants:
+                    return None
+
+                letters = get_session_order(self.session.id, self.session.package.is_free) or []
+                progress = LettersGameProgress.objects.filter(session=self.session).first()
+                cell_states = progress.cell_states if (progress and isinstance(progress.cell_states, dict)) else {}
+
+                return {
+                    'show_grid': True,
+                    'grid_size': settings.grid_size,
+                    'letters': letters,
+                    'cell_states': cell_states,
+                    'team1_color': settings.team1_color,
+                    'team2_color': settings.team2_color,
+                    'team1_name': settings.team1_name or self.session.team1_name,
+                    'team2_name': settings.team2_name or self.session.team2_name,
+                    'team1_score': self.session.team1_score,
+                    'team2_score': self.session.team2_score,
+                }
+
+            data = await sync_to_async(_get_data)()
+            if data:
+                await self.send(text_data=json.dumps({
+                    'type': 'grid_state',
+                    **data
+                }))
+        except Exception as e:
+            logger.error(f'Error sending grid to contestant: {e}')
+    
+
+    async def broadcast_penalty_start(self, event):
+        if self.role == 'host':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'penalty_start',
+            'team': event.get('team'),
+            'team_name': event.get('team_name'),
+            'seconds': event.get('seconds', 10),
+        }))
+
+    async def broadcast_penalty_end(self, event):
+        if self.role == 'host':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'penalty_end',
+            'team': event.get('team'),
+        }))
+
+    
+    async def broadcast_nohost_question(self, event):
+        """بث السؤال لشاشات العرض الأخرى — لا نرسل للمقدم ولا للمتسابقين"""
+        if self.role in ('host', 'contestant'):
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'nohost_question',
+            'letter': event.get('letter'),
+            'question': event.get('question'),
+        }))
+
+
+        
 
 
 
@@ -466,6 +609,8 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         # بثّ الحالة الأولية للمقدم/العرض
         if self.role in ('host', 'display'):
             await self._send_puzzle_state()
+
+            
 
     async def disconnect(self, code):
         try:

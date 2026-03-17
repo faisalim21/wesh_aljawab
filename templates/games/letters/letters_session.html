@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
@@ -80,6 +81,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
 
   <style>
+
+    .grid-option.selected .grid-preview { color: #8b5cf6; }
+    .grid-option:hover .grid-preview { color: #8b5cf6; }
+    .grid-7x7 { grid-template-columns: repeat(7,5px); }
+    .grid-7x7 div { width:5px; height:5px; }
+    :root {
+      --team1-color: #22c55e;
+      --team1-stroke: #15803d;
+      --team2-color: #f97316;
+      --team2-stroke: #c2410c;
+    }
     body {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       font-family: 'Tajawal', sans-serif;
@@ -136,15 +148,85 @@
     .honeycomb-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; padding: 10px; }
     .honeycomb-svg { width: 100%; max-width: 100vw; height: auto; display: block; margin: 0 auto; }
 
-    .hex-cell { cursor: pointer; transition: all 0.3s ease; }
-    .hex-cell:hover .hex-shape { fill: #f0f9ff; stroke-width: 4; transform: scale(1.05); }
-    .hex-cell.team1 .hex-shape { fill: #22c55e; stroke: #15803d; stroke-width: 4; }
-    .hex-cell.team1 .hex-text { fill: white; font-weight: bold; }
-    .hex-cell.team2 .hex-shape { fill: #f97316; stroke: #c2410c; stroke-width: 4; }
-    .hex-cell.team2 .hex-text { fill: white; font-weight: bold; }
-    .hex-shape { fill: white; stroke: #6b46c1; stroke-width: 3; transition: all 0.3s ease; transform-origin: center; }
-    .hex-text { fill: #6b46c1; font-family: 'Tajawal', sans-serif; font-size: 130px; font-weight: 900; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+    /* =====================================================
+      CSS محدّث للخلايا السداسية
+      استبدل الـ CSS الحالي المتعلق بـ hex-cell في كلا الملفين
+      ===================================================== */
 
+    /* الخلية الأساسية */
+    .hex-cell { cursor: pointer; }
+    .hex-cell:hover .hex-shape { stroke: #f59e0b; stroke-width: 3.5; }
+
+    /* شكل الخلية */
+    .hex-shape {
+      fill: white;
+      stroke: #6b21a8;
+      stroke-width: 2;
+      transition: fill 0.25s, stroke 0.25s;
+    }
+
+    /* النص */
+    .hex-text {
+      fill: #4c1d95;
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* فريق 1 */
+    .hex-cell.team1 .hex-shape {
+      fill: var(--team1-color, #22c55e);
+      stroke: var(--team1-stroke, #15803d);
+      stroke-width: 3;
+    }
+    .hex-cell.team1 .hex-text { fill: white; }
+
+    /* فريق 2 */
+    .hex-cell.team2 .hex-shape {
+      fill: var(--team2-color, #f97316);
+      stroke: var(--team2-stroke, #c2410c);
+      stroke-width: 3;
+    }
+    .hex-cell.team2 .hex-text { fill: white; }
+
+    /* حالة التحديد (الحرف المختار) */
+    .hex-cell.selected .hex-shape {
+      stroke: #f59e0b;
+      stroke-width: 4;
+      filter: drop-shadow(0 0 8px rgba(245,158,11,0.5));
+    }
+
+    /* CSS Variables الافتراضية */
+    :root {
+      --team1-color: #22c55e;
+      --team1-stroke: #15803d;
+      --team2-color: #f97316;
+      --team2-stroke: #c2410c;
+    }
+
+    /* حاوية الشبكة */
+    .honeycomb-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 15px 0;
+      padding: 5px;
+    }
+
+    .honeycomb-svg {
+      width: 100%;
+      max-width: 100vw;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+
+    @media (min-width: 769px) {
+      .honeycomb-svg { max-width: 650px; }
+    }
     .info-panel { background: white; border-radius: 15px; padding: 12px; margin: 10px 0; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
     /* لوحة الأسئلة */
@@ -160,8 +242,27 @@
     .btn-primary { background: linear-gradient(135deg, #4c51bf, #667eea); border: none; border-radius: 10px; padding: 8px 12px; font-weight: bold; font-size: 14px; }
 
     .score-display { font-size: 1.1rem; font-weight: bold; text-align: center; padding: 8px; border-radius: 10px; margin: 3px; }
-    .team1-score { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #22c55e; border: 2px solid #22c55e; }
-    .team2-score { background: linear-gradient(135deg, #fed7aa, #fdba74); color: #f97316; border: 2px solid #f97316; }
+    /* بعد */
+    /* ===== كروت النقاط - ألوان واضحة وعصرية ===== */
+
+    .team1-score {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+      color: #14532d;
+      border: 2px solid var(--team1-color, #22c55e);
+      border-right: 5px solid var(--team1-color, #22c55e);
+      border-radius: 12px;
+    }
+
+    .team2-score {
+      background: linear-gradient(135deg, #fff7ed, #fed7aa);
+      color: #7c2d12;
+      border: 2px solid var(--team2-color, #f97316);
+      border-right: 5px solid var(--team2-color, #f97316);
+      border-radius: 12px;
+    }
+
+/* تحديث الكروت عند تغيير الألوان من الإعدادات */
+/* هذا يتطبق عبر JS - applySettingsLocally */
 
     .timer-display { font-size: 2rem; font-weight: bold; color: #dc2626; text-shadow: 2px 2px 4px rgba(0,0,0,0.2); }
 
@@ -405,8 +506,850 @@
     .no-host-toggle.active .toggle-label { color: #6d28d9; }
           
   </style>
+
+
+<!-- ========== CSS الإعدادات ========== -->
+<style>
+/* ---- زر الفتح ---- */
+.settings-trigger-wrap {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 14px;
+}
+ 
+.settings-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #3b0764 0%, #4c1d95 60%, #1e3a8a 100%);
+  color: #fff;
+  border: 1.5px solid rgba(139,92,246,0.4);
+  border-radius: 999px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(59,7,100,0.25);
+  position: relative;
+}
+.settings-trigger-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(139,92,246,0.35);
+  border-color: rgba(139,92,246,0.7);
+}
+.settings-trigger-icon {
+  display: flex;
+  align-items: center;
+  animation: spinSlow 8s linear infinite;
+}
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.settings-trigger-btn:hover .settings-trigger-icon {
+  animation-duration: 1s;
+}
+.settings-trigger-badge {
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+ 
+/* ---- Overlay ---- */
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,5,20,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.settings-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+ 
+/* ---- Modal ---- */
+.settings-modal {
+  background: #fafafa;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 620px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.15);
+  transform: translateY(24px) scale(0.97);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  overflow: hidden;
+}
+.settings-overlay.open .settings-modal {
+  transform: translateY(0) scale(1);
+}
+ 
+/* ---- Header ---- */
+.settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  background: linear-gradient(135deg, #3b0764, #4c1d95 50%, #1e3a8a);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+.settings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.settings-header-icon {
+  font-size: 1.8rem;
+  animation: spinSlow 10s linear infinite;
+}
+.settings-header-title {
+  font-weight: 900;
+  font-size: 1.15rem;
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+}
+.settings-header-sub {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+}
+.settings-close-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  color: #fff;
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+.settings-close-btn:hover { background: rgba(255,255,255,0.22); }
+ 
+/* ---- Body ---- */
+.settings-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.settings-body::-webkit-scrollbar { width: 6px; }
+.settings-body::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 999px; }
+ 
+/* ---- Section ---- */
+.settings-section {
+  background: #fff;
+  border: 1.5px solid rgba(139,92,246,0.12);
+  border-radius: 18px;
+  padding: 18px 18px 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+}
+.settings-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 900;
+  font-size: 1rem;
+  color: #1f2937;
+  font-family: 'Tajawal', sans-serif;
+  margin-bottom: 5px;
+}
+.settings-section-icon { font-size: 1.15rem; }
+.settings-section-desc {
+  font-size: 0.83rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+ 
+/* ---- Teams Grid ---- */
+.teams-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.team-setting-card {
+  border-radius: 14px;
+  padding: 14px;
+  border: 1.5px solid;
+  background: #f9fafb;
+}
+.team1-card { border-color: rgba(34,197,94,0.3); background: linear-gradient(135deg,#f0fdf4,#f9fafb); }
+.team2-card { border-color: rgba(249,115,22,0.3); background: linear-gradient(135deg,#fff7ed,#f9fafb); }
+.team-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.team-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.team-card-label {
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #374151;
+  font-family: 'Tajawal', sans-serif;
+}
+.settings-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #111827;
+  background: #fff;
+  transition: border-color 0.2s;
+  outline: none;
+  margin-bottom: 10px;
+  text-align: right;
+}
+.settings-input:focus { border-color: #8b5cf6; }
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+}
+.color-picker-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.color-picker {
+  width: 36px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  padding: 2px;
+  cursor: pointer;
+  background: none;
+}
+.color-hex {
+  font-size: 0.78rem;
+  font-family: monospace;
+  color: #374151;
+  font-weight: 700;
+}
+ 
+/* ---- Grid Size ---- */
+.grid-size-options {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.grid-option input { display: none; }
+.grid-option-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px 10px;
+  border-radius: 14px;
+  border: 2px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 72px;
+}
+.grid-option:hover .grid-option-inner,
+.grid-option.selected .grid-option-inner {
+  border-color: #8b5cf6;
+  background: linear-gradient(135deg,#f5f3ff,#ede9fe);
+  box-shadow: 0 4px 12px rgba(139,92,246,0.15);
+}
+
+.grid-preview svg { display: block; }
+.grid-option.selected .grid-preview { color: #8b5cf6; }
+.grid-option:hover .grid-preview { color: #8b5cf6; }
+.grid-preview {
+  display: grid;
+  gap: 2px;
+}
+.grid-option-sub {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  font-weight: 600;
+  font-family: 'Tajawal', sans-serif;
+}
+.default-badge {
+  background: #8b5cf6;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+ 
+/* ---- Timer Settings ---- */
+.timer-setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.timer-setting:last-child { border-bottom: none; padding-bottom: 0; }
+.timer-setting-info { flex: 1; }
+.timer-setting-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #111827;
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.timer-setting-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.timer-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.timer-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  color: #374151;
+  font-family: monospace;
+}
+.timer-btn:hover {
+  background: #ede9fe;
+  border-color: #8b5cf6;
+  color: #6d28d9;
+}
+.timer-display {
+  min-width: 52px;
+  text-align: center;
+  background: linear-gradient(135deg,#3b0764,#4c1d95);
+  color: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-family: 'Tajawal', sans-serif;
+}
+.timer-display span:first-child { font-size: 1.2rem; font-weight: 900; }
+.timer-unit { font-size: 0.75rem; font-weight: 700; opacity: 0.8; margin-right: 2px; }
+ 
+/* ---- Recommend / Warn Pills ---- */
+.recommend-pill {
+  display: inline-block;
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+.warn-pill {
+  display: inline-block;
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-top: 3px;
+}
+.new-pill {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 900;
+}
+ 
+/* ---- Toggle Settings ---- */
+.toggle-setting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+.toggle-setting:last-child { border-bottom: none; padding-bottom: 0; }
+.toggle-setting-info { flex: 1; }
+.toggle-setting-title {
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: #111827;
+  font-family: 'Tajawal', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.toggle-setting-desc {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 600;
+  line-height: 1.6;
+}
+ 
+/* Big Toggle */
+.big-toggle { position: relative; flex-shrink: 0; cursor: pointer; margin-top: 2px; }
+.big-toggle input { display: none; }
+.big-toggle-track {
+  display: block;
+  width: 52px;
+  height: 28px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.3s;
+}
+.big-toggle input:checked + .big-toggle-track { background: #8b5cf6; }
+.big-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 22px;
+  height: 22px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+.big-toggle input:checked + .big-toggle-track .big-toggle-thumb {
+  transform: translateX(-24px);
+}
+ 
+/* Mini Toggle (inline) */
+.toggle-inline { display: inline-flex; align-items: center; }
+.mini-toggle { position: relative; cursor: pointer; }
+.mini-toggle input { display: none; }
+.mini-toggle-track {
+  display: block;
+  width: 38px;
+  height: 20px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  position: relative;
+  transition: background 0.25s;
+}
+.mini-toggle input:checked + .mini-toggle-track { background: #8b5cf6; }
+.mini-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+.mini-toggle input:checked + .mini-toggle-track::after { transform: translateX(-18px); }
+ 
+/* ---- Footer ---- */
+.settings-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f3f4f6;
+  background: #fff;
+  flex-shrink: 0;
+}
+.settings-cancel-btn {
+  padding: 10px 20px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: #6b7280;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.settings-cancel-btn:hover { border-color: #9ca3af; color: #374151; }
+.settings-save-btn {
+  padding: 10px 28px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3b0764, #4c1d95 50%, #1e3a8a);
+  color: #fff;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 900;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.25s;
+  box-shadow: 0 4px 14px rgba(59,7,100,0.3);
+}
+.settings-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(139,92,246,0.4);
+}
+.settings-save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+ 
+@media (max-width: 480px) {
+  .settings-modal { border-radius: 20px 20px 0 0; max-height: 92vh; }
+  .settings-overlay { align-items: flex-end; padding: 0; }
+  .teams-grid { grid-template-columns: 1fr; }
+  .grid-size-options { gap: 8px; }
+  .settings-header { padding: 16px 18px 14px; }
+  .settings-body { padding: 16px 18px; }
+  .settings-footer { padding: 14px 18px; }
+}
+
+.reset-section-btn {
+  margin-top: 10px;
+  background: none;
+  border: 1.5px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.reset-section-btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+  background: #fff5f5;
+}
+.settings-reset-all-btn {
+  padding: 10px 16px;
+  border: 1.5px dashed #ef4444;
+  border-radius: 12px;
+  background: #fff;
+  color: #ef4444;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: auto;
+}
+.settings-reset-all-btn:hover {
+  background: #fff5f5;
+}
+
+
+
+
+
+
+
+/* ===== شعار حروف مع [الاسم] ===== */
+.logo-preview-wrap {
+  margin-top: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #5b21b6;
+  position: relative;
+  aspect-ratio: 16/5;
+  min-height: 90px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-hex-bg { position: absolute; inset: 0; pointer-events: none; }
+.logo-title-group {
+  position: relative; z-index: 2;
+  text-align: center; line-height: 0.95;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: 'Lalezar', sans-serif;
+}
+.logo-t-haroof {
+  font-size: clamp(22px,5vw,48px); color: #FCD34D;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
+}
+.logo-t-maa {
+  font-size: clamp(12px,2.5vw,22px); color: #22D3EE;
+  -webkit-text-stroke: 1px #1a0035; paint-order: stroke fill;
+  display: block; margin: -0.05em 0;
+}
+.logo-t-name {
+  font-size: clamp(22px,5vw,48px); color: #F87171;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
+}
+/* ===== subtitle — badge موحد في كل الشعارات ===== */
+.logo-t-sub {
+  display: inline-block;
+  background: #FCD34D;
+  color: #1a0035;
+  border: 1.5px solid #92400e;
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: clamp(8px, 1.4vw, 14px);
+  font-weight: 900;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 2px 0 #78350f;
+  margin-top: 4px;
+  white-space: nowrap;
+  min-height: 0;
+}
+.logo-t-sub:empty { display: none; }.logo-open-btn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #5b21b6, #4c1d95);
+  color: #e9d5ff;
+  border: 1px solid rgba(139,92,246,.4);
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.logo-open-btn:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
+
+/* ===== Overlay الشعار الكامل - ستايل شاشة العرض ===== */
+.logo-fullscreen-overlay {
+  position: fixed; inset: 0;
+  background: #2e1065;
+  z-index: 999999; display: none;
+  align-items: center; justify-content: center; flex-direction: column;
+}
+.logo-fullscreen-overlay.open { display: flex; }
+
+.logo-full-hex-bg {
+  position: absolute; inset: 0;
+  pointer-events: none; width: 100%; height: 100%;
+}
+
+/* النص الرئيسي */
+.logo-full-haroof {
+  font-size: clamp(90px, 16vw, 220px);
+  color: #FCD34D;
+  -webkit-text-stroke: 5px #1a0035;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #92400e,
+    6px 6px 0 #78350f,
+    9px 9px 0 #451a03,
+    0 0 40px rgba(252,211,77,0.3);
+  display: block;
+  transform: translateX(120%); opacity: 0;
+  letter-spacing: 4px;
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-maa {
+  font-size: clamp(38px, 6vw, 80px);
+  color: #22D3EE;
+  -webkit-text-stroke: 2.5px #164e63;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #0e7490, 4px 4px 0 #155e75;
+  display: block; margin: -0.05em 0; opacity: 0;
+  transform: rotate(-8deg) scale(0.8);
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-name {
+  font-size: clamp(90px, 16vw, 220px);
+  color: #F87171;
+  -webkit-text-stroke: 5px #1a0035;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #991b1b,
+    6px 6px 0 #7f1d1d,
+    9px 9px 0 #450a0a,
+    0 0 40px rgba(248,113,113,0.3);
+  display: block;
+  transform: translateX(-120%); opacity: 0;
+  letter-spacing: 4px;
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-sub {
+  position: absolute;
+  bottom: -18px; right: -16px;
+  font-size: clamp(12px, 1.4vw, 22px);
+  color: #1a0035;
+  background: #FCD34D;
+  border: 2px solid #92400e;
+  border-radius: 999px;
+  padding: 2px 14px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 900;
+  box-shadow: 0 3px 0 #78350f;
+  white-space: nowrap;
+  opacity: 0;
+  direction: rtl;
+}
+.logo-full-sub:empty {
+  display: none !important;
+  opacity: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* الحاوية الرئيسية */
+.logo-full-group {
+  position: relative; z-index: 2;
+  text-align: center;
+  font-family: 'Lalezar', sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; line-height: 0.85;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
+}
+.logo-name-wrap {
+  position: relative; display: inline-block;
+}
+
+/* أنيميشن */
+@keyframes lf-fromR { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-fromL { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-pop   { to { opacity: 1; transform: rotate(-8deg) scale(1); } }
+@keyframes lf-badge { to { opacity: 1; } }
+
+.lf-go-r  { animation: lf-fromR .75s cubic-bezier(.34,1.56,.64,1) .05s forwards; }
+.lf-go-l  { animation: lf-fromL .75s cubic-bezier(.34,1.56,.64,1) .25s forwards; }
+.lf-go-f1 { animation: lf-pop .5s cubic-bezier(.34,1.56,.64,1) .42s forwards; }
+.lf-go-f2 { animation: lf-badge .4s ease .9s forwards; }
+
+/* أزرار التحكم */
+.logo-close-btn {
+  position: fixed; top: 20px; left: 20px; z-index: 10;
+  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+.logo-save-btn {
+  background: rgba(252,211,77,.2); border: 1px solid rgba(252,211,77,.5);
+  color: #FCD34D; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+.logo-replay-btn {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+  background: rgba(139,92,246,.4); border: 1px solid rgba(139,92,246,.6);
+  color: #fff; border-radius: 12px; padding: 10px 24px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+
+
+/* ===== مؤقت العقوبة ===== */
+.penalty-bar {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px;
+  padding: 10px 14px; margin: 10px 0;
+}
+.penalty-team-btns { display: flex; gap: 6px; }
+.penalty-team-btn {
+  padding: 6px 12px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+  background: #f9fafb; font-family: 'Tajawal',sans-serif; font-weight: 700;
+  font-size: 0.82rem; cursor: pointer; transition: all 0.2s; color: #374151;
+}
+.penalty-team-btn.active-t1 { background: var(--team1-color,#22c55e); border-color: var(--team1-color,#22c55e); color: #fff; }
+.penalty-team-btn.active-t2 { background: var(--team2-color,#f97316); border-color: var(--team2-color,#f97316); color: #fff; }
+.penalty-start-btn {
+  padding: 8px 16px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
+  color: #fff; font-family: 'Tajawal',sans-serif; font-weight: 800;
+  font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(124,58,237,.3);
+}
+.penalty-start-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 14px rgba(124,58,237,.4); }
+.penalty-start-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.penalty-countdown {
+  font-size: 1.4rem; font-weight: 900; color: #7c3aed;
+  min-width: 40px; text-align: center; font-family: monospace;
+  display: none;
+}
+.penalty-countdown.running { display: block; animation: penaltyPulse 1s infinite; }
+@keyframes penaltyPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+</style>
+ 
 </head>
 <body>
+
+  <!-- ===== Overlay الشعار الكامل ===== -->
+<div id="logoFullOverlay" class="logo-fullscreen-overlay">
+  <svg class="logo-full-hex-bg" id="logoFullHex"
+       xmlns="http://www.w3.org/2000/svg"
+       preserveAspectRatio="xMidYMid slice"></svg>
+
+  <div class="logo-full-group" id="logoFullGroup">
+    <span class="logo-full-haroof lf-go-r">حروف</span>
+    <span class="logo-full-maa lf-go-f1">مــــع</span>
+    <div class="logo-name-wrap">
+      <span class="logo-full-name lf-go-l" id="logoFullName">—</span>
+      <span class="logo-full-sub lf-go-f2" id="logoFullSub"></span>
+    </div>
+  </div>
+
+  <button class="logo-close-btn" onclick="closeLogoOverlay()">✕ إغلاق</button>
+
+  <div style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;">
+    <button class="logo-save-btn" onclick="saveLogoImage('landscape')">📺 حفظ عرضي</button>
+    <button class="logo-save-btn" onclick="saveLogoImage('portrait')">📱 حفظ طولي</button>
+  </div>
+
+  <button class="logo-replay-btn" onclick="replayLogoAnim()">↺ إعادة الأنيميشن</button>
+</div>
+
 
   <div class="container">
     <h2 class="text-center mb-2">🎯 خلية الحروف - المقدم</h2>
@@ -426,7 +1369,8 @@
             <div>
               <h6>رابط المقدّم</h6>
               <p>
-                هذا الرابط لك أنت فقط لإدارة اللعبة: اختيار الحروف، تغيير ألوان الخلايا، والتحكم بالنقاط.
+               هذا الرابط خاص بك لإدارة اللعبة بالكامل، مثل:
+               اختيار الحروف، عرض الأسئلة، تعديل النقاط، تشغيل العقوبة، والتحكم في إعدادات الجلسة بشكل مفصل          
               </p>
             </div>
           </div>
@@ -436,8 +1380,8 @@
             <div>
               <h6>رابط شاشة العرض</h6>
               <p>
-                اعرضه على التلفزيون/الآيباد أمام الجميع.
-                يعرض الحرف المختار، النقاط، واسم أول متسابق ضغط الزر — للعرض فقط.
+               هذا الرابط يُفتح على التلفزيون أو الآيباد أمام الجميع.
+                يعرض خلية الحروف، النقاط، الحرف المختار، واسم أول متسابق ضغط زر الإجابة, وفي حال وضعت في الإعدادات اللب بدون مقدم يمكنك التحكم في اللعبة من خلال شاشة العرض فقط
               </p>
             </div>
           </div>
@@ -447,9 +1391,9 @@
             <div>
               <h6>رابط المتسابقين</h6>
               <p>
-                أرسله للاعبين.
-                المتسابق يكتب اسمه ثم ينتظر السؤال ويضغط الزر للإجابة.
-                <small>⚡ يُقبل أول لاعب فقط ويُرفض الباقي تلقائيًا.</small>
+               هذا الرابط ترسله للاعبين.
+                المتسابق يكتب اسمه، يختار فريقه، ثم يضغط زر الإجابة عند الحاجة.
+                ويُقبل أول لاعب فقط تلقائيًا. وتقدر تظهر النتيجة والخلية للاعبين من خلال الإعدادات وعندها تستغنون عن شاشة العرض
               </p>
             </div>
           </div>
@@ -463,30 +1407,452 @@
 
 
 
-      <!-- ===== خيار إضافي: وضع بدون مقدم ===== -->
-      <div style="margin: 0 0 14px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-          <div style="flex:1;height:1px;background:linear-gradient(90deg,transparent,#e5e7eb);"></div>
-          <span style="font-size:0.78rem;font-weight:800;color:#9ca3af;white-space:nowrap;padding:0 6px;">خيار إضافي</span>
-          <div style="flex:1;height:1px;background:linear-gradient(90deg,#e5e7eb,transparent);"></div>
-        </div>
-
-        <div style="background:#fafafa;border:1px dashed #d1d5db;border-radius:14px;padding:12px 14px;">
-          <p style="margin:0 0 10px;font-size:0.88rem;font-weight:700;color:#6b7280;line-height:1.6;">
-            ⚠️ للحصول على أفضل تجربة ممكنة، <strong style="color:#111827;">يُنصح بوجود مقدم</strong> يدير اللعبة ويتحكم بالإجابات والنقاط.
-            <br>إذا كان عددكم قليلاً وتريدون اللعب بأنفسكم، يمكنكم إخفاء الإجابات وكشفها واحدة واحدة.
-          </p>
-
-          <button class="no-host-toggle" id="noHostToggle" onclick="toggleNoHostMode()" style="margin:0;">
-            <div>
-              <div class="toggle-label">🎭 وضع بدون مقدم</div>
-              <div class="toggle-sub">الإجابات ظاهرة — اضغط لإخفائها</div>
+      <!-- ⚙️ زر الإعدادات -->
+      <div class="settings-trigger-wrap">
+        <button class="settings-trigger-btn" onclick="openSettings()" type="button">
+          <span class="settings-trigger-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </span>
+          <span>إعدادات الجلسة</span>
+          <span class="settings-trigger-badge" id="settingsChangedBadge" style="display:none">محدّث</span>
+        </button>
+      </div>
+      
+      <!-- ========== Modal الإعدادات ========== -->
+      <div id="settingsOverlay" class="settings-overlay" onclick="closeSettingsOnBackdrop(event)">
+        <div class="settings-modal" role="dialog" aria-modal="true" aria-label="إعدادات الجلسة">
+      
+          <!-- Header -->
+          <div class="settings-header">
+            <div class="settings-header-left">
+              <div class="settings-header-icon">⚙️</div>
+              <div>
+                <div class="settings-header-title">إعدادات الجلسة</div>
+                <div class="settings-header-sub">خصّص تجربة اللعبة على كيفك</div>
+              </div>
             </div>
-            <div class="toggle-icon"></div>
-          </button>
+            <button class="settings-close-btn" onclick="closeSettings()" type="button" aria-label="إغلاق">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+      
+          <!-- Body -->
+          <div class="settings-body">
+
+            <!-- ===== قسم 5: شعار الجلسة ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🎨</span>
+                شعار الجلسة
+              </div>
+              <div class="settings-section-desc">
+                شعار "حروف مع [اسمك]" — يظهر في شاشة العرض وصفحة المتسابقين، ويمكن حفظه كصورة للطباعة والتيك توك.
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
+                  <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
+                </div>
+                <div>
+                  <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
+                  <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2026" maxlength="20">
+                </div>
+              </div>
+
+              <!-- معاينة مصغرة -->
+              <div class="logo-preview-wrap" id="logoPreviewWrap">
+                <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+                <div class="logo-title-group">
+                  <span class="logo-t-haroof">حروف</span>
+                  <span class="logo-t-maa">مــــع</span>
+                  <span class="logo-t-name" id="previewName">—</span>
+                  <span class="logo-t-sub" id="previewSub"></span>
+                </div>
+              </div>
+              <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
+                📺 فتح الشعار كامل الشاشة
+              </button>
+            </div>
+
+      
+            <!-- ===== قسم 1: الفريقان ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🏆</span>
+                الفريقان
+              </div>
+              <div class="settings-section-desc">اسم وكلور كل فريق — يظهر في جميع الشاشات فور الحفظ</div>
+      
+              <div class="teams-grid">
+                <!-- الفريق 1 -->
+                <div class="team-setting-card team1-card">
+                  <div class="team-card-header">
+                    <div class="team-dot" id="team1Dot" style="background:#22c55e;"></div>
+                    <span class="team-card-label">الفريق الأول</span>
+                  </div>
+                  <input
+                    type="text"
+                    id="setting_team1_name"
+                    class="settings-input"
+                    placeholder="الفريق الأخضر"
+                    maxlength="50"
+                  />
+                  <div class="color-row">
+                    <label class="color-label">اللون</label>
+                    <div class="color-picker-wrap">
+                      <input type="color" id="setting_team1_color" class="color-picker" value="#22c55e"
+                        oninput="document.getElementById('team1Dot').style.background=this.value; document.getElementById('team1ColorHex').textContent=this.value"/>
+                      <span class="color-hex" id="team1ColorHex">#22c55e</span>
+                    </div>
+                  </div>
+                </div>
+      
+                <!-- الفريق 2 -->
+                <div class="team-setting-card team2-card">
+                  <div class="team-card-header">
+                    <div class="team-dot" id="team2Dot" style="background:#f97316;"></div>
+                    <span class="team-card-label">الفريق الثاني</span>
+                  </div>
+                  <input
+                    type="text"
+                    id="setting_team2_name"
+                    class="settings-input"
+                    placeholder="الفريق البرتقالي"
+                    maxlength="50"
+                  />
+                  <div class="color-row">
+                    <label class="color-label">اللون</label>
+                    <div class="color-picker-wrap">
+                      <input type="color" id="setting_team2_color" class="color-picker" value="#f97316"
+                        oninput="document.getElementById('team2Dot').style.background=this.value; document.getElementById('team2ColorHex').textContent=this.value"/>
+                      <span class="color-hex" id="team2ColorHex">#f97316</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="reset-section-btn" onclick="resetTeamsToDefault()">
+                ↺ استعادة الافتراضي
+              </button>
+            </div>
+      
+            <!-- ===== قسم 2: حجم الشبكة ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">🔲</span>
+                حجم الشبكة
+              </div>
+              <div class="settings-section-desc">
+                عدد الخلايا في خلية الحروف — <strong>الافتراضي 5×5</strong> مناسب لمعظم الجلسات
+              </div>
+              <div class="grid-size-options">
+                <label class="grid-option" data-size="3x3">
+                  <input type="radio" name="grid_size" value="3x3" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-3x3">
+                      <div></div><div></div><div></div>
+                      <div></div><div></div><div></div>
+                      <div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">3×3</span>
+                    <span class="grid-option-sub">9 خلايا</span>
+                  </div>
+                </label>
+                <label class="grid-option" data-size="4x4">
+                  <input type="radio" name="grid_size" value="4x4" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-4x4">
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">4×4</span>
+                    <span class="grid-option-sub">16 خلية</span>
+                  </div>
+                </label>
+                <label class="grid-option selected" data-size="5x5">
+                  <input type="radio" name="grid_size" value="5x5" checked />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-5x5">
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">5×5 <span class="default-badge">افتراضي</span></span>
+                    <span class="grid-option-sub">25 خلية</span>
+                  </div>
+                </label>
+                <label class="grid-option" data-size="6x6">
+                  <input type="radio" name="grid_size" value="6x6" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-6x6">
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">6×6</span>
+                    <span class="grid-option-sub">36 خلية</span>
+                  </div>
+                </label>
+
+                <label class="grid-option" data-size="7x7">
+                  <input type="radio" name="grid_size" value="7x7" />
+                  <div class="grid-option-inner">
+                    <div class="grid-preview grid-6x6">
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                      <div></div><div></div><div></div><div></div><div></div><div></div>
+                    </div>
+                    <span class="grid-option-label">7×7</span>
+                    <span class="grid-option-sub">49 خلية</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+      
+            <!-- ===== قسم 3: مؤقتات ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">⏱️</span>
+                المؤقتات
+              </div>
+      
+              <!-- مؤقت الزر -->
+              <div class="timer-setting">
+                <div class="timer-setting-info">
+                  <div class="timer-setting-title">مدة قفل زر الإجابة</div>
+                  <div class="timer-setting-desc">
+                    بعد ضغط المتسابق، يُقفل الزر لهذه المدة قبل فتحه للباقين.
+                    <span class="recommend-pill">⭐ الموصى به: 3 ثوانٍ</span>
+                  </div>
+                </div>
+                <div class="timer-control">
+                  <button class="timer-btn" onclick="adjustTimer('buzz', -1)" type="button">−</button>
+                  <div class="timer-display">
+                    <span id="buzzTimerVal">3</span>
+                    <span class="timer-unit">ث</span>
+                  </div>
+                  <button class="timer-btn" onclick="adjustTimer('buzz', 1)" type="button">+</button>
+                </div>
+              </div>
+      
+              <!-- مؤقت العقوبة -->
+              <div class="timer-setting">
+                <div class="timer-setting-info">
+                  <div class="timer-setting-title">
+                    مؤقت العقوبة بعد الإجابة الخاطئة
+                    <span class="toggle-inline">
+                      <label class="mini-toggle">
+                        <input type="checkbox" id="penaltyEnabled" onchange="togglePenaltyTimer(this.checked)"/>
+                        <span class="mini-toggle-track"></span>
+                      </label>
+                    </span>
+                  </div>
+                  <div class="timer-setting-desc">
+                    إذا أجاب فريق خطأ، يُمنع من الضغط لهذه المدة.
+                    <span class="recommend-pill">⭐ الموصى به: 10 ثوانٍ</span>
+                  </div>
+                </div>
+                <div class="timer-control" id="penaltyTimerControl" style="opacity:0.4;pointer-events:none;">
+                  <button class="timer-btn" onclick="adjustTimer('penalty', -1)" type="button">−</button>
+                  <div class="timer-display">
+                    <span id="penaltyTimerVal">10</span>
+                    <span class="timer-unit">ث</span>
+                  </div>
+                  <button class="timer-btn" onclick="adjustTimer('penalty', 1)" type="button">+</button>
+                </div>
+              </div>
+            </div>
+      
+            <!-- ===== قسم 4: خيارات العرض ===== -->
+            <div class="settings-section">
+              <div class="settings-section-label">
+                <span class="settings-section-icon">📺</span>
+                خيارات العرض
+              </div>
+
+
+      
+              <!-- إظهار الخلية للمتسابقين -->
+              <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                  <div class="toggle-setting-title">إظهار الخلية في صفحة المتسابقين</div>
+                  <div class="toggle-setting-desc">
+                    يعرض شبكة الحروف مباشرة لكل المتسابقين على أجهزتهم — مفيد لو ما عندك شاشة عرض.
+                    <br><span class="warn-pill">⚠️ مناسب للجلسات بدون شاشة عرض خارجية</span>
+                  </div>
+                </div>
+                <label class="big-toggle">
+                  <input type="checkbox" id="showGridToContestants"/>
+                  <span class="big-toggle-track">
+                    <span class="big-toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+      
+              <!-- وضع بدون مقدم -->
+              <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                  <div class="toggle-setting-title">وضع بدون مقدم <span class="new-pill">جديد</span></div>
+                  <div class="toggle-setting-desc">
+                    يفعّل التحكم الكامل من شاشة العرض — اختيار الحروف، عرض الأسئلة، وتعديل النقاط.
+                    <br><span class="warn-pill">⚠️ يُفعَّل على شاشة العرض تلقائياً عند الحفظ</span>
+                  </div>
+                </div>
+                <label class="big-toggle">
+                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNohostSettings(this.checked)"/>
+                  <span class="big-toggle-track">
+                    <span class="big-toggle-thumb"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- إعدادات فرعية لوضع بدون مقدم -->
+              <div id="nohostSubSettings" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
+                <div style="
+                  padding:14px 12px;
+                  border-radius:10px;
+                  background:linear-gradient(135deg,#faf5ff,#f5f3ff);
+                  border:1px dashed #c4b5fd;
+                  text-align:center;
+                  font-family:'Tajawal',sans-serif;
+                ">
+                  <div style="
+                    font-size:0.92rem;
+                    font-weight:900;
+                    color:#6d28d9;
+                    margin-bottom:4px;
+                  ">
+                    ✨ قريبًا إعدادات تفصيلية أكثر
+                  </div>
+                  <div style="
+                    font-size:0.8rem;
+                    font-weight:700;
+                    color:#7c3aed;
+                    opacity:0.9;
+                  ">
+                    بطلب منكم
+                  </div>
+                </div>
+              </div>
+            </div>
+      
+          </div><!-- /settings-body -->
+      
+          <!-- Footer -->
+          <div class="settings-footer">
+            <button class="settings-reset-all-btn" onclick="resetAllToDefault()" type="button">
+              ↺ إعادة كل الإعدادات
+            </button>
+            <button class="settings-cancel-btn" onclick="closeSettings()" type="button">إلغاء</button>
+            <button class="settings-save-btn" onclick="saveSettings()" type="button" id="saveSettingsBtn">
+              <span id="saveSettingsBtnText">💾 حفظ الإعدادات</span>
+            </button>
+          </div>
+      
         </div>
       </div>
 
+      <!-- ===== شعار الجلسة - عرض مصغر ===== -->
+      <div id="sessionLogoBar" onclick="openLogoOverlay()" style="
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        background: linear-gradient(135deg, #2e1065, #3b0764, #1a0050);
+        border-radius: 18px;
+        padding: 18px 28px 14px;
+        margin-bottom: 14px;
+        cursor: pointer;
+        min-width: 180px;
+        border: 1.5px solid rgba(139,92,246,0.4);
+        box-shadow: 0 8px 28px rgba(59,7,100,0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+        position: relative;
+        overflow: hidden;"
+        onmouseenter="this.style.transform='scale(1.03)';this.style.boxShadow='0 12px 36px rgba(139,92,246,0.5)'"
+        onmouseleave="this.style.transform='';this.style.boxShadow='0 8px 28px rgba(59,7,100,0.5)'">
+
+        <!-- خلفية سداسيات صغيرة -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.15;pointer-events:none;"
+            xmlns="http://www.w3.org/2000/svg" id="sessionLogoBgSvg"></svg>
+
+        <!-- النص الرئيسي -->
+        <div style="
+          font-family: 'Lalezar', sans-serif;
+          text-align: center;
+          line-height: 0.88;
+          position: relative;
+          z-index: 2;
+          filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
+          <span style="
+            color: #FCD34D;
+            font-size: clamp(28px, 5vw, 52px);
+            -webkit-text-stroke: 2px #1a0035;
+            paint-order: stroke fill;
+            text-shadow: 2px 2px 0 #92400e, 4px 4px 0 #78350f;
+            display: block;
+            letter-spacing: 2px;">حروف</span>
+          <span style="
+            color: #22D3EE;
+            font-size: clamp(14px, 2.5vw, 26px);
+            -webkit-text-stroke: 1px #164e63;
+            paint-order: stroke fill;
+            display: block;
+            transform: rotate(-6deg);
+            margin: -2px 0;">مـــع</span>
+          <div style="position: relative; display: inline-block;">
+            <span id="sessionLogoBarName" style="
+              color: #F87171;
+              font-size: clamp(28px, 5vw, 52px);
+              -webkit-text-stroke: 2px #1a0035;
+              paint-order: stroke fill;
+              text-shadow: 2px 2px 0 #991b1b, 4px 4px 0 #7f1d1d;
+              display: block;
+              letter-spacing: 2px;">—</span>
+            <span id="sessionLogoBarSub" style="
+              position: absolute;
+              bottom: -10px; left: -10px;
+              background: #FCD34D;
+              color: #1a0035;
+              border: 1.5px solid #92400e;
+              border-radius: 999px;
+              padding: 1px 10px;
+              font-size: clamp(9px, 1.3vw, 14px);
+              font-weight: 900;
+              font-family: 'Tajawal', sans-serif;
+              box-shadow: 0 2px 0 #78350f;
+              white-space: nowrap;
+              display: none;"></span>
+          </div>
+        </div>
+
+        <!-- تلميح أسفل -->
+        <div style="
+          margin-top: 18px;
+          font-size: 0.68rem;
+          color: rgba(255,255,255,0.4);
+          font-family: 'Tajawal', sans-serif;
+          text-align: center;
+          position: relative;
+          z-index: 2;">
+          📺 اضغط للعرض الكامل
+        </div>
+      </div>
+
+      
     <!-- شارات أعلى الصفحة فقط -->
     {% if session.package.is_free %}
       <span class="badge-soft badge-free">تجريبية مجانية (ساعة واحدة)</span>
@@ -545,20 +1911,26 @@
              class="img-fluid">
       </div>
       
-      <svg class="honeycomb-svg" viewBox="0 0 1800 1200" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
-        <defs>
-          <polygon id="greenTop" points="0,0 1800,0 1350,200 450,200"/>
-          <polygon id="greenBottom" points="450,1000 1350,1000 1800,1200 0,1200"/>
-          <polygon id="orangeLeft" points="0,0 450,200 450,1000 0,1200"/>
-          <polygon id="orangeRight" points="1350,200 1800,0 1800,1200 1350,1000"/>
-        </defs>
-        <rect width="1800" height="1200" rx="40" fill="#4ade80"/>
-        <use href="#orangeLeft" fill="#fb923c"/>
-        <use href="#orangeRight" fill="#fb923c"/>
-        <use href="#greenTop" fill="#4ade80"/>
-        <use href="#greenBottom" fill="#4ade80"/>
+      <svg class="honeycomb-svg" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg" id="honeycombSvg">
       </svg>
     </div>
+
+    <!-- ===== مؤقت العقوبة ===== -->
+    {% if session.settings.penalty_timer_enabled or True %}
+    <div class="penalty-bar" id="penaltyBar">
+      <span style="font-weight:800;font-size:0.88rem;color:#374151;font-family:'Tajawal',sans-serif;">⏱ عقوبة:</span>
+      <div class="penalty-team-btns">
+        <button class="penalty-team-btn" id="penaltyT1Btn" onclick="togglePenaltyTeam('team1')" type="button">
+          {{ session.team1_name }}
+        </button>
+        <button class="penalty-team-btn" id="penaltyT2Btn" onclick="togglePenaltyTeam('team2')" type="button">
+          {{ session.team2_name }}
+        </button>
+      </div>
+      <button class="penalty-start-btn" id="penaltyStartBtn" onclick="startPenalty()" type="button">▶ ابدأ</button>
+      <span class="penalty-countdown" id="penaltyCountdown">10</span>
+    </div>
+    {% endif %}
 
     <!-- لوحة الأسئلة -->
     <div class="question-panel" id="questionPanel">
@@ -708,16 +2080,13 @@
 
   const cellStates = {};
   let lastClickedLetter = null;
+  let lastClickedIndex = null;
+  let lastClickAt = 0;
 
   // تتبع تثبيت (Acknowledgement) النقاط
   let pendingScoreAckUntil = 0;       // timestamp حتى متى ننتظر تأكيد
   let pendingScoreTimeoutId = null;   // timeout للمصالحة بعد 3 ثوانٍ
 
-  function getLetters(){
-    return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
-      ? window.sessionData.arabicLetters
-      : [];
-  }
 
   // ---------- نسخ الروابط ----------
   async function copyLink(text){
@@ -761,99 +2130,43 @@
   function playUnlockSound(){ tone(520,160,0.35); }
 
   // ========= رسم خلية الحروف =========
-  function createHoneycombCells(){
-    const svg = document.getElementById('honeycombSvg');
-    const lettersArr = getLetters();
-    const P = [
-      {x:380,y:260,points:"250,200 380,140 510,200 510,320 380,380 250,320"},
-      {x:630,y:260,points:"500,200 630,140 760,200 760,320 630,380 500,320"},
-      {x:880,y:260,points:"750,200 880,140 1010,200 1010,320 880,380 750,320"},
-      {x:1130,y:260,points:"1000,200 1130,140 1260,200 1260,320 1130,380 1000,320"},
-      {x:1380,y:260,points:"1250,200 1380,140 1510,200 1510,320 1380,380 1250,320"},
-      {x:505,y:440,points:"375,380 505,320 635,380 635,500 505,560 375,500"},
-      {x:755,y:440,points:"625,380 755,320 885,380 885,500 755,560 625,500"},
-      {x:1005,y:440,points:"875,380 1005,320 1135,380 1135,500 1005,560 875,500"},
-      {x:1255,y:440,points:"1125,380 1255,320 1385,380 1385,500 1255,560 1125,500"},
-      {x:1505,y:440,points:"1375,380 1505,320 1635,380 1635,500 1505,560 1375,500"},
-      {x:380,y:620,points:"250,560 380,500 510,560 510,680 380,740 250,680"},
-      {x:630,y:620,points:"500,560 630,500 760,560 760,680 630,740 500,680"},
-      {x:880,y:620,points:"750,560 880,500 1010,560 1010,680 880,740 750,680"},
-      {x:1130,y:620,points:"1000,560 1130,500 1260,560 1260,680 1130,740 1000,680"},
-      {x:1380,y:620,points:"1250,560 1380,500 1510,560 1510,680 1380,740 1250,680"},
-      {x:505,y:800,points:"375,740 505,680 635,740 635,860 505,920 375,860"},
-      {x:755,y:800,points:"625,740 755,680 885,740 885,860 755,920 625,860"},
-      {x:1005,y:800,points:"875,740 1005,680 1135,740 1135,860 1005,920 875,860"},
-      {x:1255,y:800,points:"1125,740 1255,680 1385,740 1385,860 1255,920 1125,860"},
-      {x:1505,y:800,points:"1375,740 1505,680 1635,740 1635,860 1505,920 1375,860"},
-      {x:380,y:980,points:"250,920 380,860 510,920 510,1040 380,1100 250,1040"},
-      {x:630,y:980,points:"500,920 630,860 760,920 760,1040 630,1100 500,1040"},
-      {x:880,y:980,points:"750,920 880,860 1010,920 1010,1040 880,1100 750,1040"},
-      {x:1130,y:980,points:"1000,920 1130,860 1260,920 1260,1040 1130,1100 1000,1040"},
-      {x:1380,y:980,points:"1250,920 1380,860 1510,920 1510,1040 1380,1100 1250,1040"}
-    ];
 
-    for(let i=0;i<Math.min(25, lettersArr.length);i++){
-      const letter = lettersArr[i], pos = P[i];
-      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.setAttribute('class','hex-cell'); g.setAttribute('data-letter', letter);
 
-      const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      poly.setAttribute('class','hex-shape'); poly.setAttribute('points', pos.points);
 
-      const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-      txt.setAttribute('class','hex-text'); txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y); txt.textContent = letter;
+  function onCellClick(g, letter, cellIndex) {
+      const now = Date.now();
+      if (now - lastClickAt < 150) return;
+      lastClickAt = now;
 
-      g.appendChild(poly); g.appendChild(txt); svg.appendChild(g);
+      showQuestion(letter);
 
-      g.addEventListener('click', () => onCellClick(g, letter));
-    }
-  }
+      if (lastClickedIndex === cellIndex) {
+        let newState = 'team1';
+        if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
+        else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
+        else { g.classList.add('team1'); newState = 'team1'; }
 
-  function rebuildHoneycomb(letters, resetProgress=false){
-    const svg = document.getElementById('honeycombSvg');
-    [...svg.querySelectorAll('g.hex-cell')].forEach(n => n.remove());
+        cellStates[cellIndex] = newState;
+        sendWS({type:'update_cell_state', letter, state:newState, cell_index:cellIndex})
+          .catch(()=> updateCellStateAPI(letter, newState, cellIndex));
+      }
 
-    window.sessionData = window.sessionData || {};
-    window.sessionData.arabicLetters = Array.isArray(letters) ? letters.slice(0, 25) : [];
-
-    if (resetProgress) {
-      Object.keys(cellStates).forEach(k => delete cellStates[k]);
-      lastClickedLetter = null;
-      const qp = document.getElementById('questionPanel'); if (qp) qp.style.display = 'none';
-      const qd = document.getElementById('questionDisplay'); if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
+      lastClickedIndex = cellIndex;
+      lastClickedLetter = letter;
     }
 
-    createHoneycombCells();
-  }
 
-  let lastClickAt = 0;
-  function onCellClick(g, letter){
-    const now = Date.now();
-    if (now - lastClickAt < 150) return; // منع الاهتزاز السريع
-    lastClickAt = now;
-
-    showQuestion(letter); // ← سيبث الحرف للعرض
-
-    if (lastClickedLetter === letter){
-      // تدوير اللون
-      let newState = 'team1';
-      if (g.classList.contains('team1')) { g.classList.remove('team1'); g.classList.add('team2'); newState = 'team2'; }
-      else if (g.classList.contains('team2')) { g.classList.remove('team2'); newState = 'normal'; }
-      else { g.classList.add('team1'); newState = 'team1'; }
-      cellStates[letter] = newState;
-
-      sendWS({type:'update_cell_state', letter, state:newState})
-        .catch(()=> updateCellStateAPI(letter, newState));
+  function applyCellState(letter, state, cellIndex) {
+    let el;
+    if (cellIndex !== undefined) {
+      el = document.querySelector(`[data-cell-index="${cellIndex}"]`);
+    } else {
+      el = document.querySelector(`[data-letter="${letter}"]`);
     }
-    lastClickedLetter = letter;
-  }
-
-  function applyCellState(letter, state){
-    const el = document.querySelector(`[data-letter="${letter}"]`);
     if (!el) return;
     el.classList.remove('team1','team2');
-    if (state && state!=='normal') el.classList.add(state);
-    cellStates[letter] = state || 'normal';
+    if (state && state !== 'normal') el.classList.add(state);
+    cellStates[cellIndex ?? letter] = state || 'normal';
   }
 
   function toggleAltCard(idPrefix, exists, questionText, answerText){
@@ -1134,10 +2447,9 @@
           showBuzzNotification(d.contestant_name, d.team);
           break;
         case 'cell_state_updated':
-          applyCellState(d.letter, d.state);
+          applyCellState(d.letter, d.state, d.cell_index);
           break;
         case 'scores_updated':
-          // تثبيت من السيرفر؛ حتى لو كنا بعرض تفاؤلي، هذا يُنهي نافذة الانتظار ويثبّت القيم
           onScoresUpdated(d);
           break;
         case 'letters_updated':
@@ -1149,6 +2461,9 @@
           playUnlockSound();
           break;
         case 'pong':
+          break;
+        case 'settings_updated':
+          applySettingsLocally(d.settings);
           break;
         default:
           break;
@@ -1223,6 +2538,25 @@
     setupWebSocket();
     setInterval(loadSessionState, 30000);
 
+    // تحميل الإعدادات عند فتح الصفحة أو التحديث
+    fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.settings) applySettingsLocally(data.settings);
+      })
+      .catch(() => {});
+
+    document.querySelectorAll('.grid-option').forEach(label => {
+      const n = parseInt(label.dataset.size);
+      const preview = label.querySelector('.grid-preview');
+      if (preview && n) {
+        preview.innerHTML = buildGridPreview(n);
+        preview.style.color = '#d1d5db';
+      }
+    });
+    document.querySelectorAll('.grid-option.selected .grid-preview').forEach(p => {
+      p.style.color = '#8b5cf6';
+    });
     const newRoundBtn = document.getElementById('newRoundBtn');
     if (newRoundBtn) {
       if (isFreeSession) {
@@ -1264,6 +2598,14 @@
     }
   }
 
+  function toggleNohostSettings(enabled) {
+    const sub = document.getElementById('nohostSubSettings');
+    if (sub) {
+      sub.style.opacity = enabled ? '1' : '0.4';
+      sub.style.pointerEvents = enabled ? 'auto' : 'none';
+    }
+  }
+
   function revealAnswer(btn) {
     const answerEl = btn.previousElementSibling;
     if (!answerEl) return;
@@ -1276,6 +2618,864 @@
 
 
 
+<script>
+// ===== فتح/إغلاق الـ Modal =====
+function openSettings() {
+  loadCurrentSettings();
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+ 
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+ 
+function closeSettingsOnBackdrop(e) {
+  if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+}
+ 
+// ESC يغلق الـ modal
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+ 
+// ===== تحميل الإعدادات الحالية =====
+async function loadCurrentSettings() {
+  try {
+    const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`);
+    if (!r.ok) return;
+    const { settings } = await r.json();
+    if (!settings) return;
+
+    document.getElementById('setting_team1_name').value = settings.team1_name || '';
+    document.getElementById('setting_team2_name').value = settings.team2_name || '';
+
+    const c1 = settings.team1_color || '#22c55e';
+    const c2 = settings.team2_color || '#f97316';
+    document.getElementById('setting_team1_color').value = c1;
+    document.getElementById('setting_team2_color').value = c2;
+    document.getElementById('team1Dot').style.background = c1;
+    document.getElementById('team2Dot').style.background = c2;
+    document.getElementById('team1ColorHex').textContent = c1;
+    document.getElementById('team2ColorHex').textContent = c2;
+
+    const gs = settings.grid_size || '5x5';
+    document.querySelectorAll('.grid-option').forEach(el => {
+      el.classList.toggle('selected', el.dataset.size === gs);
+    });
+    const radioEl = document.querySelector(`input[name="grid_size"][value="${gs}"]`);
+    if (radioEl) radioEl.checked = true;
+
+    document.getElementById('buzzTimerVal').textContent = settings.buzz_timer_seconds ?? 3;
+    document.getElementById('penaltyTimerVal').textContent = settings.penalty_timer_seconds ?? 10;
+
+    const penaltyEnabled = !!settings.penalty_timer_enabled;
+    document.getElementById('penaltyEnabled').checked = penaltyEnabled;
+    togglePenaltyTimer(penaltyEnabled);
+
+    document.getElementById('showGridToContestants').checked = !!settings.show_grid_to_contestants;
+
+    const nohostEnabled = !!settings.nohost_mode;
+    document.getElementById('noHostModeToggle').checked = nohostEnabled;
+    toggleNohostSettings(nohostEnabled);
+    document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
+    document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
+
+    // شعار الجلسة
+    document.getElementById('setting_show_name').value = settings.show_name || '';
+    document.getElementById('setting_show_subtitle').value = settings.show_subtitle || '';
+    updateLogoPreview(settings.show_name || '', settings.show_subtitle || '');
+
+  } catch(e) {
+    console.error('loadCurrentSettings error:', e);
+  }
+}
+
+// ===== حجم الشبكة: تفعيل الاختيار البصري =====
+document.querySelectorAll('.grid-option').forEach(label => {
+  label.addEventListener('click', () => {
+    document.querySelectorAll('.grid-option').forEach(l => l.classList.remove('selected'));
+    label.classList.add('selected');
+  });
+});
+ 
+// ===== تعديل المؤقتات =====
+const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 } };
+ 
+function adjustTimer(type, delta) {
+  const el = document.getElementById(type === 'buzz' ? 'buzzTimerVal' : 'penaltyTimerVal');
+  const lim = timerLimits[type];
+  let val = parseInt(el.textContent || '0') + delta;
+  val = Math.max(lim.min, Math.min(lim.max, val));
+  el.textContent = val;
+ 
+  // إضافة نبضة بصرية
+  el.parentElement.style.transform = 'scale(1.15)';
+  setTimeout(() => el.parentElement.style.transform = '', 150);
+}
+ 
+// ===== تفعيل/تعطيل مؤقت العقوبة =====
+function togglePenaltyTimer(enabled) {
+  const ctrl = document.getElementById('penaltyTimerControl');
+  if (ctrl) {
+    ctrl.style.opacity = enabled ? '1' : '0.4';
+    ctrl.style.pointerEvents = enabled ? 'auto' : 'none';
+  }
+}
+ 
+// ===== حفظ الإعدادات =====
+async function saveSettings() {
+  const btn = document.getElementById('saveSettingsBtn');
+  const btnText = document.getElementById('saveSettingsBtnText');
+  btn.disabled = true;
+  btnText.textContent = '⏳ جاري الحفظ...';
+
+  const selectedGrid = document.querySelector('.grid-option.selected')?.dataset.size
+    || document.querySelector('input[name="grid_size"]:checked')?.value
+    || '5x5';
+
+  const payload = {
+    session_id: sessionId,
+    team1_name: document.getElementById('setting_team1_name').value.trim(),
+    team2_name: document.getElementById('setting_team2_name').value.trim(),
+    team1_color: document.getElementById('setting_team1_color').value,
+    team2_color: document.getElementById('setting_team2_color').value,
+    grid_size: selectedGrid,
+    buzz_timer_seconds: parseInt(document.getElementById('buzzTimerVal').textContent),
+    penalty_timer_enabled: document.getElementById('penaltyEnabled').checked,
+    penalty_timer_seconds: parseInt(document.getElementById('penaltyTimerVal').textContent),
+    show_grid_to_contestants: document.getElementById('showGridToContestants').checked,
+    show_name: document.getElementById('setting_show_name').value.trim(),
+    show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
+    nohost_mode: document.getElementById('noHostModeToggle').checked,
+  };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const r = await fetch('/games/api/settings/save/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    const data = await r.json();
+
+    if (data.success) {
+      btnText.textContent = '✅ تم الحفظ!';
+      applySettingsLocally(data.settings);
+      document.getElementById('settingsChangedBadge').style.display = 'inline';
+
+      setTimeout(() => {
+        closeSettings();
+        btnText.textContent = '💾 حفظ الإعدادات';
+        btn.disabled = false;
+      }, 600);
+    } else {
+      btnText.textContent = '❌ تعذر الحفظ';
+      btn.disabled = false;
+    }
+  } catch (e) {
+    clearTimeout(timeoutId);
+
+    if (e.name === 'AbortError') {
+      btnText.textContent = '⌛ الحفظ تأخر، حاول مرة أخرى';
+    } else {
+      btnText.textContent = '❌ خطأ في الاتصال';
+    }
+
+    btn.disabled = false;
+    console.error('saveSettings error:', e);
+  }
+}
+
+function applySettingsLocally(settings) {
+  if (!settings) return;
+
+  if (settings.team1_color) {
+    document.documentElement.style.setProperty('--team1-color', settings.team1_color);
+    document.documentElement.style.setProperty('--team1-stroke', settings.team1_color);
+    document.querySelectorAll('.team1-score').forEach(el => {
+      el.style.background = `linear-gradient(135deg, ${settings.team1_color}18, ${settings.team1_color}30)`;
+      el.style.borderColor = settings.team1_color;
+      el.style.borderRightColor = settings.team1_color;
+      el.style.color = '#14532d';
+    });
+  }
+
+  if (settings.team2_color) {
+    document.documentElement.style.setProperty('--team2-color', settings.team2_color);
+    document.documentElement.style.setProperty('--team2-stroke', settings.team2_color);
+    document.querySelectorAll('.team2-score').forEach(el => {
+      el.style.background = `linear-gradient(135deg, ${settings.team2_color}18, ${settings.team2_color}30)`;
+      el.style.borderColor = settings.team2_color;
+      el.style.borderRightColor = settings.team2_color;
+      el.style.color = '#7c2d12';
+    });
+  }
+
+  const svg = document.getElementById('honeycombSvg');
+  const vb = svg.getAttribute('viewBox').split(' ');
+  const t1 = document.documentElement.style.getPropertyValue('--team1-color') || '#22c55e';
+  const t2 = document.documentElement.style.getPropertyValue('--team2-color') || '#f97316';
+  buildHexBackground(svg, parseFloat(vb[2]), parseFloat(vb[3]), t1, t2);
+
+  if (settings.team1_name) {
+    window.sessionData = window.sessionData || {};
+    window.sessionData.team1Name = settings.team1_name;
+    const m1 = document.querySelector('.scores-mobile .team1-score');
+    if (m1) m1.childNodes[0].textContent = `🟢 ${settings.team1_name}: `;
+    const d1 = document.querySelector('.d-none.d-md-flex .team1-score');
+    if (d1) d1.childNodes[0].textContent = `${settings.team1_name}: `;
+  }
+  if (settings.team2_name) {
+    window.sessionData.team2Name = settings.team2_name;
+    const m2 = document.querySelector('.scores-mobile .team2-score');
+    if (m2) m2.childNodes[0].textContent = `🟠 ${settings.team2_name}: `;
+    const d2 = document.querySelector('.d-none.d-md-flex .team2-score');
+    if (d2) d2.childNodes[0].textContent = `${settings.team2_name}: `;
+  }
+
+  if (settings.buzz_timer_seconds) {
+    window.BUZZ_TIMER_SECONDS = settings.buzz_timer_seconds;
+  }
+
+  if (settings.grid_size && settings.grid_size !== window.currentGridSize) {
+    window.currentGridSize = settings.grid_size;
+    applyGridSize(settings.grid_size);
+  }
+
+  // ← شعار الجلسة
+  if (settings.show_name !== undefined || settings.show_subtitle !== undefined) {
+    const n = settings.show_name || '';
+    const s = settings.show_subtitle || '';
+    updateLogoPreview(n, s);
+    const fn = document.getElementById('logoFullName');
+    const fs = document.getElementById('logoFullSub');
+    if (fn) fn.textContent = n || '—';
+    if (fs) fs.textContent = s;
+  }
+
+  if (settings.penalty_timer_seconds) {
+    window.PENALTY_TIMER_SECONDS = settings.penalty_timer_seconds;
+  }
+}
+
+
+
+// ============================================================
+// محرك الشبكة السداسية - النسخة المصححة
+// التعرج على الأعمدة (يمين/يسار) مب الصفوف
+// ============================================================
+
+const ARABIC_28 = [
+  'أ','ب','ت','ث','ج','ح','خ','د','ذ','ر',
+  'ز','س','ش','ص','ض','ط','ظ','ع','غ','ف',
+  'ق','ك','ل','م','ن','هـ','و','ي'
+];
+
+const GRID_R = { '3x3':52, '4x4':40, '5x5':32, '6x6':26, '7x7':21 };
+
+
+// نقاط الخلية السداسية - pointed-top (التعرج يمين/يسار)
+function hexPoints(cx, cy, r) {
+  const pts = [];
+  for (let i = 0; i < 6; i++) {
+    const a = Math.PI / 6 + Math.PI / 3 * i;
+    pts.push(`${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`);
+  }
+  return pts.join(' ');
+}
+
+function getLettersForGrid(gridSize, baseLetters) {
+  const sizeMap = { '3x3':9, '4x4':16, '5x5':25, '6x6':36, '7x7':49 };
+  const count = sizeMap[gridSize] || 25;
+  const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
+  let result = [...src];
+  while (result.length < count) {
+    result = result.concat([...src].sort(() => Math.random() - 0.5));
+  }
+  return result.slice(0, count);
+}
+
+function buildHexBackground(svg, viewW, viewH, color1, color2) {
+  svg.querySelectorAll('.hex-bg').forEach(el => el.remove());
+  svg.querySelectorAll('#hexBgDefs').forEach(el => el.remove());
+  const NS = 'http://www.w3.org/2000/svg';
+  const cx = viewW/2, cy = viewH/2;
+
+  const defs = document.createElementNS(NS, 'defs');
+  defs.setAttribute('id','hexBgDefs');
+  const cp = document.createElementNS(NS, 'clipPath');
+  cp.setAttribute('id','hexBgClip');
+  const cr = document.createElementNS(NS, 'rect');
+  cr.setAttribute('width',viewW); cr.setAttribute('height',viewH); cr.setAttribute('rx','14');
+  cp.appendChild(cr); defs.appendChild(cp);
+  svg.insertBefore(defs, svg.firstChild);
+
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class','hex-bg');
+  g.setAttribute('clip-path','url(#hexBgClip)');
+
+  const tri = (pts, fill) => {
+    const p = document.createElementNS(NS,'polygon');
+    p.setAttribute('points',pts); p.setAttribute('fill',fill); g.appendChild(p);
+  };
+  tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
+  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
+  tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
+  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
+
+  svg.insertBefore(g, defs.nextSibling);
+}
+
+
+function createHoneycombCells() {
+  const svg = document.getElementById('honeycombSvg');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  const gridSize = window.currentGridSize || '5x5';
+  const t1Color = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
+  const t2Color = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
+
+  const sizeMap = { '3x3':3,'4x4':4,'5x5':5,'6x6':6,'7x7':7 };
+  const cols = sizeMap[gridSize] || 5;
+  const rows = cols;
+  const R = GRID_R[gridSize] || 32;
+
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const colStep = hexW;
+  const rowStep = hexH * 0.75;
+
+  const pad = R * 1.4;
+  const totalW = colStep * (cols + 0.5) + pad * 2;
+  const totalH = rowStep * (rows - 1) + hexH + pad * 2;
+  const viewW = Math.ceil(Math.max(totalW, 300));
+  const viewH = Math.ceil(Math.max(totalH, 240));
+
+  svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+  svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
+  buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
+
+  const startX = (viewW - colStep * (cols - 0.5)) / 2;
+  const gridH = rowStep * (rows - 1) + hexH;
+  const startY = (viewH - gridH) / 2 + hexH / 2;
+
+  const letters = getLettersForGrid(gridSize, window.sessionData?.arabicLetters || ARABIC_28);
+  const fontSize = Math.round(R * 0.68);
+
+  let idx = 0;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
+      const cy = startY + row * rowStep;
+      const letter = letters[idx];
+
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class','hex-cell');
+      g.setAttribute('data-letter', letter);
+      g.setAttribute('data-cell-index', idx);
+
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('class','hex-shape');
+      poly.setAttribute('points', hexPoints(cx, cy, R));
+      g.appendChild(poly);
+
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('class','hex-text');
+      txt.setAttribute('x', cx.toFixed(1));
+      txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('dominant-baseline','central');
+      txt.setAttribute('text-anchor','middle');
+      txt.style.fontSize = `${fontSize}px`;
+      txt.textContent = letter;
+      g.appendChild(txt);
+
+      ;(function(el, ltr, cellIdx) {
+        el.addEventListener('click', function() {
+          if (typeof onCellClick === 'function') onCellClick(el, ltr, cellIdx);
+        });
+      })(g, letter, idx);
+
+      svg.appendChild(g);
+      idx++;
+    }
+  }
+}
+
+function rebuildHoneycomb(letters, resetProgress = false) {
+  window.sessionData = window.sessionData || {};
+  if (letters && letters.length) window.sessionData.arabicLetters = letters;
+
+  if (resetProgress) {
+    if (typeof cellStates !== 'undefined') Object.keys(cellStates).forEach(k => delete cellStates[k]);
+    if (typeof lastClickedLetter !== 'undefined') window.lastClickedLetter = null;
+    const qp = document.getElementById('questionPanel');
+    if (qp) qp.style.display = 'none';
+    const qd = document.getElementById('questionDisplay');
+    if (qd) qd.textContent = 'اضغط على أي حرف لعرض السؤال';
+  }
+
+  createHoneycombCells();
+
+  if (!resetProgress && typeof cellStates !== 'undefined') {
+    Object.entries(cellStates).forEach(([ltr, st]) => {
+      if (typeof applyCellState === 'function') applyCellState(ltr, st);
+    });
+  }
+}
+
+function applyGridSize(gridSize) {
+  window.currentGridSize = gridSize;
+  rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+}
+
+function getLetters() {
+  return (window.sessionData && Array.isArray(window.sessionData.arabicLetters))
+    ? window.sessionData.arabicLetters
+    : ARABIC_28;
+}
+
+window.BUZZ_TIMER_SECONDS = window.BUZZ_TIMER_SECONDS || 3;
+window.currentGridSize = window.currentGridSize || '5x5';
+
+// متغير عالمي لمدة قفل الزر (تُستخدم في WebSocket)
+
+
+const DEFAULTS = {
+  team1_name: 'الفريق الأخضر',
+  team2_name: 'الفريق البرتقالي',
+  team1_color: '#22c55e',
+  team2_color: '#f97316',
+  grid_size: '5x5',
+  buzz_timer_seconds: 3,
+  penalty_timer_enabled: false,
+  penalty_timer_seconds: 10,
+  show_grid_to_contestants: false,
+};
+
+function resetTeamsToDefault() {
+  document.getElementById('setting_team1_name').value = DEFAULTS.team1_name;
+  document.getElementById('setting_team2_name').value = DEFAULTS.team2_name;
+  document.getElementById('setting_team1_color').value = DEFAULTS.team1_color;
+  document.getElementById('setting_team2_color').value = DEFAULTS.team2_color;
+  document.getElementById('team1Dot').style.background = DEFAULTS.team1_color;
+  document.getElementById('team2Dot').style.background = DEFAULTS.team2_color;
+  document.getElementById('team1ColorHex').textContent = DEFAULTS.team1_color;
+  document.getElementById('team2ColorHex').textContent = DEFAULTS.team2_color;
+}
+
+function resetAllToDefault() {
+  if (!confirm('تأكيد إعادة جميع الإعدادات للافتراضي؟')) return;
+  resetTeamsToDefault();
+  // الشبكة
+  document.querySelectorAll('.grid-option').forEach(el => {
+    el.classList.toggle('selected', el.dataset.size === DEFAULTS.grid_size);
+  });
+  const radio = document.querySelector(`input[name="grid_size"][value="${DEFAULTS.grid_size}"]`);
+  if (radio) radio.checked = true;
+  // المؤقتات
+  document.getElementById('buzzTimerVal').textContent = DEFAULTS.buzz_timer_seconds;
+  document.getElementById('penaltyTimerVal').textContent = DEFAULTS.penalty_timer_seconds;
+  document.getElementById('penaltyEnabled').checked = DEFAULTS.penalty_timer_enabled;
+  togglePenaltyTimer(DEFAULTS.penalty_timer_enabled);
+  // خيارات العرض
+  document.getElementById('showGridToContestants').checked = DEFAULTS.show_grid_to_contestants;
+  document.getElementById('noHostModeToggle').checked = false;
+}
+
+function buildGridPreview(n) {
+  const r = 5, hw = r*Math.sqrt(3), hh = r*2;
+  const cs = hw, rs = hh*0.75;
+  const w = cs*(n+0.5)+4, h = (n-1)*rs+hh+4;
+  let p = '';
+  for (let row=0; row<n; row++) {
+    for (let col=0; col<n; col++) {
+      const cx = 2 + col*cs + (row%2===0?0:cs*0.5) + hw/2;
+      const cy = 2 + row*rs + hh/2;
+      const pts = [];
+      for (let i=0;i<6;i++){
+        const a=Math.PI/6+Math.PI/3*i;
+        pts.push(`${(cx+r*Math.cos(a)).toFixed(1)},${(cy+r*Math.sin(a)).toFixed(1)}`);
+      }
+      p += `<polygon points="${pts.join(' ')}" fill="currentColor"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${w.toFixed(1)} ${h.toFixed(1)}" width="${Math.ceil(w)}" height="${Math.ceil(h)}">${p}</svg>`;
+}
+
+// ===== شعار الجلسة =====
+// ===== خلفية السداسيات الثرية (نفس شاشة العرض) =====
+function buildLogoHexBg(svgEl, w, h) {
+  const NS = 'http://www.w3.org/2000/svg';
+  while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+  // gradient خلفية
+  const defs = document.createElementNS(NS, 'defs');
+  const grad = document.createElementNS(NS, 'radialGradient');
+  grad.setAttribute('id', 'dlgGradHost');
+  grad.setAttribute('cx', '50%'); grad.setAttribute('cy', '50%'); grad.setAttribute('r', '70%');
+  const s1 = document.createElementNS(NS, 'stop');
+  s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#6b21a8');
+  const s2 = document.createElementNS(NS, 'stop');
+  s2.setAttribute('offset', '100%'); s2.setAttribute('stop-color', '#2e1065');
+  grad.append(s1, s2); defs.appendChild(grad);
+
+  const filt = document.createElementNS(NS, 'filter');
+  filt.setAttribute('id', 'dlgBlurHost');
+  const fBlur = document.createElementNS(NS, 'feGaussianBlur');
+  fBlur.setAttribute('stdDeviation', '1.2');
+  filt.appendChild(fBlur); defs.appendChild(filt);
+  svgEl.appendChild(defs);
+
+  // خلفية
+  const bg = document.createElementNS(NS, 'rect');
+  bg.setAttribute('width', w); bg.setAttribute('height', h);
+  bg.setAttribute('fill', 'url(#dlgGradHost)');
+  svgEl.appendChild(bg);
+
+  const R = Math.min(w, h) * 0.042;
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const cols = Math.ceil(w / hexW) + 2;
+  const rows = Math.ceil(h / (hexH * 0.75)) + 3;
+  const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('filter', 'url(#dlgBlurHost)');
+
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = -hexW * 0.5 + col * hexW + (row % 2 ? hexW * 0.5 : 0);
+      const cy = -hexH * 0.25 + row * hexH * 0.75;
+      const opacity = 0.08 + Math.random() * 0.22;
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 6 + Math.PI / 3 * i;
+        pts.push(`${(cx + R * Math.cos(a)).toFixed(1)},${(cy + R * Math.sin(a)).toFixed(1)}`);
+      }
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('points', pts.join(' '));
+      poly.setAttribute('fill', `rgba(139,92,246,${opacity})`);
+      poly.setAttribute('stroke', `rgba(167,139,250,${opacity * 1.8})`);
+      poly.setAttribute('stroke-width', '1');
+      g.appendChild(poly);
+
+      if (Math.random() > 0.55) {
+        const txt = document.createElementNS(NS, 'text');
+        txt.setAttribute('x', cx.toFixed(1));
+        txt.setAttribute('y', cy.toFixed(1));
+        txt.setAttribute('text-anchor', 'middle');
+        txt.setAttribute('dominant-baseline', 'central');
+        txt.setAttribute('fill', `rgba(196,167,253,${opacity * 1.5})`);
+        txt.setAttribute('font-size', Math.round(R * 0.55));
+        txt.setAttribute('font-family', 'Lalezar,Tajawal,sans-serif');
+        txt.setAttribute('font-weight', '900');
+        txt.textContent = letters[Math.floor(Math.random() * letters.length)];
+        g.appendChild(txt);
+      }
+    }
+  }
+  svgEl.appendChild(g);
+}
+
+function updateLogoPreview(name, subtitle) {
+  // المعاينة الداخلية (داخل الإعدادات)
+  const el  = document.getElementById('previewName');
+  const sub = document.getElementById('previewSub');
+  if (el)  el.textContent  = name     || '—';
+  if (sub) sub.textContent = subtitle || '';
+
+  // خلفية المعاينة
+  const hex = document.getElementById('logoPreviewHex');
+  if (hex) buildLogoHexBg(hex, 800, 200);
+
+  // الشريط الخارجي الكبير
+  const barName = document.getElementById('sessionLogoBarName');
+  const barSub  = document.getElementById('sessionLogoBarSub');
+  if (barName) barName.textContent = name || '—';
+  if (barSub) {
+    barSub.textContent = subtitle || '';
+    barSub.style.display = subtitle ? 'inline-block' : 'none';
+  }
+
+  // خلفية الشريط الخارجي
+  const bgSvg = document.getElementById('sessionLogoBgSvg');
+  if (bgSvg) buildLogoHexBg(bgSvg, 200, 130);
+}
+// ===== فتح الـ Overlay =====
+function openLogoOverlay() {
+  const name = document.getElementById('setting_show_name')?.value.trim()
+    || document.getElementById('previewName')?.textContent || '';
+  const sub = document.getElementById('setting_show_subtitle')?.value.trim()
+    || document.getElementById('previewSub')?.textContent || '';
+
+  document.getElementById('logoFullName').textContent = name || '—';
+  document.getElementById('logoFullSub').textContent = sub;
+
+  const hex = document.getElementById('logoFullHex');
+  hex.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+  buildLogoHexBg(hex, window.innerWidth, window.innerHeight);
+
+  replayLogoAnim();
+  document.getElementById('logoFullOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeLogoOverlay() {
+  document.getElementById('logoFullOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function replayLogoAnim() {
+  const haroof = document.querySelector('.logo-full-haroof');
+  const maa    = document.querySelector('.logo-full-maa');
+  const name   = document.querySelector('.logo-full-name');
+  const sub    = document.querySelector('.logo-full-sub');
+
+  [haroof, maa, name, sub].forEach(el => {
+    if (!el) return;
+    el.classList.remove('lf-go-r', 'lf-go-l', 'lf-go-f1', 'lf-go-f2');
+    el.style.opacity = '0';
+  });
+  if (haroof) haroof.style.transform = 'translateX(120%)';
+  if (name)   name.style.transform   = 'translateX(-120%)';
+  if (maa)    maa.style.transform    = 'rotate(-8deg) scale(0.8)';
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (haroof) haroof.classList.add('lf-go-r');
+    if (maa)    maa.classList.add('lf-go-f1');
+    if (name)   name.classList.add('lf-go-l');
+    if (sub && sub.textContent.trim()) sub.classList.add('lf-go-f2');
+  }));
+}
+
+// ===== حفظ الصورة بـ Canvas API (بدون مكتبات) =====
+async function saveLogoImage(orientation) {
+  await document.fonts.ready;
+  try {
+    await Promise.all([
+      document.fonts.load('900 220px Lalezar'),
+      document.fonts.load('900 80px Tajawal'),
+    ]);
+  } catch {}
+
+  const isPortrait = orientation === 'portrait';
+  const W = isPortrait ? 900 : 1600;
+  const H = isPortrait ? 1600 : 900;
+
+  const canvas = document.createElement('canvas');
+  canvas.width  = W * 2;
+  canvas.height = H * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // خلفية gradient
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H) * 0.75);
+  grad.addColorStop(0, '#6b21a8');
+  grad.addColorStop(1, '#2e1065');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // نمط السداسيات
+  const letters = 'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'.split('');
+  const R    = Math.min(W, H) * 0.042;
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const cols = Math.ceil(W / hexW) + 2;
+  const rows = Math.ceil(H / (hexH * 0.75)) + 3;
+
+  ctx.save();
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = -hexW * 0.5 + col * hexW + (row % 2 ? hexW * 0.5 : 0);
+      const cy = -hexH * 0.25 + row * hexH * 0.75;
+      const op = 0.07 + Math.abs(Math.sin(row * 2.3 + col * 1.7)) * 0.16;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 6 + Math.PI / 3 * i;
+        i === 0
+          ? ctx.moveTo(cx + R * Math.cos(a), cy + R * Math.sin(a))
+          : ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+      }
+      ctx.closePath();
+      ctx.fillStyle   = `rgba(139,92,246,${op})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(167,139,250,${op * 1.8})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (Math.sin(row * 3.7 + col * 2.3) > 0.15) {
+        ctx.fillStyle = `rgba(196,167,253,${op * 1.3})`;
+        ctx.font = `900 ${Math.round(R * 0.52)}px Lalezar`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(letters[Math.abs(row * cols + col) % letters.length], cx, cy);
+      }
+    }
+  }
+  ctx.restore();
+
+  // رسم النص بنفس ستايل CSS
+  const mainFS = Math.round(Math.min(220, Math.max(90, W * 0.16)));
+  const maaFS  = Math.round(Math.min(80,  Math.max(38, W * 0.06)));
+  const name   = document.getElementById('logoFullName')?.textContent || '—';
+  const sub    = (document.getElementById('logoFullSub')?.textContent || '').trim();
+
+  const drawText3D = (text, x, y, fs, fillColor, shadowPairs) => {
+    ctx.font = `900 ${fs}px Lalezar`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    shadowPairs.forEach(([ox, oy, color]) => {
+      ctx.fillStyle = color;
+      ctx.fillText(text, x + ox, y + oy);
+    });
+    ctx.strokeStyle = '#1a0035';
+    ctx.lineWidth = fs * 0.048;
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = fillColor;
+    ctx.fillText(text, x, y);
+  };
+
+  const lineH = mainFS * 0.92;
+  const total = lineH * 2 + maaFS * 0.85 + (sub ? maaFS * 0.85 : 0);
+  let y = (H - total) / 2 + mainFS * 0.5;
+
+  // "حروف"
+  drawText3D('حروف', W / 2, y, mainFS, '#FCD34D',
+    [[3,3,'#92400e'],[6,6,'#78350f'],[9,9,'#451a03']]);
+  y += lineH;
+
+  // "مع"
+  ctx.save();
+  ctx.translate(W / 2, y - maaFS * 0.1);
+  ctx.rotate(-8 * Math.PI / 180);
+  ctx.font = `900 ${maaFS}px Lalezar`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.fillStyle = '#0e7490'; ctx.fillText('مــــع', 3, 3);
+  ctx.strokeStyle = '#164e63'; ctx.lineWidth = maaFS * 0.06; ctx.strokeText('مع', 0, 0);
+  ctx.fillStyle = '#22D3EE'; ctx.fillText('مــــع', 0, 0);
+  ctx.restore();
+  y += maaFS * 0.85;
+
+  // الاسم
+  drawText3D(name, W / 2, y, mainFS, '#F87171',
+    [[3,3,'#991b1b'],[6,6,'#7f1d1d'],[9,9,'#450a0a']]);
+
+  // badge الـ subtitle
+  if (sub) {
+    const subFS = Math.round(Math.min(22, Math.max(12, W * 0.014)));
+    ctx.font = `900 ${subFS * 1.6}px Tajawal`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(sub).width;
+    const pw = tw + subFS * 2.4;
+    const ph = subFS * 2.2;
+    const bx = W / 2 + mainFS * 0.4;
+    const by = y + mainFS * 0.48;
+
+    const _rr = (bx, by, bw, bh, r) => {
+      ctx.beginPath();
+      ctx.moveTo(bx+r,by); ctx.lineTo(bx+bw-r,by); ctx.arcTo(bx+bw,by,bx+bw,by+r,r);
+      ctx.lineTo(bx+bw,by+bh-r); ctx.arcTo(bx+bw,by+bh,bx+bw-r,by+bh,r);
+      ctx.lineTo(bx+r,by+bh); ctx.arcTo(bx,by+bh,bx,by+bh-r,r);
+      ctx.lineTo(bx,by+r); ctx.arcTo(bx,by,bx+r,by,r); ctx.closePath();
+    };
+
+    ctx.fillStyle = '#78350f'; _rr(bx+3, by+4, pw, ph, ph/2); ctx.fill();
+    ctx.fillStyle = '#FCD34D'; _rr(bx, by, pw, ph, ph/2); ctx.fill();
+    ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2.5; _rr(bx, by, pw, ph, ph/2); ctx.stroke();
+    ctx.fillStyle = '#1a0035'; ctx.fillText(sub, bx + pw/2, by + ph/2);
+  }
+
+  canvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `haroof-${orientation}.png`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  }, 'image/png');
+}
+// تهيئة المعاينة عند فتح الإعدادات
+document.getElementById('setting_show_name')?.addEventListener('input', function() {
+  updateLogoPreview(this.value, document.getElementById('setting_show_subtitle')?.value || '');
+});
+document.getElementById('setting_show_subtitle')?.addEventListener('input', function() {
+  updateLogoPreview(document.getElementById('setting_show_name')?.value || '', this.value);
+});
+
+// بناء خلفية المعاينة الصغيرة عند التحميل
+document.addEventListener('DOMContentLoaded', () => {
+  const hex = document.getElementById('logoPreviewHex');
+  if (hex) buildLogoHexBg(hex, 800, 200);
+});
+
+// ===== مؤقت العقوبة =====
+let penaltyTeam = null;
+let penaltyInterval = null;
+
+function togglePenaltyTeam(team) {
+  penaltyTeam = (penaltyTeam === team) ? null : team;
+  document.getElementById('penaltyT1Btn').className =
+    'penalty-team-btn' + (penaltyTeam === 'team1' ? ' active-t1' : '');
+  document.getElementById('penaltyT2Btn').className =
+    'penalty-team-btn' + (penaltyTeam === 'team2' ? ' active-t2' : '');
+}
+
+function startPenalty() {
+  if (penaltyInterval) {
+    clearInterval(penaltyInterval);
+    penaltyInterval = null;
+    document.getElementById('penaltyCountdown').classList.remove('running');
+    document.getElementById('penaltyStartBtn').textContent = '▶ ابدأ';
+    document.getElementById('penaltyStartBtn').disabled = false;
+    sendWS({ type: 'penalty_end', team: penaltyTeam }).catch(() => {});
+
+    return;
+  }
+
+  const seconds = window.PENALTY_TIMER_SECONDS || 10;
+  let left = seconds;
+
+  const countEl = document.getElementById('penaltyCountdown');
+  const btnEl   = document.getElementById('penaltyStartBtn');
+
+  countEl.textContent = left;
+  countEl.classList.add('running');
+  btnEl.textContent = '⏹ إيقاف';
+
+  // بث عبر WebSocket
+  sendWS({
+    type: 'penalty_start',
+    team: penaltyTeam,
+    seconds: seconds,
+    team_name: penaltyTeam === 'team1'
+      ? (window.sessionData?.team1Name || 'الفريق 1')
+      : penaltyTeam === 'team2'
+        ? (window.sessionData?.team2Name || 'الفريق 2')
+        : null
+  }).catch(() => {});
+
+  penaltyInterval = setInterval(() => {
+    left--;
+    countEl.textContent = left;
+    if (left <= 0) {
+      clearInterval(penaltyInterval);
+      penaltyInterval = null;
+      countEl.classList.remove('running');
+      btnEl.textContent = '▶ ابدأ';
+      btnEl.disabled = false;
+      // بث انتهاء العقوبة
+      sendWS({ type: 'penalty_end', team: penaltyTeam }).catch(() => {});
+    }
+  }, 1000);
+}
+
+// تحديث مدة العقوبة من الإعدادات
+window.PENALTY_TIMER_SECONDS = 10;
+</script>
 
 
 </body>

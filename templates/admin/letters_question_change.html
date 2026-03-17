@@ -1,0 +1,313 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:1fr 420px;gap:20px;align-items:start;">
+
+<!-- الجانب الأيسر: النموذج -->
+  <div>
+    <!-- إعدادات التوليد — تظهر فقط في صفحة الإضافة -->
+    {% if not original %}
+    <div style="background:#0b1220;border:1px solid #374151;border-radius:12px;padding:16px;margin-bottom:20px;">
+      <h3 style="color:#06b6d4;margin:0 0 14px;font-size:14px;">⚡ توليد أسئلة بالجملة</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:5px;">عدد الأسئلة لكل حرف</label>
+          <select id="genCount" style="width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;">
+            <option value="1">١</option><option value="2">٢</option>
+            <option value="3">٣</option><option value="4">٤</option>
+            <option value="5" selected>٥</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:5px;">المجال الافتراضي</label>
+          <select id="genCategory" style="width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;">
+            <option value="">— غير محدد —</option>
+            <option value="general">الثقافة العامة</option>
+            <option value="religious">ديني</option>
+            <option value="science">العلوم</option>
+            <option value="geography">الجغرافيا</option>
+            <option value="arabic">اللغة العربية</option>
+            <option value="history">التاريخ</option>
+            <option value="who_said">من القائل ⚠️</option>
+            <option value="who_am_i">من أنا؟</option>
+            <option value="sports">الرياضة</option>
+            <option value="politics">السياسة</option>
+          </select>
+        </div>
+        <div>
+          <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:5px;">الصعوبة الافتراضية</label>
+          <select id="genDifficulty" style="width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;">
+            <option value="unspecified">غير محدد</option>
+            <option value="easy">سهل</option>
+            <option value="medium">متوسط</option>
+            <option value="hard">صعب</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:5px;">الحزمة *</label>
+        <select id="genPackage" style="width:100%;padding:8px;border-radius:7px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;">
+          <option value="">— اختر حزمة —</option>
+          {% for p in letters_packages %}
+          <option value="{{ p.id }}">حزمة {{ p.package_number }} — {{ p.get_question_theme_display }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="button" onclick="generateBulkForm()" style="background:linear-gradient(135deg,#6d28d9,#06b6d4);color:#fff;border:none;border-radius:9px;padding:10px 22px;font-weight:800;font-size:13px;cursor:pointer;">
+        ⚡ توليد النموذج
+      </button>
+
+    </div>
+
+    <!-- حاوية النموذج المولّد -->
+    <div id="bulkContainer"></div>
+
+    {% else %}
+    {{ block.super }}
+    {% endif %}
+  </div>
+
+
+  <!-- الجانب الأيمن: المرجع + البحث -->
+  <div style="position:sticky;top:20px;">
+
+    <!-- حقل البحث -->
+    <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;margin-bottom:16px;">
+      <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:14px;font-weight:800;">
+        🔍 بحث عن مشابه
+      </h3>
+      <div style="display:flex;gap:8px;">
+        <input
+          type="text"
+          id="similarSearchInput"
+          placeholder="ابحث بالسؤال أو الإجابة..."
+          style="flex:1;padding:8px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:13px;"
+        />
+        <button
+          onclick="searchSimilar()"
+          style="background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px;"
+        >بحث</button>
+      </div>
+      <div id="searchResults" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- أسئلة نفس الحرف -->
+    <div style="background:#0b1220;border:1px solid #1f2937;border-radius:14px;padding:16px;max-height:70vh;overflow-y:auto;">
+      <h3 style="color:#e2e8f0;margin:0 0 12px;font-size:14px;font-weight:800;">
+        📚 أسئلة حرف في الحزم السابقة
+      </h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input type="text" id="letterSearchInput" maxlength="3" placeholder="أدخل حرفاً..."
+          style="flex:1;padding:8px 12px;border-radius:8px;background:#111827;color:#e2e8f0;border:1px solid #374151;font-size:14px;text-align:center;"/>
+        <button onclick="searchByLetter()" style="background:#6d28d9;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-weight:700;">بحث</button>
+      </div>
+      <div id="letterSearchResults">
+        {% if same_letter_questions %}
+          <div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">حرف {{ current_letter }} — {{ same_letter_questions|length }} سؤال</div>
+        {% endif %}
+
+
+
+      {% if same_letter_questions %}
+        {% for q in same_letter_questions %}
+        <div style="border:1px solid #1f2937;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#111827;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+            <span style="background:#1e3a8a;color:#93c5fd;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;">
+              {{ q.package }}
+            </span>
+            <span style="background:#1e1b4b;color:#a5b4fc;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;">
+              ترتيب {{ q.order }}
+            </span>
+            {% if q.category and q.category != '—' %}
+            <span style="background:#064e3b;color:#6ee7b7;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;">
+              {{ q.category }}
+            </span>
+            {% endif %}
+            {% if q.difficulty %}
+            <span style="background:#1c1917;color:#d6d3d1;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;">
+              {{ q.difficulty }}
+            </span>
+            {% endif %}
+          </div>
+          <div style="color:#e2e8f0;font-size:13px;margin-bottom:4px;">{{ q.question }}</div>
+          <div style="color:#22c55e;font-size:12px;font-weight:700;">✅ {{ q.answer }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0;">
+          {% if current_letter %}
+            لا توجد أسئلة سابقة لحرف {{ current_letter }}
+          {% else %}
+            اختر الحرف لعرض الأسئلة السابقة
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+async function searchSimilar() {
+  const q = document.getElementById('similarSearchInput').value.trim();
+  const resultsDiv = document.getElementById('searchResults');
+
+  if (!q || q.length < 2) {
+    resultsDiv.innerHTML = '<p style="color:#94a3b8;font-size:12px;">أدخل كلمتين على الأقل</p>';
+    return;
+  }
+
+  resultsDiv.innerHTML = '<p style="color:#94a3b8;font-size:12px;">جاري البحث...</p>';
+
+  try {
+    const res = await fetch(`/control-9f7a2c4e8b/games/lettersgamequestion/search-similar/?q=${encodeURIComponent(q)}`);
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) {
+      resultsDiv.innerHTML = '<p style="color:#22c55e;font-size:12px;font-weight:700;">✅ لا يوجد تشابه</p>';
+      return;
+    }
+
+    let html = `<p style="color:#f59e0b;font-size:12px;font-weight:700;margin-bottom:8px;">⚠️ وجدنا ${data.count} نتيجة مشابهة:</p>`;
+    data.results.forEach(item => {
+      html += `
+        <div style="border:1px solid #374151;border-radius:8px;padding:8px 10px;margin-bottom:6px;background:#0f172a;">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="background:#1e3a8a;color:#93c5fd;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;">${item.package}</span>
+            <span style="background:#1e1b4b;color:#a5b4fc;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;">حرف ${item.letter} / ترتيب ${item.order}</span>
+            <span style="background:#064e3b;color:#6ee7b7;border-radius:999px;padding:1px 7px;font-size:11px;">${item.category}</span>
+          </div>
+          <div style="color:#e2e8f0;font-size:12px;margin-bottom:3px;">${item.question}</div>
+          <div style="color:#22c55e;font-size:11px;font-weight:700;">✅ ${item.answer}</div>
+        </div>
+      `;
+    });
+    resultsDiv.innerHTML = html;
+  } catch(e) {
+    resultsDiv.innerHTML = '<p style="color:#ef4444;font-size:12px;">حدث خطأ في البحث</p>';
+  }
+}
+
+// بحث بضغط Enter
+document.getElementById('similarSearchInput')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') searchSimilar();
+});
+
+
+const ALL_LETTERS = ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي'];
+const TYPES_BY_COUNT = {1:['main'],2:['main','alt1'],3:['main','alt1','alt2'],4:['main','alt1','alt2','alt3'],5:['main','alt1','alt2','alt3','alt4']};
+const TYPE_LABELS = {'main':'١ رئيسي','alt1':'٢','alt2':'٣','alt3':'٤','alt4':'٥'};
+
+function generateBulkForm() {
+  const count = parseInt(document.getElementById('genCount').value);
+  const cat = document.getElementById('genCategory').value;
+  const diff = document.getElementById('genDifficulty').value;
+  const types = TYPES_BY_COUNT[count];
+  const pkgVal = document.getElementById('genPackage')?.value || '';
+  if (!pkgVal) { alert('اختر الحزمة أولاً'); return; }
+
+  const catOptions = ['','general','religious','science','geography','arabic','history','who_said','who_am_i','sports','politics'];
+  const catLabels = {'':'— غير محدد —','general':'الثقافة العامة','religious':'ديني','science':'العلوم','geography':'الجغرافيا','arabic':'اللغة العربية','history':'التاريخ','who_said':'من القائل ⚠️','who_am_i':'من أنا؟','sports':'الرياضة','politics':'السياسة'};
+  const diffOptions = ['unspecified','easy','medium','hard'];
+  const diffLabels = {'unspecified':'غير محدد','easy':'سهل','medium':'متوسط','hard':'صعب'};
+
+  function selOpts(opts, labels, selected) {
+    return opts.map(v => `<option value="${v}" ${v===selected?'selected':''}>${labels[v]}</option>`).join('');
+  }
+
+  let html = `<form method="post" id="bulkSaveForm">
+    <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+    <input type="hidden" name="bulk_action" value="1">
+    <input type="hidden" name="package" value="${pkgVal}">`;
+
+  ALL_LETTERS.forEach(letter => {
+    html += `<div style="background:#0b1220;border:1px solid #1f2937;border-radius:11px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span style="background:linear-gradient(135deg,#6d28d9,#06b6d4);color:#fff;border-radius:7px;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:17px;">${letter}</span>
+      </div>`;
+
+    types.forEach(qtype => {
+      html += `<div style="background:#111827;border-radius:9px;padding:10px;margin-bottom:8px;">
+        <div style="color:#a78bfa;font-size:11px;font-weight:700;margin-bottom:7px;">السؤال ${TYPE_LABELS[qtype]}</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr auto auto;gap:8px;align-items:start;">
+          <div>
+            <textarea name="q_${letter}_${qtype}_question" rows="2" oninput="checkSim(this,'${letter}','${qtype}')"
+              style="width:100%;padding:7px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:12px;resize:vertical;" placeholder="السؤال..."></textarea>
+            <div id="sw_${letter}_${qtype}" style="font-size:11px;margin-top:2px;"></div>
+          </div>
+          <input type="text" name="q_${letter}_${qtype}_answer" placeholder="الإجابة..."
+            style="width:100%;padding:7px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:12px;"/>
+          <select name="q_${letter}_${qtype}_category" style="padding:7px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:11px;">
+            ${selOpts(catOptions, catLabels, cat)}
+          </select>
+          <select name="q_${letter}_${qtype}_difficulty" style="padding:7px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:11px;">
+            ${selOpts(diffOptions, diffLabels, diff)}
+          </select>
+        </div>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  html += `<div style="position:sticky;bottom:0;background:#0f172a;border-top:1px solid #1f2937;padding:12px;text-align:center;margin-top:16px;">
+    <button type="submit" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:9px;padding:12px 32px;font-weight:800;font-size:14px;cursor:pointer;">💾 حفظ الكل</button>
+  </div></form>`;
+
+  document.getElementById('bulkContainer').innerHTML = html;
+  document.getElementById('bulkContainer').scrollIntoView({behavior:'smooth'});
+}
+
+const _debounce = {};
+function checkSim(el, letter, qtype) {
+  const k = letter+'_'+qtype;
+  clearTimeout(_debounce[k]);
+  _debounce[k] = setTimeout(async () => {
+    const q = el.value.trim();
+    const w = document.getElementById('sw_'+letter+'_'+qtype);
+    if (!q || q.length < 3) { w.innerHTML=''; return; }
+    try {
+      const r = await fetch('/control-9f7a2c4e8b/games/lettersgamequestion/search-similar/?q='+encodeURIComponent(q));
+      const d = await r.json();
+      w.innerHTML = d.count > 0
+        ? `<span style="color:#f59e0b;">⚠️ مشابه: ${d.results[0].package} / ${d.results[0].question.substring(0,35)}...</span>`
+        : `<span style="color:#22c55e;">✅ لا يوجد تشابه</span>`;
+    } catch(e) { w.innerHTML=''; }
+  }, 600);
+}
+
+async function searchByLetter() {
+  const letter = document.getElementById('letterSearchInput').value.trim();
+  const container = document.getElementById('letterSearchResults');
+  if (!letter) { container.innerHTML = '<p style="color:#94a3b8;font-size:12px;">أدخل حرفاً</p>'; return; }
+  container.innerHTML = '<p style="color:#94a3b8;font-size:12px;">جاري البحث...</p>';
+  try {
+    const res = await fetch(`/control-9f7a2c4e8b/games/lettersgamequestion/search-similar/?q=${encodeURIComponent(letter)}`);
+    const data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      container.innerHTML = '<p style="color:#22c55e;font-size:12px;">لا توجد أسئلة لهذا الحرف</p>';
+      return;
+    }
+    let html = `<div style="color:#94a3b8;font-size:12px;margin-bottom:8px;">${data.count} نتيجة</div>`;
+    data.results.forEach(item => {
+      html += `<div style="border:1px solid #1f2937;border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#111827;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <span style="background:#1e3a8a;color:#93c5fd;border-radius:999px;padding:1px 7px;font-size:11px;font-weight:700;">${item.package}</span>
+          <span style="background:#1e1b4b;color:#a5b4fc;border-radius:999px;padding:1px 7px;font-size:11px;">حرف ${item.letter} / ${item.order}</span>
+        </div>
+        <div style="color:#e2e8f0;font-size:12px;margin-bottom:3px;">${item.question}</div>
+        <div style="color:#22c55e;font-size:11px;font-weight:700;">✅ ${item.answer}</div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } catch(e) {
+    container.innerHTML = '<p style="color:#ef4444;font-size:12px;">حدث خطأ</p>';
+  }
+}
+
+document.getElementById('letterSearchInput')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') searchByLetter();
+});
+</script>
+{% endblock %}

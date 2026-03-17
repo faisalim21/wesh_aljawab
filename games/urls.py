@@ -75,6 +75,8 @@ path(
     name="imposter_session"
 ),
 
+path('api/settings/', views.api_get_settings, name='api_get_settings'),
+path('api/settings/save/', views.api_save_settings, name='api_save_settings'),
 
 # صفحة بداية الحزمة (قبل الإعداد)
 path(
