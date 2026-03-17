@@ -1,4 +1,5 @@
 # games/views.py
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -1935,6 +1936,9 @@ def api_get_settings(request):
             'nohost_mode': settings.nohost_mode,
             'show_name': settings.show_name,
             'show_subtitle': settings.show_subtitle,
+            'nohost_mode': settings.nohost_mode,
+            'nohost_allow_cell_color': settings.nohost_allow_cell_color,
+            'nohost_hide_answer': settings.nohost_hide_answer,
         }
 
     
@@ -1997,10 +2001,19 @@ def api_save_settings(request):
             pass
 
     if 'show_grid_to_contestants' in data:
-        settings.show_grid_to_contestants = data.get('show_grid_to_contestants', False)
-        settings.nohost_mode = data.get('nohost_mode', False)
+        settings.show_grid_to_contestants = bool(data['show_grid_to_contestants'])
 
-    # ← شعار الجلسة
+    # وضع بدون مقدم — مستقل عن show_grid_to_contestants
+    if 'nohost_mode' in data:
+        settings.nohost_mode = bool(data['nohost_mode'])
+    
+    if 'nohost_allow_cell_color' in data:
+        settings.nohost_allow_cell_color = bool(data['nohost_allow_cell_color'])
+
+    if 'nohost_hide_answer' in data:
+        settings.nohost_hide_answer = bool(data['nohost_hide_answer'])
+
+    # شعار الجلسة
     settings.show_name = data.get('show_name', '')[:50]
     settings.show_subtitle = data.get('show_subtitle', '')[:50]
 
@@ -2016,6 +2029,23 @@ def api_save_settings(request):
     if changed_session:
         session.save(update_fields=['team1_name', 'team2_name'])
 
+    settings_payload = {
+        'team1_name': settings.team1_name,
+        'team2_name': settings.team2_name,
+        'team1_color': settings.team1_color,
+        'team2_color': settings.team2_color,
+        'grid_size': settings.grid_size,
+        'buzz_timer_seconds': settings.buzz_timer_seconds,
+        'penalty_timer_enabled': settings.penalty_timer_enabled,
+        'penalty_timer_seconds': settings.penalty_timer_seconds,
+        'show_grid_to_contestants': settings.show_grid_to_contestants,
+        'nohost_mode': settings.nohost_mode,
+        'show_name': settings.show_name,
+        'show_subtitle': settings.show_subtitle,
+        'nohost_allow_cell_color': settings.nohost_allow_cell_color,
+        'nohost_hide_answer': settings.nohost_hide_answer,
+    }
+
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
@@ -2023,19 +2053,7 @@ def api_save_settings(request):
                 f"letters_session_{session_id}",
                 {
                     "type": "broadcast_settings_update",
-                    "settings": {
-                        "team1_name": settings.team1_name,
-                        "team2_name": settings.team2_name,
-                        "team1_color": settings.team1_color,
-                        "team2_color": settings.team2_color,
-                        "grid_size": settings.grid_size,
-                        "buzz_timer_seconds": settings.buzz_timer_seconds,
-                        "penalty_timer_enabled": settings.penalty_timer_enabled,
-                        "penalty_timer_seconds": settings.penalty_timer_seconds,
-                        "show_grid_to_contestants": settings.show_grid_to_contestants,
-                        "show_name": settings.show_name,
-                        "show_subtitle": settings.show_subtitle,
-                    }
+                    "settings": settings_payload,
                 }
             )
     except Exception as e:
@@ -2044,17 +2062,5 @@ def api_save_settings(request):
     return JsonResponse({
         'success': True,
         'message': 'تم حفظ الإعدادات',
-        'settings': {
-            'team1_name': settings.team1_name,
-            'team2_name': settings.team2_name,
-            'team1_color': settings.team1_color,
-            'team2_color': settings.team2_color,
-            'grid_size': settings.grid_size,
-            'buzz_timer_seconds': settings.buzz_timer_seconds,
-            'penalty_timer_enabled': settings.penalty_timer_enabled,
-            'penalty_timer_seconds': settings.penalty_timer_seconds,
-            'show_grid_to_contestants': settings.show_grid_to_contestants,
-            'show_name': settings.show_name,
-            'show_subtitle': settings.show_subtitle,
-        }
+        'settings': settings_payload,
     })
