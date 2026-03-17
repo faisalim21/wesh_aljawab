@@ -405,7 +405,7 @@
 
         /* ===== مؤقت العقوبة - شاشة العرض ===== */
         .penalty-display-bar {
-          position: fixed; bottom: 0; left: 0; right: 0; z-index: 500;
+          position: fixed; bottom: 0; left: 0; right: 0; z-index: 600;
           background: linear-gradient(135deg, rgba(124,58,237,0.95), rgba(76,29,149,0.95));
           backdrop-filter: blur(10px);
           padding: 12px 24px;
@@ -742,46 +742,52 @@
         /* ===== وضع بدون مقدم - تخطيط ثلاثي ===== */
         .nohost-right-panel {
           position: fixed; right: 0; top: 0; bottom: 0;
-          width: 200px; z-index: 100;
-          background: rgba(0,0,0,0.65); backdrop-filter: blur(16px);
+          width: 200px; z-index: 200;
+          background: rgba(0,0,0,0.75); backdrop-filter: blur(16px);
           border-left: 1px solid rgba(139,92,246,0.2);
           display: none; flex-direction: column;
           padding: 12px 10px; gap: 8px;
         }
         .nohost-question-panel {
           position: fixed; right: 200px; top: 0; bottom: 0;
-          width: 320px; z-index: 100;
-          background: rgba(10,4,30,0.85); backdrop-filter: blur(16px);
-          border-left: 1px solid rgba(139,92,246,0.15);
+          width: 320px; z-index: 200;
+          background: rgba(10,4,30,0.9); backdrop-filter: blur(20px);
+          border-left: 1px solid rgba(139,92,246,0.2);
           display: none; flex-direction: column;
           padding: 20px 16px; gap: 14px;
-        }
-        .nohost-left-panel {
-          position: fixed; left: 0; top: 0; bottom: 0;
-          right: 520px; z-index: 50;
-          display: none; align-items: center; justify-content: center;
           pointer-events: auto;
         }
+        .nohost-left-panel { display: none !important; }
 
         body.nohost-active .nohost-right-panel    { display: flex; }
         body.nohost-active .nohost-question-panel { display: flex; }
-        body.nohost-active .nohost-left-panel     { display: flex; }
         body.nohost-active .scores-container      { display: none !important; }
         body.nohost-active .logo-container        { display: none !important; }
         body.nohost-active .display-logo-btn      { display: none !important; }
         body.nohost-active #nohostToggleBtn       { display: none !important; }
         body.nohost-active #nohostPanel           { display: none !important; }
-        body.nohost-active .main-container        { display: block !important; }
-        body.nohost-active .honeycomb-container   {
-          position: fixed; left: 0; top: 0; right: 520px; bottom: 0;
-          display: flex; align-items: center; justify-content: center;
+        body.nohost-active .nohost-left-panel     { display: none !important; }
+        body.nohost-active .honeycomb-container {
+          position: fixed !important;
+          left: 0 !important; top: 0 !important;
+          right: 520px !important; bottom: 0 !important;
+          width: auto !important; height: auto !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          pointer-events: auto !important;
         }
         body.nohost-active .honeycomb-svg {
-          width: calc(100vw - 540px) !important;
-          height: 94vh !important;
-          max-width: none !important; max-height: none !important;
+          width: 100% !important;
+          height: 96vh !important;
+          max-width: none !important;
+          max-height: none !important;
         }
         body.nohost-active .hex-cell { cursor: pointer !important; }
+        body.nohost-active .penalty-display-bar {
+          right: 520px !important;
+          z-index: 600 !important;
+        }
 
         /* بطاقة السؤال */
         .nqp-empty {
@@ -2146,7 +2152,6 @@ function _roundRect(ctx, x, y, w, h, r) {
 </div>
 
 <!-- الخلية - يسار -->
-<div id="nohostLeftPanel" class="nohost-left-panel"></div>
 
 
 
