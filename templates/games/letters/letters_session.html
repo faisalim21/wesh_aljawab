@@ -1607,6 +1607,8 @@
                 <span class="settings-section-icon">📺</span>
                 خيارات العرض
               </div>
+
+
       
               <!-- إظهار الخلية للمتسابقين -->
               <div class="toggle-setting">
@@ -1625,21 +1627,52 @@
                 </label>
               </div>
       
-              <!-- وضع بدون مقدم (انتقل من الخارج لهنا) -->
+              <!-- وضع بدون مقدم -->
               <div class="toggle-setting">
                 <div class="toggle-setting-info">
                   <div class="toggle-setting-title">وضع بدون مقدم <span class="new-pill">جديد</span></div>
                   <div class="toggle-setting-desc">
-                    يخفي الإجابات ويسمح بكشفها واحدة واحدة — مناسب لو اللاعبون يديرون اللعبة بأنفسهم.
-                    <br><span class="recommend-pill">⭐ للحصول على أفضل تجربة، يُنصح بوجود مقدم</span>
+                    يفعّل التحكم الكامل من شاشة العرض — اختيار الحروف، عرض الأسئلة، وتعديل النقاط.
+                    <br><span class="warn-pill">⚠️ يُفعَّل على شاشة العرض تلقائياً عند الحفظ</span>
                   </div>
                 </div>
                 <label class="big-toggle">
-                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNoHostMode()"/>
+                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNohostSettings(this.checked)"/>
                   <span class="big-toggle-track">
                     <span class="big-toggle-thumb"></span>
                   </span>
                 </label>
+              </div>
+
+              <!-- إعدادات فرعية لوضع بدون مقدم -->
+              <div id="nohostSubSettings" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
+                <div style="font-size:0.82rem;font-weight:800;color:#374151;font-family:'Tajawal',sans-serif;margin-bottom:10px;">
+                  ⚙️ إعدادات وضع بدون مقدم
+                </div>
+
+                <!-- السماح بتغيير لون الخلية -->
+                <div class="toggle-setting" style="padding:8px 0; border-bottom:1px solid #f3f4f6;">
+                  <div class="toggle-setting-info">
+                    <div class="toggle-setting-title" style="font-size:0.85rem;">السماح بتغيير لون الخلية</div>
+                    <div class="toggle-setting-desc">الضغط مرتين على الحرف يغير لونه للفريق الفائز</div>
+                  </div>
+                  <label class="big-toggle">
+                    <input type="checkbox" id="nohostAllowCellColor" checked/>
+                    <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+                  </label>
+                </div>
+
+                <!-- إخفاء الإجابة كامل -->
+                <div class="toggle-setting" style="padding:8px 0;">
+                  <div class="toggle-setting-info">
+                    <div class="toggle-setting-title" style="font-size:0.85rem;">إخفاء الإجابة بشكل كامل</div>
+                    <div class="toggle-setting-desc">الإجابة محجوبة تماماً حتى يضغط المقدم على "اكشف"</div>
+                  </div>
+                  <label class="big-toggle">
+                    <input type="checkbox" id="nohostHideAnswer" checked/>
+                    <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+                  </label>
+                </div>
               </div>
             </div>
       
@@ -2422,6 +2455,14 @@
     }
   }
 
+  function toggleNohostSettings(enabled) {
+    const sub = document.getElementById('nohostSubSettings');
+    if (sub) {
+      sub.style.opacity = enabled ? '1' : '0.4';
+      sub.style.pointerEvents = enabled ? 'auto' : 'none';
+    }
+  }
+
   function revealAnswer(btn) {
     const answerEl = btn.previousElementSibling;
     if (!answerEl) return;
@@ -2489,9 +2530,15 @@ async function loadCurrentSettings() {
     togglePenaltyTimer(penaltyEnabled);
 
     document.getElementById('showGridToContestants').checked = !!settings.show_grid_to_contestants;
-    document.getElementById('noHostModeToggle').checked = !!noHostMode;
 
-    // ← شعار الجلسة
+    const nohostEnabled = !!settings.nohost_mode;
+    document.getElementById('noHostModeToggle').checked = nohostEnabled;
+    toggleNohostSettings(nohostEnabled);
+
+    document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
+    document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
+
+    // شعار الجلسة
     document.getElementById('setting_show_name').value = settings.show_name || '';
     document.getElementById('setting_show_subtitle').value = settings.show_subtitle || '';
     updateLogoPreview(settings.show_name || '', settings.show_subtitle || '');
@@ -2500,7 +2547,6 @@ async function loadCurrentSettings() {
     console.error('loadCurrentSettings error:', e);
   }
 }
-
 
 // ===== حجم الشبكة: تفعيل الاختيار البصري =====
 document.querySelectorAll('.grid-option').forEach(label => {
@@ -2540,11 +2586,11 @@ async function saveSettings() {
   const btnText = document.getElementById('saveSettingsBtnText');
   btn.disabled = true;
   btnText.textContent = '⏳ جاري الحفظ...';
- 
+
   const selectedGrid = document.querySelector('.grid-option.selected')?.dataset.size
     || document.querySelector('input[name="grid_size"]:checked')?.value
     || '5x5';
- 
+
   const payload = {
     session_id: sessionId,
     team1_name: document.getElementById('setting_team1_name').value.trim(),
@@ -2558,8 +2604,11 @@ async function saveSettings() {
     show_grid_to_contestants: document.getElementById('showGridToContestants').checked,
     show_name: document.getElementById('setting_show_name').value.trim(),
     show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
+    nohost_mode: document.getElementById('noHostModeToggle').checked,
+    nohost_allow_cell_color: document.getElementById('nohostAllowCellColor').checked,
+    nohost_hide_answer: document.getElementById('nohostHideAnswer').checked,
   };
- 
+
   try {
     const r = await fetch('/games/api/settings/save/', {
       method: 'POST',
@@ -2567,16 +2616,12 @@ async function saveSettings() {
       body: JSON.stringify(payload)
     });
     const data = await r.json();
- 
+
     if (data.success) {
       btnText.textContent = '✅ تم الحفظ!';
- 
-      // تطبيق الإعدادات فوراً
       applySettingsLocally(data.settings);
- 
-      // إظهار شارة "محدّث" على الزر
       document.getElementById('settingsChangedBadge').style.display = 'inline';
- 
+
       setTimeout(() => {
         closeSettings();
         btnText.textContent = '💾 حفظ الإعدادات';
@@ -2590,8 +2635,7 @@ async function saveSettings() {
     btnText.textContent = '❌ خطأ في الاتصال';
     btn.disabled = false;
   }
-}
- 
+} 
 function applySettingsLocally(settings) {
   if (!settings) return;
 

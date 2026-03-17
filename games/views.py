@@ -1932,6 +1932,7 @@ def api_get_settings(request):
             'penalty_timer_enabled': settings.penalty_timer_enabled,
             'penalty_timer_seconds': settings.penalty_timer_seconds,
             'show_grid_to_contestants': settings.show_grid_to_contestants,
+            'nohost_mode': settings.nohost_mode,
             'show_name': settings.show_name,
             'show_subtitle': settings.show_subtitle,
         }
@@ -1996,7 +1997,8 @@ def api_save_settings(request):
             pass
 
     if 'show_grid_to_contestants' in data:
-        settings.show_grid_to_contestants = bool(data['show_grid_to_contestants'])
+        settings.show_grid_to_contestants = data.get('show_grid_to_contestants', False)
+        settings.nohost_mode = data.get('nohost_mode', False)
 
     # ← شعار الجلسة
     settings.show_name = data.get('show_name', '')[:50]

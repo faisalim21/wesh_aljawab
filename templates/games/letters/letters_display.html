@@ -259,8 +259,7 @@
         .team1 .team-name { color: #22c55e; }
         .team2 .team-name { color: #f97316; }
         .team-score { font-size: 2.2rem; font-weight: 900; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.35); }
-        .logo-container { position: fixed; top: 16px; right: 16px; z-index: 100; background: rgba(255, 255, 255, 0.97); padding: 10px 14px; border-radius: 16px; box-shadow: 0 10px 28px rgba(0,0,0,0.25); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
-        .logo-container img { max-height: 90px; width: auto; display: block; }
+
         .honeycomb-container { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
         .honeycomb-svg { width: 90vw; height: 90vh; max-width: 1100px; max-height: 850px; display: block; margin: 0 auto; }
 
@@ -500,113 +499,77 @@
           border-color: #a78bfa; color: #fff;
         }
 
-        /* --- تصميم شعار حروف مع عزيز المطور --- */
-        .aziz-logo-wrapper {
+/* --- ستايل شعار حروف المطور 3D (فوق اللوجو الأصلي) --- */
+        .logo-container {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1000;
-            font-family: 'Lalezar', cursive;
-            perspective: 1000px;
-        }
-
-        .aziz-logo-inner {
-            background: rgba(91, 33, 182, 0.2); /* خلفية زجاجية خفيفة */
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
             align-items: center;
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.1);
+            gap: 10px; /* مسافة بين النص واللوجو اللي تحت */
         }
 
-        .aziz-logo-inner:hover { transform: scale(1.05) rotate(-2deg); }
-
-        .logo-text-row { display: flex; align-items: center; gap: 8px; line-height: 1; }
-
-        /* تأثير الـ 3D والألوان من الصورة */
-        .logo-haroof {
-            color: #FCD34D; /* أصفر */
-            font-size: 45px;
-            text-shadow: 2px 2px 0 #3b0764, 4px 4px 0 #3b0764;
-            animation: slideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        .logo-maa {
-            color: #22D3EE; /* سماوي */
-            font-size: 20px;
-            transform: rotate(-15deg);
-            margin-top: 10px;
-            opacity: 0;
-            animation: fadeIn 0.5s ease 0.6s forwards;
-        }
-
-        .logo-aziz {
-            color: #F87171; /* أحمر برتقالي */
-            font-size: 45px;
-            text-shadow: 2px 2px 0 #3b0764, 4px 4px 0 #3b0764;
-            animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        .logo-ramadan {
-            background: #FCD34D;
-            color: #3b0764;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 12px;
-            font-weight: 900;
-            padding: 1px 12px;
-            border-radius: 50px;
-            margin-top: -5px;
-            box-shadow: 0 4px 0 #d97706;
-        }
-
-        /* قائمة الخيارات */
-        .logo-options-menu {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 10px;
-            background: white;
-            border-radius: 12px;
-            padding: 8px;
-            display: none;
+        .haroof-group {
+            font-family: 'Lalezar', cursive;
+            display: flex;
             flex-direction: column;
-            gap: 5px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .logo-options-menu.show { display: flex; animation: popIn 0.3s ease; }
-        .logo-options-menu button {
-            border: none; background: #7c3aed; color: white;
-            padding: 8px 15px; border-radius: 8px; font-family: 'Tajawal';
-            font-weight: bold; white-space: nowrap; transition: 0.2s;
-        }
-        .logo-options-menu button:hover { background: #5b21b6; }
-
-        /* أوفرلاي العرض الكامل */
-        .full-logo-overlay {
-            position: fixed; inset: 0; background: #3b0764; 
-            z-index: 9999; display: none; align-items: center; justify-content: center;
-        }
-        .full-logo-overlay.open { display: flex; }
-        .logo-stage { 
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-            background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 30px 30px; /* شكل الحروف الخلفية بنسويها بالـ JS */
+            align-items: center;
+            line-height: 0.8;
+            pointer-events: none;
         }
 
-        .close-overlay {
-            position: absolute; top: 20px; left: 20px; font-size: 40px;
-            color: white; border: none; background: none; cursor: pointer; z-index: 10;
+        .haroof-main-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* أنميشن */
-        @keyframes slideInRight { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes slideInLeft { from { transform: translateX(-100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* تأثير الـ 3D العريض والظل المتراكم */
+        .h-text, .h-name {
+            font-size: 60px;
+            -webkit-text-stroke: 2.5px #1a0035; /* تحديد غامق عريض */
+            paint-order: stroke fill;
+            text-shadow: 
+                2px 2px 0 #1a0035, 
+                4px 4px 0 #1a0035, 
+                6px 6px 0 #1a0035; /* ظل متراكم لعمق 3D */
+        }
+
+        .h-text { color: #FCD34D; } /* أصفر */
+        .h-name { color: #F87171; } /* أحمر/وردي */
+
+        .h-maa {
+            color: #22D3EE; /* سماوي */
+            font-size: 26px;
+            transform: rotate(-15deg);
+            -webkit-text-stroke: 1.5px #1a0035;
+            text-shadow: 2px 2px 0 #1a0035, 3px 3px 0 #1a0035;
+            margin: 0 -8px;
+            z-index: 2;
+        }
+
+        .h-date-badge {
+            background: #FCD34D;
+            color: #1a0035;
+            padding: 2px 18px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 900;
+            border: 2px solid #1a0035;
+            box-shadow: 0 4px 0 #1a0035;
+            margin-top: -10px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        /* تنسيق لوجو الموقع الأصلي (الصورة) */
+        .logo-container img {
+            max-height: 80px; /* صغرناه شوي عشان النص اللي فوقه يبرز */
+            width: auto;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+        }
+
     </style>
 </head>
 <body>
@@ -624,9 +587,8 @@
         </div>
 
         <!-- اللوجو -->
-        <div class="logo-container">
-            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" 
-                 alt="وش الجواب" class="img-fluid">
+        <div class="logo-container" style="position:fixed;top:16px;right:16px;z-index:100;background:rgba(255,255,255,.97);padding:10px 14px;border-radius:16px;box-shadow:0 10px 28px rgba(0,0,0,.25);">
+            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" class="img-fluid" style="max-height:90px;width:auto;display:block;">
         </div>
 
         <!-- طبقة عرض اسم المتسابق -->
@@ -866,9 +828,7 @@
       socket = new WebSocket(url);
 
       socket.onopen = () => {
-        console.log('🟢 WS connected (display)');
         reconnectDelay = 1000;
-
         clearInterval(heartbeatTimer);
         heartbeatTimer = setInterval(() => {
           try { socket.readyState === WebSocket.OPEN && socket.send(JSON.stringify({ type: 'ping' })); } catch {}
@@ -910,11 +870,13 @@
             if (d.settings) {
               if (d.settings.team1_color) {
                 document.documentElement.style.setProperty('--team1-color', d.settings.team1_color);
-                document.querySelector('.score-card.team1').style.borderColor = d.settings.team1_color;
+                const c1 = document.querySelector('.score-card.team1');
+                if (c1) c1.style.borderColor = d.settings.team1_color;
               }
               if (d.settings.team2_color) {
                 document.documentElement.style.setProperty('--team2-color', d.settings.team2_color);
-                document.querySelector('.score-card.team2').style.borderColor = d.settings.team2_color;
+                const c2 = document.querySelector('.score-card.team2');
+                if (c2) c2.style.borderColor = d.settings.team2_color;
               }
               const svg = document.getElementById('honeycombSvg');
               const vb = svg.getAttribute('viewBox').split(' ');
@@ -941,36 +903,44 @@
                 if (fullName) fullName.textContent = d.settings.show_name;
                 if (fullSub) fullSub.textContent = d.settings.show_subtitle || '';
               }
+              // وضع بدون مقدم — يُفعَّل/يُعطَّل تلقائياً
+              if (d.settings.nohost_mode !== undefined) {
+                const shouldEnable = !!d.settings.nohost_mode;
+                if (shouldEnable !== nohostMode) {
+                  nohostMode = shouldEnable;
+                  const btn = document.getElementById('nohostToggleBtn');
+                  if (btn) {
+                    btn.classList.toggle('active', nohostMode);
+                    btn.textContent = nohostMode ? '✅ وضع بدون مقدم' : '🎭 وضع بدون مقدم';
+                  }
+                  if (!nohostMode) closeNohostPanel();
+                }
+              }
             }
             break;
-
           case 'penalty_start':
             showPenaltyDisplay(d.team_name, d.seconds);
             break;
           case 'penalty_end':
             hidePenaltyDisplay();
             break;
-        } 
-     };
+        }
+      };
 
       socket.onclose = (e) => {
-        console.warn('WS closed (display):', e.code, e.reason);
         clearInterval(heartbeatTimer);
         setTimeout(setupWebSocket, reconnectDelay);
         reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
       };
 
-      socket.onerror = (err) => {
-        console.error('WS error (display):', err);
+      socket.onerror = () => {
         try { socket.close(); } catch {}
       };
     } catch (e) {
-      console.error('WS create error:', e);
       setTimeout(setupWebSocket, reconnectDelay);
       reconnectDelay = Math.min(reconnectDelay * 2, maxDelay);
     }
   }
-
 
 
 
@@ -1404,11 +1374,12 @@ function toggleLogoMenu() {
 function showFullLogo(mode) {
     const overlay = document.getElementById('fullLogoOverlay');
     const stage = document.getElementById('logoStage');
+    const hostName = document.getElementById('dynamicNameDisplay').textContent; // جلب الاسم الحالي
+    
     overlay.classList.add('open');
     document.getElementById('logoMenu').classList.remove('show');
     
-    // بناء محتوى اللوجو الكبير بناءً على النمط (طولي أو عرضي)
-    const fontSize = mode === 'portrait' ? 'clamp(80px, 15vw, 150px)' : 'clamp(100px, 20vw, 250px)';
+    const fontSize = mode === 'portrait' ? 'clamp(60px, 12vw, 120px)' : 'clamp(80px, 18vw, 220px)';
     const direction = mode === 'portrait' ? 'column' : 'row';
     
     stage.innerHTML = `
@@ -1416,13 +1387,12 @@ function showFullLogo(mode) {
             <div style="display:flex; align-items:center; gap:15px;">
                 <span class="logo-haroof" style="font-size:${fontSize}">حروف</span>
                 <span class="logo-maa" style="font-size:calc(${fontSize}/2.5)">مع</span>
-                <span class="logo-aziz" style="font-size:${fontSize}">عزيز</span>
+                <span class="logo-aziz" style="font-size:${fontSize}">${hostName}</span>
             </div>
-            <div class="logo-ramadan" style="font-size:24px; padding: 5px 30px;">رمضان 2025</div>
+            <div class="logo-ramadan" style="font-size:24px; padding: 5px 30px;">2026</div>
         </div>
     `;
 }
-
 function closeFullLogo() {
     document.getElementById('fullLogoOverlay').classList.remove('open');
 }
@@ -1440,27 +1410,25 @@ window.onclick = function(event) {
 
 
 
-<div class="aziz-logo-wrapper" id="mainLogoContainer">
-            <div class="aziz-logo-inner" onclick="toggleLogoMenu()">
-                <div class="logo-text-row">
-                    <span class="logo-haroof">حروف</span>
-                    <span class="logo-maa">مع</span>
-                    <span class="logo-aziz">عزيز</span>
-                </div>
-                <div class="logo-ramadan">رمضان 2025</div>
-            </div>
-            
-            <div class="logo-options-menu" id="logoMenu">
-                <button onclick="showFullLogo('portrait')">📱 عرض طولي</button>
-                <button onclick="showFullLogo('landscape')">📺 عرض عرضي</button>
-            </div>
-        </div>
+<!-- زر الشعار الصغير -->
+<div class="display-logo-btn" id="dispLogoBtn" onclick="openDispLogo()" style="display:none;">
+  <span class="dlb-haroof">حروف</span>
+  <span class="dlb-maa">مع</span>
+  <span class="dlb-name" id="dispLogoBtnName">—</span>
+  <span class="dlb-hint">اضغط للعرض الكامل</span>
+</div>
 
-        <div id="fullLogoOverlay" class="full-logo-overlay">
-            <button class="close-overlay" onclick="closeFullLogo()">×</button>
-            <div id="logoStage" class="logo-stage">
-                </div>
-        </div>lass="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
+<!-- Overlay الشعار كامل الشاشة -->
+<div id="dispLogoOverlay" class="disp-logo-overlay">
+  <svg class="disp-logo-full-hex" id="dispLogoHex" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div class="disp-logo-group">
+    <span class="dlg-haroof dlg-go-r">حروف</span>
+    <span class="dlg-maa dlg-go-f1">مع</span>
+    <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
+    <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
+  </div>
+  <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
+  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
 </div>
 
 <!-- مؤقت العقوبة -->

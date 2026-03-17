@@ -960,6 +960,7 @@ class GameSettings(models.Model):
         related_name='settings',
         verbose_name="الجلسة"
     )
+    nohost_mode = models.BooleanField(default=False)
 
     show_name = models.CharField(max_length=50, blank=True, default='')
     show_subtitle = models.CharField(max_length=50, blank=True, default='')
