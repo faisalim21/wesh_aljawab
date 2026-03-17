@@ -2532,13 +2532,8 @@ async function loadCurrentSettings() {
     document.getElementById('showGridToContestants').checked = !!settings.show_grid_to_contestants;
 
     const nohostEnabled = !!settings.nohost_mode;
-    const nohostEnabled = !!settings.nohost_mode;
     document.getElementById('noHostModeToggle').checked = nohostEnabled;
     toggleNohostSettings(nohostEnabled);
-    document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
-    document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
-    toggleNohostSettings(nohostEnabled);
-
     document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
     document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
 
