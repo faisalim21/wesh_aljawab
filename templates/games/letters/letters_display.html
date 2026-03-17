@@ -320,35 +320,57 @@
         }
         .dlg-haroof {
           font-size: clamp(90px,16vw,220px); color: #FCD34D;
-          -webkit-text-stroke: 4px #1a0035; paint-order: stroke fill;
-          text-shadow: 3px 3px 0 #1a0035, 6px 6px 0 #1a0035, 9px 9px 0 #1a0035, 12px 12px 0 #1a0035;
+          -webkit-text-stroke: 5px #1a0035; paint-order: stroke fill;
+          text-shadow:
+            3px 3px 0 #92400e,
+            6px 6px 0 #78350f,
+            9px 9px 0 #451a03,
+            0 0 40px rgba(252,211,77,0.3);
           display: block; transform: translateX(120%); opacity: 0;
-          letter-spacing: 2px;
+          letter-spacing: 4px; font-family: 'Lalezar', cursive;
         }
         .dlg-maa {
-          font-size: clamp(40px,7vw,90px); color: #22D3EE;
-          -webkit-text-stroke: 2.5px #1a0035; paint-order: stroke fill;
-          text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
-          display: block; margin: -0.08em 0; opacity: 0;
+          font-size: clamp(38px,6vw,80px); color: #22D3EE;
+          -webkit-text-stroke: 2.5px #164e63; paint-order: stroke fill;
+          text-shadow: 2px 2px 0 #0e7490, 4px 4px 0 #155e75;
+          display: block; margin: -0.05em 0; opacity: 0;
           transform: rotate(-8deg) scale(0.8);
+          font-family: 'Lalezar', cursive;
         }
         .dlg-name {
           font-size: clamp(90px,16vw,220px); color: #F87171;
-          -webkit-text-stroke: 4px #1a0035; paint-order: stroke fill;
-          text-shadow: 3px 3px 0 #1a0035, 6px 6px 0 #1a0035, 9px 9px 0 #1a0035, 12px 12px 0 #1a0035;
+          -webkit-text-stroke: 5px #1a0035; paint-order: stroke fill;
+          text-shadow:
+            3px 3px 0 #991b1b,
+            6px 6px 0 #7f1d1d,
+            9px 9px 0 #450a0a,
+            0 0 40px rgba(248,113,113,0.3);
           display: block; transform: translateX(-120%); opacity: 0;
-          letter-spacing: 2px;
+          letter-spacing: 4px; font-family: 'Lalezar', cursive;
         }
         .dlg-sub {
-          font-size: clamp(16px,2.5vw,38px); color: #fff;
-          display: inline-block; opacity: 0; margin-top: 16px;
-          background: rgba(0,0,0,0.35); border: 2px solid #FCD34D;
-          border-radius: 999px; padding: 4px 28px;
-          font-family: 'Tajawal',sans-serif; font-weight: 900;
+          font-size: clamp(18px,2.8vw,42px);
+          color: #1a0035;
+          display: inline-block; opacity: 0;
+          margin-top: 20px;
+          background: #FCD34D;
+          border: 3px solid #92400e;
+          border-radius: 999px;
+          padding: 5px 36px;
+          font-family: 'Tajawal', sans-serif;
+          font-weight: 900;
           letter-spacing: 1px;
-          box-shadow: 0 0 0 4px rgba(252,211,77,0.15);
+          box-shadow: 0 5px 0 #78350f, 0 8px 20px rgba(0,0,0,0.4);
         }
-
+        /* إخفاء الـ sub إذا كان فارغاً */
+        .dlg-sub:empty {
+          display: none !important;
+          opacity: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
         @keyframes dlg-fromR { to { transform: translateX(0); opacity: 1; } }
         @keyframes dlg-fromL { to { transform: translateX(0); opacity: 1; } }
         @keyframes dlg-pop   { to { opacity: 1; transform: rotate(-8deg) scale(1); } }
@@ -1461,17 +1483,19 @@ function replayDispLogo() {
   els.forEach(el => {
     el.classList.remove('dlg-go-r','dlg-go-l','dlg-go-f1','dlg-go-f2');
     el.style.opacity = '0';
-    if (el.classList.contains('dlg-haroof')) el.style.transform = 'translateX(150%)';
-    if (el.classList.contains('dlg-name')) el.style.transform = 'translateX(-150%)';
+    if (el.classList.contains('dlg-haroof')) el.style.transform = 'translateX(120%)';
+    if (el.classList.contains('dlg-name'))   el.style.transform = 'translateX(-120%)';
+    if (el.classList.contains('dlg-maa'))    el.style.transform = 'rotate(-8deg) scale(0.8)';
   });
   requestAnimationFrame(() => requestAnimationFrame(() => {
     document.querySelector('.dlg-haroof').classList.add('dlg-go-r');
     document.querySelector('.dlg-maa').classList.add('dlg-go-f1');
     document.querySelector('.dlg-name').classList.add('dlg-go-l');
-    document.querySelector('.dlg-sub').classList.add('dlg-go-f2');
+    const sub = document.querySelector('.dlg-sub');
+    // فقط لو فيه محتوى
+    if (sub && sub.textContent.trim()) sub.classList.add('dlg-go-f2');
   }));
 }
-
 
 let penaltyDisplayInterval = null;
 
@@ -1768,12 +1792,23 @@ function saveDispLogo(orientation) {
     <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
   </div>
   <button class="disp-logo-close" onclick="closeDispLogo()">✕ إغلاق</button>
-  <div class="disp-logo-save-btn">
-    <span onclick="saveDispLogo('landscape')" style="cursor:pointer;">📺 عرضي</span>
-    <span style="opacity:0.4;">|</span>
-    <span onclick="saveDispLogo('portrait')" style="cursor:pointer;">📱 طولي</span>
+  <div style="position:fixed;top:20px;right:20px;z-index:10;display:flex;gap:8px;">
+    <button onclick="saveDispLogo('landscape')" style="
+      background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
+      color:#FCD34D;border-radius:12px;padding:10px 18px;
+      font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
+      backdrop-filter:blur(8px);">
+      📺 حفظ عرضي
+    </button>
+    <button onclick="saveDispLogo('portrait')" style="
+      background:rgba(252,211,77,0.15);border:1.5px solid rgba(252,211,77,0.5);
+      color:#FCD34D;border-radius:12px;padding:10px 18px;
+      font-family:'Tajawal',sans-serif;font-weight:700;font-size:13px;cursor:pointer;
+      backdrop-filter:blur(8px);">
+      📱 حفظ طولي
+    </button>
   </div>
-  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة</button>
+  <button class="disp-logo-replay" onclick="replayDispLogo()">↺ إعادة الأنيميشن</button>
 </div>
 
 <div id="nohostRightPanel" class="nohost-right-panel">
