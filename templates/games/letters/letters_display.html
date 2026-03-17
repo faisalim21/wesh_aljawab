@@ -805,11 +805,10 @@
           flex-shrink: 0;
         }
         .nqp-question-text {
-          font-size: clamp(1rem,1.6vw,1.25rem);
+          font-size: clamp(1.3rem, 2.2vw, 1.8rem);
           font-weight: 900; color: #f1f5f9;
-          line-height: 1.8; font-family: 'Tajawal',sans-serif;
-          flex: 1; overflow-y: auto;
-          padding: 4px 0;
+          line-height: 1.9; font-family: 'Tajawal',sans-serif;
+          flex: 1; overflow-y: auto; padding: 4px 0;
         }
         .nqp-answer-box {
           background: rgba(255,255,255,0.05);
@@ -822,10 +821,10 @@
           font-family: 'Tajawal',sans-serif; margin-bottom: 6px;
         }
         .nqp-answer-text {
-          font-size: 1.2rem; font-weight: 900; color: #4ade80;
+          font-size: 1.6rem; font-weight: 900; color: #4ade80;
           filter: blur(10px) brightness(0.15);
           transition: filter 0.35s; user-select: none;
-          font-family: 'Tajawal',sans-serif; margin-bottom: 8px;
+          font-family: 'Tajawal',sans-serif; margin-bottom: 10px;
         }
         .nqp-answer-text.revealed { filter: none; user-select: text; }
         .nqp-reveal-btn {
@@ -844,6 +843,15 @@
           font-size: 0.8rem; cursor: pointer;
         }
         .nqp-change-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+        body.nohost-active .penalty-display-bar {
+          right: 520px !important;
+          left: 0 !important;
+          z-index: 9000 !important;
+        }
+        body.nohost-active .penalty-display-bar.show {
+          display: flex !important;
+        }
     </style>
 </head>
 <body>
@@ -1148,11 +1156,13 @@
             if (d.settings) {
               if (d.settings.team1_color) {
                 document.documentElement.style.setProperty('--team1-color', d.settings.team1_color);
+                document.documentElement.style.setProperty('--team1-stroke', d.settings.team1_color);
                 const c1 = document.querySelector('.score-card.team1');
                 if (c1) c1.style.borderColor = d.settings.team1_color;
               }
               if (d.settings.team2_color) {
                 document.documentElement.style.setProperty('--team2-color', d.settings.team2_color);
+                document.documentElement.style.setProperty('--team2-stroke', d.settings.team2_color);
                 const c2 = document.querySelector('.score-card.team2');
                 if (c2) c2.style.borderColor = d.settings.team2_color;
               }
