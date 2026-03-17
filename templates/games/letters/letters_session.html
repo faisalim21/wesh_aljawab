@@ -2747,16 +2747,21 @@ async function saveSettings() {
     show_name: document.getElementById('setting_show_name').value.trim(),
     show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
     nohost_mode: document.getElementById('noHostModeToggle').checked,
-    nohost_allow_cell_color: document.getElementById('nohostAllowCellColor').checked,
-    nohost_hide_answer: document.getElementById('nohostHideAnswer').checked,
   };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
     const r = await fetch('/games/api/settings/save/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
     const data = await r.json();
 
     if (data.success) {
@@ -2768,16 +2773,25 @@ async function saveSettings() {
         closeSettings();
         btnText.textContent = '💾 حفظ الإعدادات';
         btn.disabled = false;
-      }, 800);
+      }, 600);
     } else {
-      btnText.textContent = '❌ خطأ، حاول مرة أخرى';
+      btnText.textContent = '❌ تعذر الحفظ';
       btn.disabled = false;
     }
-  } catch(e) {
-    btnText.textContent = '❌ خطأ في الاتصال';
+  } catch (e) {
+    clearTimeout(timeoutId);
+
+    if (e.name === 'AbortError') {
+      btnText.textContent = '⌛ الحفظ تأخر، حاول مرة أخرى';
+    } else {
+      btnText.textContent = '❌ خطأ في الاتصال';
+    }
+
     btn.disabled = false;
+    console.error('saveSettings error:', e);
   }
-} 
+}
+
 function applySettingsLocally(settings) {
   if (!settings) return;
 
