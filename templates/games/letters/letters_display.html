@@ -1291,10 +1291,11 @@ function buildHexBackground(svg, viewW, viewH, color1, color2) {
     const p = document.createElementNS(NS,'polygon');
     p.setAttribute('points',pts); p.setAttribute('fill',fill); g.appendChild(p);
   };
-  tri(`0,0 ${viewW},0 ${cx},${cy}`, color1);
-  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, color1);
-  tri(`0,0 0,${viewH} ${cx},${cy}`, color2);
-  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, color2);
+  // بعد — خلفية موحدة داكنة بدون ألوان الفرق
+  tri(`0,0 ${viewW},0 ${cx},${cy}`, 'rgba(30,10,60,0.6)');
+  tri(`0,${viewH} ${viewW},${viewH} ${cx},${cy}`, 'rgba(30,10,60,0.6)');
+  tri(`0,0 0,${viewH} ${cx},${cy}`, 'rgba(20,5,50,0.6)');
+  tri(`${viewW},0 ${viewW},${viewH} ${cx},${cy}`, 'rgba(20,5,50,0.6)');
 
   svg.insertBefore(g, defs.nextSibling);
 }
@@ -1843,9 +1844,10 @@ function nlpReveal()          { nqpReveal(); }
 
 // إغلاق القائمة عند الضغط في أي مكان آخر
 window.onclick = function(event) {
-    if (!event.target.closest('.aziz-logo-wrapper')) {
-        document.getElementById('logoMenu').classList.remove('show');
-    }
+  const logoMenu = document.getElementById('logoMenu');
+  if (logoMenu && !event.target.closest('.aziz-logo-wrapper')) {
+    logoMenu.classList.remove('show');
+  }
 }
 
 
@@ -1952,7 +1954,7 @@ async function saveDispLogo(orientation) {
   y += lineH1 + lineH2 * 0.1;
 
   // "مع" (أو "مـع" مع مدّة)
-  const maaText = document.querySelector('.dlg-maa')?.textContent?.trim() || 'مع';
+  const maaText = document.querySelector('.dlg-maa')?.textContent?.trim() || 'مــــع';
   ctx.save();
   ctx.translate(W / 2, y);
   ctx.rotate(-8 * Math.PI / 180);
@@ -2019,7 +2021,7 @@ function _roundRect(ctx, x, y, w, h, r) {
 <!-- زر الشعار الصغير -->
 <div class="display-logo-btn" id="dispLogoBtn" onclick="openDispLogo()" style="display:none;">
   <span class="dlb-haroof">حروف</span>
-  <span class="dlb-maa">مع</span>
+  <span class="dlb-maa">مــــع</span>
   <span class="dlb-name" id="dispLogoBtnName">—</span>
   <span class="dlb-hint">اضغط للعرض الكامل</span>
 </div>
@@ -2029,7 +2031,7 @@ function _roundRect(ctx, x, y, w, h, r) {
 
   <div class="disp-logo-group">
     <span class="dlg-haroof dlg-go-r">حروف</span>
-    <span class="dlg-maa dlg-go-f1">مـــع</span>
+    <span class="dlg-maa dlg-go-f1">مــــع</span>
     <div class="dlg-name-wrap">
       <span class="dlg-name dlg-go-l" id="dispLogoFullName">—</span>
       <span class="dlg-sub dlg-go-f2" id="dispLogoFullSub"></span>
@@ -2109,7 +2111,7 @@ function _roundRect(ctx, x, y, w, h, r) {
   </div>
   <div class="nhrp-logo" onclick="openDispLogo()" style="cursor:pointer;opacity:1;transition:opacity 0.2s;" onmouseenter="this.style.opacity='0.7'" onmouseleave="this.style.opacity='1'">
     <span class="lh">حروف</span>
-    <span class="lm">مع</span>
+    <span class="lm">مــــع</span>
     <span class="ln" id="nhrpName">—</span>
     <span class="ls" id="nhrpSub"></span>
   </div>
@@ -2164,7 +2166,13 @@ function _roundRect(ctx, x, y, w, h, r) {
 <!-- الخلية - يسار -->
 
 
-
+<!-- شريط عقوبة شاشة العرض -->
+<div id="penaltyDisplayBar" class="penalty-display-bar">
+  <span class="penalty-display-label">⏱ عقوبة</span>
+  <span class="penalty-display-team" id="penaltyDisplayTeam"></span>
+  <span class="penalty-display-num" id="penaltyDisplayNum">10</span>
+  <span class="penalty-display-label">ث</span>
+</div>
 
 </body>
 </html>
