@@ -312,16 +312,90 @@
 
 
     /* ===== هيدر الشعار ===== */
+    /* ===== هيدر شعار الجلسة ===== */
     .session-logo-header {
       display: none;
       width: 100%;
-      background: linear-gradient(135deg, #3b0764, #4c1d95);
-      padding: 10px 16px;
+      background: linear-gradient(135deg, #2e1065 0%, #3b0764 50%, #1a0050 100%);
+      padding: 14px 16px 12px;
       text-align: center;
       font-family: 'Lalezar', sans-serif;
-      line-height: 1;
       position: sticky; top: 0; z-index: 5;
-      border-bottom: 1px solid rgba(139,92,246,0.3);
+      border-bottom: 1.5px solid rgba(139,92,246,0.35);
+      box-shadow: 0 4px 20px rgba(59,7,100,0.4);
+    }
+
+    /* خلفية سداسيات خفيفة */
+    .session-logo-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='46'%3E%3Cpolygon points='20,2 38,12 38,34 20,44 2,34 2,12' fill='none' stroke='rgba(139,92,246,0.12)' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 28px 32px;
+      pointer-events: none;
+    }
+
+    .slh-inner {
+      position: relative; z-index: 2;
+      display: inline-flex; align-items: center;
+      justify-content: center; gap: 4px;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+      line-height: 0.9;
+    }
+
+    .slh-haroof {
+      color: #FCD34D;
+      font-size: clamp(22px, 6vw, 38px);
+      -webkit-text-stroke: 1.5px #1a0035;
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 #92400e, 3px 3px 0 #78350f;
+      letter-spacing: 2px;
+    }
+    .slh-maa {
+      color: #22D3EE;
+      font-size: clamp(12px, 3vw, 20px);
+      -webkit-text-stroke: 1px #164e63;
+      paint-order: stroke fill;
+      display: inline-block;
+      transform: rotate(-6deg);
+      margin: 0 2px;
+    }
+    .slh-name {
+      color: #F87171;
+      font-size: clamp(22px, 6vw, 38px);
+      -webkit-text-stroke: 1.5px #1a0035;
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 #991b1b, 3px 3px 0 #7f1d1d;
+      letter-spacing: 2px;
+    }
+
+    /* badge التاريخ */
+    .slh-sub-wrap {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center;
+      margin-top: 4px;
+    }
+    .slh-sub {
+      display: none;
+      background: #FCD34D;
+      color: #1a0035;
+      border: 1.5px solid #92400e;
+      border-radius: 999px;
+      padding: 1px 10px;
+      font-size: clamp(9px, 2vw, 12px);
+      font-weight: 900;
+      font-family: 'Tajawal', sans-serif;
+      box-shadow: 0 2px 0 #78350f;
+      white-space: nowrap;
+    }
+    .slh-sub.visible { display: inline-block; }
+
+    /* أنيميشن دخول بسيط */
+    @keyframes slh-fadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .session-logo-header.show {
+      animation: slh-fadeIn 0.4s ease forwards;
     }
     .slh-inner {
       display: inline-flex; align-items: center; gap: 6px;
@@ -445,10 +519,12 @@
   <div id="sessionLogoHeader" class="session-logo-header">
     <div class="slh-inner">
       <span class="slh-haroof">حروف</span>
-      <span class="slh-maa">مع</span>
+      <span class="slh-maa">مــــع</span>
       <span class="slh-name" id="slhName">—</span>
     </div>
-    <span class="slh-sub" id="slhSub"></span>
+    <div class="slh-sub-wrap">
+      <span class="slh-sub" id="slhSub"></span>
+    </div>
   </div>
   <!-- لمبة الاتصال -->
   <div id="conn" class="conn disconnected">🔴 منقطع</div>
@@ -572,6 +648,20 @@
       buzzText: document.getElementById('buzzText'),
     };
 
+    function showSessionLogo(name, subtitle) {
+      const header = document.getElementById('sessionLogoHeader');
+      const nameEl = document.getElementById('slhName');
+      const subEl  = document.getElementById('slhSub');
+      if (!header || !nameEl) return;
+      nameEl.textContent = name || '—';
+      if (subEl) {
+        subEl.textContent = subtitle || '';
+        subEl.classList.toggle('visible', !!(subtitle && subtitle.trim()));
+      }
+      header.style.display = 'block';
+      header.classList.add('show');
+    }
+
     // ======== أدوات واجهة ========
     function setConn(connected){
       el.conn.className = 'conn ' + (connected ? 'connected' : 'disconnected');
@@ -645,52 +735,58 @@
           tone(840, 220, .4);
           haptic(30);
           setTimeout(()=> enableBuzz(), 900);
+
         } else if (d.type === 'buzz_rejected'){
           showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
           tone(360, 180, .25);
           haptic(40);
           setTimeout(()=> enableBuzz(), 400);
+
         } else if (d.type === 'error'){
           showMsg('err', d.message || 'حدث خطأ.', 3200);
           setTimeout(()=> enableBuzz(), 600);
-        } else if (d.type === 'settings_updated') {
+
+        } else if (d.type === 'settings_updated'){
           const s = d.settings;
-          if (s && s.show_name) {
-            const header = document.getElementById('sessionLogoHeader');
-            const name   = document.getElementById('slhName');
-            const sub    = document.getElementById('slhSub');
-            if (name) name.textContent = s.show_name;
-            if (sub)  sub.textContent  = s.show_subtitle || '';
-            if (header) header.style.display = 'block';
-          }
+          if (!s) return;
 
-          if (s && s.show_grid_to_contestants === false) {
-            const wrap = document.getElementById('contestantGridWrap');
-            const scoresWrap = document.getElementById('contestantScoresWrap');
-            if (wrap) wrap.style.display = 'none';
-            if (scoresWrap) scoresWrap.style.display = 'none';
+          if (s.team1_color) {
+            contestantT1Color = s.team1_color;
+            document.documentElement.style.setProperty('--team1-color', s.team1_color);
+            const c1 = document.getElementById('contestantTeam1ScoreCard');
+            if (c1) c1.style.borderColor = s.team1_color;
           }
+          if (s.team2_color) {
+            contestantT2Color = s.team2_color;
+            document.documentElement.style.setProperty('--team2-color', s.team2_color);
+            const c2 = document.getElementById('contestantTeam2ScoreCard');
+            if (c2) c2.style.borderColor = s.team2_color;
+          }
+          if (s.show_name) {
+            showSessionLogo(s.show_name, s.show_subtitle);
+          }
+          if (s.show_grid_to_contestants === false) {
+            document.getElementById('contestantGridWrap').style.display = 'none';
+            document.getElementById('contestantScoresWrap').style.display = 'none';
+          }
+          if (s.show_grid_to_contestants === true) {
+            document.getElementById('contestantGridWrap').style.display = 'block';
+          }
+          renderContestantScores(
+            s.team1_name || '{{ session.team1_name|escapejs }}',
+            s.team2_name || '{{ session.team2_name|escapejs }}',
+            document.getElementById('contestantTeam1Score')?.textContent || 0,
+            document.getElementById('contestantTeam2Score')?.textContent || 0,
+            s.team1_color || contestantT1Color,
+            s.team2_color || contestantT2Color
+          );
 
-          if (s && s.show_grid_to_contestants === true) {
-            const wrap = document.getElementById('contestantGridWrap');
-            if (wrap) wrap.style.display = 'block';
-          }
-
-          if (s) {
-            renderContestantScores(
-              s.team1_name || '{{ session.team1_name|escapejs }}',
-              s.team2_name || '{{ session.team2_name|escapejs }}',
-              document.getElementById('contestantTeam1Score')?.textContent || 0,
-              document.getElementById('contestantTeam2Score')?.textContent || 0,
-              s.team1_color || contestantT1Color,
-              s.team2_color || contestantT2Color
-            );
-          }
-        } else if (d.type === 'grid_state') {
+        } else if (d.type === 'grid_state'){
+          if (d.team1_color) { contestantT1Color = d.team1_color; document.documentElement.style.setProperty('--team1-color', d.team1_color); }
+          if (d.team2_color) { contestantT2Color = d.team2_color; document.documentElement.style.setProperty('--team2-color', d.team2_color); }
           if (d.show_grid) {
             document.getElementById('contestantGridWrap').style.display = 'block';
             buildContestantGrid(d.grid_size, d.letters, d.cell_states, d.team1_color, d.team2_color);
-
             renderContestantScores(
               d.team1_name,
               d.team2_name,
@@ -700,14 +796,17 @@
               d.team2_color
             );
           }
-        } else if (d.type === 'cell_state_updated') {
+
+        } else if (d.type === 'cell_state_updated'){
           updateContestantCell(d.letter, d.state, d.cell_index);
-        
-        } else if (d.type === 'scores_updated') {
+
+        } else if (d.type === 'scores_updated'){
           updateContestantScores(d.team1_score, d.team2_score);
-        } else if (d.type === 'penalty_start') {
+
+        } else if (d.type === 'penalty_start'){
           showPenaltyContestant(d.team_name, d.seconds);
-        } else if (d.type === 'penalty_end') {
+
+        } else if (d.type === 'penalty_end'){
           hidePenaltyContestant();
         }
       };
@@ -789,13 +888,9 @@
         .then(r => r.json())
         .then(data => {
           const s = data.settings;
+          // بعد
           if (!s || !s.show_name) return;
-          const header = document.getElementById('sessionLogoHeader');
-          const name   = document.getElementById('slhName');
-          const sub    = document.getElementById('slhSub');
-          if (name) name.textContent = s.show_name;
-          if (sub)  sub.textContent  = s.show_subtitle || '';
-          if (header) header.style.display = 'block';
+          showSessionLogo(s.show_name, s.show_subtitle);
         })
         .catch(() => {});
 
