@@ -786,6 +786,12 @@ function connect() {
     let d; try { d = JSON.parse(ev.data); } catch { return; }
     switch (d.type) {
 
+
+      case 'team_names_updated':
+        document.getElementById('t1Name').textContent = d.team1_name;
+        document.getElementById('t2Name').textContent = d.team2_name;
+        break;
+        
       case 'full_state':
         applyFullState(d);
         break;
@@ -805,7 +811,7 @@ function connect() {
             playAwardSound();
         }
         break; 
-        
+
       case 'answer_revealed': {
         if (!state.revealed.includes(d.rank)) state.revealed.push(d.rank);
         state.roundPts = d.round_points;

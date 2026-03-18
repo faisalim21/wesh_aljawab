@@ -1477,6 +1477,10 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 await self._handle_show_question(data.get('show', True))
             elif t == 'buzz_reset':
                 await self._handle_buzz_reset()
+            elif t == 'update_team_names':
+                await self._handle_update_team_names(
+                    data.get('team1_name'), data.get('team2_name')
+                )
 
         # المتسابق
         if self.role == 'contestant' and t == 'contestant_buzz':
@@ -1577,6 +1581,31 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'awarded_team': team,
             'awarded_points': pts,
         })
+
+    async def _handle_update_team_names(self, t1_name, t2_name):
+        if not t1_name or not t2_name:
+            return
+
+        def _save():
+            session = GameSession.objects.get(id=self.session_id)
+            session.team1_name = t1_name[:50]
+            session.team2_name = t2_name[:50]
+            session.save(update_fields=['team1_name', 'team2_name'])
+
+        await sync_to_async(_save)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_team_names',
+            'team1_name': t1_name,
+            'team2_name': t2_name,
+        })
+
+    async def broadcast_team_names(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'team_names_updated',
+            'team1_name': event['team1_name'],
+            'team2_name': event['team2_name'],
+        }))
 
     async def _handle_next_question(self):
         def _next():
