@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>فاميلي فيود — شاشة العرض</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Lalezar&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --feud-bg:     #070d1f;
+      --feud-blue:   #1a3a8f;
+      --feud-blue2:  #2563eb;
+      --feud-gold:   #f59e0b;
+      --feud-gold-d: #d97706;
+      --feud-orange: #ea580c;
+      --feud-red:    #dc2626;
+      --cell-bg:     #0f2460;
+      --cell-border: #f59e0b;
+      --cell-text:   #fcd34d;
+      --revealed-bg: #1d4ed8;
+      --t1: #22c55e;
+      --t2: #f97316;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Tajawal',sans-serif; }
+
+    body {
+      background: var(--feud-bg);
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      color: #fff;
+      display: flex; flex-direction: column;
+    }
+
+    /* نقاط الخلفية */
+    body::before {
+      content:'';
+      position:fixed; inset:0;
+      background-image: radial-gradient(circle, rgba(245,158,11,0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events:none; z-index:0;
+    }
+
+    /* ========= هيدر النقاط ========= */
+    .scores-bar {
+      position: relative; z-index:10;
+      display: flex; align-items: stretch;
+      height: 100px;
+      flex-shrink: 0;
+      background: linear-gradient(135deg, #0a1628, #0f2460);
+      border-bottom: 3px solid var(--feud-gold);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .score-block {
+      flex: 1;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 8px 20px;
+      position: relative;
+    }
+
+    .score-block.t1 {
+      border-left: 4px solid var(--t1);
+      background: linear-gradient(135deg, rgba(34,197,94,0.12), transparent);
+    }
+    .score-block.t2 {
+      border-right: 4px solid var(--t2);
+      background: linear-gradient(135deg, transparent, rgba(249,115,22,0.12));
+    }
+
+    .score-team-name {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .score-block.t1 .score-team-name { color: var(--t1); }
+    .score-block.t2 .score-team-name { color: var(--t2); }
+
+    .score-number {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 0 20px currentColor;
+    }
+    .score-block.t1 .score-number { color: var(--t1); }
+    .score-block.t2 .score-number { color: var(--t2); }
+
+    /* وسط الهيدر: شعار + نقاط الجولة */
+    .header-center {
+      width: clamp(180px, 22vw, 280px);
+      flex-shrink: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0f1f5c, #1a3a8f);
+      border-left: 2px solid rgba(245,158,11,0.4);
+      border-right: 2px solid rgba(245,158,11,0.4);
+    }
+
+    .header-logo {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.6rem);
+      color: var(--feud-gold);
+      -webkit-text-stroke: 1px var(--feud-orange);
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 var(--feud-orange);
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .round-pts-display {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      color: var(--feud-gold);
+      text-shadow: 0 0 20px rgba(245,158,11,0.6);
+      margin-top: 2px;
+    }
+
+    .round-pts-label {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+    }
+
+    /* ========= المضاعف ========= */
+    .multiplier-display {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 200;
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1.2rem, 2.5vw, 2rem);
+      padding: 4px 20px; border-radius: 999px;
+      background: rgba(0,0,0,0.7);
+      border: 2px solid var(--feud-gold);
+      color: var(--feud-gold);
+      display: none;
+      box-shadow: 0 0 20px rgba(245,158,11,0.4);
+      backdrop-filter: blur(8px);
+    }
+    .multiplier-display.show { display: block; }
+    .multiplier-display.x2 { border-color: #fcd34d; color: #fcd34d; background: rgba(217,119,6,0.5); }
+    .multiplier-display.x3 { border-color: #fca5a5; color: #fca5a5; background: rgba(185,28,28,0.5); }
+
+    /* ========= السؤال ========= */
+    .question-section {
+      position: relative; z-index:5;
+      padding: clamp(10px, 2vh, 18px) clamp(16px, 3vw, 40px);
+      flex-shrink: 0;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 2px solid rgba(245,158,11,0.25);
+    }
+
+    .question-display {
+      text-align: center;
+      font-size: clamp(1.1rem, 3vw, 2rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.4;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      min-height: 1.4em;
+      transition: all 0.4s ease;
+    }
+
+    .question-display.hidden {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    /* ========= لوحة الإجابات ========= */
+    .board-section {
+      flex: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: clamp(10px, 2vh, 20px) clamp(16px, 3vw, 40px);
+      position: relative; z-index:5;
+      overflow: hidden;
+    }
+
+    /* عمودان، الترتيب عمودي */
+    .answers-board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
+      gap: clamp(6px, 1.2vw, 14px);
+      width: 100%;
+      max-width: 1400px;
+      height: 100%;
+    }
+
+    /* خلية الإجابة */
+    .answer-cell {
+      background: var(--cell-bg);
+      border: 3px solid var(--cell-border);
+      border-radius: clamp(8px, 1.2vw, 16px);
+      display: flex; align-items: center;
+      overflow: hidden;
+      position: relative;
+      box-shadow:
+        0 6px 0 rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 0 20px rgba(245,158,11,0.1);
+      transition: all 0.35s ease;
+    }
+
+    /* رقم الإجابة */
+    .answer-rank {
+      width: clamp(44px, 7vw, 80px);
+      min-width: clamp(44px, 7vw, 80px);
+      height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+      border-left: 2px solid rgba(245,158,11,0.3);
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1.2rem, 3vw, 2.2rem);
+      color: var(--cell-text);
+      text-shadow: 0 0 12px rgba(252,211,77,0.5);
+      flex-shrink: 0;
+    }
+
+    /* نص + نقاط */
+    .answer-body {
+      flex: 1;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px clamp(10px, 2vw, 20px);
+      gap: 8px;
+    }
+
+    .answer-name {
+      font-size: clamp(1rem, 2.8vw, 2rem);
+      font-weight: 900;
+      color: var(--cell-text);
+      /* مخفي حتى الكشف */
+      filter: blur(8px) brightness(0.3);
+      transition: filter 0.5s ease, transform 0.4s ease;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .answer-pts {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1.1rem, 2.8vw, 2rem);
+      color: rgba(252,211,77,0.4);
+      filter: blur(6px);
+      transition: filter 0.5s ease, color 0.4s;
+      min-width: clamp(30px, 4vw, 55px);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ========= الإجابة المكشوفة ========= */
+    .answer-cell.revealed {
+      background: var(--revealed-bg);
+      border-color: #60a5fa;
+      box-shadow:
+        0 0 30px rgba(96,165,250,0.5),
+        0 6px 0 rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+      animation: revealPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .answer-cell.revealed .answer-name {
+      filter: none;
+      transform: scale(1.02);
+    }
+    .answer-cell.revealed .answer-pts {
+      filter: none;
+      color: var(--feud-gold);
+      text-shadow: 0 0 12px rgba(245,158,11,0.6);
+    }
+    .answer-cell.revealed .answer-rank {
+      color: #fff;
+      background: rgba(96,165,250,0.2);
+    }
+
+    @keyframes revealPop {
+      0%   { transform: scaleY(0.7); opacity: 0.3; }
+      60%  { transform: scaleY(1.05); }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+
+    /* ========= X المتراكمة ========= */
+    /* شريط الـ X أسفل اللوحة */
+    .strikes-bar {
+      position: relative; z-index:10;
+      display: flex; align-items: center; justify-content: center;
+      gap: clamp(20px, 5vw, 60px);
+      padding: clamp(6px, 1.5vh, 14px);
+      background: linear-gradient(135deg, #0a1628, #0f2460);
+      border-top: 2px solid rgba(245,158,11,0.25);
+      flex-shrink: 0;
+    }
+
+    .team-strikes {
+      display: flex; align-items: center; gap: clamp(8px, 1.5vw, 16px);
+    }
+
+    .strikes-label {
+      font-size: clamp(0.7rem, 1.5vw, 0.95rem);
+      font-weight: 800;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .strike-icons {
+      display: flex; gap: clamp(4px, 0.8vw, 10px);
+    }
+
+    /* X واحدة */
+    .x-icon {
+      width: clamp(28px, 4vw, 52px);
+      height: clamp(28px, 4vw, 52px);
+      border-radius: 999px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(0.9rem, 2vw, 1.6rem);
+      font-weight: 900;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: transparent;
+      transition: all 0.3s;
+    }
+
+    .x-icon.active {
+      background: var(--feud-red);
+      border-color: #fca5a5;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(255,0,0,0.7);
+      box-shadow:
+        0 0 20px rgba(220,38,38,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+      animation: xPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes xPop {
+      0%   { transform: scale(0) rotate(-20deg); }
+      70%  { transform: scale(1.25) rotate(5deg); }
+      100% { transform: scale(1) rotate(0deg); }
+    }
+
+    /* ========= Overlay الطنطيط ========= */
+    .buzz-overlay {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg,
+        rgba(220,38,38,0.96),
+        rgba(185,28,28,0.96)
+      );
+      animation: buzzPulse 0.5s ease-in-out infinite alternate;
+    }
+    .buzz-overlay.show { display: flex; }
+
+    @keyframes buzzPulse {
+      from { background: linear-gradient(135deg, rgba(220,38,38,0.92), rgba(185,28,28,0.92)); }
+      to   { background: linear-gradient(135deg, rgba(239,68,68,1), rgba(220,38,38,1)); }
+    }
+
+    .buzz-contestant {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(3rem, 10vw, 7rem);
+      color: #fff;
+      text-align: center;
+      text-shadow:
+        3px 3px 0 rgba(0,0,0,0.4),
+        0 0 40px rgba(255,255,255,0.3);
+      animation: nameGlow 0.5s ease-in-out infinite alternate;
+      margin-bottom: 20px;
+    }
+
+    @keyframes nameGlow {
+      from { text-shadow: 3px 3px 6px rgba(0,0,0,0.5); }
+      to   { text-shadow: 3px 3px 20px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.5); }
+    }
+
+    .buzz-team-badge {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      font-weight: 900;
+      padding: 10px 28px;
+      border-radius: 999px;
+      border: 4px solid rgba(255,255,255,0.7);
+      margin-bottom: 28px;
+    }
+
+    .buzz-countdown {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(5rem, 15vw, 10rem);
+      text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
+      animation: cdPop 1s ease-in-out;
+    }
+
+    @keyframes cdPop {
+      0%   { transform: scale(0.7); opacity:0; }
+      50%  { transform: scale(1.2); }
+      100% { transform: scale(1); opacity:1; }
+    }
+
+    /* ========= X الكبيرة عند الخطأ ========= */
+    .big-x-overlay {
+      position: fixed; inset: 0; z-index: 8888;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.1s;
+    }
+    .big-x-overlay.show { opacity: 1; }
+
+    .big-x-text {
+      font-family: 'Lalezar', sans-serif;
+      font-size: min(35vw, 35vh);
+      color: #dc2626;
+      text-shadow:
+        0 0 40px rgba(220,38,38,0.9),
+        0 0 80px rgba(220,38,38,0.5);
+      animation: bigXFlash 0.5s ease-out;
+    }
+
+    @keyframes bigXFlash {
+      0%   { transform: scale(2) rotate(-15deg); opacity: 0; }
+      30%  { transform: scale(0.95) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 0.85; }
+    }
+
+    /* ========= نقاط ممنوحة ========= */
+    .award-pop {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(3rem, 10vw, 7rem);
+      color: var(--feud-gold);
+      text-shadow:
+        0 0 30px rgba(245,158,11,0.9),
+        3px 3px 0 var(--feud-orange);
+      pointer-events: none; z-index: 7777;
+      opacity: 0;
+    }
+    .award-pop.show { animation: awardFloat 1.8s ease forwards; }
+
+    @keyframes awardFloat {
+      0%   { opacity:0; transform: translate(-50%,-50%) scale(0.5); }
+      20%  { opacity:1; transform: translate(-50%,-50%) scale(1.2); }
+      60%  { opacity:1; transform: translate(-50%,-60%) scale(1.05); }
+      100% { opacity:0; transform: translate(-50%,-80%) scale(0.9); }
+    }
+
+    /* ========= الفريق المتحكم ========= */
+    .controlling-indicator {
+      position: fixed; bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      padding: 6px 20px; border-radius: 999px;
+      font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+      font-weight: 900;
+      border: 2px solid;
+      backdrop-filter: blur(8px);
+      display: none;
+      transition: all 0.3s;
+    }
+    .controlling-indicator.show { display: block; }
+    .controlling-indicator.t1 {
+      background: rgba(34,197,94,0.2);
+      border-color: var(--t1); color: var(--t1);
+    }
+    .controlling-indicator.t2 {
+      background: rgba(249,115,22,0.2);
+      border-color: var(--t2); color: var(--t2);
+    }
+
+    /* ========= لوجو وش الجواب ========= */
+    .wesh-logo {
+      position: fixed; bottom: 14px; right: 16px;
+      z-index: 100;
+      background: rgba(255,255,255,0.92);
+      border-radius: 10px;
+      padding: 5px 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .wesh-logo img { height: 32px; width: auto; display: block; }
+  </style>
+</head>
+<body>
+
+<!-- ===== هيدر النقاط ===== -->
+<div class="scores-bar">
+  <div class="score-block t1">
+    <div class="score-team-name" id="t1Name">{{ session.team1_name }}</div>
+    <div class="score-number" id="t1Score">0</div>
+  </div>
+
+  <div class="header-center">
+    <div class="header-logo">فاميلي فيود</div>
+    <div class="round-pts-label">نقاط الجولة</div>
+    <div class="round-pts-display" id="roundPts">0</div>
+  </div>
+
+  <div class="score-block t2">
+    <div class="score-team-name" id="t2Name">{{ session.team2_name }}</div>
+    <div class="score-number" id="t2Score">0</div>
+  </div>
+</div>
+
+<!-- المضاعف -->
+<div id="multiplierDisplay" class="multiplier-display"></div>
+
+<!-- ===== السؤال ===== -->
+<div class="question-section">
+  <div class="question-display" id="questionDisplay">
+    انتظر السؤال...
+  </div>
+</div>
+
+<!-- ===== لوحة الإجابات ===== -->
+<div class="board-section">
+  <div class="answers-board" id="answersBoard">
+    <!-- تُبنى بالـ JS -->
+  </div>
+</div>
+
+<!-- ===== شريط الـ X ===== -->
+<div class="strikes-bar">
+  <div class="team-strikes">
+    <span class="strikes-label" id="t1StrikesLabel">{{ session.team1_name }}</span>
+    <div class="strike-icons" id="t1StrikeIcons">
+      <div class="x-icon">✗</div>
+      <div class="x-icon">✗</div>
+      <div class="x-icon">✗</div>
+    </div>
+  </div>
+
+  <div class="team-strikes">
+    <div class="strike-icons" id="t2StrikeIcons">
+      <div class="x-icon">✗</div>
+      <div class="x-icon">✗</div>
+      <div class="x-icon">✗</div>
+    </div>
+    <span class="strikes-label" id="t2StrikesLabel">{{ session.team2_name }}</span>
+  </div>
+</div>
+
+<!-- ===== overlays ===== -->
+<!-- طنطيط -->
+<div id="buzzOverlay" class="buzz-overlay">
+  <div id="buzzName" class="buzz-contestant">—</div>
+  <div id="buzzTeam" class="buzz-team-badge">—</div>
+  <div id="buzzCountdown" class="buzz-countdown">3</div>
+</div>
+
+<!-- X الكبيرة -->
+<div id="bigXOverlay" class="big-x-overlay">
+  <span class="big-x-text" id="bigXText">✗</span>
+</div>
+
+<!-- نقاط ممنوحة -->
+<div id="awardPop" class="award-pop"></div>
+
+<!-- الفريق المتحكم -->
+<div id="controllingIndicator" class="controlling-indicator"></div>
+
+<!-- لوجو -->
+<div class="wesh-logo">
+  <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+</div>
+
+<script>
+const SESSION_ID = '{{ session.id|escapejs }}';
+const T1_NAME_INIT = '{{ session.team1_name|escapejs }}';
+const T2_NAME_INIT = '{{ session.team2_name|escapejs }}';
+const BUZZ_TIMER = 3;
+
+let socket = null;
+let reconnectDelay = 1000;
+let cdInterval = null;
+let hbTimer = null;
+
+let state = {
+  answers: [],
+  revealed: [],
+  t1Strikes: 0,
+  t2Strikes: 0,
+  roundPts: 0,
+  multiplier: 1,
+  controllingTeam: '',
+  t1Score: 0,
+  t2Score: 0,
+  questionText: '',
+  questionVisible: true,
+};
+
+// ========= أصوات =========
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let actx = null;
+
+function ensureAudio() {
+  if (!actx) {
+    try { actx = new AudioCtx(); } catch {}
+  }
+  if (actx && actx.state === 'suspended') actx.resume();
+}
+document.addEventListener('click', ensureAudio, { once: true });
+document.addEventListener('touchstart', ensureAudio, { once: true, passive: true });
+
+function tone(freq, dur, gain = 0.4, type = 'sine') {
+  ensureAudio();
+  if (!actx) return;
+  try {
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.connect(g); g.connect(actx.destination);
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(gain, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur/1000);
+    o.start(); o.stop(actx.currentTime + dur/1000);
+  } catch {}
+}
+
+// صوت الكشف: دينق تصاعدي مشهور
+function playRevealSound() {
+  tone(523, 120, 0.4);
+  setTimeout(() => tone(659, 120, 0.4), 100);
+  setTimeout(() => tone(784, 200, 0.45), 200);
+  setTimeout(() => tone(1047, 300, 0.5), 350);
+}
+
+// صوت X: دوي منخفض + صوت إنذار
+function playStrikeSound(count) {
+  // صوت الـ X المشهور في فاميلي فيود
+  tone(150, 400, 0.7, 'sawtooth');
+  setTimeout(() => tone(120, 500, 0.6, 'sawtooth'), 100);
+  // كلما زاد عدد الـ X كلما صار أقوى
+  if (count >= 3) {
+    setTimeout(() => tone(100, 800, 0.8, 'sawtooth'), 200);
+  }
+}
+
+// صوت الطنطيط
+function playBuzzSound() {
+  tone(880, 300, 0.5);
+  setTimeout(() => tone(1100, 200, 0.4), 250);
+}
+
+// صوت النقاط
+function playAwardSound() {
+  [0, 100, 200, 300].forEach((d, i) => {
+    setTimeout(() => tone(523 * Math.pow(1.25, i), 200, 0.4), d);
+  });
+}
+
+// ========= بناء اللوحة =========
+function buildBoard(answers, revealed) {
+  const board = document.getElementById('answersBoard');
+  board.innerHTML = '';
+
+  // نحتاج ترتيب عمودي: 1,2,3,4 في العمود الأيسر ← 5,6,7,8 في الأيمن
+  const sorted = [...answers].sort((a, b) => a.rank - b.rank);
+  const half   = Math.ceil(sorted.length / 2);
+
+  // نعيد الترتيب: col1=[1,2,3,4] col2=[5,6,7,8] → grid يأخذها صفاً صفاً
+  // بما أن grid يملأ left-to-right ثم top-to-bottom
+  // نحتاج نرتبها بحيث grid-template-rows يكون auto-flow: column
+  // الحل: نغير grid إلى grid-auto-flow: column مع عدد صفوف ثابت
+
+  board.style.gridTemplateRows = `repeat(${half}, 1fr)`;
+  board.style.gridAutoFlow = 'column';
+
+  sorted.forEach(ans => {
+    const isRevealed = revealed.includes(ans.rank);
+    const cell = document.createElement('div');
+    cell.className = 'answer-cell' + (isRevealed ? ' revealed' : '');
+    cell.dataset.rank = ans.rank;
+    cell.innerHTML = `
+      <div class="answer-rank">${ans.rank}</div>
+      <div class="answer-body">
+        <div class="answer-name">${ans.text}</div>
+        <div class="answer-pts">${ans.points}</div>
+      </div>
+    `;
+    board.appendChild(cell);
+  });
+}
+
+function updateStrikes(t1Count, t2Count, highlightTeam) {
+  ['t1', 't2'].forEach(t => {
+    const count  = t === 't1' ? t1Count : t2Count;
+    const icons  = document.getElementById(`${t}StrikeIcons`).querySelectorAll('.x-icon');
+    icons.forEach((icon, i) => {
+      const wasActive = icon.classList.contains('active');
+      const shouldBe  = i < count;
+      if (!wasActive && shouldBe) {
+        // أضف مع تأخير متسلسل
+        setTimeout(() => icon.classList.add('active'), i * 100);
+      } else if (wasActive && !shouldBe) {
+        icon.classList.remove('active');
+      }
+    });
+  });
+
+  // X الكبيرة
+  if (highlightTeam) {
+    const count = highlightTeam === 'team1' ? t1Count : t2Count;
+    showBigX(count);
+    playStrikeSound(count);
+  }
+}
+
+function showBigX(count) {
+  const overlay = document.getElementById('bigXOverlay');
+  const text    = document.getElementById('bigXText');
+  // نعرض عدد الـ X المتراكمة
+  text.textContent = '✗'.repeat(Math.min(count, 3));
+  overlay.classList.add('show');
+  setTimeout(() => overlay.classList.remove('show'), 800);
+}
+
+function updateMultiplier(m) {
+  state.multiplier = m;
+  const el = document.getElementById('multiplierDisplay');
+  if (m > 1) {
+    el.textContent = `×${m} مضاعف!`;
+    el.className = 'multiplier-display show' + (m === 2 ? ' x2' : ' x3');
+  } else {
+    el.className = 'multiplier-display';
+  }
+}
+
+function updateControllingTeam(team) {
+  state.controllingTeam = team || '';
+  const ind = document.getElementById('controllingIndicator');
+  if (!team) {
+    ind.classList.remove('show', 't1', 't2');
+    return;
+  }
+  const name = team === 'team1'
+    ? document.getElementById('t1Name').textContent
+    : document.getElementById('t2Name').textContent;
+  ind.textContent = `🏆 ${name} يتحكم`;
+  ind.className = `controlling-indicator show ${team === 'team1' ? 't1' : 't2'}`;
+}
+
+function applyFullState(d) {
+  state = {
+    answers:         d.answers || [],
+    revealed:        d.revealed_answers || [],
+    t1Strikes:       d.team1_strikes || 0,
+    t2Strikes:       d.team2_strikes || 0,
+    roundPts:        d.round_points || 0,
+    multiplier:      d.multiplier || 1,
+    controllingTeam: d.controlling_team || '',
+    t1Score:         d.team1_score || 0,
+    t2Score:         d.team2_score || 0,
+    questionText:    d.question_text || '',
+    questionVisible: true,
+  };
+
+  document.getElementById('t1Score').textContent = state.t1Score;
+  document.getElementById('t2Score').textContent = state.t2Score;
+  document.getElementById('roundPts').textContent = state.roundPts;
+  document.getElementById('questionDisplay').textContent = state.questionText || 'انتظر السؤال...';
+
+  buildBoard(state.answers, state.revealed);
+  updateStrikes(state.t1Strikes, state.t2Strikes, null);
+  updateMultiplier(state.multiplier);
+  updateControllingTeam(state.controllingTeam);
+}
+
+// ========= WebSocket =========
+function connect() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  socket = new WebSocket(`${proto}://${location.host}/ws/feud/${SESSION_ID}/?role=display`);
+
+  socket.onopen = () => {
+    reconnectDelay = 1000;
+    clearInterval(hbTimer);
+    hbTimer = setInterval(() => {
+      if (socket && socket.readyState === 1)
+        socket.send(JSON.stringify({ type: 'ping' }));
+    }, 20000);
+  };
+
+  socket.onmessage = (ev) => {
+    let d; try { d = JSON.parse(ev.data); } catch { return; }
+    switch (d.type) {
+
+      case 'full_state':
+        applyFullState(d);
+        break;
+
+      case 'answer_revealed': {
+        if (!state.revealed.includes(d.rank)) state.revealed.push(d.rank);
+        state.roundPts = d.round_points;
+        document.getElementById('roundPts').textContent = state.roundPts;
+
+        const cell = document.querySelector(`.answer-cell[data-rank="${d.rank}"]`);
+        if (cell && !cell.classList.contains('revealed')) {
+          cell.classList.add('revealed');
+          playRevealSound();
+        }
+        break;
+      }
+
+      case 'strike_updated': {
+        const prevT1 = state.t1Strikes;
+        const prevT2 = state.t2Strikes;
+        state.t1Strikes = d.team1_strikes;
+        state.t2Strikes = d.team2_strikes;
+        // تحديد الفريق اللي أضاف الـ X
+        const hitTeam = d.team
+          || (d.team1_strikes > prevT1 ? 'team1' : null)
+          || (d.team2_strikes > prevT2 ? 'team2' : null);
+        updateStrikes(state.t1Strikes, state.t2Strikes, hitTeam);
+        break;
+      }
+
+      case 'scores_updated':
+        state.t1Score = d.team1_score;
+        state.t2Score = d.team2_score;
+        document.getElementById('t1Score').textContent = d.team1_score;
+        document.getElementById('t2Score').textContent = d.team2_score;
+        state.roundPts = 0;
+        document.getElementById('roundPts').textContent = '0';
+        if (d.awarded_points && d.awarded_points > 0) {
+          showAwardPop(`+${d.awarded_points}`);
+          playAwardSound();
+        }
+        break;
+
+      case 'multiplier_changed':
+        updateMultiplier(d.multiplier);
+        break;
+
+      case 'controlling_team_changed':
+        updateControllingTeam(d.team);
+        break;
+
+      case 'phase_changed':
+        // لو المقدم ضغط "عرض السؤال" يظهر، لو "انتظار" يختفي
+        if (d.phase === 'question' || d.phase === 'buzzer' || d.phase === 'team1_turn' || d.phase === 'team2_turn' || d.phase === 'steal') {
+          document.getElementById('questionDisplay').classList.remove('hidden');
+        } else if (d.phase === 'waiting') {
+          document.getElementById('questionDisplay').classList.add('hidden');
+        }
+        break;
+
+      case 'question_visibility':
+        document.getElementById('questionDisplay').classList.toggle('hidden', !d.show);
+        break;
+
+      case 'contestant_buzz_accepted':
+        showBuzz(d.contestant_name, d.team, d.team_display);
+        break;
+
+      case 'buzz_reset_by_host':
+        hideBuzz();
+        break;
+    }
+  };
+
+  socket.onclose = () => {
+    clearInterval(hbTimer);
+    setTimeout(connect, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 8000);
+  };
+  socket.onerror = () => { try { socket.close(); } catch {} };
+}
+
+// ========= طنطيط =========
+function showBuzz(name, team, teamDisplay) {
+  playBuzzSound();
+  document.getElementById('buzzName').textContent = name || '—';
+  const badge = document.getElementById('buzzTeam');
+  badge.textContent = teamDisplay || (team === 'team1' ? T1_NAME_INIT : T2_NAME_INIT);
+  badge.style.background = team === 'team1'
+    ? 'rgba(34,197,94,0.4)'
+    : 'rgba(249,115,22,0.4)';
+  document.getElementById('buzzOverlay').classList.add('show');
+  startCountdown();
+}
+
+function hideBuzz() {
+  clearInterval(cdInterval);
+  document.getElementById('buzzOverlay').classList.remove('show');
+}
+
+function startCountdown() {
+  clearInterval(cdInterval);
+  let n = BUZZ_TIMER;
+  const el = document.getElementById('buzzCountdown');
+  el.textContent = n;
+  cdInterval = setInterval(() => {
+    n--;
+    el.textContent = n;
+    if (n <= 0) { clearInterval(cdInterval); hideBuzz(); }
+  }, 1000);
+}
+
+function showAwardPop(text) {
+  const el = document.getElementById('awardPop');
+  el.textContent = text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 1800);
+}
+
+// ========= تهيئة =========
+document.addEventListener('DOMContentLoaded', () => {
+  connect();
+});
+
+window.addEventListener('beforeunload', () => {
+  clearInterval(hbTimer);
+  clearInterval(cdInterval);
+  try { socket && socket.readyState === 1 && socket.close(1000, 'unload'); } catch {}
+});
+</script>
+</body>
+</html>
