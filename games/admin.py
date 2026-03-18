@@ -2216,7 +2216,325 @@ class ImposterPackageAdmin(admin.ModelAdmin):
 
 
 
+# =========================
+#  فاميلي فيود
+# =========================
 
+from .models import FamilyFeudQuestion, FamilyFeudAnswer, FamilyFeudProgress
+
+
+class FeudPackage(GamePackage):
+    class Meta:
+        proxy = True
+        verbose_name = "حزمة - فاميلي فيود"
+        verbose_name_plural = "حزم - فاميلي فيود"
+
+
+class FamilyFeudAnswerInline(admin.TabularInline):
+    model = FamilyFeudAnswer
+    fk_name = 'question'
+    extra = 5
+    max_num = 8
+    fields = ('rank', 'text', 'points')
+    ordering = ('rank',)
+
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super().get_formset(request, obj, **kwargs)
+        formset.form.base_fields['rank'].help_text = "1 = الأكثر شيوعاً"
+        formset.form.base_fields['points'].help_text = "يفضل أن يكون مجموع كل الإجابات = 100"
+        return formset
+
+
+class FamilyFeudQuestionInline(admin.StackedInline):
+    model = FamilyFeudQuestion
+    fk_name = 'package'
+    extra = 0
+    fields = ('order', 'question_text', 'multiplier')
+    ordering = ('order',)
+    show_change_link = True
+
+
+@admin.register(FeudPackage)
+class FeudPackageAdmin(admin.ModelAdmin):
+    list_display = (
+        'package_info',
+        'questions_count',
+        'price_info',
+        'is_free_icon',
+        'status_badge',
+        'created_at',
+        'feud_actions',
+    )
+    list_filter = ('is_free', 'is_active', 'created_at')
+    search_fields = ('package_number', 'description')
+    ordering = ('package_number',)
+    inlines = [FamilyFeudQuestionInline]
+
+    fieldsets = (
+        ('المعلومات الأساسية', {
+            'fields': (
+                'package_number', 'is_free',
+                ('original_price', 'discounted_price', 'price'),
+                'is_active'
+            )
+        }),
+        ('الوصف', {'fields': ('description',)}),
+    )
+
+    def get_queryset(self, request):
+        return (
+            super().get_queryset(request)
+            .filter(game_type='feud')
+            .annotate(_qcount=Count('feud_questions'))
+        )
+
+    def save_model(self, request, obj, form, change):
+        obj.game_type = 'feud'
+        super().save_model(request, obj, form, change)
+
+    def package_info(self, obj):
+        return f"حزمة {obj.package_number}"
+    package_info.short_description = "الرقم"
+
+    def questions_count(self, obj):
+        count = getattr(obj, '_qcount', 0)
+        if count == 0:
+            color, icon = '#ef4444', '❌'
+        elif count < 5:
+            color, icon = '#f59e0b', '⚠️'
+        else:
+            color, icon = '#10b981', '✅'
+        return format_html(
+            '<span style="color:{};font-weight:700;">{} {} سؤال</span>',
+            color, icon, count
+        )
+    questions_count.short_description = "عدد الأسئلة"
+
+    def price_info(self, obj):
+        if obj.is_free:
+            return "🆓 مجانية"
+        if getattr(obj, 'has_discount', False):
+            return format_html(
+                '<span style="text-decoration:line-through;color:#64748b;">{} ﷼</span> → <b style="color:#0ea5e9;">{} ﷼</b>',
+                obj.original_price, obj.discounted_price
+            )
+        return f"💰 {obj.price} ريال"
+    price_info.short_description = "السعر"
+
+    def is_free_icon(self, obj):
+        return "✅" if obj.is_free else "—"
+    is_free_icon.short_description = "مجانية"
+
+    def status_badge(self, obj):
+        return format_html(
+            '<b style="color:{};">{}</b>',
+            'green' if obj.is_active else 'red',
+            'فعّالة' if obj.is_active else 'غير فعّالة'
+        )
+    status_badge.short_description = "الحالة"
+
+    def feud_actions(self, obj):
+        upload_url = reverse('admin:games_feudpackage_upload', args=[obj.id])
+        template_url = reverse('admin:games_feudpackage_template')
+        export_url = reverse('admin:games_feudpackage_export', args=[obj.id])
+        return mark_safe(
+            f'<a class="button" href="{upload_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع CSV</a>'
+            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
+            f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
+        )
+    feud_actions.short_description = "إجراءات"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom = [
+            path(
+                "<uuid:pk>/upload/",
+                self.admin_site.admin_view(self.upload_feud_view),
+                name="games_feudpackage_upload"
+            ),
+            path(
+                "<uuid:pk>/export/",
+                self.admin_site.admin_view(self.export_feud_view),
+                name="games_feudpackage_export"
+            ),
+            path(
+                "template/",
+                self.admin_site.admin_view(self.download_feud_template),
+                name="games_feudpackage_template"
+            ),
+        ]
+        return custom + urls
+
+    def download_feud_template(self, request):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="feud_template.csv"'
+        w = csv.writer(response)
+        w.writerow(['رقم_السؤال', 'السؤال', 'المضاعف', 'ترتيب_الاجابة', 'نص_الاجابة', 'النقاط'])
+        w.writerow([1, 'أكثر شيء يحبه الناس في الصيف؟', 1, 1, 'البحر', 42])
+        w.writerow([1, 'أكثر شيء يحبه الناس في الصيف؟', 1, 2, 'السفر', 28])
+        w.writerow([1, 'أكثر شيء يحبه الناس في الصيف؟', 1, 3, 'النوم', 15])
+        w.writerow([1, 'أكثر شيء يحبه الناس في الصيف؟', 1, 4, 'الأكل', 10])
+        w.writerow([1, 'أكثر شيء يحبه الناس في الصيف؟', 1, 5, 'المكيف', 5])
+        w.writerow([2, 'أشهر رياضة في السعودية؟', 1, 1, 'كرة القدم', 55])
+        w.writerow([2, 'أشهر رياضة في السعودية؟', 1, 2, 'السباحة', 20])
+        w.writerow([2, 'أشهر رياضة في السعودية؟', 1, 3, 'كرة السلة', 15])
+        w.writerow([2, 'أشهر رياضة في السعودية؟', 1, 4, 'الجري', 10])
+        return response
+
+    def upload_feud_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='feud')
+
+        if request.method != 'POST':
+            ctx = {
+                **self.admin_site.each_context(request),
+                "opts": self.model._meta,
+                "title": f"رفع أسئلة فاميلي فيود — حزمة {package.package_number}",
+                "package": package,
+                "accept": ".csv",
+                "download_template_url": reverse('admin:games_feudpackage_template'),
+                "export_url": reverse('admin:games_feudpackage_export', args=[package.id]),
+                "change_url": reverse('admin:games_feudpackage_change', args=[package.id]),
+                "back_url": reverse('admin:games_feudpackage_changelist'),
+                "help_rows": [
+                    "الأعمدة: رقم_السؤال | السؤال | المضاعف | ترتيب_الاجابة | نص_الاجابة | النقاط",
+                    "المضاعف: 1 (عادي) أو 2 أو 3",
+                    "كل سؤال يجب أن يكون له من 4 إلى 8 إجابات.",
+                    "ترتيب الإجابة: 1 = الأكثر شيوعاً.",
+                ],
+                "extra_note": "تفعيل خيار الحذف سيحذف جميع أسئلة الحزمة قبل الرفع.",
+                "submit_label": "رفع الملف",
+                "replace_label": "حذف الأسئلة الحالية قبل الرفع",
+            }
+            return TemplateResponse(request, "admin/import_csv.html", ctx)
+
+        file = request.FILES.get('file')
+        replace = bool(request.POST.get('replace'))
+
+        if not file:
+            messages.error(request, "يرجى اختيار ملف CSV.")
+            return HttpResponseRedirect(request.path)
+
+        if replace:
+            FamilyFeudQuestion.objects.filter(package=package).delete()
+
+        try:
+            decoded = file.read().decode('utf-8-sig', errors='ignore')
+            reader = csv.reader(io.StringIO(decoded))
+            next(reader, None)  # تخطي الهيدر
+
+            # نجمع الأسئلة والإجابات أولاً قبل الحفظ
+            questions_map = {}  # رقم_السؤال → {text, multiplier, answers[]}
+
+            for row in reader:
+                if not row or len(row) < 6:
+                    continue
+                q_num_raw, q_text, multiplier_raw, rank_raw, ans_text, points_raw = [
+                    (str(x).strip() if x is not None else '') for x in row[:6]
+                ]
+                if not q_num_raw or not q_text or not ans_text:
+                    continue
+                try:
+                    q_num = int(q_num_raw)
+                    rank = int(rank_raw)
+                    points = int(points_raw)
+                    multiplier = int(multiplier_raw) if multiplier_raw in ('1', '2', '3') else 1
+                except (ValueError, TypeError):
+                    continue
+
+                if q_num not in questions_map:
+                    questions_map[q_num] = {
+                        'text': q_text,
+                        'multiplier': multiplier,
+                        'answers': []
+                    }
+                questions_map[q_num]['answers'].append({
+                    'rank': rank,
+                    'text': ans_text,
+                    'points': points
+                })
+
+            if not questions_map:
+                messages.error(request, "لم يتم التعرف على أي سؤال في الملف.")
+                return HttpResponseRedirect(request.path)
+
+            saved_q = 0
+            saved_a = 0
+            for q_num in sorted(questions_map.keys()):
+                q_data = questions_map[q_num]
+                q_obj, _ = FamilyFeudQuestion.objects.update_or_create(
+                    package=package,
+                    order=q_num,
+                    defaults={
+                        'question_text': q_data['text'],
+                        'multiplier': q_data['multiplier'],
+                    }
+                )
+                saved_q += 1
+                for ans in q_data['answers']:
+                    FamilyFeudAnswer.objects.update_or_create(
+                        question=q_obj,
+                        rank=ans['rank'],
+                        defaults={
+                            'text': ans['text'],
+                            'points': ans['points'],
+                        }
+                    )
+                    saved_a += 1
+
+            messages.success(request, f"تم حفظ {saved_q} سؤال و {saved_a} إجابة بنجاح.")
+            return HttpResponseRedirect(reverse('admin:games_feudpackage_changelist'))
+
+        except Exception as e:
+            messages.error(request, f"خطأ أثناء الرفع: {e}")
+            return HttpResponseRedirect(request.path)
+
+    def export_feud_view(self, request, pk):
+        package = get_object_or_404(GamePackage, pk=pk, game_type='feud')
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="feud_package_{package.package_number}.csv"'
+        w = csv.writer(response)
+        w.writerow(['رقم_السؤال', 'السؤال', 'المضاعف', 'ترتيب_الاجابة', 'نص_الاجابة', 'النقاط'])
+        for q in package.feud_questions.all().order_by('order').prefetch_related('answers'):
+            for ans in q.answers.all().order_by('rank'):
+                w.writerow([q.order, q.question_text, q.multiplier, ans.rank, ans.text, ans.points])
+        return response
+
+
+@admin.register(FamilyFeudQuestion)
+class FamilyFeudQuestionAdmin(admin.ModelAdmin):
+    list_display = ('package_ref', 'order', 'question_preview', 'answers_count', 'multiplier')
+    list_filter = ('package__package_number', 'multiplier')
+    search_fields = ('question_text',)
+    ordering = ('package__package_number', 'order')
+    inlines = [FamilyFeudAnswerInline]
+    list_select_related = ('package',)
+
+    def get_queryset(self, request):
+        return (
+            super().get_queryset(request)
+            .filter(package__game_type='feud')
+            .annotate(_acount=Count('answers'))
+        )
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'package':
+            kwargs['queryset'] = GamePackage.objects.filter(game_type='feud').order_by('package_number')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def package_ref(self, obj):
+        return f"حزمة {obj.package.package_number}"
+    package_ref.short_description = "الحزمة"
+
+    def question_preview(self, obj):
+        return (obj.question_text[:60] + '...') if len(obj.question_text) > 60 else obj.question_text
+    question_preview.short_description = "السؤال"
+
+    def answers_count(self, obj):
+        count = getattr(obj, '_acount', 0)
+        if count < 4:
+            return format_html('<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات</span>', count)
+        return format_html('<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>', count)
+    answers_count.short_description = "الإجابات"
 
 
 

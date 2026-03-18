@@ -46,7 +46,8 @@ class GamePackage(models.Model):
         ('images',  'تحدي الصور'),
         ('time',    'تحدّي الوقت'),
         ('quiz',    'سؤال وجواب'),
-        ('imposter', 'لعبة امبوستر'),  
+        ('imposter', 'لعبة امبوستر'), 
+        ('feud',     'فاميلي فيود'),  
     ]
 
     # أنواع الأسئلة (للحروف - قابلة للتوسّع)
@@ -1034,3 +1035,211 @@ class GameSettings(models.Model):
             }
         )
         return obj
+
+
+
+
+
+# =========================
+#  فاميلي فيود
+# =========================
+
+class FamilyFeudQuestion(models.Model):
+    """سؤال واحد في فاميلي فيود مع إجاباته"""
+    package = models.ForeignKey(
+        GamePackage,
+        on_delete=models.CASCADE,
+        related_name='feud_questions',
+        limit_choices_to={'game_type': 'feud'},
+    )
+    order = models.PositiveIntegerField(
+        default=1,
+        help_text="ترتيب السؤال داخل الحزمة"
+    )
+    question_text = models.TextField(
+        verbose_name="نص السؤال"
+    )
+    multiplier = models.PositiveIntegerField(
+        default=1,
+        choices=[(1, 'عادي ×1'), (2, 'مضاعف ×2'), (3, 'ثلاثي ×3')],
+        verbose_name="مضاعف النقاط",
+        help_text="يمكن للمقدم تغييره أثناء اللعب"
+    )
+
+    class Meta:
+        ordering = ['package', 'order']
+        unique_together = [('package', 'order')]
+        verbose_name = "سؤال فاميلي فيود"
+        verbose_name_plural = "أسئلة فاميلي فيود"
+        indexes = [
+            models.Index(fields=['package', 'order']),
+        ]
+
+    def __str__(self):
+        return f"[حزمة {self.package.package_number}] #{self.order} — {self.question_text[:40]}"
+
+    def clean(self):
+        super().clean()
+        if self.package and self.package.game_type != 'feud':
+            raise ValidationError("هذه الحزمة ليست من نوع فاميلي فيود.")
+        if self.order < 1:
+            raise ValidationError("ترتيب السؤال يبدأ من 1.")
+
+
+class FamilyFeudAnswer(models.Model):
+    """إجابة واحدة مرتبطة بسؤال فاميلي فيود"""
+    question = models.ForeignKey(
+        FamilyFeudQuestion,
+        on_delete=models.CASCADE,
+        related_name='answers',
+        verbose_name="السؤال"
+    )
+    rank = models.PositiveIntegerField(
+        verbose_name="الترتيب",
+        help_text="1 = الأكثر شيوعاً"
+    )
+    text = models.CharField(
+        max_length=200,
+        verbose_name="نص الإجابة"
+    )
+    points = models.PositiveIntegerField(
+        verbose_name="النقاط",
+        help_text="نقاط هذه الإجابة (مجموع كل الإجابات يفضل 100)"
+    )
+
+    class Meta:
+        ordering = ['question', 'rank']
+        unique_together = [('question', 'rank')]
+        verbose_name = "إجابة فاميلي فيود"
+        verbose_name_plural = "إجابات فاميلي فيود"
+        indexes = [
+            models.Index(fields=['question', 'rank']),
+        ]
+
+    def __str__(self):
+        return f"[س{self.question.order}] #{self.rank} {self.text} ({self.points} نقطة)"
+
+    def clean(self):
+        super().clean()
+        if self.rank < 1:
+            raise ValidationError("الترتيب يبدأ من 1.")
+        if self.points < 1:
+            raise ValidationError("النقاط يجب أن تكون 1 على الأقل.")
+
+
+class FamilyFeudProgress(models.Model):
+    """
+    حالة جلسة فاميلي فيود — المقدم يتحكم بكل شيء يدوياً.
+
+    المراحل (phase):
+    - 'waiting'     : انتظار بدء الجلسة
+    - 'question'    : السؤال ظاهر، لم يُعطَ لفريق بعد
+    - 'buzzer'      : زر الطنطيط مفتوح، ننتظر أول ضاغط
+    - 'team1_turn'  : الفريق الأول يجاوب
+    - 'team2_turn'  : الفريق الثاني يجاوب
+    - 'steal'       : محاولة سرقة النقاط (الفريق الثاني عنده محاولة واحدة)
+    - 'award'       : المقدم اختار الفريق الفائز بنقاط الجولة
+    - 'finished'    : انتهت الجلسة
+    """
+
+    PHASE_CHOICES = [
+        ('waiting',    'انتظار'),
+        ('question',   'عرض السؤال'),
+        ('buzzer',     'الزر مفتوح'),
+        ('team1_turn', 'دور الفريق الأول'),
+        ('team2_turn', 'دور الفريق الثاني'),
+        ('steal',      'محاولة السرقة'),
+        ('award',      'إعطاء النقاط'),
+        ('finished',   'انتهت اللعبة'),
+    ]
+
+    session = models.OneToOneField(
+        GameSession,
+        on_delete=models.CASCADE,
+        related_name='feud_progress'
+    )
+
+    # السؤال الحالي
+    current_question_index = models.PositiveIntegerField(
+        default=1,
+        verbose_name="رقم السؤال الحالي"
+    )
+
+    # المرحلة الحالية (المقدم يغيرها يدوياً)
+    phase = models.CharField(
+        max_length=20,
+        choices=PHASE_CHOICES,
+        default='waiting',
+        verbose_name="المرحلة الحالية"
+    )
+
+    # الفريق المتحكم حالياً
+    controlling_team = models.CharField(
+        max_length=10,
+        choices=[('team1', 'الفريق الأول'), ('team2', 'الفريق الثاني'), ('', 'لا أحد')],
+        default='',
+        blank=True,
+        verbose_name="الفريق المتحكم"
+    )
+
+    # أخطاء كل فريق في الجولة الحالية (تصفر مع كل سؤال جديد)
+    team1_strikes = models.PositiveIntegerField(default=0, verbose_name="أخطاء الفريق الأول")
+    team2_strikes = models.PositiveIntegerField(default=0, verbose_name="أخطاء الفريق الثاني")
+
+    # نقاط الجولة الحالية المتراكمة (قبل إعطائها لفريق)
+    round_points = models.PositiveIntegerField(
+        default=0,
+        verbose_name="نقاط الجولة الحالية"
+    )
+
+    # الإجابات المكشوفة في الجولة الحالية (قائمة rank)
+    revealed_answers = models.JSONField(
+        default=list,
+        verbose_name="الإجابات المكشوفة"
+    )
+
+    # مضاعف الجولة الحالي (المقدم يغيره)
+    current_multiplier = models.PositiveIntegerField(
+        default=1,
+        verbose_name="المضاعف الحالي"
+    )
+
+    # آخر ضاغط على الزر (للعرض فقط، القرار للمقدم)
+    last_buzzer_name = models.CharField(
+        max_length=50,
+        blank=True,
+        default='',
+        verbose_name="آخر ضاغط على الزر"
+    )
+    last_buzzer_team = models.CharField(
+        max_length=10,
+        blank=True,
+        default='',
+        verbose_name="فريق آخر ضاغط"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "تقدم فاميلي فيود"
+        verbose_name_plural = "تقدم فاميلي فيود"
+
+    def __str__(self):
+        return f"FeudProgress(session={self.session_id}, q={self.current_question_index}, phase={self.phase})"
+
+    def reset_round(self):
+        """تصفير بيانات الجولة عند الانتقال لسؤال جديد"""
+        self.team1_strikes = 0
+        self.team2_strikes = 0
+        self.round_points = 0
+        self.revealed_answers = []
+        self.controlling_team = ''
+        self.phase = 'question'
+        self.last_buzzer_name = ''
+        self.last_buzzer_team = ''
+        self.current_multiplier = 1
+
+    @property
+    def total_strikes(self):
+        return self.team1_strikes + self.team2_strikes
