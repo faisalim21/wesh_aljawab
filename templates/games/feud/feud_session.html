@@ -310,6 +310,52 @@
       margin-bottom: 14px; position: relative; z-index: 1;
     }
     .question-text { font-size: clamp(1.1rem,2.5vw,1.5rem); font-weight: 900; color: #fff; line-height: 1.6; }
+    .question-nav-inline {
+    display: grid;
+    grid-template-columns: 52px 1fr 52px;
+    align-items: center;
+    gap: 12px;
+    }
+
+    .question-center-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    }
+
+    .q-nav-label-inline {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.55);
+    font-weight: 800;
+    }
+
+    .question-nav-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(245,158,11,0.35);
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    .question-nav-btn:hover:not(:disabled) {
+    background: rgba(245,158,11,0.18);
+    border-color: rgba(245,158,11,0.7);
+    box-shadow: 0 6px 18px rgba(245,158,11,0.2);
+    }
+
+    .question-nav-btn:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+    }
 
     /* نقاط الجولة */
     .round-pts-row {
@@ -323,64 +369,163 @@
       min-width: 50px; text-align: center;
     }
 
-    /* شبكة الإجابات */
-    .answers-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-      position: relative; z-index: 1;
+    /* ========= أزرار كشف الإجابات ========= */
+    .reveal-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
     }
-    @media(max-width:600px){ .answers-grid { grid-template-columns: 1fr; } }
+
+    .reveal-btn {
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(245,158,11,0.35);
+    background: rgba(255,255,255,0.06);
+    color: #fcd34d;
+    font-weight: 900;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    }
+
+    .reveal-btn:hover:not(:disabled) {
+    background: rgba(245,158,11,0.18);
+    border-color: rgba(245,158,11,0.7);
+    transform: translateY(-1px);
+    }
+
+    .reveal-btn:disabled {
+    opacity: 0.35;
+    cursor: default;
+    }
+
+    /* ========= لوحة الإجابات — نفس شاشة العرض ========= */
+    .answers-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(8px, 1.2vw, 16px);
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    grid-auto-rows: 1fr;
+    grid-auto-flow: column;
+    }
+
+    @media(max-width:600px){
+    .answers-grid {
+        grid-template-columns: 1fr;
+        grid-auto-flow: row;
+    }
+    }
 
     .answer-cell {
-      background: #1e3a8f; border: 2.5px solid var(--feud-gold);
-      border-radius: 12px; display: flex; align-items: center;
-      overflow: hidden; min-height: 60px; cursor: pointer;
-      position: relative;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08);
-      transition: all 0.25s;
+    background: var(--cell-bg);
+    border: 3px solid var(--cell-border);
+    border-radius: clamp(8px, 1.2vw, 16px);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    position: relative;
+    min-height: 74px;
+    box-shadow:
+        0 6px 0 rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        0 0 20px rgba(245,158,11,0.1);
+    transition: all 0.35s ease;
+    cursor: pointer;
     }
+
     .answer-cell:hover:not(.revealed) {
-      border-color: #60a5fa;
-      box-shadow: 0 4px 16px rgba(96,165,250,0.3), 0 4px 0 rgba(0,0,0,0.3);
+    border-color: #60a5fa;
+    box-shadow:
+        0 0 24px rgba(96,165,250,0.25),
+        0 6px 0 rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.08);
     }
+
+    .answer-rank {
+    width: clamp(44px, 7vw, 80px);
+    min-width: clamp(44px, 7vw, 80px);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.35);
+    border-left: 2px solid rgba(245,158,11,0.3);
+    font-family: 'Lalezar', sans-serif;
+    font-size: clamp(1.2rem, 3vw, 2.2rem);
+    color: var(--cell-text);
+    text-shadow: 0 0 12px rgba(252,211,77,0.5);
+    flex-shrink: 0;
+    }
+
+    .answer-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px clamp(10px, 2vw, 20px);
+    gap: 8px;
+    }
+
+    .answer-name {
+    font-size: clamp(1rem, 2.2vw, 1.35rem);
+    font-weight: 900;
+    color: var(--cell-text);
+    filter: blur(8px) brightness(0.3);
+    transition: filter 0.5s ease, transform 0.4s ease;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    }
+
+    .answer-pts {
+    font-family: 'Lalezar', sans-serif;
+    font-size: clamp(1.1rem, 2.2vw, 1.5rem);
+    color: rgba(252,211,77,0.4);
+    filter: blur(6px);
+    transition: filter 0.5s ease, color 0.4s;
+    min-width: 40px;
+    text-align: center;
+    flex-shrink: 0;
+    }
+
     .answer-cell.revealed {
-      background: #1d4ed8; border-color: #60a5fa;
-      box-shadow: 0 0 20px rgba(96,165,250,0.4), 0 4px 0 rgba(0,0,0,0.3);
-      animation: revealPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    background: var(--revealed-bg);
+    border-color: #60a5fa;
+    box-shadow:
+        0 0 30px rgba(96,165,250,0.5),
+        0 6px 0 rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+    animation: revealPop 0.5s cubic-bezier(0.34,1.56,0.64,1);
     }
+
+    .answer-cell.revealed .answer-name {
+    filter: none;
+    transform: scale(1.02);
+    }
+
+    .answer-cell.revealed .answer-pts {
+    filter: none;
+    color: var(--feud-gold);
+    text-shadow: 0 0 12px rgba(245,158,11,0.6);
+    }
+
+    .answer-cell.revealed .answer-rank {
+    color: #fff;
+    background: rgba(96,165,250,0.2);
+    }
+
     @keyframes revealPop {
-      0%  { transform: scaleY(0.85); opacity: 0.5; }
-      60% { transform: scaleY(1.04); }
-      100%{ transform: scaleY(1);    opacity: 1; }
+    0%   { transform: scaleY(0.7); opacity: 0.3; }
+    60%  { transform: scaleY(1.05); }
+    100% { transform: scaleY(1); opacity: 1; }
     }
-
-    .ans-rank {
-      width: 50px; min-width: 50px; height: 100%;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.3); border-left: 2px solid rgba(245,158,11,0.3);
-      font-family: 'Lalezar', sans-serif; font-size: 1.3rem; color: #fcd34d;
-      text-shadow: 0 0 8px rgba(252,211,77,0.4); padding: 8px 0;
-    }
-    .answer-cell.revealed .ans-rank { background: rgba(96,165,250,0.2); color: #fff; }
-
-    .ans-body { flex: 1; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; gap: 6px; }
-    .ans-name { font-size: 0.95rem; font-weight: 900; color: #fcd34d; filter: blur(5px); transition: filter 0.4s; }
-    .ans-pts  {
-      font-family: 'Lalezar', sans-serif; font-size: 1.2rem;
-      color: rgba(252,211,77,0.5); filter: blur(5px); transition: filter 0.4s, color 0.4s;
-      min-width: 32px; text-align: center;
-    }
-    .answer-cell.revealed .ans-name { filter: none; }
-    .answer-cell.revealed .ans-pts  { filter: none; color: var(--feud-gold); }
-
-    .x-mark {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: rgba(220,38,38,0.88); backdrop-filter: blur(2px);
-      font-size: 2.5rem; font-weight: 900; color: #fff;
-      text-shadow: 0 0 20px rgba(255,0,0,0.8);
-      border-radius: 10px; opacity: 0; transition: opacity 0.25s; pointer-events: none; z-index: 5;
-    }
-    .answer-cell.wrong .x-mark { opacity: 1; }
-
     /* عدادات X */
     .strikes-row {
       display: flex; align-items: center; justify-content: center; gap: 24px;
@@ -591,17 +736,16 @@
 
   <!-- ===== زر الإعدادات ===== -->
   <div class="settings-trigger-wrap">
-    <button class="settings-trigger-btn" type="button">
-      <span class="settings-trigger-icon">
+    <button class="settings-trigger-btn" type="button" onclick="openSettings()">
+        <span class="settings-trigger-icon">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
         </svg>
-      </span>
-      إعدادات الجلسة
+        </span>
+        إعدادات الجلسة
     </button>
-  </div>
-
+    </div>
   <!-- ===== روابط الجلسة ===== -->
   <div class="links-card">
     <span class="links-label">🔗 روابط:</span>
@@ -651,13 +795,30 @@
     </div>
 
     <div class="question-box">
-      <div class="question-text" id="questionText">جاري التحميل...</div>
+    <div class="question-nav-inline">
+        <button class="question-nav-btn" id="prevBtn" onclick="navigate('prev')" title="السؤال السابق">
+        <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <div class="question-center-wrap">
+        <div class="question-text" id="questionText">جاري التحميل...</div>
+        <div class="q-nav-label-inline" id="qNavLabel">1 / {{ questions_count }}</div>
+        </div>
+
+        <button class="question-nav-btn" id="nextBtn" onclick="navigate('next')" title="السؤال التالي">
+        <i class="fas fa-chevron-left"></i>
+        </button>
+    </div>
     </div>
 
     <div class="round-pts-row">
-      <span class="round-pts-label">نقاط الجولة:</span>
-      <span class="round-pts-val" id="roundPts">0</span>
+    <span class="round-pts-label">نقاط الجولة:</span>
+    <span class="round-pts-val" id="roundPts">0</span>
     </div>
+
+    <div class="reveal-controls" id="revealControls"></div>
+
+    <div class="answers-grid" id="answersGrid"></div>
 
     <div class="answers-grid" id="answersGrid"></div>
 
@@ -682,30 +843,17 @@
 
   </div>
 
-  <!-- ===== التنقل ===== -->
-  <div class="ctrl-section">
-    <div class="ctrl-section-title">📋 التنقل بين الأسئلة</div>
-    <div class="nav-row">
-      <button class="nav-btn" id="prevBtn" onclick="navigate('prev')">
-        <i class="fas fa-chevron-right"></i> السابق
-      </button>
-      <span class="q-nav-label" id="qNavLabel">1 / {{ questions_count }}</span>
-      <button class="nav-btn" id="nextBtn" onclick="navigate('next')">
-        التالي <i class="fas fa-chevron-left"></i>
-      </button>
-    </div>
-  </div>
 
 
   <!-- ===== تسجيل خطأ ===== -->
   <div class="ctrl-section">
-    <div class="ctrl-section-title">✗ تسجيل خطأ</div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn green" onclick="markStrike('team1')">✗ {{ session.team1_name }}</button>
-      <button class="ctrl-btn orange" onclick="markStrike('team2')">✗ {{ session.team2_name }}</button>
-      <button class="ctrl-btn ghost" onclick="resetStrikes()"><i class="fas fa-redo"></i> تصفير</button>
-    </div>
+  <div class="ctrl-section-title">✗ تسجيل خطأ</div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn green strike-btn t1" onclick="markStrike('team1')">✗ {{ session.team1_name }}</button>
+    <button class="ctrl-btn orange strike-btn t2" onclick="markStrike('team2')">✗ {{ session.team2_name }}</button>
+    <button class="ctrl-btn ghost" onclick="resetStrikes()"><i class="fas fa-redo"></i> تصفير</button>
   </div>
+</div>
 
   <!-- ===== المضاعف ===== -->
   <div class="ctrl-section">
@@ -718,13 +866,13 @@
   </div>
 
   <!-- ===== إعطاء النقاط ===== -->
-  <div class="ctrl-section">
-    <div class="ctrl-section-title">🎁 إعطاء نقاط الجولة</div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn green"  onclick="awardPoints('team1')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team1_name }}</button>
-      <button class="ctrl-btn orange" onclick="awardPoints('team2')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team2_name }}</button>
-    </div>
+<div class="ctrl-section">
+  <div class="ctrl-section-title">🎁 إعطاء نقاط الجولة</div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn green award-t1"  onclick="awardPoints('team1')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team1_name }}</button>
+    <button class="ctrl-btn orange award-t2" onclick="awardPoints('team2')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team2_name }}</button>
   </div>
+</div>
 
   <!-- ===== إجراءات ===== -->
   <div class="ctrl-section">
@@ -882,12 +1030,22 @@ const DISPLAY_URL = '{{ display_url|escapejs }}';
 const CONTEST_URL = '{{ contestants_url|escapejs }}';
 const TOTAL_Q     = {{ questions_count }};
 
-let socket = null, hbTimer = null, reconnectDelay = 1000;
+let socket = null;
+let hbTimer = null;
+let reconnectDelay = 1000;
 
 let st = {
-  qi: 1, qt: '', answers: [], revealed: [],
-  t1s: 0, t2s: 0, rpts: 0, mult: 1,
-  ctrl: '', t1: 0, t2: 0,
+  qi: 1,
+  qt: '',
+  answers: [],
+  revealed: [],
+  t1s: 0,
+  t2s: 0,
+  rpts: 0,
+  mult: 1,
+  ctrl: '',
+  t1: 0,
+  t2: 0,
   t1n: '{{ session.team1_name|escapejs }}',
   t2n: '{{ session.team2_name|escapejs }}',
 };
@@ -895,210 +1053,435 @@ let st = {
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
   socket = new WebSocket(`${proto}://${location.host}/ws/feud/${SESSION_ID}/?role=host`);
-  socket.onopen  = () => { reconnectDelay = 1000; startHB(); };
-  socket.onclose = () => { clearInterval(hbTimer); setTimeout(connect, reconnectDelay); reconnectDelay = Math.min(reconnectDelay*2,8000); };
-  socket.onerror = () => { try{socket.close();}catch{} };
+
+  socket.onopen = () => {
+    reconnectDelay = 1000;
+    startHB();
+  };
+
+  socket.onclose = () => {
+    clearInterval(hbTimer);
+    setTimeout(connect, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 8000);
+  };
+
+  socket.onerror = () => {
+    try { socket.close(); } catch {}
+  };
+
   socket.onmessage = (ev) => {
-    let d; try{d=JSON.parse(ev.data);}catch{return;}
-    switch(d.type){
-      case 'full_state':               applyFull(d);    break;
-      case 'answer_revealed':          onRevealed(d);   break;
-      case 'strike_updated':           onStrike(d);     break;
-      case 'scores_updated':           onScores(d);     break;
-      case 'multiplier_changed':       onMult(d);       break;
-      case 'controlling_team_changed': onCtrl(d);       break;
-      case 'contestant_buzz_accepted': onBuzz(d);       break;
-      case 'buzz_reset_by_host':       hideBuzz();      break;
+    let d;
+    try { d = JSON.parse(ev.data); } catch { return; }
+
+    switch (d.type) {
+      case 'full_state':
+        applyFull(d);
+        break;
+
+      case 'answer_revealed':
+        onRevealed(d);
+        break;
+
+      case 'strike_updated':
+        onStrike(d);
+        break;
+
+      case 'scores_updated':
+        onScores(d);
+        break;
+
+      case 'multiplier_changed':
+        onMult(d);
+        break;
+
+      case 'controlling_team_changed':
+        onCtrl(d);
+        break;
+
+      case 'contestant_buzz_accepted':
+        onBuzz(d);
+        break;
+
+      case 'buzz_reset_by_host':
+        hideBuzz();
+        break;
+
+      case 'team_names_updated':
+        onTeamNamesUpdated(d);
+        break;
     }
   };
 }
-function startHB(){ clearInterval(hbTimer); hbTimer=setInterval(()=>{if(socket?.readyState===1)socket.send(JSON.stringify({type:'ping'}));},20000); }
-function send(p){ if(socket?.readyState===1) socket.send(JSON.stringify(p)); }
 
-function applyFull(d){
-  Object.assign(st,{qi:d.question_index,qt:d.question_text,answers:d.answers||[],revealed:d.revealed_answers||[],t1s:d.team1_strikes,t2s:d.team2_strikes,rpts:d.round_points,mult:d.multiplier,ctrl:d.controlling_team||'',t1:d.team1_score,t2:d.team2_score});
+function startHB() {
+  clearInterval(hbTimer);
+  hbTimer = setInterval(() => {
+    if (socket?.readyState === 1) socket.send(JSON.stringify({ type: 'ping' }));
+  }, 20000);
+}
+
+function send(payload) {
+  if (socket?.readyState === 1) socket.send(JSON.stringify(payload));
+}
+
+function applyFull(d) {
+  st.qi   = d.question_index || 1;
+  st.qt   = d.question_text || '';
+  st.answers = d.answers || [];
+  st.revealed = d.revealed_answers || [];
+  st.t1s = d.team1_strikes || 0;
+  st.t2s = d.team2_strikes || 0;
+  st.rpts = d.round_points || 0;
+  st.mult = d.multiplier || 1;
+  st.ctrl = d.controlling_team || '';
+  st.t1 = d.team1_score || 0;
+  st.t2 = d.team2_score || 0;
+
+  if (d.team1_name) st.t1n = d.team1_name;
+  if (d.team2_name) st.t2n = d.team2_name;
+
   renderAll();
 }
 
-function renderAll(){
-  document.getElementById('questionText').textContent = st.qt||'—';
+function renderAll() {
+  document.getElementById('questionText').textContent = st.qt || '—';
   document.getElementById('qCounter').textContent = `س ${st.qi}`;
   document.getElementById('qNavLabel').textContent = `${st.qi} / ${TOTAL_Q}`;
   document.getElementById('t1Score').textContent = st.t1;
   document.getElementById('t2Score').textContent = st.t2;
   document.getElementById('roundPts').textContent = st.rpts;
+
+  document.getElementById('t1Name').textContent = st.t1n;
+  document.getElementById('t2Name').textContent = st.t2n;
+  document.getElementById('t1StrikeLabel').textContent = `${st.t1n}:`;
+  document.getElementById('t2StrikeLabel').textContent = `${st.t2n}:`;
+
   document.getElementById('prevBtn').disabled = st.qi <= 1;
   document.getElementById('nextBtn').disabled = st.qi >= TOTAL_Q;
+
   renderStrikes('t1Strikes', st.t1s);
   renderStrikes('t2Strikes', st.t2s);
   renderMult(st.mult);
   renderCtrl(st.ctrl);
   renderAnswers();
+  renderRevealControls();
+  syncControlButtonsText();
 }
 
-function renderAnswers(){
+function renderAnswers() {
   const g = document.getElementById('answersGrid');
   g.innerHTML = '';
-  [...st.answers].sort((a,b)=>a.rank-b.rank).forEach(ans => {
+
+  const sorted = [...st.answers].sort((a, b) => a.rank - b.rank);
+  const half = Math.ceil(sorted.length / 2);
+
+  if (window.innerWidth <= 600) {
+    g.style.gridTemplateRows = 'unset';
+    g.style.gridAutoFlow = 'row';
+  } else {
+    g.style.gridTemplateRows = `repeat(${half}, 1fr)`;
+    g.style.gridAutoFlow = 'column';
+  }
+
+  sorted.forEach(ans => {
     const rev = st.revealed.includes(ans.rank);
     const cell = document.createElement('div');
-    cell.className = 'answer-cell'+(rev?' revealed':'');
+    cell.className = 'answer-cell' + (rev ? ' revealed' : '');
     cell.dataset.rank = ans.rank;
     cell.onclick = () => revealAnswer(ans.rank);
-    cell.innerHTML = `<div class="ans-rank">${ans.rank}</div><div class="ans-body"><div class="ans-name">${ans.text}</div><div class="ans-pts">${ans.points}</div></div><div class="x-mark">✗</div>`;
+
+    cell.innerHTML = `
+      <div class="answer-rank">${ans.rank}</div>
+      <div class="answer-body">
+        <div class="answer-name">${ans.text}</div>
+        <div class="answer-pts">${ans.points}</div>
+      </div>
+    `;
+
     g.appendChild(cell);
   });
 }
 
-function renderStrikes(id, count){
-  document.getElementById(id).querySelectorAll('.strike-dot').forEach((d,i)=>d.classList.toggle('active',i<count));
+function renderRevealControls() {
+  const wrap = document.getElementById('revealControls');
+  wrap.innerHTML = '';
+
+  [...st.answers]
+    .sort((a, b) => a.rank - b.rank)
+    .forEach(ans => {
+      const btn = document.createElement('button');
+      btn.className = 'reveal-btn';
+      btn.textContent = `اكشف ${ans.rank}`;
+      btn.disabled = st.revealed.includes(ans.rank);
+      btn.onclick = () => revealAnswer(ans.rank);
+      wrap.appendChild(btn);
+    });
 }
 
-function renderMult(m){
-  [1,2,3].forEach(n=>{
+function renderStrikes(id, count) {
+  document.getElementById(id)
+    .querySelectorAll('.strike-dot')
+    .forEach((d, i) => d.classList.toggle('active', i < count));
+}
+
+function renderMult(m) {
+  [1, 2, 3].forEach(n => {
     const b = document.getElementById(`mult${n}`);
-    b.className = 'mult-btn'+(n===m?' active'+(n>1?' x'+n:''):'');
+    b.className = 'mult-btn' + (n === m ? ' active' + (n > 1 ? ' x' + n : '') : '');
   });
+
   const badge = document.getElementById('multBadge');
   badge.textContent = `×${m}`;
-  badge.className = 'mult-badge'+(m===2?' x2':m===3?' x3':'');
+  badge.className = 'mult-badge' + (m === 2 ? ' x2' : m === 3 ? ' x3' : '');
 }
 
-function renderCtrl(team){
-  document.getElementById('ctrlT1').className='ctrl-team-btn'+(team==='team1'?' active-t1':'');
-  document.getElementById('ctrlT2').className='ctrl-team-btn'+(team==='team2'?' active-t2':'');
+function renderCtrl(team) {
   const badge = document.getElementById('ctrlBadge');
-  if(team==='team1'){badge.className='ctrl-badge t1';badge.textContent='🏆 '+st.t1n;}
-  else if(team==='team2'){badge.className='ctrl-badge t2';badge.textContent='🏆 '+st.t2n;}
-  else{badge.className='ctrl-badge none';badge.textContent='لا أحد يتحكم';}
+
+  if (team === 'team1') {
+    badge.className = 'ctrl-badge t1';
+    badge.textContent = '🏆 ' + st.t1n;
+  } else if (team === 'team2') {
+    badge.className = 'ctrl-badge t2';
+    badge.textContent = '🏆 ' + st.t2n;
+  } else {
+    badge.className = 'ctrl-badge none';
+    badge.textContent = 'لا أحد يتحكم';
+  }
 }
 
-function onRevealed(d){
-  if(!st.revealed.includes(d.rank)) st.revealed.push(d.rank);
-  st.rpts = d.round_points;
+function syncControlButtonsText() {
+  const strikeT1 = document.querySelector('.strike-btn.t1');
+  const strikeT2 = document.querySelector('.strike-btn.t2');
+  const awardT1  = document.querySelector('.award-t1');
+  const awardT2  = document.querySelector('.award-t2');
+
+  if (strikeT1) strikeT1.innerHTML = `✗ ${st.t1n}`;
+  if (strikeT2) strikeT2.innerHTML = `✗ ${st.t2n}`;
+  if (awardT1)  awardT1.innerHTML  = `<i class="fas fa-trophy"></i> أعطِ لـ ${st.t1n}`;
+  if (awardT2)  awardT2.innerHTML  = `<i class="fas fa-trophy"></i> أعطِ لـ ${st.t2n}`;
+}
+
+function onRevealed(d) {
+  if (!st.revealed.includes(d.rank)) st.revealed.push(d.rank);
+  st.rpts = d.round_points || st.rpts;
+
   document.getElementById('roundPts').textContent = st.rpts;
-  document.querySelector(`.answer-cell[data-rank="${d.rank}"]`)?.classList.add('revealed');
-  playReveal();
+
+  const cell = document.querySelector(`.answer-cell[data-rank="${d.rank}"]`);
+  if (cell && !cell.classList.contains('revealed')) {
+    cell.classList.add('revealed');
+    playReveal();
+  }
+
+  renderRevealControls();
 }
 
-function onStrike(d){
-  st.t1s=d.team1_strikes; st.t2s=d.team2_strikes;
-  renderStrikes('t1Strikes',st.t1s); renderStrikes('t2Strikes',st.t2s);
-  if(d.team!==null){
-    const f=document.getElementById('xFlash'); f.classList.add('show'); setTimeout(()=>f.classList.remove('show'),400);
+function onStrike(d) {
+  st.t1s = d.team1_strikes || 0;
+  st.t2s = d.team2_strikes || 0;
+
+  renderStrikes('t1Strikes', st.t1s);
+  renderStrikes('t2Strikes', st.t2s);
+
+  if (d.team !== null) {
+    const f = document.getElementById('xFlash');
+    f.classList.add('show');
+    setTimeout(() => f.classList.remove('show'), 450);
     playStrike();
   }
 }
 
-function onScores(d){
-  st.t1=d.team1_score; st.t2=d.team2_score; st.rpts=0;
-  document.getElementById('t1Score').textContent=d.team1_score;
-  document.getElementById('t2Score').textContent=d.team2_score;
-  document.getElementById('roundPts').textContent='0';
-  if(d.awarded_points>0) showAward(`+${d.awarded_points}`);
+function onScores(d) {
+  st.t1 = d.team1_score || 0;
+  st.t2 = d.team2_score || 0;
+  st.rpts = 0;
+
+  if (d.team1_name) st.t1n = d.team1_name;
+  if (d.team2_name) st.t2n = d.team2_name;
+
+  document.getElementById('t1Score').textContent = st.t1;
+  document.getElementById('t2Score').textContent = st.t2;
+  document.getElementById('roundPts').textContent = '0';
+
+  document.getElementById('t1Name').textContent = st.t1n;
+  document.getElementById('t2Name').textContent = st.t2n;
+  document.getElementById('t1StrikeLabel').textContent = `${st.t1n}:`;
+  document.getElementById('t2StrikeLabel').textContent = `${st.t2n}:`;
+
+  syncControlButtonsText();
+
+  if (d.awarded_points > 0) showAward(`+${d.awarded_points}`);
 }
 
-function onMult(d){ st.mult=d.multiplier; renderMult(d.multiplier); }
-function onCtrl(d){ st.ctrl=d.team||''; renderCtrl(st.ctrl); }
-function onBuzz(d){
-  const n=document.getElementById('buzzNotif');
-  n.innerHTML=`🚨 <strong>${d.contestant_name}</strong><br><small>${d.team==='team1'?st.t1n:st.t2n}</small>`;
-  n.classList.add('show'); playBuzzS();
-}
-function hideBuzz(){ document.getElementById('buzzNotif').classList.remove('show'); }
-
-function revealAnswer(rank){ if(!st.revealed.includes(rank)) send({type:'reveal_answer',rank}); }
-function revealAll(){ st.answers.forEach(a=>{if(!st.revealed.includes(a.rank)) send({type:'reveal_answer',rank:a.rank});}); }
-function markStrike(team){ send({type:'mark_strike',team}); }
-function resetStrikes(){ send({type:'reset_strikes'}); }
-function awardPoints(team){ if(st.rpts<=0){alert('لا نقاط للتوزيع');return;} send({type:'award_points',team}); }
-function navigate(dir){ send({type:dir==='next'?'next_question':'prev_question'}); }
-function setControllingTeam(t){ send({type:'set_controlling_team',team:st.ctrl===t?'':t}); }
-function setMultiplier(m){ send({type:'set_multiplier',multiplier:m}); }
-function cycleMultiplier(){ setMultiplier((st.mult%3)+1); }
-function resetBuzz(){ send({type:'buzz_reset'}); hideBuzz(); }
-function confirmNewRound(){ if(!confirm('الانتقال للسؤال التالي؟')) return; send({type:'next_question'}); }
-
-function adjustScore(team,delta){
-  const t1=team==='team1'?Math.max(0,st.t1+delta):st.t1;
-  const t2=team==='team2'?Math.max(0,st.t2+delta):st.t2;
-  send({type:'update_scores',team1_score:t1,team2_score:t2});
-  st.t1=t1; st.t2=t2;
-  document.getElementById('t1Score').textContent=t1;
-  document.getElementById('t2Score').textContent=t2;
+function onMult(d) {
+  st.mult = d.multiplier || 1;
+  renderMult(st.mult);
 }
 
-async function copyLink(type){
-  const urls={display:DISPLAY_URL,contestants:CONTEST_URL,host:location.href};
-  try{await navigator.clipboard.writeText(urls[type]);}catch{alert(urls[type]);return;}
-  const t=document.getElementById('copyToast');
-  t.style.display='block'; setTimeout(()=>t.style.display='none',1800);
+function onCtrl(d) {
+  st.ctrl = d.team || '';
+  renderCtrl(st.ctrl);
 }
 
-function tone(f,d,g=0.4){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),gg=c.createGain();o.connect(gg);gg.connect(c.destination);o.frequency.value=f;gg.gain.value=g;o.start();o.stop(c.currentTime+d/1000);}catch{}}
-function playReveal(){ tone(880,200); setTimeout(()=>tone(1100,150),180); }
-function playStrike(){ tone(200,400,0.5); }
-function playBuzzS() { tone(800,300,0.5); }
-function showAward(t){ const e=document.getElementById('awardFlash'); e.textContent=t; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1500); }
+function onBuzz(d) {
+  const n = document.getElementById('buzzNotif');
+  n.innerHTML = `🚨 <strong>${d.contestant_name}</strong><br><small>${d.team === 'team1' ? st.t1n : st.t2n}</small>`;
+  n.classList.add('show');
+  playBuzzS();
+}
 
-document.addEventListener('DOMContentLoaded', ()=>{ connect(); });
+function onTeamNamesUpdated(d) {
+  if (d.team1_name) st.t1n = d.team1_name;
+  if (d.team2_name) st.t2n = d.team2_name;
 
+  document.getElementById('t1Name').textContent = st.t1n;
+  document.getElementById('t2Name').textContent = st.t2n;
+  document.getElementById('t1StrikeLabel').textContent = `${st.t1n}:`;
+  document.getElementById('t2StrikeLabel').textContent = `${st.t2n}:`;
 
+  renderCtrl(st.ctrl);
+  syncControlButtonsText();
+}
 
-async function saveTeamNames() {
-  const t1 = document.getElementById('t1NameInput').value.trim();
-  const t2 = document.getElementById('t2NameInput').value.trim();
+function hideBuzz() {
+  document.getElementById('buzzNotif').classList.remove('show');
+}
 
-  if (!t1 || !t2) { alert('يرجى إدخال اسمي الفريقين'); return; }
-
-  // تحديث محلي فوري
-  state.t1Name = t1;
-  state.t2Name = t2;
-  document.getElementById('t1Name').textContent = t1;
-  document.getElementById('t2Name').textContent = t2;
-  document.getElementById('ctrlT1Btn').textContent = t1;
-  document.getElementById('ctrlT2Btn').textContent = t2;
-  document.querySelector('.strike-btn.t1').textContent = `✗ ${t1}`;
-  document.querySelector('.strike-btn.t2').textContent = `✗ ${t2}`;
-  document.querySelector('.ctrl-btn.award-t1').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t1}`;
-  document.querySelector('.ctrl-btn.award-t2').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t2}`;
-
-  // حفظ في السيرفر
-  try {
-    await fetch('/games/api/update-scores/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        session_id: SESSION_ID,
-        team1_score: state.t1Score,
-        team2_score: state.t2Score,
-      })
-    });
-
-    // بث الأسماء لشاشة العرض عبر WS
-    send({
-      type: 'update_scores',
-      team1_score: state.t1Score,
-      team2_score: state.t2Score,
-      team1_name: t1,
-      team2_name: t2,
-    });
-
-  } catch {}
-
-  // تأكيد بصري
-  const btn = document.querySelector('button[onclick="saveTeamNames()"]');
-  if (btn) {
-    btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ!';
-    setTimeout(() => { btn.innerHTML = '<i class="fas fa-save"></i> حفظ الأسماء'; }, 1500);
+function revealAnswer(rank) {
+  if (!st.revealed.includes(rank)) {
+    send({ type: 'reveal_answer', rank });
   }
 }
 
+function revealAll() {
+  st.answers.forEach(a => {
+    if (!st.revealed.includes(a.rank)) {
+      send({ type: 'reveal_answer', rank: a.rank });
+    }
+  });
+}
+
+function markStrike(team) {
+  send({ type: 'mark_strike', team });
+}
+
+function resetStrikes() {
+  send({ type: 'reset_strikes' });
+}
+
+function awardPoints(team) {
+  if (st.rpts <= 0) {
+    alert('لا نقاط للتوزيع');
+    return;
+  }
+  send({ type: 'award_points', team });
+}
+
+function navigate(dir) {
+  send({ type: dir === 'next' ? 'next_question' : 'prev_question' });
+}
+
+function setMultiplier(m) {
+  send({ type: 'set_multiplier', multiplier: m });
+}
+
+function cycleMultiplier() {
+  setMultiplier((st.mult % 3) + 1);
+}
+
+function resetBuzz() {
+  send({ type: 'buzz_reset' });
+  hideBuzz();
+}
+
+function confirmNewRound() {
+  if (!confirm('الانتقال للسؤال التالي؟')) return;
+  send({ type: 'next_question' });
+}
+
+function adjustScore(team, delta) {
+  const t1 = team === 'team1' ? Math.max(0, st.t1 + delta) : st.t1;
+  const t2 = team === 'team2' ? Math.max(0, st.t2 + delta) : st.t2;
+
+  send({
+    type: 'update_scores',
+    team1_score: t1,
+    team2_score: t2
+  });
+
+  st.t1 = t1;
+  st.t2 = t2;
+  document.getElementById('t1Score').textContent = t1;
+  document.getElementById('t2Score').textContent = t2;
+}
+
+async function copyLink(type) {
+  const urls = {
+    display: DISPLAY_URL,
+    contestants: CONTEST_URL,
+    host: location.href
+  };
+
+  try {
+    await navigator.clipboard.writeText(urls[type]);
+  } catch {
+    alert(urls[type]);
+    return;
+  }
+
+  const t = document.getElementById('copyToast');
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 1800);
+}
+
+function tone(f, d, g = 0.4, type = 'sine') {
+  try {
+    const c = new (window.AudioContext || window.webkitAudioContext)();
+    const o = c.createOscillator();
+    const gg = c.createGain();
+    o.connect(gg);
+    gg.connect(c.destination);
+    o.type = type;
+    o.frequency.value = f;
+    gg.gain.setValueAtTime(g, c.currentTime);
+    gg.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d / 1000);
+    o.start();
+    o.stop(c.currentTime + d / 1000);
+  } catch {}
+}
+
+function playReveal() {
+  tone(523, 120, 0.35);
+  setTimeout(() => tone(659, 120, 0.35), 100);
+  setTimeout(() => tone(784, 180, 0.42), 200);
+  setTimeout(() => tone(1047, 260, 0.46), 340);
+}
+
+function playStrike() {
+  tone(150, 350, 0.6, 'sawtooth');
+  setTimeout(() => tone(120, 450, 0.5, 'sawtooth'), 90);
+}
+
+function playBuzzS() {
+  tone(880, 300, 0.5);
+  setTimeout(() => tone(1100, 200, 0.4), 250);
+}
+
+function showAward(t) {
+  const e = document.getElementById('awardFlash');
+  e.textContent = t;
+  e.classList.add('show');
+  setTimeout(() => e.classList.remove('show'), 1500);
+}
+
 function openSettings() {
-  document.getElementById('setting_t1_name').value = state.t1Name || '{{ session.team1_name|escapejs }}';
-  document.getElementById('setting_t2_name').value = state.t2Name || '{{ session.team2_name|escapejs }}';
+  document.getElementById('setting_t1_name').value = st.t1n || '{{ session.team1_name|escapejs }}';
+  document.getElementById('setting_t2_name').value = st.t2n || '{{ session.team2_name|escapejs }}';
+
   const overlay = document.getElementById('feudSettingsOverlay');
-  const modal   = document.getElementById('feudSettingsModal');
+  const modal = document.getElementById('feudSettingsModal');
+
   overlay.style.opacity = '1';
   overlay.style.pointerEvents = 'all';
   modal.style.transform = 'translateY(0) scale(1)';
@@ -1107,7 +1490,8 @@ function openSettings() {
 
 function closeSettings() {
   const overlay = document.getElementById('feudSettingsOverlay');
-  const modal   = document.getElementById('feudSettingsModal');
+  const modal = document.getElementById('feudSettingsModal');
+
   overlay.style.opacity = '0';
   overlay.style.pointerEvents = 'none';
   modal.style.transform = 'translateY(24px) scale(0.97)';
@@ -1118,31 +1502,35 @@ function closeSettingsOnBackdrop(e) {
   if (e.target === document.getElementById('feudSettingsOverlay')) closeSettings();
 }
 
-async function saveSettings() {
+function saveSettings() {
   const t1 = document.getElementById('setting_t1_name').value.trim();
   const t2 = document.getElementById('setting_t2_name').value.trim();
-  if (!t1 || !t2) { alert('يرجى إدخال اسمي الفريقين'); return; }
+
+  if (!t1 || !t2) {
+    alert('يرجى إدخال اسمي الفريقين');
+    return;
+  }
 
   const btn = document.getElementById('saveSettingsBtn');
   btn.textContent = '⏳ جاري...';
   btn.disabled = true;
 
-  // تحديث محلي
-  state.t1Name = t1;
-  state.t2Name = t2;
+  st.t1n = t1;
+  st.t2n = t2;
+
   document.getElementById('t1Name').textContent = t1;
   document.getElementById('t2Name').textContent = t2;
-  document.getElementById('t1StrikeLabel').textContent = t1;
-  document.getElementById('t2StrikeLabel').textContent = t2;
-  document.getElementById('ctrlT1Btn').textContent = t1;
-  document.getElementById('ctrlT2Btn').textContent = t2;
-  document.querySelector('.strike-btn.t1').innerHTML = `✗ ${t1}`;
-  document.querySelector('.strike-btn.t2').innerHTML = `✗ ${t2}`;
-  document.querySelector('.ctrl-btn.award-t1').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t1}`;
-  document.querySelector('.ctrl-btn.award-t2').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t2}`;
+  document.getElementById('t1StrikeLabel').textContent = `${t1}:`;
+  document.getElementById('t2StrikeLabel').textContent = `${t2}:`;
 
-  // بث للشاشات
-  send({ type: 'update_team_names', team1_name: t1, team2_name: t2 });
+  syncControlButtonsText();
+  renderCtrl(st.ctrl);
+
+  send({
+    type: 'update_team_names',
+    team1_name: t1,
+    team2_name: t2
+  });
 
   btn.textContent = '✅ تم!';
   setTimeout(() => {
@@ -1154,6 +1542,14 @@ async function saveSettings() {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeSettings();
+});
+
+window.addEventListener('resize', () => {
+  renderAnswers();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  connect();
 });
 </script>
 </body>
