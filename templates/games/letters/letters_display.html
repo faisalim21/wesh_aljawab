@@ -2353,6 +2353,91 @@ function _roundRect(ctx, x, y, w, h, r) {
   <span class="penalty-display-num" id="penaltyDisplayNum">10</span>
   <span class="penalty-display-label">ث</span>
 </div>
+<!-- ===== overlay الشعار الكامل ===== -->
+<div id="dispLogoOverlay" class="disp-logo-overlay" onclick="toggleDispControls()">
 
+  <!-- خلفية السداسيات -->
+  <svg id="dispLogoHex" class="disp-logo-full-hex" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <!-- الشعار -->
+  <div class="disp-logo-group">
+    <span class="dlg-haroof">حروف</span>
+    <span class="dlg-maa">مـــع</span>
+    <div class="dlg-name-wrap">
+      <span class="dlg-name" id="dispLogoFullName">—</span>
+      <span class="dlg-sub" id="dispLogoFullSub"></span>
+    </div>
+  </div>
+
+  <!-- hint اضغط لإظهار الخيارات -->
+  <div id="dispLogoHint" style="
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    color:rgba(255,255,255,0.3); font-family:'Tajawal',sans-serif;
+    font-size:0.8rem; font-weight:700; pointer-events:none;
+    transition:opacity 0.3s;">
+    اضغط في أي مكان لإظهار الخيارات
+  </div>
+
+  <!-- أزرار التحكم — مخفية بالأصل -->
+  <div id="dispLogoControls" style="
+    opacity:0; pointer-events:none;
+    transition:opacity 0.3s;
+    position:fixed; inset:0;
+    pointer-events:none;">
+
+    <!-- إغلاق -->
+    <button class="disp-logo-close"
+      style="pointer-events:auto;"
+      onclick="event.stopPropagation(); closeDispLogo()">
+      ✕ إغلاق
+    </button>
+
+    <!-- حفظ -->
+    <div style="
+      position:fixed; top:20px; right:20px; z-index:10;
+      display:flex; gap:8px; pointer-events:auto;"
+      onclick="event.stopPropagation()">
+      <button class="disp-logo-save-btn" onclick="saveDispLogo('landscape')">
+        💾 حفظ عرضي
+      </button>
+      <button class="disp-logo-save-btn" onclick="saveDispLogo('portrait')">
+        💾 حفظ طولي
+      </button>
+    </div>
+
+    <!-- تشغيل تلقائي -->
+    <div style="
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:10px; z-index:10;
+      pointer-events:auto;"
+      onclick="event.stopPropagation()">
+
+      <button onclick="changeAutoReplay(-5)"
+        style="width:28px;height:28px;border-radius:8px;
+               border:1px solid rgba(255,255,255,0.2);
+               background:rgba(255,255,255,0.1);color:#fff;
+               font-size:0.9rem;cursor:pointer;">−</button>
+
+      <span id="autoReplaySec"
+        style="color:#FCD34D;font-weight:900;font-family:monospace;
+               min-width:32px;text-align:center;">10ث</span>
+
+      <button onclick="changeAutoReplay(5)"
+        style="width:28px;height:28px;border-radius:8px;
+               border:1px solid rgba(255,255,255,0.2);
+               background:rgba(255,255,255,0.1);color:#fff;
+               font-size:0.9rem;cursor:pointer;">+</button>
+
+      <button id="autoReplayBtn" class="disp-logo-replay"
+        style="pointer-events:auto;"
+        onclick="toggleAutoReplay()">▶ تشغيل</button>
+
+      <button class="disp-logo-replay"
+        style="pointer-events:auto;"
+        onclick="replayDispLogo()">🔁 إعادة</button>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
