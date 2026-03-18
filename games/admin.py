@@ -2526,6 +2526,8 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
     ordering = ('package__package_number', 'order')
     inlines = [FamilyFeudAnswerInline]
     list_select_related = ('package',)
+    change_form_template = 'admin/feud_question_change.html'
+    add_form_template = 'admin/feud_question_change.html'
 
     def get_queryset(self, request):
         return (
@@ -2554,6 +2556,19 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
         return format_html('<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>', count)
     answers_count.short_description = "الإجابات"
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        count = int(request.POST.get('ans_count', 0))
+        if count:
+            obj.answers.all().delete()
+            for i in range(count):
+                rank   = int(request.POST.get(f'ans_rank_{i}', i+1))
+                text   = request.POST.get(f'ans_text_{i}', '').strip()
+                points = int(request.POST.get(f'ans_points_{i}', 0))
+                if text:
+                    FamilyFeudAnswer.objects.create(
+                        question=obj, rank=rank, text=text, points=points
+                    )
 
 
 # ========= تحسينات عامة لواجهة الأدمن =========

@@ -1,0 +1,116 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+
+{% block after_related_objects %}
+<div id="feud-answers-section" style="margin:20px 0;">
+  <div style="background:#1e293b;border-radius:12px;padding:20px;">
+    
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h3 style="color:#e2e8f0;margin:0;font-size:1.1rem;">📝 الإجابات</h3>
+      <span style="color:#94a3b8;font-size:0.85rem;" id="answers-summary">0 إجابة | مجموع النقاط: 0</span>
+    </div>
+
+    <div id="answers-list"></div>
+
+    <button type="button" id="add-answer-btn"
+      style="margin-top:12px;padding:8px 18px;background:linear-gradient(135deg,#6d28d9,#06b6d4);
+             color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.9rem;">
+      ➕ أضف إجابة
+    </button>
+
+  </div>
+</div>
+
+{# حقول مخفية للإجابات الحالية — تُرسل مع الفورم #}
+<div id="hidden-answers-data"></div>
+
+<script>
+(function(){
+  // بيانات الإجابات الموجودة (لو تعديل)
+  const existingAnswers = [
+    {% if original %}
+      {% for ans in original.answers.all %}
+        { rank: {{ ans.rank }}, text: {{ ans.text|escapejs|json_script:""|slice:"1:-1"|default:"''" }}, points: {{ ans.points }} },
+      {% endfor %}
+    {% endif %}
+  ];
+
+  let answers = existingAnswers.length ? existingAnswers : [];
+  
+  const list = document.getElementById('answers-list');
+  const summary = document.getElementById('answers-summary');
+  const hiddenDiv = document.getElementById('hidden-answers-data');
+
+  function updateSummary(){
+    const total = answers.reduce((s,a) => s + (parseInt(a.points)||0), 0);
+    const color = total === 100 ? '#22c55e' : total > 100 ? '#ef4444' : '#f59e0b';
+    summary.innerHTML = `${answers.length} إجابة | مجموع النقاط: <b style="color:${color}">${total}</b>`;
+  }
+
+  function updateHidden(){
+    hiddenDiv.innerHTML = '';
+    answers.forEach((a, i) => {
+      hiddenDiv.innerHTML += `
+        <input type="hidden" name="ans_rank_${i}" value="${a.rank}">
+        <input type="hidden" name="ans_text_${i}" value="${a.text}">
+        <input type="hidden" name="ans_points_${i}" value="${a.points}">
+      `;
+    });
+    hiddenDiv.innerHTML += `<input type="hidden" name="ans_count" value="${answers.length}">`;
+  }
+
+  function render(){
+    list.innerHTML = '';
+    answers.forEach((ans, i) => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:10px;margin-bottom:10px;';
+      row.innerHTML = `
+        <span style="background:#6d28d9;color:#fff;border-radius:999px;width:28px;height:28px;
+                     display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">
+          ${ans.rank}
+        </span>
+        <input type="text" placeholder="نص الإجابة" value="${ans.text}"
+          style="flex:1;padding:8px 12px;border-radius:8px;border:1.5px solid #334155;
+                 background:#0f172a;color:#e2e8f0;font-family:Tajawal,sans-serif;font-size:0.95rem;"
+          onchange="window._feudUpdateAnswer(${i},'text',this.value)">
+        <input type="number" placeholder="النقاط" value="${ans.points}" min="1" max="99"
+          style="width:80px;padding:8px;border-radius:8px;border:1.5px solid #334155;
+                 background:#0f172a;color:#e2e8f0;text-align:center;font-size:0.95rem;"
+          onchange="window._feudUpdateAnswer(${i},'points',this.value)">
+        <button type="button" onclick="window._feudRemoveAnswer(${i})"
+          style="background:#ef4444;color:#fff;border:none;border-radius:8px;
+                 padding:6px 10px;cursor:pointer;font-size:0.85rem;">✕</button>
+      `;
+      list.appendChild(row);
+    });
+    updateSummary();
+    updateHidden();
+  }
+
+  window._feudUpdateAnswer = function(i, field, val){
+    answers[i][field] = field === 'points' ? parseInt(val)||0 : val;
+    updateSummary();
+    updateHidden();
+  };
+
+  window._feudRemoveAnswer = function(i){
+    answers.splice(i, 1);
+    // إعادة ترقيم
+    answers.forEach((a, idx) => a.rank = idx + 1);
+    render();
+  };
+
+  document.getElementById('add-answer-btn').addEventListener('click', function(){
+    if (answers.length >= 5){
+      alert('الحد الأقصى 5 إجابات');
+      return;
+    }
+    answers.push({ rank: answers.length + 1, text: '', points: 0 });
+    render();
+  });
+
+  // تهيئة أولية
+  render();
+})();
+</script>
+{% endblock %}
