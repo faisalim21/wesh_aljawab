@@ -2064,3 +2064,184 @@ def api_save_settings(request):
         'message': 'تم حفظ الإعدادات',
         'settings': settings_payload,
     })
+
+
+
+# =========================
+#  فاميلي فيود - Views
+# =========================
+
+from .models import FamilyFeudQuestion, FamilyFeudAnswer, FamilyFeudProgress
+
+
+def feud_game_home(request):
+    free_package = GamePackage.objects.filter(
+        game_type='feud', is_free=True, is_active=True
+    ).first()
+
+    paid_packages = GamePackage.objects.filter(
+        game_type='feud', is_free=False, is_active=True
+    ).order_by('package_number')
+
+    active_packages_ids = set()
+    completed_packages_ids = set()
+    expired_packages_ids = set()
+    used_before_ids = set()
+    free_session_eligible = False
+    free_session_message = ""
+    free_active_session = None
+
+    if request.user.is_authenticated:
+        free_session_eligible, free_session_message, _ = check_free_session_eligibility(
+            request.user, 'feud'
+        )
+
+        if free_package:
+            free_active_session = (
+                GameSession.objects
+                .filter(host=request.user, package=free_package, is_active=True, game_type='feud')
+                .order_by('-created_at')
+                .first()
+            )
+            if free_active_session and free_active_session.is_time_expired:
+                free_active_session = None
+
+        purchases = UserPurchase.objects.filter(
+            user=request.user, package__game_type='feud'
+        )
+        for p in purchases:
+            used_before_ids.add(p.package_id)
+            if not p.is_completed:
+                continue
+            if not p.package.is_free:
+                active_packages_ids.add(p.package_id)
+                completed_packages_ids.add(p.package_id)
+            else:
+                expired_packages_ids.add(p.package_id)
+
+    return render(request, 'games/feud/packages.html', {
+        'free_package': free_package,
+        'paid_packages': paid_packages,
+        'active_packages_ids': active_packages_ids,
+        'completed_packages_ids': completed_packages_ids,
+        'expired_packages_ids': expired_packages_ids,
+        'used_before_ids': used_before_ids,
+        'free_session_eligible': free_session_eligible,
+        'free_session_message': free_session_message,
+        'free_active_session': free_active_session,
+    })
+
+
+@csrf_exempt
+@login_required
+@require_POST
+def create_feud_session(request):
+    package_id = request.POST.get('package_id')
+    if not package_id:
+        return JsonResponse({'success': False, 'error': 'package_id مفقود'}, status=400)
+
+    package = get_object_or_404(GamePackage, id=package_id, game_type='feud', is_active=True)
+
+    if not package.is_free:
+        purchase = UserPurchase.objects.filter(
+            user=request.user, package=package, is_completed=True
+        ).order_by('-id').first()
+        if not purchase:
+            return JsonResponse({'success': False, 'error': 'لا تملك هذه الحزمة'}, status=403)
+    else:
+        purchase = None
+
+    if not package.feud_questions.exists():
+        return JsonResponse({'success': False, 'error': 'لا توجد أسئلة لهذه الحزمة'}, status=400)
+
+    if purchase:
+        session, _ = GameSession.objects.get_or_create(
+            purchase=purchase,
+            defaults={
+                'host': request.user,
+                'package': package,
+                'game_type': 'feud',
+                'is_active': True,
+            }
+        )
+    else:
+        try:
+            with transaction.atomic():
+                FreeTrialUsage.objects.create(user=request.user, game_type='feud')
+        except IntegrityError:
+            existing = GameSession.objects.filter(
+                host=request.user, package=package, is_active=True
+            ).order_by('-created_at').first()
+            if existing and not existing.is_time_expired:
+                from django.http import HttpResponseRedirect
+                return HttpResponseRedirect(reverse('games:feud_session', args=[existing.id]))
+            messages.error(request, 'لقد استخدمت الجلسة المجانية لفاميلي فيود.')
+            return redirect('games:feud_home')
+
+        session = GameSession.objects.create(
+            host=request.user,
+            package=package,
+            purchase=None,
+            game_type='feud',
+            is_active=True,
+        )
+
+    FamilyFeudProgress.objects.get_or_create(
+        session=session,
+        defaults={'current_question_index': 1, 'phase': 'waiting'}
+    )
+
+    from django.http import HttpResponseRedirect
+    return HttpResponseRedirect(reverse('games:feud_session', args=[session.id]))
+
+
+def feud_session(request, session_id):
+    session = get_object_or_404(GameSession, id=session_id, game_type='feud')
+
+    if session.is_time_expired:
+        messages.error(request, f'⏰ {_expired_text(session)}')
+        return redirect('games:feud_home')
+
+    questions = list(
+        session.package.feud_questions
+        .prefetch_related('answers')
+        .order_by('order')
+    )
+
+    progress, _ = FamilyFeudProgress.objects.get_or_create(
+        session=session,
+        defaults={'current_question_index': 1, 'phase': 'waiting'}
+    )
+
+    return render(request, 'games/feud/feud_session.html', {
+        'session': session,
+        'questions': questions,
+        'progress': progress,
+        'questions_count': len(questions),
+        'display_url': request.build_absolute_uri(reverse('games:feud_display', args=[session.display_link])),
+        'contestants_url': request.build_absolute_uri(reverse('games:feud_contestants', args=[session.contestants_link])),
+    })
+
+
+def feud_display(request, display_link):
+    session = get_object_or_404(GameSession, display_link=display_link, is_active=True, game_type='feud')
+
+    if session.is_time_expired:
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+        })
+
+    return render(request, 'games/feud/feud_display.html', {'session': session})
+
+
+def feud_contestants(request, contestants_link):
+    session = get_object_or_404(GameSession, contestants_link=contestants_link, is_active=True, game_type='feud')
+
+    if session.is_time_expired:
+        return render(request, 'games/session_expired.html', {
+            'message': _expired_text(session),
+            'session_type': 'مجانية' if session.package.is_free else 'مدفوعة',
+        })
+
+    return render(request, 'games/feud/feud_contestants.html', {'session': session})

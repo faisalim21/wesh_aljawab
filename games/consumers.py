@@ -1397,3 +1397,530 @@ class TimeGameConsumer(AsyncWebsocketConsumer):
 
 
 
+# =========================
+#  فاميلي فيود Consumer
+# =========================
+
+from games.models import FamilyFeudProgress, FamilyFeudAnswer
+
+class FamilyFeudConsumer(AsyncWebsocketConsumer):
+
+    async def connect(self):
+        self.session_id = self.scope['url_route']['kwargs']['session_id']
+        self.group_name = f"feud_session_{self.session_id}"
+        self.role = self._parse_qs().get('role', ['viewer'])[0]
+
+        try:
+            self.session = await sync_to_async(
+                lambda: GameSession.objects.select_related('package').get(id=self.session_id)
+            )()
+        except ObjectDoesNotExist:
+            await self.close(code=4404)
+            return
+
+        if not self.session.is_active:
+            await self.close(code=4401)
+            return
+
+        await self.channel_layer.group_add(self.group_name, self.channel_name)
+        await self.accept()
+        logger.info(f"WS connected (feud): session={self.session_id}, role={self.role}")
+
+        # أرسل الحالة الأولية
+        await self._send_initial_state()
+
+    async def disconnect(self, code):
+        try:
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        except Exception:
+            pass
+
+    async def receive(self, text_data: str):
+        try:
+            data = json.loads(text_data or '{}')
+        except json.JSONDecodeError:
+            return
+
+        t = data.get('type')
+
+        if t == 'ping':
+            await self.send(text_data=json.dumps({'type': 'pong'}))
+            return
+
+        # المقدم فقط
+        if self.role == 'host':
+            if t == 'reveal_answer':
+                await self._handle_reveal_answer(data.get('rank'))
+            elif t == 'mark_strike':
+                await self._handle_mark_strike(data.get('team'))
+            elif t == 'reset_strikes':
+                await self._handle_reset_strikes()
+            elif t == 'award_points':
+                await self._handle_award_points(data.get('team'))
+            elif t == 'next_question':
+                await self._handle_next_question()
+            elif t == 'prev_question':
+                await self._handle_prev_question()
+            elif t == 'set_question':
+                await self._handle_set_question(data.get('index'))
+            elif t == 'set_phase':
+                await self._handle_set_phase(data.get('phase'))
+            elif t == 'set_controlling_team':
+                await self._handle_set_controlling_team(data.get('team'))
+            elif t == 'set_multiplier':
+                await self._handle_set_multiplier(data.get('multiplier'))
+            elif t == 'update_scores':
+                await self._handle_update_scores(
+                    data.get('team1_score'), data.get('team2_score')
+                )
+            elif t == 'show_question':
+                await self._handle_show_question(data.get('show', True))
+            elif t == 'buzz_reset':
+                await self._handle_buzz_reset()
+
+        # المتسابق
+        if self.role == 'contestant' and t == 'contestant_buzz':
+            await self._handle_buzz(data)
+
+    # ==================== Handlers ====================
+
+    async def _handle_reveal_answer(self, rank):
+        if rank is None:
+            return
+
+        def _reveal():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            if rank not in progress.revealed_answers:
+                progress.revealed_answers = progress.revealed_answers + [rank]
+                # احسب النقاط المضافة
+                q = progress.session.package.feud_questions.filter(
+                    order=progress.current_question_index
+                ).first()
+                pts = 0
+                if q:
+                    ans = q.answers.filter(rank=rank).first()
+                    if ans:
+                        pts = ans.points * progress.current_multiplier
+                progress.round_points += pts
+                progress.save(update_fields=['revealed_answers', 'round_points'])
+                return progress, pts
+            return progress, 0
+
+        progress, pts = await sync_to_async(_reveal)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_answer_revealed',
+            'rank': rank,
+            'points_added': pts,
+            'round_points': progress.round_points,
+            'revealed_answers': progress.revealed_answers,
+        })
+
+    async def _handle_mark_strike(self, team):
+        def _strike():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            if team == 'team1':
+                progress.team1_strikes = min(3, progress.team1_strikes + 1)
+            elif team == 'team2':
+                progress.team2_strikes = min(3, progress.team2_strikes + 1)
+            progress.save(update_fields=['team1_strikes', 'team2_strikes'])
+            return progress
+
+        progress = await sync_to_async(_strike)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_strike',
+            'team': team,
+            'team1_strikes': progress.team1_strikes,
+            'team2_strikes': progress.team2_strikes,
+        })
+
+    async def _handle_reset_strikes(self):
+        def _reset():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            progress.team1_strikes = 0
+            progress.team2_strikes = 0
+            progress.save(update_fields=['team1_strikes', 'team2_strikes'])
+            return progress
+
+        progress = await sync_to_async(_reset)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_strike',
+            'team': None,
+            'team1_strikes': 0,
+            'team2_strikes': 0,
+        })
+
+    async def _handle_award_points(self, team):
+        def _award():
+            from django.db import transaction
+            with transaction.atomic():
+                session = GameSession.objects.select_for_update().get(id=self.session_id)
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=session)
+                pts = progress.round_points
+                if team == 'team1':
+                    session.team1_score += pts
+                elif team == 'team2':
+                    session.team2_score += pts
+                progress.round_points = 0
+                session.save(update_fields=['team1_score', 'team2_score'])
+                progress.save(update_fields=['round_points'])
+                return session, pts
+
+        session, pts = await sync_to_async(_award)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_score_update',
+            'team1_score': session.team1_score,
+            'team2_score': session.team2_score,
+            'awarded_team': team,
+            'awarded_points': pts,
+        })
+
+    async def _handle_next_question(self):
+        def _next():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            total = self.session.package.feud_questions.count()
+            if progress.current_question_index < total:
+                progress.current_question_index += 1
+                progress.reset_round()
+                progress.save()
+            return progress
+
+        progress = await sync_to_async(_next)()
+        await self._broadcast_full_state(progress)
+
+    async def _handle_prev_question(self):
+        def _prev():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            if progress.current_question_index > 1:
+                progress.current_question_index -= 1
+                progress.reset_round()
+                progress.save()
+            return progress
+
+        progress = await sync_to_async(_prev)()
+        await self._broadcast_full_state(progress)
+
+    async def _handle_set_question(self, index):
+        if index is None:
+            return
+
+        def _set():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            total = self.session.package.feud_questions.count()
+            idx = max(1, min(int(index), total))
+            progress.current_question_index = idx
+            progress.reset_round()
+            progress.save()
+            return progress
+
+        progress = await sync_to_async(_set)()
+        await self._broadcast_full_state(progress)
+
+    async def _handle_set_phase(self, phase):
+        valid = ['waiting', 'question', 'buzzer', 'team1_turn', 'team2_turn', 'steal', 'award', 'finished']
+        if phase not in valid:
+            return
+
+        def _set():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            progress.phase = phase
+            progress.save(update_fields=['phase'])
+            return progress
+
+        progress = await sync_to_async(_set)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_phase_change',
+            'phase': phase,
+        })
+
+    async def _handle_set_controlling_team(self, team):
+        def _set():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            progress.controlling_team = team or ''
+            progress.save(update_fields=['controlling_team'])
+            return progress
+
+        await sync_to_async(_set)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_controlling_team',
+            'team': team,
+        })
+
+    async def _handle_set_multiplier(self, multiplier):
+        try:
+            m = int(multiplier)
+            if m not in (1, 2, 3):
+                return
+        except (TypeError, ValueError):
+            return
+
+        def _set():
+            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+            progress.current_multiplier = m
+            progress.save(update_fields=['current_multiplier'])
+
+        await sync_to_async(_set)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_multiplier',
+            'multiplier': m,
+        })
+
+    async def _handle_update_scores(self, t1, t2):
+        try:
+            t1 = max(0, int(t1))
+            t2 = max(0, int(t2))
+        except (TypeError, ValueError):
+            return
+
+        def _update():
+            from django.db import transaction
+            with transaction.atomic():
+                session = GameSession.objects.select_for_update().get(id=self.session_id)
+                session.team1_score = t1
+                session.team2_score = t2
+                session.save(update_fields=['team1_score', 'team2_score'])
+
+        await sync_to_async(_update)()
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_score_update',
+            'team1_score': t1,
+            'team2_score': t2,
+        })
+
+    async def _handle_show_question(self, show):
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_question_visibility',
+            'show': bool(show),
+        })
+
+    async def _handle_buzz_reset(self):
+        buzz_key = f"buzz_lock_feud_{self.session_id}"
+        await sync_to_async(cache.delete)(buzz_key)
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_buzz_event',
+            'action': 'buzz_reset',
+        })
+
+    async def _handle_buzz(self, data):
+        name = (data.get('contestant_name') or '').strip()
+        team = data.get('team')
+        if not name or team not in ('team1', 'team2'):
+            return
+
+        buzz_key = f"buzz_lock_feud_{self.session_id}"
+        payload = {'name': name, 'team': team}
+
+        try:
+            added = await sync_to_async(cache.add)(buzz_key, payload, timeout=30)
+        except Exception:
+            added = False
+
+        if not added:
+            cur = await sync_to_async(cache.get)(buzz_key) or {}
+            await self.send(text_data=json.dumps({
+                'type': 'buzz_rejected',
+                'message': f'الزر محجوز من {cur.get("name", "مشارك")}'
+            }))
+            return
+
+        await self.send(text_data=json.dumps({
+            'type': 'buzz_confirmed',
+            'contestant_name': name,
+            'team': team,
+            'message': f'تم تسجيل إجابتك يا {name}!'
+        }))
+
+        team_display = self.session.team1_name if team == 'team1' else self.session.team2_name
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_buzz_event',
+            'action': 'buzz_accepted',
+            'contestant_name': name,
+            'team': team,
+            'team_display': team_display,
+        })
+
+    # ==================== Group Broadcasts ====================
+
+    async def broadcast_answer_revealed(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'answer_revealed',
+            'rank': event['rank'],
+            'points_added': event['points_added'],
+            'round_points': event['round_points'],
+            'revealed_answers': event['revealed_answers'],
+        }))
+
+    async def broadcast_strike(self, event):
+        if self.role == 'contestant':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'strike_updated',
+            'team': event.get('team'),
+            'team1_strikes': event['team1_strikes'],
+            'team2_strikes': event['team2_strikes'],
+        }))
+
+    async def broadcast_score_update(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'scores_updated',
+            'team1_score': event['team1_score'],
+            'team2_score': event['team2_score'],
+            'awarded_team': event.get('awarded_team'),
+            'awarded_points': event.get('awarded_points'),
+        }))
+
+    async def broadcast_phase_change(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'phase_changed',
+            'phase': event['phase'],
+        }))
+
+    async def broadcast_controlling_team(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'controlling_team_changed',
+            'team': event['team'],
+        }))
+
+    async def broadcast_multiplier(self, event):
+        if self.role == 'contestant':
+            return
+        await self.send(text_data=json.dumps({
+            'type': 'multiplier_changed',
+            'multiplier': event['multiplier'],
+        }))
+
+    async def broadcast_question_visibility(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'question_visibility',
+            'show': event['show'],
+        }))
+
+    async def broadcast_buzz_event(self, event):
+        action = event.get('action')
+        if action == 'buzz_accepted':
+            if self.role == 'contestant':
+                return
+            await self.send(text_data=json.dumps({
+                'type': 'contestant_buzz_accepted',
+                'contestant_name': event.get('contestant_name'),
+                'team': event.get('team'),
+                'team_display': event.get('team_display'),
+                'start_countdown': True,
+            }))
+        elif action == 'buzz_reset':
+            if self.role == 'contestant':
+                return
+            await self.send(text_data=json.dumps({'type': 'buzz_reset_by_host'}))
+
+    async def broadcast_full_state(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'full_state',
+            'question_index': event['question_index'],
+            'question_text': event.get('question_text', ''),
+            'answers': event.get('answers', []),
+            'revealed_answers': event.get('revealed_answers', []),
+            'team1_strikes': event['team1_strikes'],
+            'team2_strikes': event['team2_strikes'],
+            'round_points': event['round_points'],
+            'controlling_team': event.get('controlling_team', ''),
+            'phase': event.get('phase', 'waiting'),
+            'multiplier': event.get('multiplier', 1),
+            'total_questions': event.get('total_questions', 0),
+            'team1_score': event.get('team1_score', 0),
+            'team2_score': event.get('team2_score', 0),
+        }))
+
+    # ==================== Helpers ====================
+
+    async def _send_initial_state(self):
+        def _get():
+            progress = FamilyFeudProgress.objects.filter(session=self.session).first()
+            if not progress:
+                return None
+            session = GameSession.objects.select_related('package').get(id=self.session_id)
+            q = session.package.feud_questions.filter(
+                order=progress.current_question_index
+            ).prefetch_related('answers').first()
+            total = session.package.feud_questions.count()
+            answers = []
+            if q:
+                for ans in q.answers.all().order_by('rank'):
+                    answers.append({
+                        'rank': ans.rank,
+                        'text': ans.text,
+                        'points': ans.points,
+                    })
+            return {
+                'question_index': progress.current_question_index,
+                'question_text': q.question_text if q else '',
+                'answers': answers,
+                'revealed_answers': progress.revealed_answers,
+                'team1_strikes': progress.team1_strikes,
+                'team2_strikes': progress.team2_strikes,
+                'round_points': progress.round_points,
+                'controlling_team': progress.controlling_team,
+                'phase': progress.phase,
+                'multiplier': progress.current_multiplier,
+                'total_questions': total,
+                'team1_score': session.team1_score,
+                'team2_score': session.team2_score,
+            }
+
+        state = await sync_to_async(_get)()
+        if state:
+            await self.send(text_data=json.dumps({
+                'type': 'full_state',
+                **state
+            }))
+
+    async def _broadcast_full_state(self, progress=None):
+        def _get():
+            session = GameSession.objects.select_related('package').get(id=self.session_id)
+            p = progress or FamilyFeudProgress.objects.get(session=session)
+            q = session.package.feud_questions.filter(
+                order=p.current_question_index
+            ).prefetch_related('answers').first()
+            total = session.package.feud_questions.count()
+            answers = []
+            if q:
+                for ans in q.answers.all().order_by('rank'):
+                    answers.append({
+                        'rank': ans.rank,
+                        'text': ans.text,
+                        'points': ans.points,
+                    })
+            return {
+                'question_index': p.current_question_index,
+                'question_text': q.question_text if q else '',
+                'answers': answers,
+                'revealed_answers': p.revealed_answers,
+                'team1_strikes': p.team1_strikes,
+                'team2_strikes': p.team2_strikes,
+                'round_points': p.round_points,
+                'controlling_team': p.controlling_team,
+                'phase': p.phase,
+                'multiplier': p.current_multiplier,
+                'total_questions': total,
+                'team1_score': session.team1_score,
+                'team2_score': session.team2_score,
+            }
+
+        state = await sync_to_async(_get)()
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_full_state',
+            **state
+        })
+
+    def _parse_qs(self):
+        try:
+            from urllib.parse import parse_qs
+            return parse_qs(self.scope.get('query_string', b'').decode())
+        except Exception:
+            return {}

@@ -86,7 +86,12 @@ path(
 ),
 
 
-
+# فاميلي فيود
+path('feud/', views.feud_game_home, name='feud_home'),
+path('feud/create/', views.create_feud_session, name='create_feud_session'),
+path('feud/session/<uuid:session_id>/', views.feud_session, name='feud_session'),
+path('feud/display/<str:display_link>/', views.feud_display, name='feud_display'),
+path('feud/contestants/<str:contestants_link>/', views.feud_contestants, name='feud_contestants'),
 
     # =========================
     # تحدّي الوقت (Time Challenge)
