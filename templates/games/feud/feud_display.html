@@ -7,21 +7,22 @@
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Lalezar&display=swap" rel="stylesheet">
   <style>
     :root {
-      --feud-bg:     #070d1f;
-      --feud-blue:   #1a3a8f;
-      --feud-blue2:  #2563eb;
-      --feud-gold:   #f59e0b;
-      --feud-gold-d: #d97706;
-      --feud-orange: #ea580c;
-      --feud-red:    #dc2626;
-      --cell-bg:     #0f2460;
-      --cell-border: #f59e0b;
-      --cell-text:   #fcd34d;
-      --revealed-bg: #1d4ed8;
-      --t1: #22c55e;
-      --t2: #f97316;
-    }
+    --feud-bg:     #070d1f;
+    --feud-blue:   #1a3a8f;
+    --feud-blue2:  #2563eb;
+    --feud-gold:   #f59e0b;
+    --feud-gold-d: #d97706;
+    --feud-orange: #ea580c;
+    --feud-red:    #dc2626;
+    --cell-bg:     #0f2460;
+    --cell-border: #f59e0b;
+    --cell-text:   #fcd34d;
+    --revealed-bg: #1d4ed8;
 
+    /* الفريقان بنفس الثيم — لا أخضر ولا برتقالي */
+    --t1: #f59e0b;   /* ذهبي للفريق الأول */
+    --t2: #60a5fa;   /* أزرق فاتح للفريق الثاني */
+    }
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Tajawal',sans-serif; }
 
     body {
@@ -61,14 +62,13 @@
     }
 
     .score-block.t1 {
-      border-left: 4px solid var(--t1);
-      background: linear-gradient(135deg, rgba(34,197,94,0.12), transparent);
+    border-left: 4px solid var(--t1);
+    background: linear-gradient(135deg, rgba(245,158,11,0.12), transparent);
     }
     .score-block.t2 {
-      border-right: 4px solid var(--t2);
-      background: linear-gradient(135deg, transparent, rgba(249,115,22,0.12));
+    border-right: 4px solid var(--t2);
+    background: linear-gradient(135deg, transparent, rgba(96,165,250,0.12));
     }
-
     .score-team-name {
       font-size: clamp(1rem, 2.5vw, 1.5rem);
       font-weight: 900;
@@ -76,6 +76,8 @@
     }
     .score-block.t1 .score-team-name { color: var(--t1); }
     .score-block.t2 .score-team-name { color: var(--t2); }
+    .score-block.t1 .score-number { color: var(--t1); }
+    .score-block.t2 .score-number { color: var(--t2); }
 
     .score-number {
       font-family: 'Lalezar', sans-serif;
@@ -177,13 +179,16 @@
 
     /* عمودان، الترتيب عمودي */
     .answers-board {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-auto-rows: 1fr;
-      gap: clamp(6px, 1.2vw, 14px);
-      width: 100%;
-      max-width: 1400px;
-      height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(8px, 1.2vw, 16px);
+        width: 100%;
+        max-width: 1400px;
+        height: 100%;
+        /* العمود الأيسر يحتوي أرقام 1,2,3,4 والأيمن 5,6,7,8 */
+        grid-auto-rows: 1fr;
+        grid-auto-flow: column;
+        /* عدد الصفوف يُحسب ديناميكيًا بالـ JS */
     }
 
     /* خلية الإجابة */
