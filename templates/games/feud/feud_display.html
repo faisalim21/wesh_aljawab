@@ -790,6 +790,22 @@ function connect() {
         applyFullState(d);
         break;
 
+      case 'scores_updated':
+        state.t1Score = d.team1_score;
+        state.t2Score = d.team2_score;
+        document.getElementById('t1Score').textContent = d.team1_score;
+        document.getElementById('t2Score').textContent = d.team2_score;
+        state.roundPts = 0;
+        document.getElementById('roundPts').textContent = '0';
+        // تحديث الأسماء لو وُجدت
+        if (d.team1_name) document.getElementById('t1Name').textContent = d.team1_name;
+        if (d.team2_name) document.getElementById('t2Name').textContent = d.team2_name;
+        if (d.awarded_points && d.awarded_points > 0) {
+            showAwardPop(`+${d.awarded_points}`);
+            playAwardSound();
+        }
+        break; 
+        
       case 'answer_revealed': {
         if (!state.revealed.includes(d.rank)) state.revealed.push(d.rank);
         state.roundPts = d.round_points;

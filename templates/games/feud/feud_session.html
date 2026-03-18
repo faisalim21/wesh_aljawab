@@ -696,14 +696,31 @@
     </div>
   </div>
 
-  <!-- ===== الفريق المتحكم ===== -->
-  <div class="ctrl-section">
-    <div class="ctrl-section-title">🏆 الفريق المتحكم</div>
-    <div class="ctrl-team-btns">
-      <button class="ctrl-team-btn" id="ctrlT1" onclick="setControllingTeam('team1')">{{ session.team1_name }}</button>
-      <button class="ctrl-team-btn" id="ctrlT2" onclick="setControllingTeam('team2')">{{ session.team2_name }}</button>
+  <!-- أسماء الفريقين -->
+    <div class="control-section">
+    <div class="ctrl-title">✏️ أسماء الفريقين</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;gap:6px;align-items:center;">
+        <input id="t1NameInput" type="text" placeholder="اسم الفريق الأول"
+            style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid var(--t1);
+                background:rgba(245,158,11,0.08);color:#fff;font-family:'Tajawal',sans-serif;
+                font-weight:700;font-size:0.85rem;outline:none;"
+            value="{{ session.team1_name }}">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--t1);flex-shrink:0;"></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+        <input id="t2NameInput" type="text" placeholder="اسم الفريق الثاني"
+            style="flex:1;padding:8px 10px;border-radius:8px;border:1.5px solid var(--t2);
+                background:rgba(96,165,250,0.08);color:#fff;font-family:'Tajawal',sans-serif;
+                font-weight:700;font-size:0.85rem;outline:none;"
+            value="{{ session.team2_name }}">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--t2);flex-shrink:0;"></div>
+        </div>
+        <button class="ctrl-btn reveal-all" onclick="saveTeamNames()" style="margin-top:2px;">
+        <i class="fas fa-save"></i> حفظ الأسماء
+        </button>
     </div>
-  </div>
+    </div>
 
   <!-- ===== تسجيل خطأ ===== -->
   <div class="ctrl-section">
@@ -912,6 +929,57 @@ function playBuzzS() { tone(800,300,0.5); }
 function showAward(t){ const e=document.getElementById('awardFlash'); e.textContent=t; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1500); }
 
 document.addEventListener('DOMContentLoaded', ()=>{ connect(); });
+
+
+
+async function saveTeamNames() {
+  const t1 = document.getElementById('t1NameInput').value.trim();
+  const t2 = document.getElementById('t2NameInput').value.trim();
+
+  if (!t1 || !t2) { alert('يرجى إدخال اسمي الفريقين'); return; }
+
+  // تحديث محلي فوري
+  state.t1Name = t1;
+  state.t2Name = t2;
+  document.getElementById('t1Name').textContent = t1;
+  document.getElementById('t2Name').textContent = t2;
+  document.getElementById('ctrlT1Btn').textContent = t1;
+  document.getElementById('ctrlT2Btn').textContent = t2;
+  document.querySelector('.strike-btn.t1').textContent = `✗ ${t1}`;
+  document.querySelector('.strike-btn.t2').textContent = `✗ ${t2}`;
+  document.querySelector('.ctrl-btn.award-t1').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t1}`;
+  document.querySelector('.ctrl-btn.award-t2').innerHTML = `<i class="fas fa-trophy"></i> أعطِ لـ ${t2}`;
+
+  // حفظ في السيرفر
+  try {
+    await fetch('/games/api/update-scores/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        session_id: SESSION_ID,
+        team1_score: state.t1Score,
+        team2_score: state.t2Score,
+      })
+    });
+
+    // بث الأسماء لشاشة العرض عبر WS
+    send({
+      type: 'update_scores',
+      team1_score: state.t1Score,
+      team2_score: state.t2Score,
+      team1_name: t1,
+      team2_name: t2,
+    });
+
+  } catch {}
+
+  // تأكيد بصري
+  const btn = document.querySelector('button[onclick="saveTeamNames()"]');
+  if (btn) {
+    btn.innerHTML = '<i class="fas fa-check"></i> تم الحفظ!';
+    setTimeout(() => { btn.innerHTML = '<i class="fas fa-save"></i> حفظ الأسماء'; }, 1500);
+  }
+}
 </script>
 </body>
 </html>

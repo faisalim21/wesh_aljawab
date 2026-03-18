@@ -1774,8 +1774,9 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'team2_score': event['team2_score'],
             'awarded_team': event.get('awarded_team'),
             'awarded_points': event.get('awarded_points'),
+            'team1_name': event.get('team1_name'),
+            'team2_name': event.get('team2_name'),
         }))
-
     async def broadcast_phase_change(self, event):
         await self.send(text_data=json.dumps({
             'type': 'phase_changed',
