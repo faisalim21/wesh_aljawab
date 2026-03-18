@@ -2234,14 +2234,15 @@ class FamilyFeudAnswerInline(admin.TabularInline):
     model = FamilyFeudAnswer
     fk_name = 'question'
     extra = 5
-    max_num = 8
+    max_num = 5  # ← الحد الأقصى 5 إجابات
+    min_num = 0
     fields = ('rank', 'text', 'points')
     ordering = ('rank',)
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super().get_formset(request, obj, **kwargs)
         formset.form.base_fields['rank'].help_text = "1 = الأكثر شيوعاً"
-        formset.form.base_fields['points'].help_text = "يفضل أن يكون مجموع كل الإجابات = 100"
+        formset.form.base_fields['points'].help_text = "مجموع كل الإجابات يفضل = 100"
         return formset
 
 class FamilyFeudQuestionInline(admin.StackedInline):
@@ -2250,7 +2251,7 @@ class FamilyFeudQuestionInline(admin.StackedInline):
     extra = 0
     fields = ('order', 'question_text', 'multiplier')
     ordering = ('order',)
-    show_change_link = True
+    show_change_link = True  # ← زر "تعديل" يفتح صفحة السؤال مع الإجابات
 
     def get_queryset(self, request):
         return super().get_queryset(request).filter(package__game_type='feud')
@@ -2289,7 +2290,15 @@ class FeudPackageAdmin(admin.ModelAdmin):
         return (
             super().get_queryset(request)
             .filter(game_type='feud')
-            .annotate(_qcount=Count('feud_questions'))
+            .annotate(
+                _qcount=Count('feud_questions', distinct=True),
+                _acount=Count('feud_questions__answers', distinct=True),
+                _pcount=Coalesce(
+                    Sum('feud_questions__answers__points'),
+                    0,
+                    output_field=IntegerField()
+                )
+            )
         )
 
     def save_model(self, request, obj, form, change):
@@ -2302,17 +2311,22 @@ class FeudPackageAdmin(admin.ModelAdmin):
 
     def questions_count(self, obj):
         count = getattr(obj, '_qcount', 0)
+        answers = getattr(obj, '_acount', 0)
+        points = getattr(obj, '_pcount', 0)
+
         if count == 0:
             color, icon = '#ef4444', '❌'
         elif count < 5:
             color, icon = '#f59e0b', '⚠️'
         else:
             color, icon = '#10b981', '✅'
+
         return format_html(
-            '<span style="color:{};font-weight:700;">{} {} سؤال</span>',
-            color, icon, count
+            '<span style="color:{};font-weight:700;">{} {} سؤال</span>'
+            '<br><span style="color:#94a3b8;font-size:0.82rem;">📝 {} إجابة | 🏆 {} نقطة</span>',
+            color, icon, count, answers, points
         )
-    questions_count.short_description = "عدد الأسئلة"
+    questions_count.short_description = "الأسئلة / الإجابات / النقاط"
 
     def price_info(self, obj):
         if obj.is_free:
