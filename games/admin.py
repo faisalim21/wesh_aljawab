@@ -2233,17 +2233,16 @@ class FeudPackage(GamePackage):
 class FamilyFeudAnswerInline(admin.TabularInline):
     model = FamilyFeudAnswer
     fk_name = 'question'
-    extra = 5
-    max_num = 5  # ← الحد الأقصى 5 إجابات
-    min_num = 0
+    extra = 0
+    max_num = 5
     fields = ('rank', 'text', 'points')
     ordering = ('rank',)
 
-    def get_formset(self, request, obj=None, **kwargs):
-        formset = super().get_formset(request, obj, **kwargs)
-        formset.form.base_fields['rank'].help_text = "1 = الأكثر شيوعاً"
-        formset.form.base_fields['points'].help_text = "مجموع كل الإجابات يفضل = 100"
-        return formset
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is None:
+            return 1
+        return 0
+
 
 class FamilyFeudQuestionInline(admin.StackedInline):
     model = FamilyFeudQuestion
@@ -2352,12 +2351,16 @@ class FeudPackageAdmin(admin.ModelAdmin):
     status_badge.short_description = "الحالة"
 
     def feud_actions(self, obj):
+        add_q_url = reverse('admin:games_familyfeudquestion_add') + f'?package={obj.id}'
+        list_q_url = reverse('admin:games_familyfeudquestion_changelist') + f'?package__package_number={obj.package_number}'
         upload_url = reverse('admin:games_feudpackage_upload', args=[obj.id])
         template_url = reverse('admin:games_feudpackage_template')
         export_url = reverse('admin:games_feudpackage_export', args=[obj.id])
         return mark_safe(
-            f'<a class="button" href="{upload_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع CSV</a>'
-            f'<a class="button" href="{template_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
+            f'<a class="button" href="{add_q_url}" style="background:#22c55e;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">➕ سؤال جديد</a>'
+            f'<a class="button" href="{list_q_url}" style="background:#6d28d9;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📋 الأسئلة</a>'
+            f'<a class="button" href="{upload_url}" style="background:#0ea5e9;color:#0b1220;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">📁 رفع CSV</a>'
+            f'<a class="button" href="{template_url}" style="background:#475569;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;margin-left:6px;">⬇️ قالب</a>'
             f'<a class="button" href="{export_url}" style="background:#6b7280;color:#fff;padding:4px 8px;border-radius:6px;text-decoration:none;">📤 تصدير</a>'
         )
     feud_actions.short_description = "إجراءات"
@@ -2526,8 +2529,6 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
     ordering = ('package__package_number', 'order')
     inlines = [FamilyFeudAnswerInline]
     list_select_related = ('package',)
-    change_form_template = 'admin/feud_question_change.html'
-    add_form_template = 'admin/feud_question_change.html'
 
     def get_queryset(self, request):
         return (
@@ -2540,6 +2541,15 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
         if db_field.name == 'package':
             kwargs['queryset'] = GamePackage.objects.filter(game_type='feud').order_by('package_number')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+    def get_changeform_initial_data(self, request):
+        initial = super().get_changeform_initial_data(request)
+        pkg_id = request.GET.get('package')
+        if pkg_id:
+            last = FamilyFeudQuestion.objects.filter(package_id=pkg_id).aggregate(Max('order'))['order__max'] or 0
+            initial['order'] = last + 1
+            initial['package'] = pkg_id
+        return initial
 
     def package_ref(self, obj):
         return f"حزمة {obj.package.package_number}"
@@ -2555,22 +2565,6 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
             return format_html('<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات</span>', count)
         return format_html('<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>', count)
     answers_count.short_description = "الإجابات"
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        count = int(request.POST.get('ans_count', 0))
-        if count:
-            obj.answers.all().delete()
-            for i in range(count):
-                rank   = int(request.POST.get(f'ans_rank_{i}', i+1))
-                text   = request.POST.get(f'ans_text_{i}', '').strip()
-                points = int(request.POST.get(f'ans_points_{i}', 0))
-                if text:
-                    FamilyFeudAnswer.objects.create(
-                        question=obj, rank=rank, text=text, points=points
-                    )
-
-
 # ========= تحسينات عامة لواجهة الأدمن =========
 admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
