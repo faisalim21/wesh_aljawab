@@ -1080,8 +1080,13 @@ class FamilyFeudQuestion(models.Model):
 
     def clean(self):
         super().clean()
-        if self.package and self.package.game_type != 'feud':
-            raise ValidationError("هذه الحزمة ليست من نوع فاميلي فيود.")
+        if self.package_id:
+            try:
+                pkg = GamePackage.objects.get(pk=self.package_id)
+                if pkg.game_type != 'feud':
+                    raise ValidationError("هذه الحزمة ليست من نوع فاميلي فيود.")
+            except GamePackage.DoesNotExist:
+                pass
         if self.order < 1:
             raise ValidationError("ترتيب السؤال يبدأ من 1.")
 

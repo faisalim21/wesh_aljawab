@@ -2244,7 +2244,6 @@ class FamilyFeudAnswerInline(admin.TabularInline):
         formset.form.base_fields['points'].help_text = "يفضل أن يكون مجموع كل الإجابات = 100"
         return formset
 
-
 class FamilyFeudQuestionInline(admin.StackedInline):
     model = FamilyFeudQuestion
     fk_name = 'package'
@@ -2252,6 +2251,11 @@ class FamilyFeudQuestionInline(admin.StackedInline):
     fields = ('order', 'question_text', 'multiplier')
     ordering = ('order',)
     show_change_link = True
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).filter(package__game_type='feud')
+
+    
 
 
 @admin.register(FeudPackage)
