@@ -1,0 +1,401 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>اختر الحزمة — فاميلي فيود | وش الجواب</title>
+  <link rel="icon" type="image/png" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+  <meta name="theme-color" content="#1a3a8f">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --feud-blue: #1a3a8f;
+      --feud-blue-light: #2563eb;
+      --feud-gold: #f59e0b;
+      --feud-gold-dark: #d97706;
+      --feud-orange: #ea580c;
+      --radius: 14px;
+      --transition: .3s cubic-bezier(.25,.8,.25,1);
+    }
+
+    * { font-family: 'Tajawal', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(135deg, #0f1f5c 0%, #1a3a8f 50%, #0c0c2e 100%);
+      min-height: 100vh;
+      padding-top: 20px;
+      padding-bottom: 40px;
+    }
+
+    /* نقاط الخلفية بستايل فاميلي فيود */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .packages-section {
+      background: rgba(255,255,255,.97);
+      border-radius: 28px;
+      margin: 32px auto;
+      padding: 40px 24px;
+      max-width: 1200px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* هيدر فاميلي فيود */
+    .feud-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .feud-logo-title {
+      display: inline-block;
+      background: linear-gradient(135deg, #1a3a8f, #2563eb);
+      border-radius: 20px;
+      padding: 16px 32px;
+      margin-bottom: 16px;
+      border: 3px solid var(--feud-gold);
+      box-shadow:
+        0 0 0 6px rgba(245,158,11,0.15),
+        0 8px 32px rgba(26,58,143,0.4);
+    }
+
+    .feud-logo-text {
+      font-size: 2.6rem;
+      font-weight: 900;
+      color: var(--feud-gold);
+      -webkit-text-stroke: 2px var(--feud-orange);
+      paint-order: stroke fill;
+      text-shadow:
+        2px 2px 0 var(--feud-orange),
+        4px 4px 0 #92400e;
+      letter-spacing: 2px;
+    }
+
+    .feud-subtitle {
+      color: #475569;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    /* بانر */
+    .dev-banner {
+      background: linear-gradient(135deg, #eff6ff, #fef3c7);
+      border: 1.5px solid #93c5fd;
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .dev-banner-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: 2px; }
+    .dev-banner-text { color: #1e3a8a; font-size: .88rem; line-height: 1.75; }
+    .dev-banner-text strong { display: block; font-size: .95rem; font-weight: 900; margin-bottom: 3px; }
+
+    /* قسم */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 36px 0 18px; padding-bottom: 12px;
+      border-bottom: 2px solid rgba(26,58,143,.15);
+    }
+    .section-header h5 {
+      margin: 0; font-weight: 900; font-size: 1.25rem;
+      display: flex; align-items: center; gap: 8px; color: #1e293b;
+    }
+    .section-header h5 i { color: var(--feud-blue); }
+    .section-header small { color: #64748b; font-size: .85rem; font-weight: 600; }
+
+    /* scroll row */
+    .scroll-row {
+      display: flex; gap: 14px; overflow-x: auto;
+      padding-bottom: 12px; scroll-behavior: smooth;
+    }
+    .scroll-row::-webkit-scrollbar { height: 6px; }
+    .scroll-row::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, #1a3a8f, #f59e0b);
+      border-radius: 999px;
+    }
+    .scroll-row::-webkit-scrollbar-track { background: rgba(26,58,143,.08); border-radius: 999px; }
+
+    .pkg { flex: 0 0 auto; width: 195px; }
+    .pkg.free-pkg { width: 320px; }
+
+    @media (min-width: 992px) {
+      .pkg { width: 260px; }
+      .pkg.free-pkg { width: 380px; }
+    }
+
+    /* كارت */
+    .cardx {
+      background: #fff;
+      border: 1.5px solid rgba(26,58,143,.12);
+      border-radius: var(--radius);
+      padding: 18px 16px 14px;
+      display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.07);
+      transition: var(--transition);
+      height: 100%; position: relative; overflow: hidden;
+    }
+    .cardx::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #1a3a8f, #f59e0b, #ea580c);
+      transform: scaleX(0); transition: transform .4s ease; transform-origin: right;
+    }
+    .cardx:hover { transform: translateY(-6px); box-shadow: 0 12px 28px rgba(0,0,0,.12); border-color: rgba(26,58,143,.3); }
+    .cardx:hover::before { transform: scaleX(1); }
+    .cardx.free {
+      border: 2px dashed var(--feud-gold);
+      background: linear-gradient(180deg, #fffbeb, #fff 60%);
+    }
+
+    /* شارة مجانية */
+    .ribbon-free {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: linear-gradient(135deg, var(--feud-gold), var(--feud-gold-dark));
+      color: #fff; padding: 4px 14px; border-radius: 999px;
+      font-weight: 900; font-size: .82rem;
+      box-shadow: 0 4px 12px rgba(245,158,11,.3);
+    }
+
+    .trust-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #f8fafc; border: 1.5px solid #e2e8f0; color: #334155;
+      border-radius: 999px; padding: 4px 12px; font-size: .8rem; font-weight: 700;
+    }
+
+    .card-title { font-weight: 900; font-size: 1.05rem; color: #1e293b; white-space: nowrap; }
+
+    .free-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+    .free-stat {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #fef3c7; border: 1.5px solid #fde68a; color: #92400e;
+      border-radius: 999px; padding: 3px 10px; font-size: .75rem; font-weight: 800;
+    }
+    .free-stat.blue { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+
+    .card-desc { font-size: .88rem; color: #475569; line-height: 1.6; }
+
+    .card-price { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .price-new { font-weight: 900; font-size: 1.25rem; color: var(--feud-blue); display: flex; align-items: center; gap: 4px; }
+    .price-old { color: #94a3b8; text-decoration: line-through; font-size: .95rem; font-weight: 700; }
+    .save-badge {
+      background: #fef3c7; color: #92400e; border: 1.5px solid #fde68a;
+      font-weight: 800; border-radius: 999px; padding: 2px 10px; font-size: .75rem;
+    }
+
+    .used-before {
+      font-size: .72rem; color: #9a3412; background: #fff7ed;
+      border: 1.5px solid #fed7aa; border-radius: 8px; padding: 3px 8px;
+      font-weight: 800; display: inline-flex; align-items: center; gap: 4px;
+    }
+
+    /* زر اللعب */
+    .btn-play {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; color: #fff; font-weight: 900; font-size: .95rem; border: none;
+      border-radius: 10px; padding: 12px; text-decoration: none;
+      transition: var(--transition); cursor: pointer; margin-top: auto;
+    }
+    .btn-play.available {
+      background: linear-gradient(135deg, #1a3a8f, #2563eb);
+      box-shadow: 0 4px 14px rgba(26,58,143,.3);
+    }
+    .btn-play.available:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 22px rgba(26,58,143,.4);
+      color: #fff; text-decoration: none;
+    }
+    .btn-play.btn-gold {
+      background: linear-gradient(135deg, var(--feud-gold-dark), var(--feud-gold));
+      box-shadow: 0 4px 14px rgba(245,158,11,.3);
+    }
+    .btn-play.btn-gold:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 22px rgba(245,158,11,.4);
+      color: #fff; text-decoration: none;
+    }
+    .btn-play:disabled {
+      background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+      color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none;
+    }
+
+    /* أنيميشن */
+    .pkg { opacity:0; animation: fadeUp .5s ease forwards; }
+    .pkg:nth-child(1){animation-delay:.05s}
+    .pkg:nth-child(2){animation-delay:.10s}
+    .pkg:nth-child(3){animation-delay:.15s}
+    .pkg:nth-child(4){animation-delay:.20s}
+    .pkg:nth-child(5){animation-delay:.25s}
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    @media (max-width:768px) {
+      .packages-section { padding:28px 14px; margin:20px 10px; border-radius:20px; }
+      .pkg { width:72vw; max-width:260px; }
+      .pkg.free-pkg { width:80vw; max-width:320px; }
+      .feud-logo-text { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+{% include 'header.html' %}
+
+<div class="container my-3">
+  {% if messages %}
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags|default:'info' }} rounded-3">{{ m|safe }}</div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+<section class="packages-section">
+
+  <!-- هيدر -->
+  <div class="feud-header">
+    <div class="feud-logo-title">
+      <div class="feud-logo-text">فاميلي فيود</div>
+    </div>
+    <p class="feud-subtitle">اختر حزمتك وابدأ التحدي مع عائلتك وأصدقائك</p>
+  </div>
+
+  <!-- بانر -->
+  <div class="dev-banner">
+    <span class="dev-banner-icon">🎮</span>
+    <div class="dev-banner-text">
+      <strong>أول نسخة عربية احترافية من فاميلي فيود!</strong>
+      شاشة عرض + صفحة مقدم + زر متسابقين — كل شيء متكامل بجودة عالية وبأقل الأسعار.
+    </div>
+  </div>
+
+  <!-- الحزمة المجانية -->
+  {% if free_package %}
+  <div class="section-header">
+    <h5><i class="fas fa-gift"></i> جرّب مجاناً</h5>
+  </div>
+  <div class="scroll-row">
+    <div class="pkg free-pkg">
+      <div class="cardx free">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span class="ribbon-free"><i class="fas fa-star"></i> مجانية</span>
+          <span class="trust-pill"><i class="fa-solid fa-clock"></i> صلاحية ساعة</span>
+        </div>
+        <div class="card-title">جولة تجريبية</div>
+        <div class="free-stats">
+          <span class="free-stat"><i class="fas fa-question-circle"></i> أسئلة تجريبية</span>
+          <span class="free-stat blue"><i class="fas fa-users"></i> فريقان</span>
+        </div>
+        {% if free_package.description %}
+          <div class="card-desc">{{ free_package.description }}</div>
+        {% endif %}
+
+        {% if request.user.is_authenticated %}
+          {% if free_active_session %}
+            <a class="btn-play btn-gold" href="{% url 'games:feud_session' free_active_session.id %}" target="_blank">
+              <i class="fas fa-play"></i> ارجع إلى جلستك
+            </a>
+          {% elif free_session_eligible %}
+            <form method="POST" action="{% url 'games:create_feud_session' %}" target="_blank">
+              {% csrf_token %}
+              <input type="hidden" name="package_id" value="{{ free_package.id }}">
+              <button type="submit" class="btn-play btn-gold">
+                <i class="fas fa-play"></i> ابدأ الجولة المجانية
+              </button>
+            </form>
+          {% else %}
+            <button class="btn-play" disabled><i class="fas fa-lock"></i> غير متاح</button>
+            <div class="text-center text-warning small mt-2">{{ free_session_message }}</div>
+          {% endif %}
+        {% else %}
+          <a class="btn-play available" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+            <i class="fas fa-sign-in-alt"></i> سجّل الدخول للتجربة
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- الحزم المدفوعة -->
+  {% if paid_packages %}
+  <div class="section-header">
+    <h5><i class="fas fa-box-open"></i> الحزم المدفوعة</h5>
+    <small>صلاحية دائمة ♾️</small>
+  </div>
+  <div class="scroll-row">
+    {% for package in paid_packages %}
+    <div class="pkg">
+      <div class="cardx">
+        <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+          <span class="card-title">حزمة {{ package.package_number }}</span>
+        </div>
+        {% if package.id in completed_packages_ids %}
+          <span class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق شراؤها</span>
+        {% endif %}
+        {% if package.description %}
+          <div class="card-desc">{{ package.description }}</div>
+        {% endif %}
+        <div class="card-price">
+          {% if package.has_discount %}
+            <span class="price-new">{{ package.discounted_price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
+            <span class="price-old">{{ package.original_price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
+            <span class="save-badge" data-orig="{{ package.original_price }}" data-disc="{{ package.discounted_price }}">وفّر <b class="save-pct">—</b></span>
+          {% else %}
+            <span class="price-new">{{ package.price|floatformat:0 }} <span class="icon-saudi_riyal"></span></span>
+          {% endif %}
+        </div>
+
+        {% if package.id in active_packages_ids %}
+          <form method="POST" action="{% url 'games:create_feud_session' %}" target="_blank">
+            {% csrf_token %}
+            <input type="hidden" name="package_id" value="{{ package.id }}">
+            <button type="submit" class="btn-play btn-gold">
+              <i class="fas fa-play"></i> ابدأ اللعب
+            </button>
+          </form>
+        {% else %}
+          <a class="btn-play available" href="{% url 'payments:start_payment' package.id %}">
+            <i class="fas fa-shopping-cart"></i> شراء
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if not free_package and not paid_packages %}
+  <div class="text-center py-5">
+    <i class="fas fa-box-open fa-3x mb-3" style="color:#94a3b8;"></i>
+    <p style="color:#64748b;font-weight:700;">لا توجد حزم متاحة حالياً، تابعونا قريباً!</p>
+  </div>
+  {% endif %}
+
+</section>
+
+{% include 'footer.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.save-badge').forEach(el => {
+    const o = parseFloat(el.dataset.orig || '0');
+    const d = parseFloat(el.dataset.disc || '0');
+    const pct = (o > 0 && d > 0 && d < o) ? Math.round((1 - d/o) * 100) : 0;
+    const tgt = el.querySelector('.save-pct');
+    if (tgt) tgt.textContent = pct > 0 ? pct + '%' : 'خصم';
+  });
+});
+</script>
+</body>
+</html>
