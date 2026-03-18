@@ -2356,10 +2356,8 @@ function _roundRect(ctx, x, y, w, h, r) {
 <!-- ===== overlay الشعار الكامل ===== -->
 <div id="dispLogoOverlay" class="disp-logo-overlay" onclick="toggleDispControls()">
 
-  <!-- خلفية السداسيات -->
   <svg id="dispLogoHex" class="disp-logo-full-hex" xmlns="http://www.w3.org/2000/svg"></svg>
 
-  <!-- الشعار -->
   <div class="disp-logo-group">
     <span class="dlg-haroof">حروف</span>
     <span class="dlg-maa">مـــع</span>
@@ -2369,72 +2367,89 @@ function _roundRect(ctx, x, y, w, h, r) {
     </div>
   </div>
 
-  <!-- hint اضغط لإظهار الخيارات -->
+  <!-- hint -->
   <div id="dispLogoHint" style="
-    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
     color:rgba(255,255,255,0.3); font-family:'Tajawal',sans-serif;
     font-size:0.8rem; font-weight:700; pointer-events:none;
-    transition:opacity 0.3s;">
+    transition:opacity 0.3s; white-space:nowrap;">
     اضغط في أي مكان لإظهار الخيارات
   </div>
 
-  <!-- أزرار التحكم — مخفية بالأصل -->
+  <!-- أزرار التحكم -->
   <div id="dispLogoControls" style="
     opacity:0; pointer-events:none;
     transition:opacity 0.3s;
-    position:fixed; inset:0;
-    pointer-events:none;">
+    position:fixed; inset:0;">
 
-    <!-- إغلاق -->
-    <button class="disp-logo-close"
-      style="pointer-events:auto;"
-      onclick="event.stopPropagation(); closeDispLogo()">
-      ✕ إغلاق
-    </button>
-
-    <!-- حفظ -->
+    <!-- شريط علوي: إغلاق يسار + حفظ يمين -->
     <div style="
-      position:fixed; top:20px; right:20px; z-index:10;
-      display:flex; gap:8px; pointer-events:auto;"
+      position:fixed; top:16px; left:0; right:0;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:0 20px; z-index:10; pointer-events:auto;"
       onclick="event.stopPropagation()">
-      <button class="disp-logo-save-btn" onclick="saveDispLogo('landscape')">
-        💾 حفظ عرضي
+
+      <button class="disp-logo-close" style="pointer-events:auto;"
+        onclick="event.stopPropagation(); closeDispLogo()">
+        ✕ إغلاق
       </button>
-      <button class="disp-logo-save-btn" onclick="saveDispLogo('portrait')">
-        💾 حفظ طولي
-      </button>
+
+      <div style="display:flex; gap:8px;">
+        <button class="disp-logo-save-btn" onclick="saveDispLogo('landscape')">
+          💾 حفظ عرضي
+        </button>
+        <button class="disp-logo-save-btn" onclick="saveDispLogo('portrait')">
+          💾 حفظ طولي
+        </button>
+      </div>
     </div>
 
-    <!-- تشغيل تلقائي -->
+    <!-- شريط سفلي: مؤقت + تشغيل + إعادة — كلها في صف واحد -->
     <div style="
       position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
-      display:flex; align-items:center; gap:10px; z-index:10;
-      pointer-events:auto;"
+      display:flex; align-items:center; gap:8px; z-index:10;
+      background:rgba(0,0,0,0.45); backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,0.12); border-radius:14px;
+      padding:10px 16px; pointer-events:auto; white-space:nowrap;"
       onclick="event.stopPropagation()">
 
-      <button onclick="changeAutoReplay(-5)"
-        style="width:28px;height:28px;border-radius:8px;
-               border:1px solid rgba(255,255,255,0.2);
-               background:rgba(255,255,255,0.1);color:#fff;
-               font-size:0.9rem;cursor:pointer;">−</button>
+      <!-- مؤقت -->
+      <span style="color:rgba(255,255,255,0.5);font-family:'Tajawal',sans-serif;font-size:0.78rem;font-weight:700;">تكرار كل</span>
 
-      <span id="autoReplaySec"
-        style="color:#FCD34D;font-weight:900;font-family:monospace;
-               min-width:32px;text-align:center;">10ث</span>
+      <button onclick="changeAutoReplay(-5)" style="
+        width:26px;height:26px;border-radius:7px;
+        border:1px solid rgba(255,255,255,0.2);
+        background:rgba(255,255,255,0.1);color:#fff;
+        font-size:0.9rem;cursor:pointer;line-height:1;">−</button>
 
-      <button onclick="changeAutoReplay(5)"
-        style="width:28px;height:28px;border-radius:8px;
-               border:1px solid rgba(255,255,255,0.2);
-               background:rgba(255,255,255,0.1);color:#fff;
-               font-size:0.9rem;cursor:pointer;">+</button>
+      <span id="autoReplaySec" style="
+        color:#FCD34D;font-weight:900;font-family:monospace;
+        min-width:34px;text-align:center;font-size:0.9rem;">10ث</span>
 
-      <button id="autoReplayBtn" class="disp-logo-replay"
-        style="pointer-events:auto;"
-        onclick="toggleAutoReplay()">▶ تشغيل</button>
+      <button onclick="changeAutoReplay(5)" style="
+        width:26px;height:26px;border-radius:7px;
+        border:1px solid rgba(255,255,255,0.2);
+        background:rgba(255,255,255,0.1);color:#fff;
+        font-size:0.9rem;cursor:pointer;line-height:1;">+</button>
 
-      <button class="disp-logo-replay"
-        style="pointer-events:auto;"
-        onclick="replayDispLogo()">🔁 إعادة</button>
+      <!-- فاصل -->
+      <div style="width:1px;height:22px;background:rgba(255,255,255,0.15);margin:0 4px;"></div>
+
+      <!-- تشغيل تلقائي -->
+      <button id="autoReplayBtn" onclick="toggleAutoReplay()" style="
+        padding:6px 14px;border-radius:8px;
+        border:1.5px solid rgba(139,92,246,0.5);
+        background:rgba(124,58,237,0.3);color:#c4b5fd;
+        font-family:'Tajawal',sans-serif;font-weight:800;
+        font-size:0.82rem;cursor:pointer;">▶ تشغيل</button>
+
+      <!-- إعادة -->
+      <button onclick="replayDispLogo()" style="
+        padding:6px 14px;border-radius:8px;
+        border:1.5px solid rgba(255,255,255,0.2);
+        background:rgba(255,255,255,0.08);color:#fff;
+        font-family:'Tajawal',sans-serif;font-weight:800;
+        font-size:0.82rem;cursor:pointer;">🔁 إعادة</button>
     </div>
 
   </div>
