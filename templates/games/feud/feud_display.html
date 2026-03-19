@@ -234,7 +234,8 @@
       font-weight: 900;
       color: var(--cell-text);
       /* مخفي حتى الكشف */
-      filter: blur(8px) brightness(0.3);
+      opacity: 0;
+
       transition: filter 0.5s ease, transform 0.4s ease;
       flex: 1;
       white-space: nowrap;
@@ -245,9 +246,8 @@
     .answer-pts {
       font-family: 'Lalezar', sans-serif;
       font-size: clamp(1.1rem, 2.8vw, 2rem);
-      filter: none;
-      color: rgba(252,211,77,0.12);
-      color: rgba(96,165,250,0.15);
+      opacity: 0;
+
       transition: filter 0.5s ease, color 0.4s;
       min-width: clamp(30px, 4vw, 55px);
       text-align: center;
@@ -266,10 +266,12 @@
     }
 
     .answer-cell.revealed .answer-name {
+      opacity: 1;
       filter: none;
       transform: scale(1.02);
     }
     .answer-cell.revealed .answer-pts {
+      opacity: 1;
       filter: none;
       color: var(--feud-gold);
       text-shadow: 0 0 12px rgba(245,158,11,0.6);
