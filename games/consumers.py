@@ -1493,22 +1493,23 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return
 
         def _reveal():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            if rank not in progress.revealed_answers:
-                progress.revealed_answers = progress.revealed_answers + [rank]
-                # احسب النقاط المضافة
-                q = progress.session.package.feud_questions.filter(
-                    order=progress.current_question_index
-                ).first()
-                pts = 0
-                if q:
-                    ans = q.answers.filter(rank=rank).first()
-                    if ans:
-                        pts = ans.points * progress.current_multiplier
-                progress.round_points += pts
-                progress.save(update_fields=['revealed_answers', 'round_points'])
-                return progress, pts
-            return progress, 0
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                if rank not in progress.revealed_answers:
+                    progress.revealed_answers = progress.revealed_answers + [rank]
+                    q = progress.session.package.feud_questions.filter(
+                        order=progress.current_question_index
+                    ).first()
+                    pts = 0
+                    if q:
+                        ans = q.answers.filter(rank=rank).first()
+                        if ans:
+                            pts = ans.points * progress.current_multiplier
+                    progress.round_points += pts
+                    progress.save(update_fields=['revealed_answers', 'round_points'])
+                    return progress, pts
+                return progress, 0
 
         progress, pts = await sync_to_async(_reveal)()
 
@@ -1522,13 +1523,15 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
 
     async def _handle_mark_strike(self, team):
         def _strike():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            if team == 'team1':
-                progress.team1_strikes = min(3, progress.team1_strikes + 1)
-            elif team == 'team2':
-                progress.team2_strikes = min(3, progress.team2_strikes + 1)
-            progress.save(update_fields=['team1_strikes', 'team2_strikes'])
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                if team == 'team1':
+                    progress.team1_strikes = min(3, progress.team1_strikes + 1)
+                elif team == 'team2':
+                    progress.team2_strikes = min(3, progress.team2_strikes + 1)
+                progress.save(update_fields=['team1_strikes', 'team2_strikes'])
+                return progress
 
         progress = await sync_to_async(_strike)()
 
@@ -1541,11 +1544,13 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
 
     async def _handle_reset_strikes(self):
         def _reset():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            progress.team1_strikes = 0
-            progress.team2_strikes = 0
-            progress.save(update_fields=['team1_strikes', 'team2_strikes'])
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                progress.team1_strikes = 0
+                progress.team2_strikes = 0
+                progress.save(update_fields=['team1_strikes', 'team2_strikes'])
+                return progress
 
         progress = await sync_to_async(_reset)()
 
@@ -1609,25 +1614,29 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
 
     async def _handle_next_question(self):
         def _next():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            total = self.session.package.feud_questions.count()
-            if progress.current_question_index < total:
-                progress.current_question_index += 1
-                progress.reset_round()
-                progress.save()
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                total = self.session.package.feud_questions.count()
+                if progress.current_question_index < total:
+                    progress.current_question_index += 1
+                    progress.reset_round()
+                    progress.save()
+                return progress
 
         progress = await sync_to_async(_next)()
         await self._broadcast_full_state(progress)
 
     async def _handle_prev_question(self):
         def _prev():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            if progress.current_question_index > 1:
-                progress.current_question_index -= 1
-                progress.reset_round()
-                progress.save()
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                if progress.current_question_index > 1:
+                    progress.current_question_index -= 1
+                    progress.reset_round()
+                    progress.save()
+                return progress
 
         progress = await sync_to_async(_prev)()
         await self._broadcast_full_state(progress)
@@ -1637,13 +1646,15 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return
 
         def _set():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            total = self.session.package.feud_questions.count()
-            idx = max(1, min(int(index), total))
-            progress.current_question_index = idx
-            progress.reset_round()
-            progress.save()
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                total = self.session.package.feud_questions.count()
+                idx = max(1, min(int(index), total))
+                progress.current_question_index = idx
+                progress.reset_round()
+                progress.save()
+                return progress
 
         progress = await sync_to_async(_set)()
         await self._broadcast_full_state(progress)
@@ -1654,13 +1665,14 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return
 
         def _set():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            progress.phase = phase
-            progress.save(update_fields=['phase'])
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                progress.phase = phase
+                progress.save(update_fields=['phase'])
+                return progress
 
         progress = await sync_to_async(_set)()
-
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_phase_change',
             'phase': phase,
@@ -1668,10 +1680,12 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
 
     async def _handle_set_controlling_team(self, team):
         def _set():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            progress.controlling_team = team or ''
-            progress.save(update_fields=['controlling_team'])
-            return progress
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                progress.controlling_team = team or ''
+                progress.save(update_fields=['controlling_team'])
+                return progress
 
         await sync_to_async(_set)()
 
@@ -1689,9 +1703,11 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return
 
         def _set():
-            progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
-            progress.current_multiplier = m
-            progress.save(update_fields=['current_multiplier'])
+            from django.db import transaction
+            with transaction.atomic():
+                progress = FamilyFeudProgress.objects.select_for_update().get(session=self.session)
+                progress.current_multiplier = m
+                progress.save(update_fields=['current_multiplier'])
 
         await sync_to_async(_set)()
 
