@@ -2233,9 +2233,11 @@ class FeudPackage(GamePackage):
 class FamilyFeudAnswerInline(admin.TabularInline):
     model = FamilyFeudAnswer
     fk_name = 'question'
-    extra = 0
-    max_num = 8
-    min_num = 0
+    extra = 4
+    max_num = 10
+    min_num = 4
+    validate_min = True
+    validate_max = True
     fields = ('rank', 'text', 'points')
     ordering = ('rank',)
 
@@ -2576,11 +2578,11 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
                 '<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات — أقل من الحد (4)</span>',
                 count
             )
-        elif count == 8:
-            return format_html(
-                '<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>',
-                count
-            )
+        elif count == 10:
+            return format_html('<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>', count)
+        elif count > 10:
+            return format_html('<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات — تجاوز الحد (10)</span>', count)
+
         elif count > 8:
             return format_html(
                 '<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات — تجاوز الحد (8)</span>',
@@ -2613,11 +2615,9 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
         if formset.model == FamilyFeudAnswer:
             obj   = form.instance
             count = obj.answers.count()
-            if count > 8:
-                messages.error(
-                    request,
-                    f'⛔ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات — الحد الأقصى 8.'
-                )
+            if count > 10:
+                messages.error(request, f'⛔ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات — الحد الأقصى 10.')
+
             elif count < 4:
                 messages.warning(
                     request,
