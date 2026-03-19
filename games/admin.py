@@ -2234,14 +2234,16 @@ class FamilyFeudAnswerInline(admin.TabularInline):
     model = FamilyFeudAnswer
     fk_name = 'question'
     extra = 0
-    max_num = 5
+    max_num = 8
+    min_num = 0
     fields = ('rank', 'text', 'points')
     ordering = ('rank',)
 
     def get_extra(self, request, obj=None, **kwargs):
         if obj is None:
-            return 1
-        return 0
+            return 4
+        count = obj.answers.count()
+        return max(0, 4 - count)
 
 
 class FamilyFeudQuestionInline(admin.StackedInline):
@@ -2309,23 +2311,27 @@ class FeudPackageAdmin(admin.ModelAdmin):
     package_info.short_description = "الرقم"
 
     def questions_count(self, obj):
-        count = getattr(obj, '_qcount', 0)
+        count   = getattr(obj, '_qcount', 0)
         answers = getattr(obj, '_acount', 0)
-        points = getattr(obj, '_pcount', 0)
+        points  = getattr(obj, '_pcount', 0)
 
-        if count == 0:
-            color, icon = '#ef4444', '❌'
-        elif count < 5:
-            color, icon = '#f59e0b', '⚠️'
-        else:
+        # لون حسب عدد الأسئلة
+        if count == 9:
             color, icon = '#10b981', '✅'
+            note = 'مثالي'
+        elif count == 0:
+            color, icon = '#ef4444', '❌'
+            note = 'لا أسئلة'
+        else:
+            color, icon = '#f59e0b', '⚠️'
+            note = f'المطلوب 9'
 
         return format_html(
             '<span style="color:{};font-weight:700;">{} {} سؤال</span>'
-            '<br><span style="color:#94a3b8;font-size:0.82rem;">📝 {} إجابة | 🏆 {} نقطة</span>',
-            color, icon, count, answers, points
+            '<br><span style="color:#94a3b8;font-size:0.78rem;">{} — 📝 {} إجابة | 🏆 {} نقطة</span>',
+            color, icon, count, note, answers, points
         )
-    questions_count.short_description = "الأسئلة / الإجابات / النقاط"
+    questions_count.short_description = "الأسئلة"
 
     def price_info(self, obj):
         if obj.is_free:
@@ -2524,10 +2530,10 @@ class FeudPackageAdmin(admin.ModelAdmin):
 @admin.register(FamilyFeudQuestion)
 class FamilyFeudQuestionAdmin(admin.ModelAdmin):
     list_display = ('package_ref', 'order', 'question_preview', 'answers_count', 'multiplier')
-    list_filter = ('package__package_number', 'multiplier')
+    list_filter  = ('package__package_number', 'multiplier')
     search_fields = ('question_text',)
     ordering = ('package__package_number', 'order')
-    inlines = [FamilyFeudAnswerInline]
+    inlines  = [FamilyFeudAnswerInline]
     list_select_related = ('package',)
 
     def get_queryset(self, request):
@@ -2539,15 +2545,19 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'package':
-            kwargs['queryset'] = GamePackage.objects.filter(game_type='feud').order_by('package_number')
+            kwargs['queryset'] = GamePackage.objects.filter(
+                game_type='feud'
+            ).order_by('package_number')
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def get_changeform_initial_data(self, request):
         initial = super().get_changeform_initial_data(request)
         pkg_id = request.GET.get('package')
         if pkg_id:
-            last = FamilyFeudQuestion.objects.filter(package_id=pkg_id).aggregate(Max('order'))['order__max'] or 0
-            initial['order'] = last + 1
+            last = FamilyFeudQuestion.objects.filter(
+                package_id=pkg_id
+            ).aggregate(Max('order'))['order__max'] or 0
+            initial['order']   = last + 1
             initial['package'] = pkg_id
         return initial
 
@@ -2562,10 +2572,59 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
     def answers_count(self, obj):
         count = getattr(obj, '_acount', 0)
         if count < 4:
-            return format_html('<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات</span>', count)
-        return format_html('<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>', count)
+            return format_html(
+                '<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات — أقل من الحد (4)</span>',
+                count
+            )
+        elif count == 8:
+            return format_html(
+                '<span style="color:#10b981;font-weight:700;">✅ {} إجابات</span>',
+                count
+            )
+        elif count > 8:
+            return format_html(
+                '<span style="color:#ef4444;font-weight:700;">⚠️ {} إجابات — تجاوز الحد (8)</span>',
+                count
+            )
+        else:
+            return format_html(
+                '<span style="color:#f59e0b;font-weight:700;">🟡 {} إجابات</span>',
+                count
+            )
     answers_count.short_description = "الإجابات"
-# ========= تحسينات عامة لواجهة الأدمن =========
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # تحقق من عدد الأسئلة في الحزمة
+        total = FamilyFeudQuestion.objects.filter(package=obj.package).count()
+        if total > 9:
+            messages.warning(
+                request,
+                f'⚠️ تجاوزت عدد الأسئلة المثالي: الحزمة {obj.package.package_number} تحتوي الآن {total} سؤالاً (المثالي 9).'
+            )
+        elif total == 9:
+            messages.success(
+                request,
+                f'✅ ممتاز! الحزمة {obj.package.package_number} تحتوي الآن على 9 أسئلة.'
+            )
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        if formset.model == FamilyFeudAnswer:
+            obj   = form.instance
+            count = obj.answers.count()
+            if count > 8:
+                messages.error(
+                    request,
+                    f'⛔ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات — الحد الأقصى 8.'
+                )
+            elif count < 4:
+                messages.warning(
+                    request,
+                    f'⚠️ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات فقط — الحد الأدنى المقترح 4.'
+                )
+                
+                # ========= تحسينات عامة لواجهة الأدمن =========
 admin.site.site_header = '🎮 إدارة الألعاب'
 admin.site.site_title = 'لوحة تحكم وش الجواب'
 admin.site.index_title = 'مرحبًا بك في لوحة التحكم'

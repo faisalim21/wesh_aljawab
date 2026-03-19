@@ -748,7 +748,7 @@ function updateStrikes(t1Count, t2Count, highlightTeam) {
   if (highlightTeam) {
     const count = highlightTeam === 'team1' ? t1Count : t2Count;
     showBigX(count);
-    playStrikeSound(count);
+    playStrike();
   }
 }
 
@@ -906,7 +906,7 @@ function connect() {
             setTimeout(() => el.remove(), 1400);
             }
 
-            playRevealSound();
+            playReveal();
         }
         break;
         }
@@ -966,7 +966,7 @@ function connect() {
 
 // ========= طنطيط =========
 function showBuzz(name, team, teamDisplay) {
-  playBuzzSound();
+  playBuzzS();
   document.getElementById('buzzName').textContent = name || '—';
   const badge = document.getElementById('buzzTeam');
   badge.textContent = teamDisplay || (team === 'team1' ? T1_NAME_INIT : T2_NAME_INIT);

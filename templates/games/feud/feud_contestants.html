@@ -22,9 +22,12 @@
     html, body { height: 100%; margin: 0; padding: 0; }
 
     body {
-      background: linear-gradient(135deg, #0a1628 0%, #1a3a8f 55%, #070d1f 100%);
-      background-image: radial-gradient(circle, rgba(245,158,11,0.06) 1px, transparent 1px);
-      background-size: 24px 24px;
+      background: #070d1f;
+      background-image:
+        radial-gradient(circle, rgba(245,158,11,0.06) 1px, transparent 1px),
+        linear-gradient(135deg, #0a1628 0%, #1a3a8f 55%, #070d1f 100%);
+      background-size: 24px 24px, cover;
+      background-attachment: fixed;
       min-height: 100dvh;
       color: #fff;
       overflow-x: hidden;

@@ -1763,7 +1763,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
         payload = {'name': name, 'team': team}
 
         try:
-            added = await sync_to_async(cache.add)(buzz_key, payload, timeout=30)
+            added = await sync_to_async(cache.add)(buzz_key, payload, timeout=3)
         except Exception:
             added = False
 
