@@ -226,9 +226,11 @@
       margin-bottom: 14px;
     }
     @media(max-width: 500px) {
-      .scores-row { grid-template-columns: 1fr; }
-      .score-val  { font-size: 1.8rem; }
-      .score-btns { flex-wrap: wrap; }
+      .scores-row { grid-template-columns: 1fr 1fr; }
+      .score-val  { font-size: 1.6rem; }
+      .score-btns { flex-wrap: wrap; justify-content: center; gap: 4px; }
+      .adj-btn    { padding: 0 7px; font-size: 0.78rem; min-width: 28px; height: 28px; }
+      .score-name { font-size: 0.72rem; }
     }
         .score-card {
       border-radius: 14px; padding: 14px;
@@ -1446,14 +1448,14 @@ function onStrike(d) {
 function onScores(d) {
   st.t1 = d.team1_score || 0;
   st.t2 = d.team2_score || 0;
-  st.rpts = 0;
+  if (d.awarded_points > 0) st.rpts = 0;  // ← فقط عند الإعطاء
 
   if (d.team1_name) st.t1n = d.team1_name;
   if (d.team2_name) st.t2n = d.team2_name;
 
   document.getElementById('t1Score').textContent = st.t1;
   document.getElementById('t2Score').textContent = st.t2;
-  document.getElementById('roundPts').textContent = '0';
+  if (d.awarded_points > 0) document.getElementById('roundPts').textContent = '0';
 
   document.getElementById('t1Name').textContent = st.t1n;
   document.getElementById('t2Name').textContent = st.t2n;
@@ -1461,10 +1463,8 @@ function onScores(d) {
   document.getElementById('t2StrikeLabel').textContent = `${st.t2n}:`;
 
   syncControlButtonsText();
-
   if (d.awarded_points > 0) showAward(`+${d.awarded_points}`);
 }
-
 function onMult(d) {
   st.mult = d.multiplier || 1;
   renderMult(st.mult);

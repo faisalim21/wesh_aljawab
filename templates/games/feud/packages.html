@@ -289,12 +289,10 @@
       <div class="cardx free">
         <div class="d-flex align-items-center gap-2 flex-wrap">
           <span class="ribbon-free"><i class="fas fa-star"></i> مجانية</span>
-          <span class="trust-pill"><i class="fa-solid fa-clock"></i> صلاحية ساعة</span>
         </div>
         <div class="card-title">جولة تجريبية</div>
         <div class="free-stats">
-          <span class="free-stat"><i class="fas fa-question-circle"></i> أسئلة تجريبية</span>
-          <span class="free-stat blue"><i class="fas fa-users"></i> فريقان</span>
+          <span class="free-stat"><i class="fas fa-question-circle"></i> أسئلة 4</span>
         </div>
         {% if free_package.description %}
           <div class="card-desc">{{ free_package.description }}</div>
@@ -318,7 +316,7 @@
             <div class="text-center text-warning small mt-2">{{ free_session_message }}</div>
           {% endif %}
         {% else %}
-          <a class="btn-play available" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}">
+          <a class="btn-play btn-gold" href="{% url 'accounts:login' %}?next=...">
             <i class="fas fa-sign-in-alt"></i> سجّل الدخول للتجربة
           </a>
         {% endif %}
@@ -365,9 +363,10 @@
             </button>
           </form>
         {% else %}
-          <a class="btn-play available" href="{% url 'payments:start_payment' package.id %}">
+          <a class="btn-play btn-gold" href="{% url 'payments:start_payment' package.id %}">
             <i class="fas fa-shopping-cart"></i> شراء
           </a>
+
         {% endif %}
       </div>
     </div>

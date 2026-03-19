@@ -1479,7 +1479,9 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 await self._handle_buzz_reset()
             elif t == 'update_team_names':
                 await self._handle_update_team_names(
-                    data.get('team1_name'), data.get('team2_name')
+                    data.get('team1_name'),
+                    data.get('team2_name'),
+                    data.get('game_title'),
                 )
 
         # المتسابق
@@ -1884,6 +1886,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'team2_score':      event.get('team2_score', 0),
             'team1_name':       event.get('team1_name', ''),
             'team2_name':       event.get('team2_name', ''),
+            'game_title':       event.get('game_title', 'فاميلي فيود'),
         }))
 
     # ==================== Helpers ====================
@@ -1927,6 +1930,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
+                'game_title':       getattr(progress, 'game_title', None) or 'فاميلي فيود',
             }
 
         state = await sync_to_async(_get)()
@@ -1962,6 +1966,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
+                'game_title': getattr(p, 'game_title', None) or 'فاميلي فيود',
             }
 
         state = await sync_to_async(_get)()
