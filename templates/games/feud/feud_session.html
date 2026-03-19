@@ -849,49 +849,47 @@
     </button>
   </div>
 
-  <!-- ===== النقاط ===== -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+  <!-- زر إعادة اللعبة -->
+  <button onclick="confirmRestart()"
+    style="padding:9px 16px;border-radius:10px;border:none;cursor:pointer;
+           background:linear-gradient(135deg,#7c3aed,#4c1d95);color:#fff;
+           font-weight:800;font-size:0.85rem;white-space:nowrap;
+           box-shadow:0 4px 12px rgba(124,58,237,0.4);
+           display:inline-flex;align-items:center;gap:7px;">
+    <i class="fas fa-redo"></i> إعادة اللعبة
+  </button>
+</div>
+
   <div class="scores-row">
     <div class="score-card t1">
-    <div class="score-name" id="t1Name">{{ session.team1_name }}</div>
-    <div class="score-val" id="t1Score">0</div>
-    <div class="score-btns">
+      <div class="score-name" id="t1Name">{{ session.team1_name }}</div>
+      <div class="score-val" id="t1Score">0</div>
+      <div class="score-btns">
         <button class="adj-btn" onclick="adjustScore('team1',-1)">−</button>
         <button class="adj-btn" onclick="adjustScore('team1',1)">+1</button>
-        <button class="adj-btn" onclick="adjustScore('team1',5)" style="background:rgba(245,158,11,0.2);border-color:var(--feud-gold);color:var(--feud-gold);">+5</button>
-        <button class="adj-btn" onclick="adjustScore('team1',10)" style="background:rgba(245,158,11,0.3);border-color:var(--feud-gold);color:var(--feud-gold);">+10</button>
+        <button class="adj-btn" onclick="adjustScore('team1',5)"
+          style="background:rgba(245,158,11,0.2);border-color:var(--feud-gold);color:var(--feud-gold);">+5</button>
+      </div>
     </div>
-    </div>
-
     <div class="score-card t2">
-    <div class="score-name" id="t2Name">{{ session.team2_name }}</div>
-    <div class="score-val" id="t2Score">0</div>
-    <div class="score-btns">
+      <div class="score-name" id="t2Name">{{ session.team2_name }}</div>
+      <div class="score-val" id="t2Score">0</div>
+      <div class="score-btns">
         <button class="adj-btn" onclick="adjustScore('team2',-1)">−</button>
         <button class="adj-btn" onclick="adjustScore('team2',1)">+1</button>
-        <button class="adj-btn" onclick="adjustScore('team2',5)" style="background:rgba(245,158,11,0.2);border-color:var(--feud-gold);color:var(--feud-gold);">+5</button>
-        <button class="adj-btn" onclick="adjustScore('team2',10)" style="background:rgba(245,158,11,0.3);border-color:var(--feud-gold);color:var(--feud-gold);">+10</button>
-    </div>
+        <button class="adj-btn" onclick="adjustScore('team2',5)"
+          style="background:rgba(245,158,11,0.2);border-color:var(--feud-gold);color:var(--feud-gold);">+5</button>
+      </div>
     </div>
   </div>
-
   <!-- ===== لوحة الإجابات ===== -->
   <div class="board-panel">
 
     <div class="board-head">
       <div class="q-counter" id="qCounter">س 1</div>
-      <div style="position:relative;display:inline-block;">
-      <div id="multBadge" class="mult-badge" onclick="toggleMultPopup()" title="اضغط لتغيير المضاعف">×1</div>
-      <div id="multPopup" style="display:none;position:absolute;top:110%;right:0;
-        background:#0f1f5c;border:2px solid var(--feud-gold);border-radius:14px;
-        padding:10px;z-index:999;flex-direction:column;gap:6px;min-width:100px;">
-        <button onclick="setMultiplier(1);closeMultPopup()" class="mult-popup-btn">×1 عادي</button>
-        <button onclick="setMultiplier(2);closeMultPopup()" class="mult-popup-btn">×2 مضاعف</button>
-        <button onclick="setMultiplier(3);closeMultPopup()" class="mult-popup-btn">×3 ثلاثي</button>
-      </div>
+      <div id="multBadge" class="mult-badge">×1</div>
     </div>
-    <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);margin-top:2px;text-align:center;">اضغط لتغييره</div>
-    </div>
-
     <div class="question-box">
     <div class="question-nav-inline">
         <button class="question-nav-btn" id="prevBtn" onclick="navigate('prev')" title="السؤال السابق">
@@ -969,14 +967,7 @@
     <button class="ctrl-btn orange award-t2" onclick="awardPoints('team2')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team2_name }}</button>
   </div>
 </div>
-<div class="ctrl-section">
-  <div class="ctrl-section-title">جولة جديدة</div>
-  <div class="ctrl-row">
-    <button class="ctrl-btn red"   onclick="confirmRestart()" style="background:linear-gradient(135deg,#7c3aed,#4c1d95);box-shadow:0 4px 12px rgba(124,58,237,0.4);">
-      <i class="fas fa-redo"></i> إعادة اللعبة كاملة
-    </button>
-  </div>
-</div>
+
 
 </div>
 
@@ -1079,19 +1070,29 @@
       <div style="
         background:rgba(255,255,255,0.04);border:1.5px solid rgba(96,165,250,0.2);
         border-radius:18px;padding:18px;">
-        <div style="font-weight:900;font-size:1rem;color:#fff;margin-bottom:5px;">
-          🎮 اسم اللعبة
-        </div>
+        <div style="font-weight:900;font-size:1rem;color:#fff;margin-bottom:5px;">🎮 اسم اللعبة</div>
         <div style="font-size:0.83rem;color:rgba(255,255,255,0.4);margin-bottom:14px;">
-          يظهر في جميع الشاشات — اتركه فارغاً لاستخدام الافتراضي
+          اكتب اسمك — سيظهر كـ "فيصل فيود" في جميع الشاشات
         </div>
         <input id="setting_game_title" type="text" maxlength="30"
-          placeholder="مثال: فاميلي فيود مع خالد"
+          placeholder="مثال: فيصل"
           style="width:100%;padding:9px 12px;border:1.5px solid rgba(96,165,250,0.4);
                 border-radius:10px;background:rgba(0,0,0,0.3);color:#fff;
                 font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.92rem;
                 outline:none;text-align:right;"
           value="">
+        <!-- معاينة مصغرة -->
+        <div id="gameTitlePreview" style="
+          margin-top:12px;padding:10px 16px;
+          background:linear-gradient(135deg,#0f1f5c,#1a3a8f);
+          border:2px solid var(--feud-gold);border-radius:12px;
+          text-align:center;font-family:'Lalezar',sans-serif;
+          font-size:1.4rem;color:var(--feud-gold);
+          -webkit-text-stroke:1px var(--feud-orange);
+          paint-order:stroke fill;
+          text-shadow:2px 2px 0 var(--feud-orange);">
+          فاميلي فيود
+        </div>
       </div>
 
       <!-- قريباً -->
@@ -1714,19 +1715,22 @@ function showAward(t) {
 }
 
 function openSettings() {
-  document.getElementById('setting_t1_name').value = st.t1n || '{{ session.team1_name|escapejs }}';
-  document.getElementById('setting_t2_name').value = st.t2n || '{{ session.team2_name|escapejs }}';
-
   const overlay = document.getElementById('feudSettingsOverlay');
   const modal = document.getElementById('feudSettingsModal');
 
-  overlay.style.opacity = '1';
-  overlay.style.pointerEvents = 'all';
-  modal.style.transform = 'translateY(0) scale(1)';
-  document.body.style.overflow = 'hidden';
-  document.getElementById('setting_game_title').value = st.gameTitle || '';
-}
+  document.getElementById('setting_t1_name').value = st.t1n || '';
+  document.getElementById('setting_t2_name').value = st.t2n || '';
 
+  const gameTitle = st.gameTitle || '';
+  document.getElementById('setting_game_title').value = gameTitle.replace(' فيود', '').replace('فاميلي فيود', '');
+
+  const preview = document.getElementById('gameTitlePreview');
+  preview.textContent = st.gameTitle || 'فاميلي فيود';
+
+  overlay.style.opacity = '1';
+  overlay.style.pointerEvents = 'auto';
+  modal.style.transform = 'translateY(0) scale(1)';
+}
 function closeSettings() {
   const overlay = document.getElementById('feudSettingsOverlay');
   const modal = document.getElementById('feudSettingsModal');
@@ -1749,21 +1753,13 @@ function saveSettings() {
     alert('يرجى إدخال اسمي الفريقين');
     return;
   }
-  const gameTitle = document.getElementById('setting_game_title').value.trim();
+
+  const namePart = document.getElementById('setting_game_title').value.trim();
+  const gameTitle = namePart ? `${namePart} فيود` : 'فاميلي فيود';
   st.gameTitle = gameTitle;
 
-  // أرسل عبر WS
-  send({
-    type: 'update_team_names',
-    team1_name: t1,
-    team2_name: t2,
-    game_title: gameTitle || 'فاميلي فيود'
-  });
-
-  // حدّث الهيدر مباشرة
   const titleEl = document.querySelector('.header-game-title');
-  if (titleEl) titleEl.textContent = gameTitle || 'فاميلي فيود';
-
+  if (titleEl) titleEl.textContent = gameTitle;
 
   const btn = document.getElementById('saveSettingsBtn');
   btn.textContent = '⏳ جاري...';
@@ -1782,7 +1778,8 @@ function saveSettings() {
   send({
     type: 'update_team_names',
     team1_name: t1,
-    team2_name: t2
+    team2_name: t2,
+    game_title: gameTitle
   });
 
   btn.textContent = '✅ تم!';
@@ -1830,6 +1827,12 @@ function closeMultPopup() {
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#multBadge') && !e.target.closest('#multPopup'))
     closeMultPopup();
+});
+
+document.getElementById('setting_game_title').addEventListener('input', function() {
+  const val = this.value.trim();
+  const preview = document.getElementById('gameTitlePreview');
+  preview.textContent = val ? `${val} فيود` : 'فاميلي فيود';
 });
 </script>
 </body>
