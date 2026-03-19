@@ -481,6 +481,35 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
     .wesh-logo img { height: 32px; width: auto; display: block; }
+
+    @keyframes feudRevealFlip {
+    0%   { transform: rotateX(90deg) scaleY(0.3); opacity: 0; }
+    40%  { transform: rotateX(-12deg) scaleY(1.08); opacity: 1; }
+    65%  { transform: rotateX(6deg) scaleY(0.97); }
+    82%  { transform: rotateX(-3deg) scaleY(1.02); }
+    100% { transform: rotateX(0deg) scaleY(1); }
+    }
+
+    .answer-cell {
+    perspective: 600px;
+    transform-style: preserve-3d;
+    }
+
+    .answer-cell.revealed {
+    animation: feudRevealFlip 0.55s cubic-bezier(0.34,1.4,0.64,1) forwards,
+                feudGlow 0.8s ease forwards !important;
+    }
+
+    @keyframes feudGlow {
+    0%   { box-shadow: 0 0 0 rgba(96,165,250,0); }
+    30%  { box-shadow: 0 0 50px rgba(96,165,250,0.9), 0 0 100px rgba(96,165,250,0.4); }
+    100% { box-shadow: 0 0 30px rgba(96,165,250,0.5), 0 6px 0 rgba(0,0,0,0.4); }
+    }
+
+    @keyframes ptsFlyUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
+    }
   </style>
 </head>
 <body>
@@ -604,52 +633,67 @@ function ensureAudio() {
 document.addEventListener('click', ensureAudio, { once: true });
 document.addEventListener('touchstart', ensureAudio, { once: true, passive: true });
 
-function tone(freq, dur, gain = 0.4, type = 'sine') {
-  ensureAudio();
-  if (!actx) return;
+let _actx = null;
+function _ac() {
+  if (!_actx) try { _actx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  if (_actx?.state === 'suspended') _actx.resume();
+  return _actx;
+}
+document.addEventListener('click', _ac, { once: true });
+
+function _tone(freq, start, dur, gain = 0.5, type = 'sine') {
+  const c = _ac(); if (!c) return;
   try {
-    const o = actx.createOscillator();
-    const g = actx.createGain();
-    o.connect(g); g.connect(actx.destination);
-    o.type = type;
-    o.frequency.value = freq;
-    g.gain.setValueAtTime(gain, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + dur/1000);
-    o.start(); o.stop(actx.currentTime + dur/1000);
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, c.currentTime + start);
+    g.gain.linearRampToValueAtTime(gain, c.currentTime + start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    o.start(c.currentTime + start);
+    o.stop(c.currentTime + start + dur + 0.05);
   } catch {}
 }
 
-// صوت الكشف: دينق تصاعدي مشهور
-function playRevealSound() {
-  tone(523, 120, 0.4);
-  setTimeout(() => tone(659, 120, 0.4), 100);
-  setTimeout(() => tone(784, 200, 0.45), 200);
-  setTimeout(() => tone(1047, 300, 0.5), 350);
+// كشف الإجابة — تصاعدي مثل فاميلي فيود
+function playReveal() {
+  _tone(523.25, 0,    0.08, 0.5);
+  _tone(659.25, 0.07, 0.08, 0.5);
+  _tone(783.99, 0.14, 0.08, 0.5);
+  _tone(1046.5, 0.21, 0.30, 0.6);
+  _tone(1318.5, 0.42, 0.18, 0.3);
+  _tone(1567.9, 0.55, 0.25, 0.25);
 }
 
-// صوت X: دوي منخفض + صوت إنذار
-function playStrikeSound(count) {
-  // صوت الـ X المشهور في فاميلي فيود
-  tone(150, 400, 0.7, 'sawtooth');
-  setTimeout(() => tone(120, 500, 0.6, 'sawtooth'), 100);
-  // كلما زاد عدد الـ X كلما صار أقوى
-  if (count >= 3) {
-    setTimeout(() => tone(100, 800, 0.8, 'sawtooth'), 200);
-  }
+// X — بزر قوي مثل فاميلي فيود
+function playStrike() {
+  _tone(80, 0,    0.08, 0.9, 'square');
+  _tone(60, 0.07, 0.08, 0.9, 'square');
+  _tone(80, 0.14, 0.08, 0.8, 'square');
+  _tone(60, 0.21, 0.08, 0.8, 'square');
+  _tone(80, 0.28, 0.08, 0.7, 'square');
+  _tone(55, 0.35, 0.30, 0.7, 'sawtooth');
 }
 
-// صوت الطنطيط
-function playBuzzSound() {
-  tone(880, 300, 0.5);
-  setTimeout(() => tone(1100, 200, 0.4), 250);
-}
-
-// صوت النقاط
+// فانفار إعطاء النقاط
 function playAwardSound() {
-  [0, 100, 200, 300].forEach((d, i) => {
-    setTimeout(() => tone(523 * Math.pow(1.25, i), 200, 0.4), d);
-  });
+  _tone(523,  0,    0.12, 0.5);
+  _tone(659,  0.10, 0.12, 0.5);
+  _tone(784,  0.20, 0.12, 0.5);
+  _tone(1047, 0.30, 0.12, 0.5);
+  _tone(1319, 0.40, 0.25, 0.55);
+  _tone(1047, 0.62, 0.10, 0.4);
+  _tone(1319, 0.72, 0.35, 0.6);
 }
+
+// طنطيط
+function playBuzzS() {
+  _tone(880,  0,    0.10, 0.5);
+  _tone(1109, 0.09, 0.10, 0.5);
+  _tone(1319, 0.18, 0.25, 0.55);
+}
+
+
 
 // ========= بناء اللوحة =========
 function buildBoard(answers, revealed) {
@@ -742,32 +786,25 @@ function updateControllingTeam(team) {
   ind.className = `controlling-indicator show ${team === 'team1' ? 't1' : 't2'}`;
 }
 
-function applyFullState(d) {
-  state = {
-    answers:         d.answers || [],
-    revealed:        d.revealed_answers || [],
-    t1Strikes:       d.team1_strikes || 0,
-    t2Strikes:       d.team2_strikes || 0,
-    roundPts:        d.round_points || 0,
-    multiplier:      d.multiplier || 1,
-    controllingTeam: d.controlling_team || '',
-    t1Score:         d.team1_score || 0,
-    t2Score:         d.team2_score || 0,
-    questionText:    d.question_text || '',
-    questionVisible: true,
-  };
+function applyFull(d) {
+  st.qi      = d.question_index  || 1;
+  st.qt      = d.question_text   || '';
+  st.answers = d.answers         || [];
+  st.revealed= d.revealed_answers|| [];
+  st.t1s     = d.team1_strikes   || 0;
+  st.t2s     = d.team2_strikes   || 0;
+  st.rpts    = d.round_points    || 0;
+  st.mult    = d.multiplier      || 1;
+  st.ctrl    = d.controlling_team|| '';
+  st.t1      = d.team1_score     || 0;
+  st.t2      = d.team2_score     || 0;
+  st.totalQ  = d.total_questions || TOTAL_Q;
 
-  document.getElementById('t1Score').textContent = state.t1Score;
-  document.getElementById('t2Score').textContent = state.t2Score;
-  document.getElementById('roundPts').textContent = state.roundPts;
-  document.getElementById('questionDisplay').textContent = state.questionText || 'انتظر السؤال...';
+  if (d.team1_name) st.t1n = d.team1_name;
+  if (d.team2_name) st.t2n = d.team2_name;
 
-  buildBoard(state.answers, state.revealed);
-  updateStrikes(state.t1Strikes, state.t2Strikes, null);
-  updateMultiplier(state.multiplier);
-  updateControllingTeam(state.controllingTeam);
+  renderAll();
 }
-
 // ========= WebSocket =========
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
@@ -791,7 +828,7 @@ function connect() {
         document.getElementById('t1Name').textContent = d.team1_name;
         document.getElementById('t2Name').textContent = d.team2_name;
         break;
-        
+
       case 'full_state':
         applyFullState(d);
         break;
@@ -819,11 +856,38 @@ function connect() {
 
         const cell = document.querySelector(`.answer-cell[data-rank="${d.rank}"]`);
         if (cell && !cell.classList.contains('revealed')) {
-          cell.classList.add('revealed');
-          playRevealSound();
+            // انميشن الكشف — فاميلي فيود flip
+            cell.style.animation = 'none';
+            cell.classList.add('revealed');
+            // reflow لإعادة تشغيل الانميشن
+            cell.offsetHeight;
+            cell.style.animation = '';
+
+            // نقاط طايرة على الشاشة
+            const pts = d.points_added || 0;
+            if (pts > 0) {
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position:fixed;
+                left:${30 + Math.random()*40}%;
+                top:${30 + Math.random()*30}%;
+                font-family:'Lalezar',sans-serif;
+                font-size:clamp(2rem,5vw,4rem);
+                color:#f59e0b;
+                text-shadow:0 0 20px rgba(245,158,11,0.9);
+                pointer-events:none;
+                z-index:9000;
+                animation:ptsFlyUp 1.4s ease forwards;
+            `;
+            el.textContent = `+${pts}`;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1400);
+            }
+
+            playRevealSound();
         }
         break;
-      }
+        }
 
       case 'strike_updated': {
         const prevT1 = state.t1Strikes;

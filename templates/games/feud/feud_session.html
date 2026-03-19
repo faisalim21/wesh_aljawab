@@ -597,14 +597,7 @@
     .mult-btn.active.x2 { background: linear-gradient(135deg,#d97706,#b45309); }
     .mult-btn.active.x3 { background: linear-gradient(135deg,#dc2626,#b91c1c); }
 
-    /* الفريق المتحكم */
-    .ctrl-team-btns { display: flex; gap: 8px; }
-    .ctrl-team-btn {
-      flex: 1; padding: 8px; border-radius: 10px;
-      border: 1.5px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);
-      font-weight: 800; font-size: 0.88rem; cursor: pointer; transition: all 0.2s;
-    }
+
     .ctrl-team-btn.active-t1 { background: rgba(34,197,94,0.15); border-color: var(--t1); color: var(--t1); }
     .ctrl-team-btn.active-t2 { background: rgba(249,115,22,0.15); border-color: var(--t2); color: var(--t2); }
 
@@ -675,6 +668,81 @@
     @media(max-width:768px){
       .page-content { padding: 10px; }
       .header-logo-center span { display: none; }
+    }
+
+    /* ===== انميشن كشف الإجابة — فاميلي فيود ===== */
+    @keyframes feudRevealFlip {
+    0%   { transform: rotateX(90deg) scaleY(0.3); opacity: 0; }
+    40%  { transform: rotateX(-12deg) scaleY(1.08); opacity: 1; }
+    65%  { transform: rotateX(6deg) scaleY(0.97); }
+    82%  { transform: rotateX(-3deg) scaleY(1.02); }
+    100% { transform: rotateX(0deg) scaleY(1); opacity: 1; }
+    }
+
+    .answer-cell {
+    perspective: 600px;
+    transform-style: preserve-3d;
+    }
+
+    .answer-cell.just-revealed {
+    animation: feudRevealFlip 0.55s cubic-bezier(0.34,1.4,0.64,1) forwards;
+    }
+
+    /* توهج الخلية بعد الكشف */
+    @keyframes feudGlow {
+    0%   { box-shadow: 0 0 0 rgba(96,165,250,0); }
+    30%  { box-shadow: 0 0 40px rgba(96,165,250,0.8), 0 0 80px rgba(96,165,250,0.4); }
+    100% { box-shadow: 0 0 30px rgba(96,165,250,0.5), 0 6px 0 rgba(0,0,0,0.4); }
+    }
+
+    .answer-cell.revealed {
+    animation: feudRevealFlip 0.55s cubic-bezier(0.34,1.4,0.64,1) forwards,
+                feudGlow 0.8s ease forwards;
+    }
+
+    /* زر الكشف داخل الخلية */
+    .reveal-cell-btn {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 5px 0;
+    border: none;
+    border-top: 1px solid rgba(245,158,11,0.25);
+    background: rgba(245,158,11,0.1);
+    color: #fcd34d;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 800;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 0 0 12px 12px;
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+    }
+
+    .answer-cell:hover .reveal-cell-btn {
+    opacity: 1;
+    }
+
+    .reveal-cell-btn:hover {
+    background: rgba(245,158,11,0.3);
+    color: #fff;
+    }
+
+    /* النقاط المتصاعدة */
+    @keyframes ptsFlyUp {
+    0%   { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-60px) scale(1.4); }
+    }
+
+    .pts-fly {
+    position: fixed;
+    font-family: 'Lalezar', sans-serif;
+    font-size: 2rem;
+    color: var(--feud-gold);
+    text-shadow: 0 0 20px rgba(245,158,11,0.8);
+    pointer-events: none;
+    z-index: 9000;
+    animation: ptsFlyUp 1.2s ease forwards;
     }
   </style>
 </head>
@@ -790,7 +858,6 @@
 
     <div class="board-head">
       <div class="q-counter" id="qCounter">س 1</div>
-      <div id="ctrlBadge" class="ctrl-badge none">لا أحد يتحكم</div>
       <div id="multBadge" class="mult-badge" onclick="cycleMultiplier()">×1</div>
     </div>
 
@@ -1125,24 +1192,24 @@ function send(payload) {
 }
 
 function applyFull(d) {
-  st.qi   = d.question_index || 1;
-  st.qt   = d.question_text || '';
-  st.answers = d.answers || [];
-  st.revealed = d.revealed_answers || [];
-  st.t1s = d.team1_strikes || 0;
-  st.t2s = d.team2_strikes || 0;
-  st.rpts = d.round_points || 0;
-  st.mult = d.multiplier || 1;
-  st.ctrl = d.controlling_team || '';
-  st.t1 = d.team1_score || 0;
-  st.t2 = d.team2_score || 0;
+  st.qi      = d.question_index  || 1;
+  st.qt      = d.question_text   || '';
+  st.answers = d.answers         || [];
+  st.revealed= d.revealed_answers|| [];
+  st.t1s     = d.team1_strikes   || 0;
+  st.t2s     = d.team2_strikes   || 0;
+  st.rpts    = d.round_points    || 0;
+  st.mult    = d.multiplier      || 1;
+  st.ctrl    = d.controlling_team|| '';
+  st.t1      = d.team1_score     || 0;
+  st.t2      = d.team2_score     || 0;
+  st.totalQ  = d.total_questions || TOTAL_Q;
 
   if (d.team1_name) st.t1n = d.team1_name;
   if (d.team2_name) st.t2n = d.team2_name;
 
   renderAll();
 }
-
 function renderAll() {
   document.getElementById('questionText').textContent = st.qt || '—';
   document.getElementById('qCounter').textContent = `س ${st.qi}`;
@@ -1157,7 +1224,8 @@ function renderAll() {
   document.getElementById('t2StrikeLabel').textContent = `${st.t2n}:`;
 
   document.getElementById('prevBtn').disabled = st.qi <= 1;
-  document.getElementById('nextBtn').disabled = st.qi >= TOTAL_Q;
+  document.getElementById('nextBtn').disabled = st.qi >= (st.totalQ || TOTAL_Q);
+  document.getElementById('qNavLabel').textContent = `${st.qi} / ${st.totalQ || TOTAL_Q}`;
 
   renderStrikes('t1Strikes', st.t1s);
   renderStrikes('t2Strikes', st.t2s);
@@ -1188,19 +1256,38 @@ function renderAnswers() {
     const cell = document.createElement('div');
     cell.className = 'answer-cell' + (rev ? ' revealed' : '');
     cell.dataset.rank = ans.rank;
-    cell.onclick = () => revealAnswer(ans.rank);
+    cell.style.position = 'relative';
+    cell.style.paddingBottom = '28px'; // مساحة لزر الكشف
 
     cell.innerHTML = `
-      <div class="answer-rank">${ans.rank}</div>
-      <div class="answer-body">
-        <div class="answer-name">${ans.text}</div>
-        <div class="answer-pts">${ans.points}</div>
+      <div style="display:flex;align-items:center;flex:1;min-height:52px;width:100%;">
+        <div class="answer-rank">${ans.rank}</div>
+        <div class="answer-body">
+          <div class="answer-name" style="filter:none;color:#fcd34d;">${ans.text}</div>
+          <div class="answer-pts" style="filter:none;color:var(--feud-gold);opacity:${rev ? 1 : 0.5};">${ans.points}</div>
+        </div>
       </div>
+      ${!rev
+        ? `<button class="reveal-cell-btn" data-rank="${ans.rank}">👁 اكشف الإجابة</button>`
+        : `<div style="position:absolute;bottom:0;left:0;right:0;padding:4px 0;
+              border-top:1px solid rgba(96,165,250,0.2);background:rgba(96,165,250,0.08);
+              color:#60a5fa;font-size:0.72rem;font-weight:800;text-align:center;
+              border-radius:0 0 10px 10px;font-family:'Tajawal',sans-serif;">✅ مكشوفة</div>`
+      }
     `;
+
+    const btn = cell.querySelector('.reveal-cell-btn');
+    if (btn) {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        revealAnswer(ans.rank);
+      });
+    }
 
     g.appendChild(cell);
   });
 }
+
 
 function renderRevealControls() {
   const wrap = document.getElementById('revealControls');
@@ -1235,20 +1322,6 @@ function renderMult(m) {
   badge.className = 'mult-badge' + (m === 2 ? ' x2' : m === 3 ? ' x3' : '');
 }
 
-function renderCtrl(team) {
-  const badge = document.getElementById('ctrlBadge');
-
-  if (team === 'team1') {
-    badge.className = 'ctrl-badge t1';
-    badge.textContent = '🏆 ' + st.t1n;
-  } else if (team === 'team2') {
-    badge.className = 'ctrl-badge t2';
-    badge.textContent = '🏆 ' + st.t2n;
-  } else {
-    badge.className = 'ctrl-badge none';
-    badge.textContent = 'لا أحد يتحكم';
-  }
-}
 
 function syncControlButtonsText() {
   const strikeT1 = document.querySelector('.strike-btn.t1');
@@ -1265,18 +1338,46 @@ function syncControlButtonsText() {
 function onRevealed(d) {
   if (!st.revealed.includes(d.rank)) st.revealed.push(d.rank);
   st.rpts = d.round_points || st.rpts;
-
   document.getElementById('roundPts').textContent = st.rpts;
 
+  // تحديث الخلية
   const cell = document.querySelector(`.answer-cell[data-rank="${d.rank}"]`);
   if (cell && !cell.classList.contains('revealed')) {
     cell.classList.add('revealed');
+
+    // احذف زر الكشف وضع "مكشوفة"
+    const btn = cell.querySelector('.reveal-cell-btn');
+    if (btn) {
+      btn.remove();
+      const done = document.createElement('div');
+      done.style.cssText = `position:absolute;bottom:0;left:0;right:0;padding:4px 0;
+        border-top:1px solid rgba(96,165,250,0.2);background:rgba(96,165,250,0.08);
+        color:#60a5fa;font-size:0.72rem;font-weight:800;text-align:center;
+        border-radius:0 0 10px 10px;font-family:'Tajawal',sans-serif;`;
+      done.textContent = '✅ مكشوفة';
+      cell.appendChild(done);
+    }
+
+    // نقاط طايرة
+    const pts = st.answers.find(a => a.rank === d.rank)?.points || 0;
+    if (pts > 0) spawnPtsFly(cell, pts);
+
     playReveal();
   }
 
   renderRevealControls();
 }
 
+function spawnPtsFly(cell, pts) {
+  const rect = cell.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'pts-fly';
+  el.textContent = `+${pts}`;
+  el.style.left = (rect.left + rect.width / 2 - 20) + 'px';
+  el.style.top  = (rect.top + rect.height / 2) + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
 function onStrike(d) {
   st.t1s = d.team1_strikes || 0;
   st.t2s = d.team2_strikes || 0;
@@ -1435,39 +1536,65 @@ async function copyLink(type) {
   setTimeout(() => t.style.display = 'none', 1800);
 }
 
-function tone(f, d, g = 0.4, type = 'sine') {
+let _actx = null;
+function _ac() {
+  if (!_actx) try { _actx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
+  if (_actx?.state === 'suspended') _actx.resume();
+  return _actx;
+}
+document.addEventListener('click', _ac, { once: true });
+
+function _tone(freq, start, dur, gain = 0.5, type = 'sine') {
+  const c = _ac(); if (!c) return;
   try {
-    const c = new (window.AudioContext || window.webkitAudioContext)();
-    const o = c.createOscillator();
-    const gg = c.createGain();
-    o.connect(gg);
-    gg.connect(c.destination);
-    o.type = type;
-    o.frequency.value = f;
-    gg.gain.setValueAtTime(g, c.currentTime);
-    gg.gain.exponentialRampToValueAtTime(0.001, c.currentTime + d / 1000);
-    o.start();
-    o.stop(c.currentTime + d / 1000);
+    const o = c.createOscillator(), g = c.createGain();
+    o.connect(g); g.connect(c.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, c.currentTime + start);
+    g.gain.linearRampToValueAtTime(gain, c.currentTime + start + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + start + dur);
+    o.start(c.currentTime + start);
+    o.stop(c.currentTime + start + dur + 0.05);
   } catch {}
 }
 
+// كشف الإجابة — تصاعدي مثل فاميلي فيود
 function playReveal() {
-  tone(523, 120, 0.35);
-  setTimeout(() => tone(659, 120, 0.35), 100);
-  setTimeout(() => tone(784, 180, 0.42), 200);
-  setTimeout(() => tone(1047, 260, 0.46), 340);
+  _tone(523.25, 0,    0.08, 0.5);
+  _tone(659.25, 0.07, 0.08, 0.5);
+  _tone(783.99, 0.14, 0.08, 0.5);
+  _tone(1046.5, 0.21, 0.30, 0.6);
+  _tone(1318.5, 0.42, 0.18, 0.3);
+  _tone(1567.9, 0.55, 0.25, 0.25);
 }
 
+// X — بزر قوي مثل فاميلي فيود
 function playStrike() {
-  tone(150, 350, 0.6, 'sawtooth');
-  setTimeout(() => tone(120, 450, 0.5, 'sawtooth'), 90);
+  _tone(80, 0,    0.08, 0.9, 'square');
+  _tone(60, 0.07, 0.08, 0.9, 'square');
+  _tone(80, 0.14, 0.08, 0.8, 'square');
+  _tone(60, 0.21, 0.08, 0.8, 'square');
+  _tone(80, 0.28, 0.08, 0.7, 'square');
+  _tone(55, 0.35, 0.30, 0.7, 'sawtooth');
 }
 
+// فانفار إعطاء النقاط
+function playAwardSound() {
+  _tone(523,  0,    0.12, 0.5);
+  _tone(659,  0.10, 0.12, 0.5);
+  _tone(784,  0.20, 0.12, 0.5);
+  _tone(1047, 0.30, 0.12, 0.5);
+  _tone(1319, 0.40, 0.25, 0.55);
+  _tone(1047, 0.62, 0.10, 0.4);
+  _tone(1319, 0.72, 0.35, 0.6);
+}
+
+// طنطيط
 function playBuzzS() {
-  tone(880, 300, 0.5);
-  setTimeout(() => tone(1100, 200, 0.4), 250);
+  _tone(880,  0,    0.10, 0.5);
+  _tone(1109, 0.09, 0.10, 0.5);
+  _tone(1319, 0.18, 0.25, 0.55);
 }
-
 function showAward(t) {
   const e = document.getElementById('awardFlash');
   e.textContent = t;
