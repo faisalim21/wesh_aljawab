@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
+  <title>فاميلي فيود — المتسابق | وش الجواب</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&family=Lalezar&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet"/>
+  <link rel="icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
+
+  <style>
+    :root {
+      --feud-bg:   #070d1f;
+      --feud-gold: #f59e0b;
+      --feud-orange: #ea580c;
+      --t1: #f59e0b;
+      --t2: #60a5fa;
+      --btn1: #dc2626; --btn2: #b91c1c; --btn3: #991b1b;
+    }
+
+    * { box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+    html, body { height: 100%; margin: 0; padding: 0; }
+
+    body {
+      background: linear-gradient(135deg, #0a1628 0%, #1a3a8f 55%, #070d1f 100%);
+      background-image: radial-gradient(circle, rgba(245,158,11,0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+      min-height: 100dvh;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* لمبة الاتصال */
+    .conn {
+      position: fixed; top: env(safe-area-inset-top, 12px); left: 12px;
+      z-index: 10; padding: 8px 12px; border-radius: 999px;
+      font-weight: 800; font-size: .85rem;
+    }
+    .conn.connected    { background: rgba(34,197,94,.92); }
+    .conn.disconnected { background: rgba(239,68,68,.92); animation: blink 1s infinite; }
+    @keyframes blink { 0%,50%{opacity:1} 51%,100%{opacity:.6} }
+
+    /* لوجو */
+    .logo {
+      position: fixed; top: env(safe-area-inset-top, 12px); right: 12px;
+      background: rgba(255,255,255,.95); padding: 8px 12px; border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10;
+    }
+    .logo img { max-height: 46px; display: block; }
+
+    /* المحتوى */
+    .main {
+      min-height: 100dvh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: clamp(12px, 3vw, 28px);
+      padding-top: 90px;
+      gap: 16px;
+    }
+
+    /* البطاقة */
+    .card-ct {
+      width: min(560px, 96vw);
+      background: rgba(255,255,255,.08);
+      border: 1.5px solid rgba(245,158,11,.3);
+      border-radius: 24px;
+      padding: clamp(18px, 3.2vw, 34px);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.35),
+                  0 0 0 1px rgba(245,158,11,.1) inset;
+      text-align: center;
+    }
+
+    /* شعار فاميلي فيود */
+    .feud-logo {
+      font-family: 'Lalezar', sans-serif;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      color: var(--feud-gold);
+      -webkit-text-stroke: 1.5px var(--feud-orange);
+      paint-order: stroke fill;
+      text-shadow: 2px 2px 0 var(--feud-orange), 4px 4px 0 #92400e;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: rgba(255,255,255,.6);
+      font-size: .9rem; font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    /* حقل الاسم */
+    .name-input {
+      width: 100%; margin: 0 0 14px;
+      background: rgba(255,255,255,.96);
+      color: #1f2937;
+      border: 2px solid rgba(255,255,255,.45);
+      border-radius: 14px;
+      padding: 14px 16px;
+      font-weight: 800; font-size: 1.05rem; text-align: center;
+      transition: .2s ease;
+    }
+    .name-input:focus {
+      outline: none;
+      border-color: var(--feud-gold);
+      box-shadow: 0 0 0 4px rgba(245,158,11,.22);
+      transform: scale(1.01);
+    }
+
+    /* اختيار الفريق */
+    .teams { margin: 0 0 16px; }
+    .teams .h { display: block; font-weight: 800; margin-bottom: 10px; color: rgba(255,255,255,.8); }
+    .team-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .topt { position: relative; }
+    .topt input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .tbtn {
+      border: 2px solid rgba(255,255,255,.2);
+      border-radius: 14px;
+      color: rgba(255,255,255,.8);
+      background: rgba(255,255,255,.06);
+      transition: all .2s;
+      font-size: clamp(.85rem, 2.8vw, 1rem);
+      min-height: 56px;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px; cursor: pointer; font-weight: 800;
+    }
+    .topt input:checked + .tbtn.team1 {
+      border-color: var(--t1); color: var(--t1);
+      background: rgba(245,158,11,.15);
+      box-shadow: 0 8px 20px rgba(245,158,11,.2);
+    }
+    .topt input:checked + .tbtn.team2 {
+      border-color: var(--t2); color: var(--t2);
+      background: rgba(96,165,250,.15);
+      box-shadow: 0 8px 20px rgba(96,165,250,.2);
+    }
+
+    /* زر الطنطيط */
+    .buzz-wrap { margin-top: 8px; }
+    .buzz-btn {
+      --size: clamp(120px, 36vw, 170px);
+      width: var(--size); height: var(--size);
+      margin-inline: auto;
+      border-radius: 999px; border: 0;
+      cursor: pointer; outline: none;
+      display: grid; place-items: center;
+      font-weight: 900; font-size: clamp(1.15rem, 4.2vw, 1.6rem);
+      color: #fff;
+      transition: transform .12s ease, box-shadow .12s ease;
+      background:
+        radial-gradient(140% 60% at 50% 8%, rgba(255,255,255,.35), transparent 40%),
+        linear-gradient(165deg, var(--btn1) 0%, var(--btn2) 45%, var(--btn3) 100%);
+      box-shadow:
+        0 18px 35px rgba(220,38,38,.45),
+        inset 0 -10px 18px rgba(0,0,0,.25),
+        inset 0 8px 12px rgba(255,255,255,.08);
+      isolation: isolate;
+      position: relative;
+    }
+    .buzz-btn::before {
+      content: ""; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(180deg, rgba(255,255,255,.45), transparent 35% 90%, rgba(0,0,0,.25));
+      mix-blend-mode: soft-light; pointer-events: none;
+    }
+    .buzz-btn::after {
+      content: ""; position: absolute; top: 6%; left: 16%;
+      width: 68%; height: 18%; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.15));
+      filter: blur(1px); transform: rotate(-6deg); pointer-events: none;
+    }
+    .buzz-btn:hover { transform: translateY(-2px) scale(1.03); }
+    .buzz-btn:active:not(:disabled) { transform: translateY(1px) scale(.97); }
+    .buzz-btn:disabled {
+      background: linear-gradient(165deg, #6b7280, #4b5563);
+      box-shadow: 0 10px 20px rgba(0,0,0,.25);
+      cursor: not-allowed;
+    }
+    .buzz-label { position: relative; z-index: 2; text-shadow: 0 2px 0 rgba(0,0,0,.2); }
+
+    /* موجة */
+    .buzz-btn.wave > i {
+      position: absolute; inset: 0; border-radius: inherit;
+      animation: wave .6s ease-out forwards;
+      background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 60%);
+      mix-blend-mode: screen; pointer-events: none;
+    }
+    @keyframes wave { from{transform:scale(.1);opacity:1} to{transform:scale(2.2);opacity:0} }
+
+    /* رسائل الحالة */
+    .status {
+      margin-top: 16px; display: none;
+      border-radius: 14px; padding: 14px 16px;
+      font-weight: 800; text-align: center;
+    }
+    .status.show { display: block; }
+    .status.ok   { background: rgba(34,197,94,.2);  border: 1px solid #22c55e; color: #22c55e; animation: pulse .4s ease; }
+    .status.err  { background: rgba(239,68,68,.2);  border: 1px solid #ef4444; color: #ef4444; animation: shake .38s ease; }
+    .status.info { background: rgba(59,130,246,.2); border: 1px solid #3b82f6; color: #60a5fa; }
+
+    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+    @keyframes shake {
+      0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+    }
+
+    .hint { color: rgba(255,255,255,.6); font-size: .9rem; margin-top: 10px; }
+
+    @media(max-width:768px) {
+      .logo { right: 10px; top: 10px; }
+      .card-ct { padding: 20px 16px; border-radius: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- لمبة الاتصال -->
+<div id="conn" class="conn disconnected">🔴 منقطع</div>
+
+<!-- الشعار -->
+<div class="logo">
+  <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب"/>
+</div>
+
+<main class="main">
+  <section class="card-ct">
+
+    <div class="feud-logo">فاميلي فيود</div>
+    <div class="subtitle">صفحة المتسابق — {{ session.team1_name }} vs {{ session.team2_name }}</div>
+
+    <input id="name" class="name-input" type="text" inputmode="text"
+           maxlength="20" placeholder="🏷️ اكتب اسمك هنا"
+           autocomplete="off" aria-label="اسم المتسابق"/>
+
+    <div class="teams">
+      <label class="h">اختر فريقك:</label>
+      <div class="team-grid">
+        <label class="topt">
+          <input id="t1" type="radio" name="team" value="team1"/>
+          <div class="tbtn team1">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--t1);flex-shrink:0;"></span>
+            {{ session.team1_name }}
+          </div>
+        </label>
+        <label class="topt">
+          <input id="t2" type="radio" name="team" value="team2"/>
+          <div class="tbtn team2">
+            <span style="width:12px;height:12px;border-radius:50%;background:var(--t2);flex-shrink:0;"></span>
+            {{ session.team2_name }}
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div class="buzz-wrap">
+      <button id="buzz" class="buzz-btn" type="button" aria-label="اضغط للإجابة">
+        <span class="buzz-label" id="buzzText">جاوِب!</span>
+      </button>
+    </div>
+
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <p class="hint">أول ضاغط يُقبل — تأكد من كتابة اسمك واختيار فريقك</p>
+
+  </section>
+</main>
+
+<script>
+const sessionId   = '{{ session.id }}';
+const LS_NAME_KEY = `feud_name_${sessionId}`;
+const LS_TEAM_KEY = `feud_team_${sessionId}`;
+
+let socket = null;
+let reconnectDelay = 1000;
+let busy = false;
+let heartbeat = null;
+
+const el = {
+  conn:     document.getElementById('conn'),
+  name:     document.getElementById('name'),
+  t1:       document.getElementById('t1'),
+  t2:       document.getElementById('t2'),
+  buzz:     document.getElementById('buzz'),
+  status:   document.getElementById('status'),
+  buzzText: document.getElementById('buzzText'),
+};
+
+// ======= حفظ/تحميل التفضيلات =======
+function loadPrefs() {
+  const n = localStorage.getItem(LS_NAME_KEY) || '';
+  if (n) el.name.value = n;
+  const t = localStorage.getItem(LS_TEAM_KEY);
+  if (t === 'team1') el.t1.checked = true;
+  if (t === 'team2') el.t2.checked = true;
+}
+function savePrefs() {
+  const n = (el.name.value || '').trim();
+  if (n) localStorage.setItem(LS_NAME_KEY, n);
+  const t = document.querySelector('input[name="team"]:checked')?.value;
+  if (t) localStorage.setItem(LS_TEAM_KEY, t);
+}
+
+// ======= واجهة =======
+function setConn(ok) {
+  el.conn.className = 'conn ' + (ok ? 'connected' : 'disconnected');
+  el.conn.textContent = ok ? '🟢 متصل' : '🔴 منقطع';
+}
+function showMsg(kind, text, ms) {
+  el.status.className = 'status show ' + (kind || 'info');
+  el.status.textContent = text || '';
+  if (ms) setTimeout(() => el.status.classList.remove('show'), ms);
+}
+function waveButton() {
+  el.buzz.classList.add('wave');
+  const i = document.createElement('i');
+  el.buzz.appendChild(i);
+  setTimeout(() => { i.remove(); el.buzz.classList.remove('wave'); }, 600);
+}
+function haptic(ms = 35) { try { navigator.vibrate && navigator.vibrate(ms); } catch {} }
+
+function disableBuzz(permanent = false) {
+  busy = true;
+  el.buzz.disabled = true;
+  el.buzzText.textContent = permanent ? 'غير متاح' : 'جارٍ...';
+}
+function enableBuzz() {
+  busy = false;
+  el.buzz.disabled = false;
+  el.buzzText.textContent = 'جاوِب!';
+}
+
+// ======= صوت =======
+function tone(freq = 740, dur = 160, gain = .35) {
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.frequency.value = freq; g.gain.value = gain;
+    o.start(); o.stop(ac.currentTime + dur / 1000);
+  } catch {}
+}
+
+// ======= WebSocket =======
+function connectWS() {
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const url = `${proto}://${location.host}/ws/feud/${encodeURIComponent(sessionId)}/?role=contestant`;
+  try { socket = new WebSocket(url); } catch { setConn(false); return; }
+
+  socket.onopen = () => {
+    setConn(true);
+    reconnectDelay = 1000;
+    clearInterval(heartbeat);
+    heartbeat = setInterval(() => {
+      try { socket.readyState === 1 && socket.send(JSON.stringify({ type: 'ping' })); } catch {}
+    }, 20000);
+  };
+
+  socket.onmessage = (ev) => {
+    let d = {};
+    try { d = JSON.parse(ev.data || '{}'); } catch { return; }
+
+    if (d.type === 'buzz_confirmed') {
+      showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
+      tone(840, 220, .4); haptic(30);
+      setTimeout(enableBuzz, 900);
+
+    } else if (d.type === 'buzz_rejected') {
+      showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
+      tone(360, 180, .25); haptic(40);
+      setTimeout(enableBuzz, 400);
+
+    } else if (d.type === 'error') {
+      showMsg('err', d.message || 'حدث خطأ.', 3200);
+      setTimeout(enableBuzz, 600);
+
+    } else if (d.type === 'team_names_updated') {
+      // تحديث أسماء الفرق لو تغيرت
+      const t1btn = document.querySelector('.tbtn.team1');
+      const t2btn = document.querySelector('.tbtn.team2');
+      if (t1btn && d.team1_name) t1btn.lastChild.textContent = d.team1_name;
+      if (t2btn && d.team2_name) t2btn.lastChild.textContent = d.team2_name;
+    }
+  };
+
+  socket.onclose = (e) => {
+    setConn(false);
+    clearInterval(heartbeat);
+    if (e && (e.code === 4401 || e.code === 4404)) {
+      showMsg('err', 'انتهت صلاحية الجلسة أو الرابط غير صحيح.');
+      disableBuzz(true); return;
+    }
+    setTimeout(connectWS, reconnectDelay);
+    reconnectDelay = Math.min(reconnectDelay * 2, 5000);
+  };
+
+  socket.onerror = () => { setConn(false); try { socket.close(); } catch {} };
+}
+
+// ======= إرسال الطنطيط =======
+function sendBuzz() {
+  const name = (el.name.value || '').trim();
+  const team = document.querySelector('input[name="team"]:checked')?.value;
+
+  if (!name) { showMsg('err', 'اكتب اسمك أولاً', 2200); el.name.focus(); haptic(30); return; }
+  if (!team) { showMsg('err', 'اختر فريقك', 2200); haptic(30); return; }
+  if (!socket || socket.readyState !== 1) { showMsg('err', 'الاتصال غير جاهز', 2200); haptic(30); return; }
+  if (busy) return;
+
+  waveButton(); haptic(50); tone(760, 130, .35);
+  disableBuzz();
+  savePrefs();
+
+  try {
+    socket.send(JSON.stringify({
+      type: 'contestant_buzz',
+      contestant_name: name,
+      team,
+      timestamp: new Date().toISOString()
+    }));
+    setTimeout(() => { if (busy) enableBuzz(); }, 3200);
+    showMsg('info', '⏳ تم الإرسال...', 1200);
+  } catch {
+    showMsg('err', 'تعذّر الإرسال، حاول مجددًا', 2500);
+    enableBuzz();
+  }
+}
+
+// ======= تهيئة =======
+document.addEventListener('DOMContentLoaded', () => {
+  loadPrefs();
+  connectWS();
+
+  el.buzz.addEventListener('click', sendBuzz);
+  el.name.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBuzz(); });
+  document.addEventListener('touchstart', () => tone(1, 1, .0001), { once: true, passive: true });
+  window.addEventListener('online',  () => setConn(socket && socket.readyState === 1));
+  window.addEventListener('offline', () => setConn(false));
+});
+</script>
+</body>
+</html>
