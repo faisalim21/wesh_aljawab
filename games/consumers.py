@@ -1587,7 +1587,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'awarded_points': pts,
         })
 
-    async def _handle_update_team_names(self, t1_name, t2_name):
+    async def _handle_update_team_names(self, t1_name, t2_name, game_title=None):
         if not t1_name or not t2_name:
             return
 
@@ -1603,6 +1603,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'type': 'broadcast_team_names',
             'team1_name': t1_name,
             'team2_name': t2_name,
+            'game_title': game_title or 'فاميلي فيود',
         })
 
     async def broadcast_team_names(self, event):
@@ -1610,8 +1611,8 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             'type': 'team_names_updated',
             'team1_name': event['team1_name'],
             'team2_name': event['team2_name'],
+            'game_title': event.get('game_title', 'فاميلي فيود'),
         }))
-
     async def _handle_next_question(self):
         def _next():
             from django.db import transaction

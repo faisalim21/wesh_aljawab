@@ -1243,8 +1243,17 @@ class FamilyFeudProgress(models.Model):
         self.phase = 'question'
         self.last_buzzer_name = ''
         self.last_buzzer_team = ''
-        self.current_multiplier = 1
+        self.current_multiplier = self._get_question_multiplier()
 
     @property
     def total_strikes(self):
         return self.team1_strikes + self.team2_strikes
+
+    def _get_question_multiplier(self):
+        try:
+            q = self.session.package.feud_questions.filter(
+                order=self.current_question_index
+            ).first()
+            return q.multiplier if q else 1
+        except Exception:
+            return 1

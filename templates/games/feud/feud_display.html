@@ -1000,10 +1000,19 @@ function startCountdown() {
   cdInterval = setInterval(() => {
     n--;
     el.textContent = n;
-    if (n <= 0) { clearInterval(cdInterval); hideBuzz(); }
+    if (n <= 0) {
+      clearInterval(cdInterval);
+      playTimeUp();
+      setTimeout(hideBuzz, 600);
+    }
   }, 1000);
 }
 
+function playTimeUp() {
+  _tone(523, 0,    0.10, 0.6);
+  _tone(415, 0.12, 0.10, 0.6);
+  _tone(330, 0.24, 0.35, 0.7, 'sawtooth');
+}
 function showAwardPop(text) {
   const el = document.getElementById('awardPop');
   el.textContent = text;
