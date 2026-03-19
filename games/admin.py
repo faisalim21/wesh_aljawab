@@ -2619,7 +2619,7 @@ class FamilyFeudQuestionAdmin(admin.ModelAdmin):
                 messages.error(request, f'⛔ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات — الحد الأقصى 10.')
 
             elif count < 4:
-                messages.warning(
+                messages.warning( 
                     request,
                     f'⚠️ السؤال "{obj.question_text[:40]}" يحتوي على {count} إجابات فقط — الحد الأدنى المقترح 4.'
                 )
