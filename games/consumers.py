@@ -1851,20 +1851,22 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
 
     async def broadcast_full_state(self, event):
         await self.send(text_data=json.dumps({
-            'type': 'full_state',
-            'question_index': event['question_index'],
-            'question_text': event.get('question_text', ''),
-            'answers': event.get('answers', []),
+            'type':             'full_state',
+            'question_index':   event['question_index'],
+            'question_text':    event.get('question_text', ''),
+            'answers':          event.get('answers', []),
             'revealed_answers': event.get('revealed_answers', []),
-            'team1_strikes': event['team1_strikes'],
-            'team2_strikes': event['team2_strikes'],
-            'round_points': event['round_points'],
+            'team1_strikes':    event['team1_strikes'],
+            'team2_strikes':    event['team2_strikes'],
+            'round_points':     event['round_points'],
             'controlling_team': event.get('controlling_team', ''),
-            'phase': event.get('phase', 'waiting'),
-            'multiplier': event.get('multiplier', 1),
-            'total_questions': event.get('total_questions', 0),
-            'team1_score': event.get('team1_score', 0),
-            'team2_score': event.get('team2_score', 0),
+            'phase':            event.get('phase', 'waiting'),
+            'multiplier':       event.get('multiplier', 1),
+            'total_questions':  event.get('total_questions', 0),
+            'team1_score':      event.get('team1_score', 0),
+            'team2_score':      event.get('team2_score', 0),
+            'team1_name':       event.get('team1_name', ''),
+            'team2_name':       event.get('team2_name', ''),
         }))
 
     # ==================== Helpers ====================
@@ -1873,79 +1875,81 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
         def _get():
             progress = FamilyFeudProgress.objects.filter(session=self.session).first()
             if not progress:
-                return None
+                progress = FamilyFeudProgress.objects.create(
+                    session=self.session,
+                    current_question_index=1,
+                    phase='waiting'
+                )
             session = GameSession.objects.select_related('package').get(id=self.session_id)
-            q = session.package.feud_questions.filter(
-                order=progress.current_question_index
-            ).prefetch_related('answers').first()
-            total = session.package.feud_questions.count()
+            questions = session.package.feud_questions.order_by('order')
+            total = questions.count()
+            if total == 0:
+                return None
+            q = questions.filter(order=progress.current_question_index).first()
+            if not q:
+                q = questions.first()
+                progress.current_question_index = q.order
+                progress.save(update_fields=['current_question_index'])
             answers = []
             if q:
                 for ans in q.answers.all().order_by('rank'):
-                    answers.append({
-                        'rank': ans.rank,
-                        'text': ans.text,
-                        'points': ans.points,
-                    })
+                    answers.append({'rank': ans.rank, 'text': ans.text, 'points': ans.points})
             return {
-                'question_index': progress.current_question_index,
-                'question_text': q.question_text if q else '',
-                'answers': answers,
-                'revealed_answers': progress.revealed_answers,
-                'team1_strikes': progress.team1_strikes,
-                'team2_strikes': progress.team2_strikes,
-                'round_points': progress.round_points,
+                'question_index':   progress.current_question_index,
+                'question_text':    q.question_text if q else '',
+                'answers':          answers,
+                'revealed_answers': progress.revealed_answers or [],
+                'team1_strikes':    progress.team1_strikes,
+                'team2_strikes':    progress.team2_strikes,
+                'round_points':     progress.round_points,
                 'controlling_team': progress.controlling_team,
-                'phase': progress.phase,
-                'multiplier': progress.current_multiplier,
-                'total_questions': total,
-                'team1_score': session.team1_score,
-                'team2_score': session.team2_score,
+                'phase':            progress.phase,
+                'multiplier':       progress.current_multiplier,
+                'total_questions':  total,
+                'team1_score':      session.team1_score,
+                'team2_score':      session.team2_score,
+                'team1_name':       session.team1_name,
+                'team2_name':       session.team2_name,
             }
 
         state = await sync_to_async(_get)()
         if state:
-            await self.send(text_data=json.dumps({
-                'type': 'full_state',
-                **state
-            }))
+            await self.send(text_data=json.dumps({'type': 'full_state', **state}))
 
     async def _broadcast_full_state(self, progress=None):
         def _get():
             session = GameSession.objects.select_related('package').get(id=self.session_id)
             p = progress or FamilyFeudProgress.objects.get(session=session)
-            q = session.package.feud_questions.filter(
-                order=p.current_question_index
-            ).prefetch_related('answers').first()
-            total = session.package.feud_questions.count()
+            questions = session.package.feud_questions.order_by('order')
+            total = questions.count()
+            q = questions.filter(order=p.current_question_index).first()
+            if not q and questions.exists():
+                q = questions.first()
             answers = []
             if q:
                 for ans in q.answers.all().order_by('rank'):
-                    answers.append({
-                        'rank': ans.rank,
-                        'text': ans.text,
-                        'points': ans.points,
-                    })
+                    answers.append({'rank': ans.rank, 'text': ans.text, 'points': ans.points})
             return {
-                'question_index': p.current_question_index,
-                'question_text': q.question_text if q else '',
-                'answers': answers,
-                'revealed_answers': p.revealed_answers,
-                'team1_strikes': p.team1_strikes,
-                'team2_strikes': p.team2_strikes,
-                'round_points': p.round_points,
+                'question_index':   p.current_question_index,
+                'question_text':    q.question_text if q else '',
+                'answers':          answers,
+                'revealed_answers': p.revealed_answers or [],
+                'team1_strikes':    p.team1_strikes,
+                'team2_strikes':    p.team2_strikes,
+                'round_points':     p.round_points,
                 'controlling_team': p.controlling_team,
-                'phase': p.phase,
-                'multiplier': p.current_multiplier,
-                'total_questions': total,
-                'team1_score': session.team1_score,
-                'team2_score': session.team2_score,
+                'phase':            p.phase,
+                'multiplier':       p.current_multiplier,
+                'total_questions':  total,
+                'team1_score':      session.team1_score,
+                'team2_score':      session.team2_score,
+                'team1_name':       session.team1_name,
+                'team2_name':       session.team2_name,
             }
 
         state = await sync_to_async(_get)()
         await self.channel_layer.group_send(self.group_name, {
-            'type': 'broadcast_full_state',
-            **state
+            'type': 'broadcast_full_state', **state
         })
 
     def _parse_qs(self):
