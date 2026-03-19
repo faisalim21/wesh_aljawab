@@ -384,6 +384,7 @@ function connectWS() {
        if (t2btn) t2btn.lastChild.textContent = ' ' + d.team2_name;
       }
       if (d.game_title) {
+        localStorage.setItem(`feud_title_${sessionId}`, d.game_title);
         document.querySelector('.feud-logo').textContent = d.game_title;
         document.title = d.game_title + ' | وش الجواب';
       }
@@ -394,6 +395,7 @@ function connectWS() {
       if (t1btn && d.team1_name) t1btn.lastChild.textContent = ' ' + d.team1_name;
       if (t2btn && d.team2_name) t2btn.lastChild.textContent = ' ' + d.team2_name;
       if (d.game_title) {
+        localStorage.setItem(`feud_title_${sessionId}`, d.game_title);
         document.querySelector('.feud-logo').textContent = d.game_title;
         document.title = d.game_title + ' | وش الجواب';
       }
@@ -446,6 +448,11 @@ function sendBuzz() {
 // ======= تهيئة =======
 document.addEventListener('DOMContentLoaded', () => {
   loadPrefs();
+  const savedTitle = localStorage.getItem(`feud_title_${sessionId}`);
+  if (savedTitle) {
+    document.querySelector('.feud-logo').textContent = savedTitle;
+    document.title = savedTitle + ' | وش الجواب';
+  }
   connectWS();
 
   el.buzz.addEventListener('click', sendBuzz);
