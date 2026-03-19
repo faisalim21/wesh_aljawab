@@ -1193,7 +1193,33 @@
                         <span>ابدأ اللعب</span>
                     </a>
                 </article>
+                
 
+                 <!-- كرت تحدي العائلات -->
+                <article class="game-card" style="border: 1.5px solid rgba(245,158,11,0.3);" itemscope itemtype="https://schema.org/Game">
+                    <div class="game-icon" aria-label="تحدي العائلات">
+                        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1773263520/%D9%81%D8%A7%D9%85%D9%84%D9%8A_%D9%81%D9%8A%D9%88%D8%AF_jiygsg.webp"
+                            alt="لعبة تحدي العائلات" width="180" height="180" loading="lazy" decoding="async" itemprop="image">
+                    </div>
+                    <h3 class="game-title" style="color: #d97706;" itemprop="name">تحدي العائلات</h3>
+                    <p class="game-description" itemprop="description">
+                        مقتبسة من السلسلة الشهيرة "فاميلي فيود" — تنافس مع عائلتك وأصدقائك في أسئلة شعبية مثيرة واكتشف من يعرف أكثر!
+                    </p>
+                    <div class="game-status">
+                        <span class="status-badge status-available">
+                            <i class="fas fa-check-circle" aria-hidden="true"></i>
+                            <span>متاح الآن</span>
+                        </span>
+                    </div>
+                    <a href="{% url 'games:feud_home' %}"
+                      class="play-button available"
+                      style="background: linear-gradient(135deg, #1a3a8f, #f59e0b); box-shadow: 0 8px 24px rgba(26,58,143,0.3); color:#fff;"
+                      aria-label="ابدأ لعب تحدي العائلات"
+                      itemprop="url">
+                        <i class="fas fa-play" aria-hidden="true"></i>
+                        <span>ابدأ اللعب</span>
+                    </a>
+                </article> 
                 <!-- 3. لعبة امبوستر -->
                 <article class="game-card" style="border: 1.5px solid rgba(239,68,68,0.3);" itemscope itemtype="https://schema.org/Game">
                     <div class="game-icon" aria-label="امبوستر" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #f97316 100%); box-shadow: 0 12px 32px rgba(239,68,68,0.3);">

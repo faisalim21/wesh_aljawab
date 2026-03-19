@@ -346,6 +346,7 @@ function connectWS() {
   const url = `${proto}://${location.host}/ws/feud/${encodeURIComponent(sessionId)}/?role=contestant`;
   try { socket = new WebSocket(url); } catch { setConn(false); return; }
 
+  
   socket.onopen = () => {
     setConn(true);
     reconnectDelay = 1000;
@@ -373,12 +374,29 @@ function connectWS() {
       showMsg('err', d.message || 'حدث خطأ.', 3200);
       setTimeout(enableBuzz, 600);
 
+    } else if (d.type === 'full_state') {
+      if (d.team1_name) {
+        const t1btn = document.querySelector('.tbtn.team1');
+        if (t1btn) t1btn.childNodes[1].textContent = ' ' + d.team1_name;
+      }
+      if (d.team2_name) {
+        const t2btn = document.querySelector('.tbtn.team2');
+        if (t2btn) t2btn.childNodes[1].textContent = ' ' + d.team2_name;
+      }
+      if (d.game_title) {
+        document.querySelector('.feud-logo').textContent = d.game_title;
+        document.title = d.game_title + ' | وش الجواب';
+      }
+
     } else if (d.type === 'team_names_updated') {
-      // تحديث أسماء الفرق لو تغيرت
       const t1btn = document.querySelector('.tbtn.team1');
       const t2btn = document.querySelector('.tbtn.team2');
-      if (t1btn && d.team1_name) t1btn.lastChild.textContent = d.team1_name;
-      if (t2btn && d.team2_name) t2btn.lastChild.textContent = d.team2_name;
+      if (t1btn && d.team1_name) t1btn.childNodes[1].textContent = ' ' + d.team1_name;
+      if (t2btn && d.team2_name) t2btn.childNodes[1].textContent = ' ' + d.team2_name;
+      if (d.game_title) {
+        document.querySelector('.feud-logo').textContent = d.game_title;
+        document.title = d.game_title + ' | وش الجواب';
+      }
     }
   };
 

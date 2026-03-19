@@ -829,7 +829,14 @@ function connect() {
       case 'team_names_updated':
         document.getElementById('t1Name').textContent = d.team1_name;
         document.getElementById('t2Name').textContent = d.team2_name;
+        document.getElementById('t1StrikesLabel').textContent = d.team1_name;
+        document.getElementById('t2StrikesLabel').textContent = d.team2_name;
+        if (d.game_title) {
+          document.querySelector('.header-logo').textContent = d.game_title;
+          document.title = d.game_title + ' | وش الجواب';
+        }
         break;
+
 
       case 'full_state':
         state.answers        = d.answers || [];
@@ -852,6 +859,10 @@ function connect() {
         if (d.team1_name) document.getElementById('t1StrikesLabel').textContent = d.team1_name;
         if (d.team2_name) document.getElementById('t2StrikesLabel').textContent = d.team2_name;
 
+        if (d.game_title) {
+          document.querySelector('.header-logo').textContent = d.game_title;
+          document.title = d.game_title + ' | وش الجواب';
+        }
         buildBoard(state.answers, state.revealed);
         updateStrikes(state.t1Strikes, state.t2Strikes, null);
         updateMultiplier(state.multiplier);
@@ -862,16 +873,17 @@ function connect() {
         state.t2Score = d.team2_score;
         document.getElementById('t1Score').textContent = d.team1_score;
         document.getElementById('t2Score').textContent = d.team2_score;
-        state.roundPts = 0;
-        document.getElementById('roundPts').textContent = '0';
-        // تحديث الأسماء لو وُجدت
+        if (d.awarded_points > 0) {
+          state.roundPts = 0;
+          document.getElementById('roundPts').textContent = '0';
+        }
         if (d.team1_name) document.getElementById('t1Name').textContent = d.team1_name;
         if (d.team2_name) document.getElementById('t2Name').textContent = d.team2_name;
         if (d.awarded_points && d.awarded_points > 0) {
-            showAwardPop(`+${d.awarded_points}`);
-            playAwardSound();
+          showAwardPop(`+${d.awarded_points}`);
+          playAwardSound();
         }
-        break; 
+        break;
 
       case 'answer_revealed': {
         if (!state.revealed.includes(d.rank)) state.revealed.push(d.rank);
