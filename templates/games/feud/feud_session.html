@@ -744,6 +744,11 @@
     z-index: 9000;
     animation: ptsFlyUp 1.2s ease forwards;
     }
+
+    @keyframes ptsFlyUp {
+    0%   { opacity:1; transform:translateY(0) scale(1); }
+    100% { opacity:0; transform:translateY(-60px) scale(1.4); }
+    }
   </style>
 </head>
 <body>
@@ -940,16 +945,14 @@
     <button class="ctrl-btn orange award-t2" onclick="awardPoints('team2')"><i class="fas fa-trophy"></i> أعطِ لـ {{ session.team2_name }}</button>
   </div>
 </div>
-
-  <!-- ===== إجراءات ===== -->
-  <div class="ctrl-section">
-    <div class="ctrl-section-title">👁 إجراءات</div>
-    <div class="ctrl-row">
-      <button class="ctrl-btn blue"  onclick="revealAll()"><i class="fas fa-eye"></i> كشف كل الإجابات</button>
-      <button class="ctrl-btn ghost" onclick="resetBuzz()"><i class="fas fa-unlock"></i> فتح زر الطنطيط</button>
-      <button class="ctrl-btn red"   onclick="confirmNewRound()"><i class="fas fa-forward"></i> سؤال جديد</button>
-    </div>
+<div class="ctrl-section">
+  <div class="ctrl-section-title">جولة جديدة</div>
+  <div class="ctrl-row">
+    <button class="ctrl-btn red"   onclick="confirmRestart()" style="background:linear-gradient(135deg,#7c3aed,#4c1d95);box-shadow:0 4px 12px rgba(124,58,237,0.4);">
+      <i class="fas fa-redo"></i> إعادة اللعبة كاملة
+    </button>
   </div>
+</div>
 
 </div>
 
@@ -1256,38 +1259,53 @@ function renderAnswers() {
     const cell = document.createElement('div');
     cell.className = 'answer-cell' + (rev ? ' revealed' : '');
     cell.dataset.rank = ans.rank;
-    cell.style.position = 'relative';
-    cell.style.paddingBottom = '28px'; // مساحة لزر الكشف
+    cell.style.cssText = 'position:relative; flex-direction:column; align-items:stretch; cursor:default; padding-bottom:30px;';
 
     cell.innerHTML = `
-      <div style="display:flex;align-items:center;flex:1;min-height:52px;width:100%;">
+      <div style="display:flex;align-items:center;min-height:56px;width:100%;">
         <div class="answer-rank">${ans.rank}</div>
         <div class="answer-body">
           <div class="answer-name" style="filter:none;color:#fcd34d;">${ans.text}</div>
-          <div class="answer-pts" style="filter:none;color:var(--feud-gold);opacity:${rev ? 1 : 0.5};">${ans.points}</div>
+          <div class="answer-pts" style="filter:none;color:var(--feud-gold);">${ans.points}</div>
         </div>
       </div>
       ${!rev
-        ? `<button class="reveal-cell-btn" data-rank="${ans.rank}">👁 اكشف الإجابة</button>`
-        : `<div style="position:absolute;bottom:0;left:0;right:0;padding:4px 0;
-              border-top:1px solid rgba(96,165,250,0.2);background:rgba(96,165,250,0.08);
-              color:#60a5fa;font-size:0.72rem;font-weight:800;text-align:center;
-              border-radius:0 0 10px 10px;font-family:'Tajawal',sans-serif;">✅ مكشوفة</div>`
+        ? `<button class="reveal-cell-btn" data-rank="${ans.rank}"
+            style="position:absolute;bottom:0;left:0;right:0;
+                   padding:6px 0;border:none;
+                   border-top:1.5px solid rgba(245,158,11,0.3);
+                   background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(245,158,11,0.08));
+                   color:#fcd34d;font-family:'Tajawal',sans-serif;
+                   font-weight:900;font-size:0.8rem;cursor:pointer;
+                   border-radius:0 0 10px 10px;
+                   transition:background 0.2s;">
+            👁 اكشف الإجابة
+          </button>`
+        : `<div style="position:absolute;bottom:0;left:0;right:0;
+                       padding:5px 0;
+                       border-top:1px solid rgba(96,165,250,0.25);
+                       background:rgba(96,165,250,0.1);
+                       color:#60a5fa;font-size:0.75rem;font-weight:800;
+                       text-align:center;border-radius:0 0 10px 10px;
+                       font-family:'Tajawal',sans-serif;">
+             ✅ مكشوفة
+           </div>`
       }
     `;
 
     const btn = cell.querySelector('.reveal-cell-btn');
     if (btn) {
-      btn.addEventListener('click', (e) => {
+      btn.onmouseover = () => btn.style.background = 'rgba(245,158,11,0.35)';
+      btn.onmouseout  = () => btn.style.background = 'linear-gradient(135deg,rgba(245,158,11,0.18),rgba(245,158,11,0.08))';
+      btn.onclick = (e) => {
         e.stopPropagation();
         revealAnswer(ans.rank);
-      });
+      };
     }
 
     g.appendChild(cell);
   });
 }
-
 
 function renderRevealControls() {
   const wrap = document.getElementById('revealControls');
@@ -1340,34 +1358,41 @@ function onRevealed(d) {
   st.rpts = d.round_points || st.rpts;
   document.getElementById('roundPts').textContent = st.rpts;
 
-  // تحديث الخلية
   const cell = document.querySelector(`.answer-cell[data-rank="${d.rank}"]`);
   if (cell && !cell.classList.contains('revealed')) {
     cell.classList.add('revealed');
 
-    // احذف زر الكشف وضع "مكشوفة"
     const btn = cell.querySelector('.reveal-cell-btn');
     if (btn) {
       btn.remove();
       const done = document.createElement('div');
-      done.style.cssText = `position:absolute;bottom:0;left:0;right:0;padding:4px 0;
-        border-top:1px solid rgba(96,165,250,0.2);background:rgba(96,165,250,0.08);
-        color:#60a5fa;font-size:0.72rem;font-weight:800;text-align:center;
+      done.style.cssText = `position:absolute;bottom:0;left:0;right:0;
+        padding:5px 0;border-top:1px solid rgba(96,165,250,0.25);
+        background:rgba(96,165,250,0.1);color:#60a5fa;
+        font-size:0.75rem;font-weight:800;text-align:center;
         border-radius:0 0 10px 10px;font-family:'Tajawal',sans-serif;`;
       done.textContent = '✅ مكشوفة';
       cell.appendChild(done);
     }
 
-    // نقاط طايرة
     const pts = st.answers.find(a => a.rank === d.rank)?.points || 0;
-    if (pts > 0) spawnPtsFly(cell, pts);
+    if (pts > 0) {
+      const rect = cell.getBoundingClientRect();
+      const fly = document.createElement('div');
+      fly.style.cssText = `position:fixed;left:${rect.left + rect.width/2 - 20}px;
+        top:${rect.top + rect.height/2}px;font-family:'Lalezar',sans-serif;
+        font-size:1.8rem;color:var(--feud-gold);
+        text-shadow:0 0 16px rgba(245,158,11,0.8);
+        pointer-events:none;z-index:9000;
+        animation:ptsFlyUp 1.2s ease forwards;`;
+      fly.textContent = `+${pts}`;
+      document.body.appendChild(fly);
+      setTimeout(() => fly.remove(), 1200);
+    }
 
     playReveal();
   }
-
-  renderRevealControls();
 }
-
 function spawnPtsFly(cell, pts) {
   const rect = cell.getBoundingClientRect();
   const el = document.createElement('div');
@@ -1480,6 +1505,8 @@ function awardPoints(team) {
 }
 
 function navigate(dir) {
+  if (dir === 'next' && st.qi >= (st.totalQ || TOTAL_Q)) return;
+  if (dir === 'prev' && st.qi <= 1) return;
   send({ type: dir === 'next' ? 'next_question' : 'prev_question' });
 }
 
@@ -1678,6 +1705,20 @@ window.addEventListener('resize', () => {
 document.addEventListener('DOMContentLoaded', () => {
   connect();
 });
+
+function confirmRestart() {
+  if (!confirm('إعادة اللعبة كاملة؟ سيتم تصفير كل شيء (النقاط، الأخطاء، الإجابات)')) return;
+  send({ type: 'set_question', index: 1 });
+  send({ type: 'reset_strikes' });
+  send({ type: 'update_scores', team1_score: 0, team2_score: 0 });
+  send({ type: 'set_multiplier', multiplier: 1 });
+  st.t1 = 0; st.t2 = 0; st.rpts = 0;
+  st.t1s = 0; st.t2s = 0;
+  st.mult = 1; st.revealed = [];
+  document.getElementById('t1Score').textContent = '0';
+  document.getElementById('t2Score').textContent = '0';
+  document.getElementById('roundPts').textContent = '0';
+}
 </script>
 </body>
 </html>

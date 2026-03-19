@@ -830,7 +830,29 @@ function connect() {
         break;
 
       case 'full_state':
-        applyFullState(d);
+        state.answers        = d.answers || [];
+        state.revealed       = d.revealed_answers || [];
+        state.t1Strikes      = d.team1_strikes || 0;
+        state.t2Strikes      = d.team2_strikes || 0;
+        state.roundPts       = d.round_points || 0;
+        state.multiplier     = d.multiplier || 1;
+        state.controllingTeam= d.controlling_team || '';
+        state.t1Score        = d.team1_score || 0;
+        state.t2Score        = d.team2_score || 0;
+        state.questionText   = d.question_text || '';
+
+        document.getElementById('t1Score').textContent = state.t1Score;
+        document.getElementById('t2Score').textContent = state.t2Score;
+        document.getElementById('roundPts').textContent = state.roundPts;
+        document.getElementById('questionDisplay').textContent = state.questionText || 'انتظر السؤال...';
+        if (d.team1_name) document.getElementById('t1Name').textContent = d.team1_name;
+        if (d.team2_name) document.getElementById('t2Name').textContent = d.team2_name;
+        if (d.team1_name) document.getElementById('t1StrikesLabel').textContent = d.team1_name;
+        if (d.team2_name) document.getElementById('t2StrikesLabel').textContent = d.team2_name;
+
+        buildBoard(state.answers, state.revealed);
+        updateStrikes(state.t1Strikes, state.t2Strikes, null);
+        updateMultiplier(state.multiplier);
         break;
 
       case 'scores_updated':
@@ -902,18 +924,6 @@ function connect() {
         break;
       }
 
-      case 'scores_updated':
-        state.t1Score = d.team1_score;
-        state.t2Score = d.team2_score;
-        document.getElementById('t1Score').textContent = d.team1_score;
-        document.getElementById('t2Score').textContent = d.team2_score;
-        state.roundPts = 0;
-        document.getElementById('roundPts').textContent = '0';
-        if (d.awarded_points && d.awarded_points > 0) {
-          showAwardPop(`+${d.awarded_points}`);
-          playAwardSound();
-        }
-        break;
 
       case 'multiplier_changed':
         updateMultiplier(d.multiplier);
@@ -1001,6 +1011,8 @@ window.addEventListener('beforeunload', () => {
   clearInterval(cdInterval);
   try { socket && socket.readyState === 1 && socket.close(1000, 'unload'); } catch {}
 });
+
+
 </script>
 </body>
 </html>
