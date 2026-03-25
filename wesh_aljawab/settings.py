@@ -222,7 +222,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 # ============== 🛡 الأمان ==============
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
