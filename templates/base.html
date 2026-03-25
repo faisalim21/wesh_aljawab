@@ -57,28 +57,47 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "وش الجواب",
-    "alternateName": ["Wesh Aljawab", "منصة وش الجواب"],
-    "url": "https://wesh-aljawab.onrender.com/",
-    "description": "منصة ألعاب تفاعلية ذكية تضم خلية الحروف، تحدي الصور، لعبة امبوستر وتحدي الوقت",
-    "inLanguage": "ar",
-    "keywords": "وش الجواب, خلية الحروف, تحدي الصور, امبوستر, العاب تفاعلية, العاب ذكاء",
-    "publisher": {
-      "@type": "Organization",
-      "name": "وش الجواب",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png",
-        "width": 512,
-        "height": 512
+    "@type": "ItemList",
+    "name": "ألعاب وش الجواب",
+    "description": "مجموعة الألعاب التفاعلية المتاحة على منصة وش الجواب",
+    "itemListElement": [
+      {
+        "@type": "Game",
+        "position": 1,
+        "name": "خلية الحروف",
+        "description": "لعبة خلية الحروف مع 140 سؤال وشاشة عرض وزر للمتسابقين",
+        "url": "https://wesh-aljawab.onrender.com/games/letters/",
+        "gamePlatform": "Web Browser",
+        "genre": "Word Game"
+      },
+      {
+        "@type": "Game",
+        "position": 2,
+        "name": "تحدي الصور",
+        "description": "لعبة مقتبسة من السلاسل الشهيرة أتحداك تجيب الصورة",
+        "url": "https://wesh-aljawab.onrender.com/games/images/",
+        "gamePlatform": "Web Browser",
+        "genre": "Picture Quiz"
+      },
+      {
+        "@type": "Game",
+        "position": 3,
+        "name": "تحدي العائلات - فاميلي فيود",
+        "description": "مقتبسة من فاميلي فيود - تنافس مع عائلتك في أسئلة شعبية مثيرة",
+        "url": "https://wesh-aljawab.onrender.com/games/feud/",
+        "gamePlatform": "Web Browser",
+        "genre": "Family Quiz"
+      },
+      {
+        "@type": "Game",
+        "position": 4,
+        "name": "امبوستر",
+        "description": "لعبة ترند على التيك توك - اكتشف الامبوستر بين اللاعبين",
+        "url": "https://wesh-aljawab.onrender.com/games/imposter/",
+        "gamePlatform": "Web Browser",
+        "genre": "Social Deduction"
       }
-    },
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://wesh-aljawab.onrender.com/?q={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
+    ]
   }
   </script>
 
@@ -110,15 +129,24 @@
       {
         "@type": "Game",
         "position": 3,
+        "name": "تحدي العائلات - فاميلي فيود",
+        "description": "مقتبسة من فاميلي فيود - تنافس مع عائلتك في أسئلة شعبية مثيرة",
+        "url": "https://wesh-aljawab.onrender.com/games/feud/",
+        "gamePlatform": "Web Browser",
+        "genre": "Family Quiz"
+      },
+      {
+        "@type": "Game",
+        "position": 4,
         "name": "امبوستر",
         "description": "لعبة ترند على التيك توك - اكتشف الامبوستر بين اللاعبين",
+        "url": "https://wesh-aljawab.onrender.com/games/imposter/",
         "gamePlatform": "Web Browser",
         "genre": "Social Deduction"
       }
     ]
   }
   </script>
-
   {% block meta_overrides %}{% endblock %}
 
   <!-- CSS & Fonts -->
@@ -1352,7 +1380,7 @@
                   <div class="stat-icon-wrap stat-icon-cyan">
                     <i class="fas fa-gamepad"></i>
                   </div>
-                  <div class="stat-number">3</div>
+                  <div class="stat-number">4</div>
                   <div class="stat-label">ألعاب متاحة الآن</div>
                   <div class="stat-coming">
                     <i class="fas fa-rocket"></i> قريباً +4 ألعاب
