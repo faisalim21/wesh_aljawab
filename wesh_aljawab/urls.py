@@ -40,6 +40,9 @@ urlpatterns = [
     path("privacy/", TemplateView.as_view(template_name="privacy.html"), name="privacy"),
     path("returns/", TemplateView.as_view(template_name="returns.html"), name="returns"),
     path('payments/', include(('payments.urls', 'payments'), namespace='payments')),
+        # Google Search Console verification
+    path('google08158d46af12cae8.html', TemplateView.as_view(template_name='google08158d46af12cae8.html')),
+
 ]
 
 if settings.DEBUG:
