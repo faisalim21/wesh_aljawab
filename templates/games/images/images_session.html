@@ -37,6 +37,9 @@
       padding: 0 0 40px;
     }
 
+    /* عوّض الهيدر الثابت */
+    .page-content { margin-top: 62px; }
+
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -48,11 +51,11 @@
 
     /* ===== هيدر ===== */
     .page-header {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(5,46,22,0.85);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(5,46,22,0.92);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(34,197,94,0.15);
-      padding: 12px 20px;
+      padding: 10px 20px;
       display: flex; align-items: center; justify-content: space-between; gap: 12px;
       flex-wrap: wrap;
     }
@@ -61,13 +64,23 @@
       display: flex; align-items: center; gap: 10px;
     }
     .header-logo img {
-      height: 38px; width: auto;
+      height: 36px; width: auto;
       background: rgba(255,255,255,0.92);
       border-radius: 10px; padding: 4px 6px;
     }
+    .header-left {
+      display: flex; align-items: center; gap: 10px;
+    }
     .header-title {
-      font-size: 1.1rem; font-weight: 900; color: var(--green-300);
-      letter-spacing: 0.3px;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 1rem; font-weight: 900; color: var(--green-300);
+    }
+    .header-title span.sep {
+      color: rgba(255,255,255,0.2); font-weight: 400;
+    }
+    .header-title span.session-name {
+      color: rgba(255,255,255,0.7); font-weight: 700;
+      font-size: 0.92rem;
     }
     .header-badge {
       background: rgba(34,197,94,0.15);
@@ -283,26 +296,29 @@
       color: rgba(255,255,255,0.8);
     }
     .reveal-btn {
-      padding: 4px 12px; border-radius: 8px; border: none;
-      background: rgba(34,197,94,0.15);
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 12px; border-radius: 8px;
+      background: rgba(34,197,94,0.12);
       border: 1px solid rgba(34,197,94,0.25);
       color: var(--green-300); font-weight: 800; font-size: 0.75rem;
       cursor: pointer; transition: var(--transition);
       font-family: 'Tajawal', sans-serif;
     }
-    .reveal-btn:hover { background: rgba(34,197,94,0.25); }
-    .reveal-btn.revealed { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+    .reveal-btn:hover { background: rgba(34,197,94,0.22); }
+    .reveal-btn.revealed { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+    .reveal-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
     .field-body {
       padding: 12px 14px; min-height: 64px; display: flex; align-items: center;
     }
-    .field-text {
-      font-size: 0.95rem; font-weight: 700; line-height: 1.65;
-      color: rgba(255,255,255,0.85); transition: filter 0.35s ease;
+    .field-placeholder {
+      display: flex; align-items: center; gap: 8px;
+      color: rgba(255,255,255,0.2); font-size: 0.85rem; font-weight: 700;
     }
-    .field-text.blurred { filter: blur(7px); color: rgba(255,255,255,0.4); user-select: none; }
-    .field-text.hint-revealed { color: #fcd34d; filter: none; }
-    .field-text.answer-revealed { color: var(--green-300); filter: none; }
+    .field-placeholder svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.5; opacity: 0.5; }
+    .field-text { font-size: 0.95rem; font-weight: 700; line-height: 1.65; }
+    .field-text.hint-revealed  { color: #fcd34d; }
+    .field-text.answer-revealed { color: var(--green-300); }
 
     /* ===== النقاط ===== */
     .scores-section {
@@ -356,15 +372,180 @@
     }
     .buzz-show { display: block !important; }
     @keyframes buzzPulse { from{transform:translateX(-50%) scale(1)} to{transform:translateX(-50%) scale(1.025)} }
+
+    /* ===== إعدادات ===== */
+    .settings-trigger-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 18px;
+      background: rgba(34,197,94,0.1);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 999px; color: var(--green-300);
+      font-weight: 800; font-size: 0.88rem;
+      cursor: pointer; transition: var(--transition);
+      font-family: 'Tajawal', sans-serif;
+    }
+    .settings-trigger-btn:hover {
+      background: rgba(34,197,94,0.18);
+      border-color: rgba(34,197,94,0.45);
+    }
+    .settings-trigger-btn svg {
+      width: 16px; height: 16px; stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round;
+    }
+
+    /* Modal overlay */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 999;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.open {
+      opacity: 1; pointer-events: auto;
+    }
+    .modal-box {
+      background: #0a1f0f;
+      border: 1.5px solid rgba(34,197,94,0.25);
+      border-radius: 24px;
+      width: 100%; max-width: 520px;
+      max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      overflow: hidden;
+    }
+    .modal-overlay.open .modal-box {
+      transform: translateY(0) scale(1);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(34,197,94,0.12);
+      background: rgba(0,0,0,0.2); flex-shrink: 0;
+    }
+    .modal-header-left { display: flex; align-items: center; gap: 12px; }
+    .modal-header-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem;
+    }
+    .modal-header h3 { margin: 0; font-size: 1rem; font-weight: 900; color: #fff; }
+    .modal-header p  { margin: 0; font-size: 0.78rem; color: rgba(255,255,255,0.4); font-weight: 600; }
+    .modal-close-btn {
+      width: 34px; height: 34px; border-radius: 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.6);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: var(--transition);
+      font-size: 1rem; line-height: 1;
+    }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+    .modal-body {
+      overflow-y: auto; flex: 1;
+      padding: 20px 22px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .setting-section {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(34,197,94,0.12);
+      border-radius: var(--radius); padding: 16px;
+    }
+    .setting-section-title {
+      font-size: 0.82rem; font-weight: 900;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 12px;
+    }
+    .setting-row {
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;
+    }
+    .setting-row:last-child { margin-bottom: 0; }
+    .setting-label {
+      font-size: 0.82rem; font-weight: 800;
+      color: rgba(255,255,255,0.65);
+    }
+    .setting-input {
+      width: 100%; padding: 9px 12px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(34,197,94,0.2);
+      border-radius: 10px; color: #fff;
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 700; font-size: 0.92rem;
+      outline: none; transition: var(--transition);
+    }
+    .setting-input:focus {
+      border-color: rgba(34,197,94,0.5);
+      box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
+    }
+    .color-row {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .color-preview {
+      width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;
+      cursor: pointer; transition: var(--transition);
+    }
+    .color-preview:hover { transform: scale(1.08); }
+    .color-input-hidden {
+      position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+    }
+    .setting-input.color-text {
+      flex: 1; font-size: 0.85rem; letter-spacing: 1px;
+    }
+    .coming-soon-note {
+      background: rgba(255,255,255,0.02);
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: var(--radius); padding: 16px;
+      text-align: center; color: rgba(255,255,255,0.3);
+      font-size: 0.82rem; font-weight: 700; line-height: 1.7;
+    }
+
+    .modal-footer {
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      background: rgba(0,0,0,0.15); flex-shrink: 0;
+    }
+    .btn-cancel {
+      padding: 9px 20px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent; color: rgba(255,255,255,0.5);
+      font-family: 'Tajawal', sans-serif; font-weight: 700;
+      font-size: 0.9rem; cursor: pointer; transition: var(--transition);
+    }
+    .btn-cancel:hover { background: rgba(255,255,255,0.06); color: #fff; }
+    .btn-save {
+      padding: 9px 26px; border-radius: 12px; border: none;
+      background: linear-gradient(135deg, #15803d, #22c55e);
+      color: #fff; font-family: 'Tajawal', sans-serif;
+      font-weight: 900; font-size: 0.92rem;
+      cursor: pointer; transition: var(--transition);
+      box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+    }
+    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(34,197,94,0.4); }
   </style>
 </head>
 <body>
 
   <!-- ===== هيدر ===== -->
   <div class="page-header">
-    <div class="header-logo">
-      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
-      <span class="header-title">تحدّي الصور</span>
+    <div class="header-left">
+      <div class="header-logo">
+        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+      </div>
+      <div class="header-title">
+        <span>تحدّي الصور</span>
+        <span class="sep">|</span>
+        <span class="session-name" id="headerSessionName">—</span>
+      </div>
     </div>
     <span class="header-badge">🧑‍🏫 صفحة المقدم</span>
   </div>
@@ -403,6 +584,14 @@
       <div class="guide-foot">
         ⚡ عند ضغط الزر: يصلك تنبيه باسم المتسابق وفريقه، ويبدأ عداد الإجابة تلقائيًا.
       </div>
+    </div>
+
+    <!-- ===== زر الإعدادات ===== -->
+    <div style="margin-bottom:18px;">
+      <button class="settings-trigger-btn" onclick="openSettings()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        إعدادات الجلسة
+      </button>
     </div>
 
     <!-- ===== الروابط + معلومات ===== -->
@@ -465,19 +654,33 @@
       <div class="field-card">
         <div class="field-header">
           <h6>💡 التلميح</h6>
-          <button class="reveal-btn" id="hintRevealBtn" onclick="toggleReveal('hint')">اضغط للكشف</button>
+          <button class="reveal-btn" id="hintRevealBtn" onclick="toggleReveal('hint')">
+            <svg id="hintEyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="hintBtnText">اكشف</span>
+          </button>
         </div>
         <div class="field-body">
-          <div class="field-text blurred" id="hintField">—</div>
+          <div class="field-placeholder" id="hintPlaceholder">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>اضغط اكشف لرؤية التلميح</span>
+          </div>
+          <div class="field-text hint-revealed" id="hintField" style="display:none;">—</div>
         </div>
       </div>
       <div class="field-card">
         <div class="field-header">
           <h6>✅ الإجابة</h6>
-          <button class="reveal-btn" id="answerRevealBtn" onclick="toggleReveal('answer')">اضغط للكشف</button>
+          <button class="reveal-btn" id="answerRevealBtn" onclick="toggleReveal('answer')">
+            <svg id="answerEyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="answerBtnText">اكشف</span>
+          </button>
         </div>
         <div class="field-body">
-          <div class="field-text blurred" id="answerField">—</div>
+          <div class="field-placeholder" id="answerPlaceholder">
+            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>اضغط اكشف لرؤية الإجابة</span>
+          </div>
+          <div class="field-text answer-revealed" id="answerField" style="display:none;">—</div>
         </div>
       </div>
     </div>
@@ -506,6 +709,79 @@
 
   </div><!-- end page-content -->
 
+  <!-- ===== Modal الإعدادات ===== -->
+  <div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsBackdrop(event)">
+    <div class="modal-box">
+
+      <div class="modal-header">
+        <div class="modal-header-left">
+          <div class="modal-header-icon">⚙️</div>
+          <div>
+            <h3>إعدادات الجلسة</h3>
+            <p>تحدّي الصور</p>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeSettings()">✕</button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- اسم الجلسة -->
+        <div class="setting-section">
+          <div class="setting-section-title">🎬 اسم الجلسة</div>
+          <div class="setting-row">
+            <label class="setting-label">اكتب اسمك — سيظهر في الهيدر كـ "تحدّي الصور | اسمك"</label>
+            <input class="setting-input" id="setting_session_name" type="text" maxlength="30" placeholder="مثال: محمد">
+          </div>
+        </div>
+
+        <!-- الفريقان -->
+        <div class="setting-section">
+          <div class="setting-section-title">🏆 الفريقان</div>
+
+          <div class="setting-row">
+            <label class="setting-label">اسم الفريق الأول</label>
+            <input class="setting-input" id="setting_t1_name" type="text" maxlength="30" placeholder="الفريق الأول">
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">لون الفريق الأول</label>
+            <div class="color-row">
+              <div class="color-preview" id="t1ColorPreview" onclick="document.getElementById('t1ColorPicker').click()"></div>
+              <input type="color" id="t1ColorPicker" class="color-input-hidden">
+              <input class="setting-input color-text" id="t1ColorText" type="text" maxlength="7" placeholder="#22c55e">
+            </div>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">اسم الفريق الثاني</label>
+            <input class="setting-input" id="setting_t2_name" type="text" maxlength="30" placeholder="الفريق الثاني">
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">لون الفريق الثاني</label>
+            <div class="color-row">
+              <div class="color-preview" id="t2ColorPreview" onclick="document.getElementById('t2ColorPicker').click()"></div>
+              <input type="color" id="t2ColorPicker" class="color-input-hidden">
+              <input class="setting-input color-text" id="t2ColorText" type="text" maxlength="7" placeholder="#f97316">
+            </div>
+          </div>
+        </div>
+
+        <!-- قريباً -->
+        <div class="coming-soon-note">
+          🚀 قريباً إعدادات أكثر — خلك قريب
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeSettings()">إلغاء</button>
+        <button class="btn-save" id="btnSaveSettings" onclick="saveSettings()">💾 حفظ</button>
+      </div>
+
+    </div>
+  </div>
   <!-- إشعار البازر -->
   <div id="buzzNotif">🚨 متسابق ضغط الزر!</div>
 
@@ -534,26 +810,40 @@
   }
 
   /* ===== الكشف ===== */
-  function toggleReveal(type){
-    const isHint = type === 'hint';
-    const field = isHint ? $hint : $ans;
-    const btn   = document.getElementById(isHint ? 'hintRevealBtn' : 'answerRevealBtn');
-    const cls   = isHint ? 'hint-revealed' : 'answer-revealed';
-    const isBlurred = field.classList.contains('blurred');
-    field.classList.toggle('blurred', !isBlurred);
-    field.classList.toggle(cls, isBlurred);
-    btn.textContent = isBlurred ? 'إخفاء' : 'اضغط للكشف';
-    btn.classList.toggle('revealed', isBlurred);
+  const EYE_OPEN   = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  const EYE_CLOSED = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+  function toggleReveal(type) {
+    const isHint  = type === 'hint';
+    const field   = document.getElementById(isHint ? 'hintField'       : 'answerField');
+    const ph      = document.getElementById(isHint ? 'hintPlaceholder' : 'answerPlaceholder');
+    const btn     = document.getElementById(isHint ? 'hintRevealBtn'   : 'answerRevealBtn');
+    const btnText = document.getElementById(isHint ? 'hintBtnText'     : 'answerBtnText');
+    const eyeIcon = document.getElementById(isHint ? 'hintEyeIcon'     : 'answerEyeIcon');
+    const isHidden = field.style.display === 'none';
+    if (isHidden) {
+      ph.style.display    = 'none';
+      field.style.display = 'block';
+      btnText.textContent = 'إخفاء';
+      btn.classList.add('revealed');
+      eyeIcon.innerHTML   = EYE_CLOSED;
+    } else {
+      field.style.display = 'none';
+      ph.style.display    = 'flex';
+      btnText.textContent = 'اكشف';
+      btn.classList.remove('revealed');
+      eyeIcon.innerHTML   = EYE_OPEN;
+    }
   }
 
-  function setField(el, text){
-    el.textContent = (text || '').trim() || '—';
-    el.classList.add('blurred');
-    el.classList.remove('hint-revealed','answer-revealed');
-    document.getElementById('hintRevealBtn').textContent = 'اضغط للكشف';
-    document.getElementById('answerRevealBtn').textContent = 'اضغط للكشف';
-    document.getElementById('hintRevealBtn').classList.remove('revealed');
-    document.getElementById('answerRevealBtn').classList.remove('revealed');
+  function setField(el, text) {
+    el.textContent      = (text || '').trim() || '—';
+    el.style.display    = 'none';
+    const isHint = el.id === 'hintField';
+    document.getElementById(isHint ? 'hintPlaceholder'  : 'answerPlaceholder').style.display  = 'flex';
+    document.getElementById(isHint ? 'hintBtnText'      : 'answerBtnText').textContent         = 'اكشف';
+    document.getElementById(isHint ? 'hintRevealBtn'    : 'answerRevealBtn').classList.remove('revealed');
+    document.getElementById(isHint ? 'hintEyeIcon'      : 'answerEyeIcon').innerHTML           = EYE_OPEN;
   }
 
   /* ===== نسخ الروابط ===== */
@@ -688,6 +978,83 @@
     ws.onerror=()=>{ try{ ws.close(); }catch{} };
   }
 
+  /* ===== الإعدادات ===== */
+  const DEFAULT_T1 = '#22c55e';
+  const DEFAULT_T2 = '#f97316';
+
+  function applyTeamColors(t1, t2) {
+    document.documentElement.style.setProperty('--t1-color', t1 || DEFAULT_T1);
+    document.documentElement.style.setProperty('--t2-color', t2 || DEFAULT_T2);
+  }
+
+  function syncColorPicker(team, hex) {
+    const preview = document.getElementById(team + 'ColorPreview');
+    const picker  = document.getElementById(team + 'ColorPicker');
+    const text    = document.getElementById(team + 'ColorText');
+    if (preview) preview.style.background = hex;
+    if (picker)  picker.value  = hex;
+    if (text)    text.value    = hex;
+  }
+
+  function openSettings() {
+    const t1 = getComputedStyle(document.documentElement).getPropertyValue('--t1-color').trim() || DEFAULT_T1;
+    const t2 = getComputedStyle(document.documentElement).getPropertyValue('--t2-color').trim() || DEFAULT_T2;
+    document.getElementById('setting_t1_name').value = document.getElementById('t1Name').textContent;
+    document.getElementById('setting_t2_name').value = document.getElementById('t2Name').textContent;
+    document.getElementById('setting_session_name').value = document.getElementById('headerSessionName').textContent === '—' ? '' : document.getElementById('headerSessionName').textContent;
+    syncColorPicker('t1', t1);
+    syncColorPicker('t2', t2);
+    document.getElementById('settingsOverlay').classList.add('open');
+  }
+
+  function closeSettings() {
+    document.getElementById('settingsOverlay').classList.remove('open');
+  }
+
+  function closeSettingsBackdrop(e) {
+    if (e.target === document.getElementById('settingsOverlay')) closeSettings();
+  }
+
+  function saveSettings() {
+    const t1Name = document.getElementById('setting_t1_name').value.trim();
+    const t2Name = document.getElementById('setting_t2_name').value.trim();
+    const t1Color = document.getElementById('t1ColorText').value.trim() || DEFAULT_T1;
+    const t2Color = document.getElementById('t2ColorText').value.trim() || DEFAULT_T2;
+    const sessionName = document.getElementById('setting_session_name').value.trim();
+
+    if (t1Name) { document.getElementById('t1Name').textContent = t1Name; }
+    if (t2Name) { document.getElementById('t2Name').textContent = t2Name; }
+
+    const nameEl = document.getElementById('headerSessionName');
+    nameEl.textContent = sessionName || '—';
+
+    applyTeamColors(t1Color, t2Color);
+
+    const btn = document.getElementById('btnSaveSettings');
+    btn.textContent = '✅ تم الحفظ';
+    setTimeout(() => { btn.textContent = '💾 حفظ'; closeSettings(); }, 800);
+  }
+
+  // ربط color pickers
+  document.addEventListener('DOMContentLoaded', () => {
+    applyTeamColors(DEFAULT_T1, DEFAULT_T2);
+    syncColorPicker('t1', DEFAULT_T1);
+    syncColorPicker('t2', DEFAULT_T2);
+
+    ['t1','t2'].forEach(team => {
+      const picker = document.getElementById(team + 'ColorPicker');
+      const text   = document.getElementById(team + 'ColorText');
+      if (picker) picker.addEventListener('input', e => {
+        syncColorPicker(team, e.target.value);
+      });
+      if (text) text.addEventListener('input', e => {
+        const val = e.target.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) syncColorPicker(team, val);
+      });
+    });
+  });
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
   /* ===== تهيئة ===== */
   document.addEventListener('DOMContentLoaded',()=>{
     initFreeTimer(); loadCurrent(); connectWS();
