@@ -1115,6 +1115,21 @@ function saveSettings() {
 
     applyTeamColors(t1Color, t2Color);
 
+    // بث الإعدادات عبر WebSocket لكافة الصفحات
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({
+        type: 'update_settings',
+        settings: {
+          team1_name:    t1Name || document.getElementById('t1Name').textContent,
+          team2_name:    t2Name || document.getElementById('t2Name').textContent,
+          team1_color:   t1Color,
+          team2_color:   t2Color,
+          show_name:     sessionName,
+          show_subtitle: '',
+        }
+      }));
+    }
+
     const btn = document.getElementById('btnSaveSettings');
     btn.textContent = '✅ تم الحفظ';
     setTimeout(() => { btn.textContent = '💾 حفظ'; closeSettings(); }, 800);
