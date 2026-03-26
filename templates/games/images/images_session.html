@@ -75,43 +75,37 @@
     .header-title .game-logo {
       display: inline-flex;
       flex-direction: column;
-      align-items: flex-end;
-      line-height: 1.1;
-      gap: 1px;
+      align-items: center;
+      line-height: 1;
+      gap: 0px;
     }
-    .header-title .logo-row1 {
-      font-size: 0.6rem; font-weight: 800;
-      color: rgba(255,255,255,0.45);
-      letter-spacing: 2px;
-      text-transform: uppercase;
+    .header-title .logo-l1 {
+      font-size: 0.58rem; font-weight: 800;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 2.5px;
     }
-    .header-title .logo-row2 {
-      display: flex; align-items: baseline; gap: 5px;
-    }
-    .header-title .word-sowar {
-      font-size: 1.15rem; font-weight: 900;
+    .header-title .logo-l2 {
+      font-size: 1.2rem; font-weight: 900;
       color: #fbbf24;
       letter-spacing: -0.5px;
-      text-shadow: 0 0 14px rgba(251,191,36,0.35);
+      text-shadow: 0 0 16px rgba(251,191,36,0.4);
+      line-height: 1.1;
     }
-    .header-title .logo-maa-name {
+    .header-title .logo-l3 {
       display: none;
-      align-items: baseline; gap: 4px;
+      align-items: baseline; gap: 3px;
+      line-height: 1.2;
     }
-    .header-title .logo-maa-name.visible { display: flex; }
-    .header-title .word-maa {
-      font-size: 0.62rem; font-weight: 700;
-      color: rgba(255,255,255,0.4);
-      letter-spacing: 0.5px;
+    .header-title .logo-l3.visible { display: flex; }
+    .header-title .logo-l3-maa {
+      font-size: 0.6rem; font-weight: 700;
+      color: rgba(255,255,255,0.35);
     }
-    .header-title .word-session-name {
-      font-size: 1.05rem; font-weight: 900;
-      color: rgba(255,255,255,0.9);
-      max-width: 100px;
+    .header-title .logo-l3-name {
+      font-size: 0.88rem; font-weight: 900;
+      color: rgba(255,255,255,0.85);
+      max-width: 90px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .header-title .word-session-name.empty {
-      display: none;
     }
 
     .header-badge {
@@ -575,13 +569,11 @@
       </div>
       <div class="header-title">
         <div class="game-logo">
-          <div class="logo-row1">تحدّي</div>
-          <div class="logo-row2">
-            <span class="word-sowar">الصور</span>
-            <div class="logo-maa-name" id="logoMaaName">
-              <span class="word-maa">مع</span>
-              <span class="word-session-name" id="headerSessionName"></span>
-            </div>
+          <span class="logo-l1">تحدّي</span>
+          <span class="logo-l2">الصور</span>
+          <div class="logo-l3" id="logoMaaName">
+            <span class="logo-l3-maa">مع</span>
+            <span class="logo-l3-name" id="headerSessionName"></span>
           </div>
         </div>
       </div>
