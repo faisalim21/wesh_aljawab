@@ -1074,17 +1074,34 @@
     if (text)    text.value    = hex;
   }
 
-  function openSettings() {
-    const t1 = getComputedStyle(document.documentElement).getPropertyValue('--t1-color').trim() || DEFAULT_T1;
-    const t2 = getComputedStyle(document.documentElement).getPropertyValue('--t2-color').trim() || DEFAULT_T2;
-    document.getElementById('setting_t1_name').value = document.getElementById('t1Name').textContent;
-    document.getElementById('setting_t2_name').value = document.getElementById('t2Name').textContent;
-    document.getElementById('setting_session_name').value = document.getElementById('headerSessionName').textContent === '—' ? '' : document.getElementById('headerSessionName').textContent;
-    syncColorPicker('t1', t1);
-    syncColorPicker('t2', t2);
+function openSettings() {
     document.getElementById('settingsOverlay').classList.add('open');
-  }
 
+    fetch(`/games/api/settings/?session_id=${encodeURIComponent(SESSION_ID)}`)
+      .then(r => r.json())
+      .then(data => {
+        const s = data.settings || {};
+        document.getElementById('setting_t1_name').value = s.team1_name || document.getElementById('t1Name').textContent;
+        document.getElementById('setting_t2_name').value = s.team2_name || document.getElementById('t2Name').textContent;
+        document.getElementById('setting_session_name').value = s.show_name || '';
+        syncColorPicker('t1', s.team1_color || DEFAULT_T1);
+        syncColorPicker('t2', s.team2_color || DEFAULT_T2);
+
+        // حدّث المعاينة
+        const val = s.show_name || '';
+        const row = document.getElementById('previewMaaRow');
+        const nameEl = document.getElementById('previewNameEl');
+        if (nameEl) nameEl.textContent = val;
+        if (row) row.style.display = val ? 'flex' : 'none';
+      })
+      .catch(() => {
+        const t1 = getComputedStyle(document.documentElement).getPropertyValue('--t1-color').trim() || DEFAULT_T1;
+        const t2 = getComputedStyle(document.documentElement).getPropertyValue('--t2-color').trim() || DEFAULT_T2;
+        syncColorPicker('t1', t1);
+        syncColorPicker('t2', t2);
+      });
+  }
+  
   function closeSettings() {
     document.getElementById('settingsOverlay').classList.remove('open');
   }
@@ -1094,46 +1111,76 @@
   }
 
 function saveSettings() {
-    const t1Name = document.getElementById('setting_t1_name').value.trim();
-    const t2Name = document.getElementById('setting_t2_name').value.trim();
-    const t1Color = document.getElementById('t1ColorText').value.trim() || DEFAULT_T1;
-    const t2Color = document.getElementById('t2ColorText').value.trim() || DEFAULT_T2;
+    const t1Name     = document.getElementById('setting_t1_name').value.trim();
+    const t2Name     = document.getElementById('setting_t2_name').value.trim();
+    const t1Color    = document.getElementById('t1ColorText').value.trim() || DEFAULT_T1;
+    const t2Color    = document.getElementById('t2ColorText').value.trim() || DEFAULT_T2;
     const sessionName = document.getElementById('setting_session_name').value.trim();
 
-    if (t1Name) { document.getElementById('t1Name').textContent = t1Name; }
-    if (t2Name) { document.getElementById('t2Name').textContent = t2Name; }
-
-    const nameEl  = document.getElementById('headerSessionName');
-    const maaName = document.getElementById('logoMaaName');
-    if (sessionName) {
-      nameEl.textContent = sessionName;
-      maaName.classList.add('visible');
-    } else {
-      nameEl.textContent = '';
-      maaName.classList.remove('visible');
-    }
-
-    applyTeamColors(t1Color, t2Color);
-
-    // بث الإعدادات عبر WebSocket لكافة الصفحات
-    if (ws && ws.readyState === 1) {
-      ws.send(JSON.stringify({
-        type: 'update_settings',
-        settings: {
-          team1_name:    t1Name || document.getElementById('t1Name').textContent,
-          team2_name:    t2Name || document.getElementById('t2Name').textContent,
-          team1_color:   t1Color,
-          team2_color:   t2Color,
-          show_name:     sessionName,
-          show_subtitle: '',
-        }
-      }));
-    }
-
     const btn = document.getElementById('btnSaveSettings');
-    btn.textContent = '✅ تم الحفظ';
-    setTimeout(() => { btn.textContent = '💾 حفظ'; closeSettings(); }, 800);
+    btn.textContent = '⏳ جارٍ...';
+    btn.disabled = true;
+
+    const payload = {
+      session_id: SESSION_ID,
+      team1_name:  t1Name  || document.getElementById('t1Name').textContent,
+      team2_name:  t2Name  || document.getElementById('t2Name').textContent,
+      team1_color: t1Color,
+      team2_color: t2Color,
+      show_name:   sessionName,
+      show_subtitle: '',
+    };
+
+    fetch('/games/api/settings/save/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        const s = data.settings || payload;
+
+        // تحديث محلي فوري
+        if (s.team1_name) document.getElementById('t1Name').textContent = s.team1_name;
+        if (s.team2_name) document.getElementById('t2Name').textContent = s.team2_name;
+        applyTeamColors(s.team1_color, s.team2_color);
+
+        const nameEl  = document.getElementById('headerSessionName');
+        const maaName = document.getElementById('logoMaaName');
+        if (s.show_name) {
+          nameEl.textContent = s.show_name;
+          maaName.classList.add('visible');
+        } else {
+          nameEl.textContent = '';
+          maaName.classList.remove('visible');
+        }
+
+        // بث عبر WS لباقي الصفحات
+        if (ws && ws.readyState === 1) {
+          ws.send(JSON.stringify({
+            type: 'update_settings',
+            settings: s,
+          }));
+        }
+
+        btn.textContent = '✅ تم الحفظ';
+        setTimeout(() => {
+          btn.textContent = '💾 حفظ';
+          btn.disabled = false;
+          closeSettings();
+        }, 800);
+      } else {
+        btn.textContent = '❌ خطأ';
+        btn.disabled = false;
+      }
+    })
+    .catch(() => {
+      btn.textContent = '❌ تعذر الاتصال';
+      btn.disabled = false;
+    });
   }
+
 
   // ربط color pickers
   document.addEventListener('DOMContentLoaded', () => {
@@ -1175,6 +1222,23 @@ function saveSettings() {
   /* ===== تهيئة ===== */
   document.addEventListener('DOMContentLoaded',()=>{
     initFreeTimer(); loadCurrent(); connectWS();
+
+    // تحميل الإعدادات من السيرفر عند الفتح
+    fetch(`/games/api/settings/?session_id=${encodeURIComponent(SESSION_ID)}`)
+      .then(r => r.json())
+      .then(data => {
+        const s = data.settings || {};
+        if (s.team1_name) document.getElementById('t1Name').textContent = s.team1_name;
+        if (s.team2_name) document.getElementById('t2Name').textContent = s.team2_name;
+        applyTeamColors(s.team1_color || DEFAULT_T1, s.team2_color || DEFAULT_T2);
+        syncColorPicker('t1', s.team1_color || DEFAULT_T1);
+        syncColorPicker('t2', s.team2_color || DEFAULT_T2);
+        if (s.show_name) {
+          document.getElementById('headerSessionName').textContent = s.show_name;
+          document.getElementById('logoMaaName').classList.add('visible');
+        }
+      })
+      .catch(() => {});
   });
 </script>
 </body>
