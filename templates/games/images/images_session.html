@@ -53,9 +53,9 @@
       background: rgba(5,46,22,0.92);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(34,197,94,0.15);
-      padding: 8px 14px;
+      padding: 10px 16px;
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      flex-wrap: nowrap; min-height: 52px;
+      flex-wrap: nowrap; min-height: 58px;
     }
 
     .header-logo {
@@ -76,37 +76,38 @@
       display: inline-flex;
       flex-direction: column;
       align-items: flex-end;
-      line-height: 1;
-      gap: 0;
+      line-height: 1.1;
+      gap: 1px;
     }
-    .header-title .game-logo-line1 {
-      display: flex; align-items: baseline;
+    .header-title .logo-row1 {
+      font-size: 0.6rem; font-weight: 800;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 2px;
+      text-transform: uppercase;
     }
-    .header-title .game-logo-line2 {
-      display: flex; align-items: baseline; gap: 4px;
-    }
-    .header-title .word-tahady {
-      color: rgba(255,255,255,0.9);
-      font-size: 0.72rem; font-weight: 900;
-      letter-spacing: 1px;
-      opacity: 0.8;
+    .header-title .logo-row2 {
+      display: flex; align-items: baseline; gap: 5px;
     }
     .header-title .word-sowar {
+      font-size: 1.15rem; font-weight: 900;
       color: #fbbf24;
-      font-size: 1.05rem; font-weight: 900;
-      letter-spacing: -0.3px;
-      text-shadow: 0 0 10px rgba(251,191,36,0.4);
+      letter-spacing: -0.5px;
+      text-shadow: 0 0 14px rgba(251,191,36,0.35);
     }
+    .header-title .logo-maa-name {
+      display: none;
+      align-items: baseline; gap: 4px;
+    }
+    .header-title .logo-maa-name.visible { display: flex; }
     .header-title .word-maa {
-      color: #67e8f9;
-      font-size: 0.7rem; font-weight: 800;
-      opacity: 0.85;
-      margin: 0 1px;
+      font-size: 0.62rem; font-weight: 700;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.5px;
     }
     .header-title .word-session-name {
-      color: rgba(255,255,255,0.85);
-      font-size: 1rem; font-weight: 900;
-      max-width: 90px;
+      font-size: 1.05rem; font-weight: 900;
+      color: rgba(255,255,255,0.9);
+      max-width: 100px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .header-title .word-session-name.empty {
@@ -574,13 +575,13 @@
       </div>
       <div class="header-title">
         <div class="game-logo">
-          <div class="game-logo-line1">
-            <span class="word-tahady">تحدّي</span>
-          </div>
-          <div class="game-logo-line2">
+          <div class="logo-row1">تحدّي</div>
+          <div class="logo-row2">
             <span class="word-sowar">الصور</span>
-            <span class="word-maa" id="headerMaa" style="display:none;">مع</span>
-            <span class="word-session-name empty" id="headerSessionName"></span>
+            <div class="logo-maa-name" id="logoMaaName">
+              <span class="word-maa">مع</span>
+              <span class="word-session-name" id="headerSessionName"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -1053,7 +1054,7 @@
     if (e.target === document.getElementById('settingsOverlay')) closeSettings();
   }
 
-  function saveSettings() {
+function saveSettings() {
     const t1Name = document.getElementById('setting_t1_name').value.trim();
     const t2Name = document.getElementById('setting_t2_name').value.trim();
     const t1Color = document.getElementById('t1ColorText').value.trim() || DEFAULT_T1;
@@ -1063,18 +1064,15 @@
     if (t1Name) { document.getElementById('t1Name').textContent = t1Name; }
     if (t2Name) { document.getElementById('t2Name').textContent = t2Name; }
 
-    const nameEl = document.getElementById('headerSessionName');
-    const maaEl  = document.getElementById('headerMaa');
+    const nameEl  = document.getElementById('headerSessionName');
+    const maaName = document.getElementById('logoMaaName');
     if (sessionName) {
       nameEl.textContent = sessionName;
-      nameEl.classList.remove('empty');
-      if (maaEl) maaEl.style.display = 'inline';
+      maaName.classList.add('visible');
     } else {
-      nameEl.textContent = 'اكتب اسمك';
-      nameEl.classList.add('empty');
-      if (maaEl) maaEl.style.display = 'none';
+      nameEl.textContent = '';
+      maaName.classList.remove('visible');
     }
-    nameEl.textContent = sessionName || '—';
 
     applyTeamColors(t1Color, t2Color);
 
