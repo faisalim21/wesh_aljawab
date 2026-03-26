@@ -72,31 +72,45 @@
     .header-title {
       display: flex; align-items: center; gap: 8px;
     }
-    .header-title .game-name {
-      display: inline-flex; align-items: center; gap: 0;
-      background: rgba(0,0,0,0.25);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      padding: 3px 10px 3px 8px;
+    .header-title .game-logo {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
       line-height: 1;
+      gap: 0;
     }
-    .header-title .game-name .word1 {
-      color: #ffffff; font-size: 1.1rem; font-weight: 900;
-      letter-spacing: -0.5px;
+    .header-title .game-logo-line1 {
+      display: flex; align-items: baseline;
     }
-    .header-title .game-name .word2 {
-      color: #fbbf24; font-size: 1.1rem; font-weight: 900;
-      letter-spacing: -0.5px;
-      text-shadow: 0 0 12px rgba(251,191,36,0.5);
+    .header-title .game-logo-line2 {
+      display: flex; align-items: baseline; gap: 4px;
     }
-    .header-title span.sep {
-      color: rgba(255,255,255,0.15); font-weight: 300;
-      font-size: 1rem; margin: 0 6px;
+    .header-title .word-tahady {
+      color: rgba(255,255,255,0.9);
+      font-size: 0.72rem; font-weight: 900;
+      letter-spacing: 1px;
+      opacity: 0.8;
     }
-    .header-title span.session-name {
-      color: rgba(255,255,255,0.75); font-weight: 800;
-      font-size: 0.92rem; max-width: 110px;
+    .header-title .word-sowar {
+      color: #fbbf24;
+      font-size: 1.05rem; font-weight: 900;
+      letter-spacing: -0.3px;
+      text-shadow: 0 0 10px rgba(251,191,36,0.4);
+    }
+    .header-title .word-maa {
+      color: #67e8f9;
+      font-size: 0.7rem; font-weight: 800;
+      opacity: 0.85;
+      margin: 0 1px;
+    }
+    .header-title .word-session-name {
+      color: rgba(255,255,255,0.85);
+      font-size: 1rem; font-weight: 900;
+      max-width: 90px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header-title .word-session-name.empty {
+      display: none;
     }
 
     .header-badge {
@@ -559,12 +573,16 @@
         <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
       </div>
       <div class="header-title">
-        <div class="game-name">
-          <span class="word1">تحدّي</span>
-          <span class="word2">الصور</span>
+        <div class="game-logo">
+          <div class="game-logo-line1">
+            <span class="word-tahady">تحدّي</span>
+          </div>
+          <div class="game-logo-line2">
+            <span class="word-sowar">الصور</span>
+            <span class="word-maa" id="headerMaa" style="display:none;">مع</span>
+            <span class="word-session-name empty" id="headerSessionName"></span>
+          </div>
         </div>
-        <span class="sep">|</span>
-        <span class="session-name" id="headerSessionName">—</span>
       </div>
     </div>
     <span class="header-badge">🧑‍🏫 صفحة المقدم</span>
@@ -750,8 +768,8 @@
         <div class="setting-section">
           <div class="setting-section-title">🎬 اسم الجلسة</div>
           <div class="setting-row">
-            <label class="setting-label">اكتب اسمك — سيظهر في الهيدر كـ "تحدّي الصور | اسمك"</label>
-            <input class="setting-input" id="setting_session_name" type="text" maxlength="30" placeholder="مثال: محمد">
+            <label class="setting-label">اكتب اسمك — سيظهر في الهيدر كـ "تحدّي الصور مع "اسمك" "</label>
+            <input class="setting-input" id="setting_session_name" type="text" maxlength="30" placeholder="مثال: فيصل">
           </div>
         </div>
 
@@ -1046,6 +1064,16 @@
     if (t2Name) { document.getElementById('t2Name').textContent = t2Name; }
 
     const nameEl = document.getElementById('headerSessionName');
+    const maaEl  = document.getElementById('headerMaa');
+    if (sessionName) {
+      nameEl.textContent = sessionName;
+      nameEl.classList.remove('empty');
+      if (maaEl) maaEl.style.display = 'inline';
+    } else {
+      nameEl.textContent = 'اكتب اسمك';
+      nameEl.classList.add('empty');
+      if (maaEl) maaEl.style.display = 'none';
+    }
     nameEl.textContent = sessionName || '—';
 
     applyTeamColors(t1Color, t2Color);
