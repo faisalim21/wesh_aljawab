@@ -2,1099 +2,378 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>تحدّي الصور — المقدم</title>
-  <meta name="description" content="تحدّي الصور — شاشة المقدم" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تحدّي الصور — شاشة العرض</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --green-900: #052e16;
-      --green-800: #14532d;
-      --green-700: #166534;
-      --green-600: #15803d;
-      --green-500: #16a34a;
-      --green-400: #22c55e;
-      --green-300: #4ade80;
-      --green-200: #bbf7d0;
-      --green-100: #dcfce7;
-      --green-50:  #f0fdf4;
-      --glass: rgba(255,255,255,0.07);
-      --glass-border: rgba(255,255,255,0.13);
-      --card-bg: rgba(255,255,255,0.06);
-      --shadow-green: rgba(21,128,61,0.35);
-      --radius: 16px;
-      --radius-sm: 10px;
-      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      --t1: #22c55e;
+      --t2: #f97316;
     }
-
     * { font-family: 'Tajawal', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      background: linear-gradient(160deg, var(--green-900) 0%, #071a0e 40%, #030f07 100%);
-      min-height: 100vh;
-      color: #fff;
-      padding: 0 0 40px;
+      background: linear-gradient(160deg, #052e16 0%, #071a0e 40%, #030f07 100%);
+      min-height: 100vh; width: 100vw; height: 100vh;
+      overflow: hidden; color: #fff;
+      display: flex; flex-direction: column;
     }
-
 
     body::before {
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(21,128,61,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(74,222,128,0.08) 0%, transparent 60%);
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(21,128,61,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(74,222,128,0.07) 0%, transparent 60%);
       pointer-events: none; z-index: 0;
     }
 
     /* ===== هيدر ===== */
-    .page-header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      background: rgba(5,46,22,0.92);
-      backdrop-filter: blur(20px);
+    .top-bar {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px;
+      background: rgba(5,46,22,0.75);
+      backdrop-filter: blur(16px);
       border-bottom: 1px solid rgba(34,197,94,0.15);
-      padding: 10px 16px;
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      flex-wrap: nowrap; min-height: 58px;
-    }
-
-    .header-logo {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .header-logo img {
-      height: 36px; width: auto;
-      background: rgba(255,255,255,0.92);
-      border-radius: 10px; padding: 4px 6px;
-    }
-    .header-left {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .header-title {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .header-title .game-logo {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      line-height: 1;
-      gap: 0px;
-    }
-    .header-title .logo-l1 {
-      font-size: 0.58rem; font-weight: 800;
-      color: #fff;
-      letter-spacing: 2.5px;
-    }
-    .header-title .logo-l2 {
-      font-size: 1.2rem; font-weight: 900;
-      color: #fbbf24;
-      letter-spacing: -0.5px;
-      text-shadow: 0 0 16px rgba(251,191,36,0.4);
-      line-height: 1.1;
-    }
-    .header-title .logo-l3 {
-      display: none;
-      align-items: baseline; gap: 3px;
-      line-height: 1.2;
-    }
-    .header-title .logo-l3.visible { display: flex; }
-    .header-title .logo-l3-maa {
-      font-size: 0.6rem; font-weight: 700;
-      color: #fff;
-    }
-    .header-title .logo-l3-name {
-      font-size: 0.88rem; font-weight: 900;
-      color: #86efac;
-      max-width: 90px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .header-badge {
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.25);
-      color: var(--green-300);
-      border-radius: 999px; padding: 3px 10px;
-      font-size: 0.72rem; font-weight: 800;
-      white-space: nowrap;
-    }
-    /* ===== المحتوى ===== */
-    .page-content {
-      max-width: 960px;
-      margin: 68px auto 0;
-      padding: 20px 16px;
-      position: relative; z-index: 1;
-    }
-
-    /* ===== شرح اللعب ===== */
-    .guide-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(34,197,94,0.18);
-      border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 18px;
-    }
-    .guide-head {
-      display: flex; align-items: center; justify-content: space-between;
-      gap: 10px; margin-bottom: 12px; flex-wrap: wrap;
-    }
-    .guide-head h3 {
-      font-size: 0.98rem; font-weight: 900; color: #fff; margin: 0;
-    }
-    .guide-pill {
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.25);
-      color: var(--green-300);
-      border-radius: 999px; padding: 3px 12px;
-      font-size: 0.78rem; font-weight: 800;
-    }
-    .guide-grid {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;
-    }
-    @media(max-width:700px){ .guide-grid { grid-template-columns: 1fr; } }
-    .guide-item {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--radius-sm);
-      padding: 12px; display: flex; gap: 10px; align-items: flex-start;
-    }
-    .guide-ico {
-      width: 38px; height: 38px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-    .ico-host    { background: rgba(34,197,94,0.15);  border: 1px solid rgba(34,197,94,0.25); }
-    .ico-display { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.2); }
-    .ico-cont    { background: rgba(21,128,61,0.2);   border: 1px solid rgba(21,128,61,0.3); }
-    .guide-item h6 { margin: 0 0 3px; font-size: 0.88rem; font-weight: 900; color: #fff; }
-    .guide-item p  { margin: 0; font-size: 0.8rem; color: rgba(255,255,255,0.6); line-height: 1.55; }
-    .guide-foot {
-      margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.07);
-      padding-top: 10px; font-size: 0.8rem;
-      color: rgba(255,255,255,0.5); line-height: 1.6;
-    }
-
-    /* ===== الروابط ===== */
-    .links-row {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin-bottom: 18px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--radius); padding: 10px 14px;
-    }
-    .links-label { font-size: 0.78rem; color: rgba(255,255,255,0.4); font-weight: 700; }
-    .link-btn {
-      padding: 5px 13px; border-radius: 8px; font-weight: 800; font-size: 0.78rem;
-      border: 1px solid; cursor: pointer; text-decoration: none;
-      transition: var(--transition); display: inline-flex; align-items: center; gap: 5px;
-      background: transparent;
-    }
-    .link-btn.display { border-color: rgba(74,222,128,0.4); color: var(--green-300); }
-    .link-btn.display:hover { background: rgba(74,222,128,0.12); color: #fff; text-decoration: none; }
-    .link-btn.contest { border-color: rgba(34,197,94,0.4); color: var(--green-400); }
-    .link-btn.contest:hover { background: rgba(34,197,94,0.12); color: #fff; text-decoration: none; }
-    .link-btn.host { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
-    .link-btn.host:hover { background: rgba(255,255,255,0.08); color: #fff; text-decoration: none; }
-    #copyToast {
-      font-size: 0.78rem; font-weight: 800;
-      color: var(--green-300); display: none;
-    }
-
-    /* ===== معلومات الحزمة + الوقت ===== */
-    .meta-row {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-    .meta-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.2);
-      color: var(--green-300);
-      border-radius: 999px; padding: 5px 14px;
-      font-size: 0.82rem; font-weight: 800;
-    }
-    .meta-badge.free { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); color: #fcd34d; }
-    .meta-badge.permanent { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.25); color: var(--green-300); }
-    .timer-bar {
-      display: none;
-      background: rgba(239,68,68,0.12);
-      border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 999px; padding: 5px 14px;
-      font-size: 0.82rem; font-weight: 800; color: #fca5a5;
-    }
-    .timer-bar.show { display: inline-flex; align-items: center; gap: 6px; }
-
-    /* ===== عارض الصور (المنطقة الرئيسية) ===== */
-    .viewer-section {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(34,197,94,0.15);
-      border-radius: 20px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-
-    .viewer-toolbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.2);
-    }
-    .viewer-counter {
-      font-size: 0.85rem; font-weight: 800; color: rgba(255,255,255,0.6);
-    }
-    .viewer-counter span { color: var(--green-300); }
-
-    .viewer-body {
-      display: grid;
-      grid-template-columns: 52px 1fr 52px;
-      align-items: center;
-      gap: 0;
-      padding: 16px 10px;
-      min-height: 320px;
-    }
-
-    .nav-btn {
-      width: 44px; height: 44px; border-radius: 12px;
-      border: 1px solid rgba(34,197,94,0.25);
-      background: rgba(34,197,94,0.08);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: var(--transition);
-      color: var(--green-300);
-      justify-self: center;
       flex-shrink: 0;
     }
-    .nav-btn:hover:not(:disabled) {
-      background: rgba(34,197,94,0.18);
-      border-color: rgba(34,197,94,0.45);
-      transform: scale(1.05);
-    }
-    .nav-btn:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
-    .nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
-    .image-wrap {
-      position: relative;
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(34,197,94,0.12);
-      border-radius: var(--radius);
-      overflow: hidden;
-      min-height: 280px;
-      display: flex; align-items: center; justify-content: center;
+    /* شعار الجلسة */
+    .session-logo {
+      display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 1px;
     }
-    .image-wrap img {
-      max-width: 100%; max-height: 65vh;
-      display: block; border-radius: 12px;
-      object-fit: contain;
+    .sl-l1 {
+      font-size: 0.52rem; font-weight: 800; color: #fff; letter-spacing: 2px;
     }
-    .img-logo {
-      position: absolute; top: 8px; right: 8px;
-      background: rgba(255,255,255,0.92);
-      border-radius: 10px; padding: 4px 6px;
-      pointer-events: none;
+    .sl-l2 {
+      font-size: clamp(1rem, 2.2vw, 1.5rem); font-weight: 900;
+      color: #fbbf24; letter-spacing: -0.5px; line-height: 1.1;
     }
-    .img-logo img { height: 32px; width: auto; display: block; }
+    .sl-l3 { display: none; align-items: baseline; gap: 3px; }
+    .sl-l3.visible { display: flex; }
+    .sl-maa { font-size: 0.52rem; font-weight: 700; color: #fff; }
+    .sl-name {
+      font-size: clamp(0.8rem, 1.6vw, 1.1rem); font-weight: 900; color: #86efac;
+      max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
 
-    .img-placeholder {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 10px; color: rgba(255,255,255,0.2);
-      font-size: 0.9rem; font-weight: 700;
-    }
-    .img-placeholder svg { opacity: 0.25; }
-
-    /* ===== التلميح والإجابة ===== */
-    .fields-row {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-      margin-bottom: 16px;
-    }
-    @media(max-width:640px){ .fields-row { grid-template-columns: 1fr; } }
-
-    .field-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .field-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.15);
-    }
-    .field-header h6 {
-      margin: 0; font-size: 0.85rem; font-weight: 900;
-      color: rgba(255,255,255,0.8);
-    }
-    .reveal-btn {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 12px; border-radius: 8px;
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.25);
-      color: var(--green-300); font-weight: 800; font-size: 0.75rem;
-      cursor: pointer; transition: var(--transition);
-      font-family: 'Tajawal', sans-serif;
-    }
-    .reveal-btn:hover { background: rgba(34,197,94,0.22); }
-    .reveal-btn.revealed { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
-    .reveal-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-
-    .field-body {
-      padding: 12px 14px; min-height: 64px; display: flex; align-items: center;
-    }
-    .field-placeholder {
-      display: flex; align-items: center; gap: 8px;
-      color: rgba(255,255,255,0.2); font-size: 0.85rem; font-weight: 700;
-    }
-    .field-placeholder svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.5; opacity: 0.5; }
-    .field-text { font-size: 0.95rem; font-weight: 700; line-height: 1.65; }
-    .field-text.hint-revealed  { color: #fcd34d; }
-    .field-text.answer-revealed { color: var(--green-300); }
-
-    /* ===== النقاط ===== */
-    .scores-section {
-      margin-bottom: 16px;
-    }
-    .scores-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    /* النقاط */
+    .scores-wrap {
+      display: flex; gap: 12px; align-items: center;
     }
     .score-card {
-      background: rgba(255,255,255,0.05);
-      border: 1.5px solid;
-      border-radius: var(--radius);
-      padding: 14px;
-      text-align: center;
-      transition: var(--transition);
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(10px);
+      border-radius: 12px; padding: 8px 16px;
+      text-align: center; border: 2px solid;
+      min-width: 110px;
     }
-    .score-card.t1 { border-color: var(--t1-color, rgba(34,197,94,0.45)); }
-    .score-card.t2 { border-color: var(--t2-color, rgba(249,115,22,0.45)); }
-    .score-name {
-      font-size: 0.82rem; font-weight: 800;
-      color: rgba(255,255,255,0.6); margin-bottom: 4px;
-    }
+    .score-card.t1 { border-color: var(--t1); }
+    .score-card.t2 { border-color: var(--t2); }
+    .score-name { font-size: 0.75rem; font-weight: 800; margin-bottom: 2px; }
+    .score-card.t1 .score-name { color: var(--t1); }
+    .score-card.t2 .score-name { color: var(--t2); }
     .score-val {
-      font-size: 2.4rem; font-weight: 900; line-height: 1;
-      margin-bottom: 10px;
+      font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 900; line-height: 1;
     }
-    .score-card.t1 .score-val { color: var(--t1-color, #22c55e); }
-    .score-card.t2 .score-val { color: var(--t2-color, #f97316); }
-    .score-btns { display: flex; gap: 6px; justify-content: center; }
-    .adj-btn {
-      padding: 5px 12px; height: 32px; border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.07); color: #fff;
-      font-size: 0.9rem; font-weight: 900;
-      cursor: pointer; transition: var(--transition);
-      font-family: 'Tajawal', sans-serif;
-    }
-    .adj-btn:hover { background: rgba(255,255,255,0.14); }
+    .score-card.t1 .score-val { color: var(--t1); }
+    .score-card.t2 .score-val { color: var(--t2); }
 
-    /* ===== إشعار البازر ===== */
-    #buzzNotif {
-      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(135deg,#dc2626,#b91c1c);
-      border: 2px solid rgba(255,255,255,0.25);
-      border-radius: 14px; padding: 12px 20px;
-      font-size: 1rem; font-weight: 900; color: #fff;
-      text-align: center; z-index: 9999;
-      box-shadow: 0 8px 28px rgba(220,38,38,0.5);
-      display: none;
-      animation: buzzPulse 0.5s ease-in-out infinite alternate;
+    /* لوجو وش الجواب */
+    .wesh-logo {
+      background: rgba(255,255,255,0.92);
+      border-radius: 10px; padding: 5px 8px;
     }
-    .buzz-show { display: block !important; }
-    @keyframes buzzPulse { from{transform:translateX(-50%) scale(1)} to{transform:translateX(-50%) scale(1.025)} }
+    .wesh-logo img { height: clamp(36px, 5vw, 54px); width: auto; display: block; }
 
-    /* ===== إعدادات ===== */
-    .settings-trigger-btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 9px 18px;
-      background: rgba(34,197,94,0.1);
-      border: 1px solid rgba(34,197,94,0.25);
-      border-radius: 999px; color: var(--green-300);
-      font-weight: 800; font-size: 0.88rem;
-      cursor: pointer; transition: var(--transition);
-      font-family: 'Tajawal', sans-serif;
-    }
-    .settings-trigger-btn:hover {
-      background: rgba(34,197,94,0.18);
-      border-color: rgba(34,197,94,0.45);
-    }
-    .settings-trigger-btn svg {
-      width: 16px; height: 16px; stroke: currentColor; fill: none;
-      stroke-width: 2; stroke-linecap: round;
-    }
-
-    /* Modal overlay */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 999;
-      background: rgba(0,0,0,0.75);
-      backdrop-filter: blur(6px);
+    /* ===== منطقة الصورة ===== */
+    .stage {
+      flex: 1; position: relative; z-index: 1;
       display: flex; align-items: center; justify-content: center;
-      padding: 16px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .modal-overlay.open {
-      opacity: 1; pointer-events: auto;
-    }
-    .modal-box {
-      background: #0a1f0f;
-      border: 1.5px solid rgba(34,197,94,0.25);
-      border-radius: 24px;
-      width: 100%; max-width: 520px;
-      max-height: 90vh;
-      display: flex; flex-direction: column;
-      box-shadow: 0 32px 80px rgba(0,0,0,0.6);
-      transform: translateY(20px) scale(0.97);
-      transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      padding: clamp(12px, 2vw, 24px);
       overflow: hidden;
     }
-    .modal-overlay.open .modal-box {
-      transform: translateY(0) scale(1);
-    }
-    .modal-header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 22px;
-      border-bottom: 1px solid rgba(34,197,94,0.12);
-      background: rgba(0,0,0,0.2); flex-shrink: 0;
-    }
-    .modal-header-left { display: flex; align-items: center; gap: 12px; }
-    .modal-header-icon {
-      width: 40px; height: 40px; border-radius: 12px;
-      background: rgba(34,197,94,0.12);
-      border: 1px solid rgba(34,197,94,0.22);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem;
-    }
-    .modal-header h3 { margin: 0; font-size: 1rem; font-weight: 900; color: #fff; }
-    .modal-header p  { margin: 0; font-size: 0.78rem; color: rgba(255,255,255,0.4); font-weight: 600; }
-    .modal-close-btn {
-      width: 34px; height: 34px; border-radius: 10px;
-      background: rgba(255,255,255,0.07);
-      border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.6);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; transition: var(--transition);
-      font-size: 1rem; line-height: 1;
-    }
-    .modal-close-btn:hover { background: rgba(255,255,255,0.14); color: #fff; }
 
-    .modal-body {
-      overflow-y: auto; flex: 1;
-      padding: 20px 22px;
-      display: flex; flex-direction: column; gap: 16px;
-    }
-    .setting-section {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(34,197,94,0.12);
-      border-radius: var(--radius); padding: 16px;
-    }
-    .setting-section-title {
-      font-size: 0.82rem; font-weight: 900;
-      color: rgba(255,255,255,0.4);
-      text-transform: uppercase; letter-spacing: 0.8px;
-      margin-bottom: 12px;
-    }
-    .setting-row {
-      display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px;
-    }
-    .setting-row:last-child { margin-bottom: 0; }
-    .setting-label {
-      font-size: 0.82rem; font-weight: 800;
-      color: rgba(255,255,255,0.65);
-    }
-    .setting-input {
-      width: 100%; padding: 9px 12px;
-      background: rgba(0,0,0,0.3);
-      border: 1px solid rgba(34,197,94,0.2);
-      border-radius: 10px; color: #fff;
-      font-family: 'Tajawal', sans-serif;
-      font-weight: 700; font-size: 0.92rem;
-      outline: none; transition: var(--transition);
-    }
-    .setting-input:focus {
-      border-color: rgba(34,197,94,0.5);
-      box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
-    }
-    .color-row {
-      display: flex; align-items: center; gap: 10px;
-    }
-    .color-preview {
-      width: 36px; height: 36px; border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.15); flex-shrink: 0;
-      cursor: pointer; transition: var(--transition);
-    }
-    .color-preview:hover { transform: scale(1.08); }
-    .color-input-hidden {
-      position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
-    }
-    .setting-input.color-text {
-      flex: 1; font-size: 0.85rem; letter-spacing: 1px;
-    }
-    .coming-soon-note {
-      background: rgba(255,255,255,0.02);
-      border: 1px dashed rgba(255,255,255,0.1);
-      border-radius: var(--radius); padding: 16px;
-      text-align: center; color: rgba(255,255,255,0.3);
-      font-size: 0.82rem; font-weight: 700; line-height: 1.7;
+    .image-frame {
+      position: relative;
+      width: 100%; height: 100%;
+      max-width: min(92vw, calc(100vh - 130px) * 16/9);
+      max-height: calc(100vh - 130px);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 2px solid rgba(34,197,94,0.2);
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.08), 0 24px 60px rgba(0,0,0,0.5);
     }
 
-    .modal-footer {
-      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
-      padding: 14px 22px;
-      border-top: 1px solid rgba(255,255,255,0.06);
-      background: rgba(0,0,0,0.15); flex-shrink: 0;
+    .image-frame img {
+      width: 100%; height: 100%;
+      object-fit: contain;
+      display: block;
+      border-radius: 14px;
     }
-    .btn-cancel {
-      padding: 9px 20px; border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: transparent; color: rgba(255,255,255,0.5);
-      font-family: 'Tajawal', sans-serif; font-weight: 700;
-      font-size: 0.9rem; cursor: pointer; transition: var(--transition);
+
+    .img-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      color: rgba(255,255,255,0.2); font-size: 1.1rem; font-weight: 700;
     }
-    .btn-cancel:hover { background: rgba(255,255,255,0.06); color: #fff; }
-    .btn-save {
-      padding: 9px 26px; border-radius: 12px; border: none;
-      background: linear-gradient(135deg, #15803d, #22c55e);
-      color: #fff; font-family: 'Tajawal', sans-serif;
-      font-weight: 900; font-size: 0.92rem;
-      cursor: pointer; transition: var(--transition);
-      box-shadow: 0 4px 14px rgba(34,197,94,0.3);
+    .img-placeholder svg { opacity: 0.15; }
+
+    /* رقم الصورة */
+    .pic-counter {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      background: rgba(5,46,22,0.85); backdrop-filter: blur(10px);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 999px; padding: 4px 16px;
+      font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.7);
+      z-index: 5;
     }
-    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(34,197,94,0.4); }
+    .pic-counter span { color: #4ade80; }
+
+    /* ===== طبقة البازر ===== */
+    .buzz-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(220,38,38,0.97), rgba(185,28,28,0.97));
+      animation: bzPulse 0.6s ease-in-out infinite alternate;
+    }
+    .buzz-overlay.show { display: flex; }
+    @keyframes bzPulse { from{filter:brightness(1)} to{filter:brightness(1.06)} }
+
+    .bz-name {
+      font-size: clamp(3rem, 8vw, 5.5rem); font-weight: 900;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.5); margin-bottom: 16px;
+    }
+    .bz-team {
+      padding: 10px 28px; border-radius: 28px;
+      border: 3px solid rgba(255,255,255,0.75);
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 800;
+      margin-bottom: 24px;
+    }
+    .bz-cd {
+      font-size: clamp(5rem, 12vw, 9rem); font-weight: 900;
+      text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
+      animation: cdPop 1s ease;
+    }
+    @keyframes cdPop { 0%{transform:scale(0.7);opacity:0} 50%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+
+    @media(max-width:768px){
+      .scores-wrap { gap: 8px; }
+      .score-card { min-width: 80px; padding: 6px 10px; }
+      .score-name { font-size: 0.65rem; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ===== هيدر ===== -->
-  <div class="page-header">
-    <div class="header-left">
-      <div class="header-logo">
-        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
-      </div>
-      <div class="header-title">
-        <div class="game-logo">
-          <span class="logo-l1">تحدّي</span>
-          <span class="logo-l2">الصور</span>
-          <div class="logo-l3" id="logoMaaName">
-            <span class="logo-l3-maa">مع</span>
-            <span class="logo-l3-name" id="headerSessionName"></span>
-          </div>
-        </div>
-      </div>
-    </div>
-    <span class="header-badge">🧑‍🏫 صفحة المقدم</span>
-  </div>
+  <!-- هيدر -->
+  <div class="top-bar">
 
-  <div class="page-content">
-
-    <!-- ===== شرح اللعب ===== -->
-    <div class="guide-card">
-      <div class="guide-head">
-        <h3>🧭 شرح طريقة اللعب في الموقع</h3>
-        <span class="guide-pill">3 روابط • 3 أدوار</span>
-      </div>
-      <div class="guide-grid">
-        <div class="guide-item">
-          <div class="guide-ico ico-host">🧑‍🏫</div>
-          <div>
-            <h6>رابط المقدم</h6>
-            <p>هذا الرابط لك أنت فقط: تمرير الصور، مشاهدة التلميح والإجابة، والتحكم بالنقاط.</p>
-          </div>
-        </div>
-        <div class="guide-item">
-          <div class="guide-ico ico-cont">👥</div>
-          <div>
-            <h6>رابط المتسابقين</h6>
-            <p>أرسله للاعبين: يكتب المتسابق اسمه وتظهر له نفس الصور التي تمررها أنت مع النقاط.</p>
-          </div>
-        </div>
-        <div class="guide-item">
-          <div class="guide-ico ico-display">🖥️</div>
-          <div>
-            <h6>شاشة العرض</h6>
-            <p>إذا عندك شاشة/تلفزيون: اعرضه أمام الجميع لعرض الصور والنقاط واسم أول ضاغط.</p>
-          </div>
-        </div>
-      </div>
-      <div class="guide-foot">
-        ⚡ عند ضغط الزر: يصلك تنبيه باسم المتسابق وفريقه، ويبدأ عداد الإجابة تلقائيًا.
+    <!-- شعار الجلسة -->
+    <div class="session-logo">
+      <span class="sl-l1">تحدّي</span>
+      <span class="sl-l2">الصور</span>
+      <div class="sl-l3" id="slMaaName">
+        <span class="sl-maa">مع</span>
+        <span class="sl-name" id="slName"></span>
       </div>
     </div>
 
-    <!-- ===== زر الإعدادات ===== -->
-    <div style="margin-bottom:18px;">
-      <button class="settings-trigger-btn" onclick="openSettings()">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        إعدادات الجلسة
-      </button>
-    </div>
-
-    <!-- ===== الروابط + معلومات ===== -->
-    <div class="links-row">
-      <span class="links-label">🔗 روابط الجلسة:</span>
-      <button class="link-btn contest" onclick="copyLink('contestants')">👥 المتسابقون</button>
-      <button class="link-btn display" onclick="copyLink('display')">🖥️ شاشة العرض</button>
-      <button class="link-btn host" onclick="copyLink('host')">🧑‍🏫 المقدم</button>
-      <span id="copyToast">✅ تم النسخ</span>
-    </div>
-
-    <!-- ===== بادجات الحزمة ===== -->
-    <div class="meta-row">
-      <span class="meta-badge">📦 حزمة رقم {{ session.package.package_number }}</span>
-      {% if session.package.is_free %}
-        <span class="meta-badge free">⏳ جلسة مجانية — ساعة واحدة</span>
-      {% else %}
-        <span class="meta-badge permanent">♾️ صلاحية دائمة</span>
-      {% endif %}
-      <div class="timer-bar" id="sessionTimer">
-        ⏰ <span id="timeRemaining" style="font-variant-numeric:tabular-nums;"></span>
+    <!-- النقاط -->
+    <div class="scores-wrap">
+      <div class="score-card t1">
+        <div class="score-name" id="t1Name">{{ session.team1_name }}</div>
+        <div class="score-val"  id="t1Score">0</div>
+      </div>
+      <div class="score-card t2">
+        <div class="score-name" id="t2Name">{{ session.team2_name }}</div>
+        <div class="score-val"  id="t2Score">0</div>
       </div>
     </div>
 
-    <!-- ===== عارض الصور ===== -->
-    <div class="viewer-section">
-      <div class="viewer-toolbar">
-        <div class="viewer-counter">
-          صورة <span id="currentIndex">1</span> من <span id="totalCount">—</span>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="copyLink('display')" style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);color:var(--green-300);border-radius:8px;padding:4px 12px;font-size:0.75rem;font-weight:800;cursor:pointer;font-family:'Tajawal',sans-serif;">🖥️ فتح شاشة العرض</button>
-        </div>
-      </div>
-
-      <div class="viewer-body">
-        <button id="prevBtn" class="nav-btn" title="السابق">
-          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M10 7l5 5-5 5"/></svg>
-        </button>
-
-        <div class="image-wrap" id="imageWrap">
-          <div class="img-logo">
-            <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="">
-          </div>
-          <div class="img-placeholder" id="imgPlaceholder">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-            <span>جارٍ التحميل...</span>
-          </div>
-          <img id="riddleImg" src="" alt="" style="display:none;" />
-        </div>
-
-        <button id="nextBtn" class="nav-btn" title="التالي">
-          <svg viewBox="0 0 24 24" stroke-width="2"><path d="M14 17l-5-5 5-5"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <!-- ===== التلميح والإجابة ===== -->
-    <div class="fields-row">
-      <div class="field-card">
-        <div class="field-header">
-          <h6>💡 التلميح</h6>
-          <button class="reveal-btn" id="hintRevealBtn" onclick="toggleReveal('hint')">
-            <svg id="hintEyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="hintBtnText">اكشف</span>
-          </button>
-        </div>
-        <div class="field-body">
-          <div class="field-placeholder" id="hintPlaceholder">
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>اضغط اكشف لرؤية التلميح</span>
-          </div>
-          <div class="field-text hint-revealed" id="hintField" style="display:none;">—</div>
-        </div>
-      </div>
-      <div class="field-card">
-        <div class="field-header">
-          <h6>✅ الإجابة</h6>
-          <button class="reveal-btn" id="answerRevealBtn" onclick="toggleReveal('answer')">
-            <svg id="answerEyeIcon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="answerBtnText">اكشف</span>
-          </button>
-        </div>
-        <div class="field-body">
-          <div class="field-placeholder" id="answerPlaceholder">
-            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <span>اضغط اكشف لرؤية الإجابة</span>
-          </div>
-          <div class="field-text answer-revealed" id="answerField" style="display:none;">—</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== النقاط ===== -->
-    <div class="scores-section">
-      <div class="scores-grid">
-        <div class="score-card t1">
-          <div class="score-name" id="t1Name">{{ session.team1_name }}</div>
-          <div class="score-val" id="t1Score">0</div>
-          <div class="score-btns">
-            <button class="adj-btn" onclick="updateScore('team1',-1)">−</button>
-            <button class="adj-btn" onclick="updateScore('team1',1)">+</button>
-          </div>
-        </div>
-        <div class="score-card t2">
-          <div class="score-name" id="t2Name">{{ session.team2_name }}</div>
-          <div class="score-val" id="t2Score">0</div>
-          <div class="score-btns">
-            <button class="adj-btn" onclick="updateScore('team2',-1)">−</button>
-            <button class="adj-btn" onclick="updateScore('team2',1)">+</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  </div><!-- end page-content -->
-
-  <!-- ===== Modal الإعدادات ===== -->
-  <div class="modal-overlay" id="settingsOverlay" onclick="closeSettingsBackdrop(event)">
-    <div class="modal-box">
-
-      <div class="modal-header">
-        <div class="modal-header-left">
-          <div class="modal-header-icon">⚙️</div>
-          <div>
-            <h3>إعدادات الجلسة</h3>
-            <p>تحدّي الصور</p>
-          </div>
-        </div>
-        <button class="modal-close-btn" onclick="closeSettings()">✕</button>
-      </div>
-
-      <div class="modal-body">
-
-        <!-- اسم الجلسة -->
-        <div class="setting-section">
-          <div class="setting-section-title">🎬 اسم الجلسة</div>
-          <div class="setting-row">
-            <label class="setting-label">اكتب اسمك — سيظهر في الهيدر كـ "تحدّي الصور مع "اسمك" "</label>
-            <input class="setting-input" id="setting_session_name" type="text" maxlength="30" placeholder="مثال: فيصل">
-          </div>
-        </div>
-
-        <!-- الفريقان -->
-        <div class="setting-section">
-          <div class="setting-section-title">🏆 الفريقان</div>
-
-          <div class="setting-row">
-            <label class="setting-label">اسم الفريق الأول</label>
-            <input class="setting-input" id="setting_t1_name" type="text" maxlength="30" placeholder="الفريق الأول">
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">لون الفريق الأول</label>
-            <div class="color-row">
-              <div class="color-preview" id="t1ColorPreview" onclick="document.getElementById('t1ColorPicker').click()"></div>
-              <input type="color" id="t1ColorPicker" class="color-input-hidden">
-              <input class="setting-input color-text" id="t1ColorText" type="text" maxlength="7" placeholder="#22c55e">
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">اسم الفريق الثاني</label>
-            <input class="setting-input" id="setting_t2_name" type="text" maxlength="30" placeholder="الفريق الثاني">
-          </div>
-
-          <div class="setting-row">
-            <label class="setting-label">لون الفريق الثاني</label>
-            <div class="color-row">
-              <div class="color-preview" id="t2ColorPreview" onclick="document.getElementById('t2ColorPicker').click()"></div>
-              <input type="color" id="t2ColorPicker" class="color-input-hidden">
-              <input class="setting-input color-text" id="t2ColorText" type="text" maxlength="7" placeholder="#f97316">
-            </div>
-          </div>
-        </div>
-
-        <!-- قريباً -->
-        <div class="coming-soon-note">
-          🚀 قريباً إعدادات أكثر — خلك قريب
-        </div>
-
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn-cancel" onclick="closeSettings()">إلغاء</button>
-        <button class="btn-save" id="btnSaveSettings" onclick="saveSettings()">💾 حفظ</button>
-      </div>
-
+    <!-- لوجو وش الجواب -->
+    <div class="wesh-logo">
+      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
     </div>
   </div>
-  <!-- إشعار البازر -->
-  <div id="buzzNotif">🚨 متسابق ضغط الزر!</div>
+
+  <!-- منطقة الصورة -->
+  <div class="stage">
+    <div class="image-frame" id="imageFrame">
+      <div class="img-placeholder" id="imgPlaceholder">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span>في انتظار الصورة...</span>
+      </div>
+      <img id="pic" src="" alt="" style="display:none;" />
+      <div class="pic-counter" id="picCounter" style="display:none;">
+        صورة <span id="picCur">1</span> من <span id="picTotal">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- طبقة البازر -->
+  <div id="buzzOverlay" class="buzz-overlay">
+    <div id="bzName" class="bz-name">—</div>
+    <div id="bzTeam" class="bz-team">—</div>
+    <div id="bzCd"   class="bz-cd">3</div>
+  </div>
 
 <script>
-  const SESSION_ID = "{{ session.id }}";
-  const IS_FREE = {{ session.package.is_free|yesno:"true,false" }};
-  const HOME_URL = "{% url 'games:images_home' %}";
-  const DISPLAY_URL = "{{ display_url }}";
-  const CONTEST_URL = "{{ contestants_url }}";
+  const SESSION_ID = '{{ session.id }}';
+  const T1_INIT    = '{{ session.team1_name|escapejs }}';
+  const T2_INIT    = '{{ session.team2_name|escapejs }}';
 
-  const $img         = document.getElementById('riddleImg');
-  const $placeholder = document.getElementById('imgPlaceholder');
-  const $cur         = document.getElementById('currentIndex');
-  const $count       = document.getElementById('totalCount');
-  const $prev        = document.getElementById('prevBtn');
-  const $next        = document.getElementById('nextBtn');
-  const $hint        = document.getElementById('hintField');
-  const $ans         = document.getElementById('answerField');
+  let ws = null, hb = null, delay = 1000, cdInterval = null;
 
-  let LOCAL_IDX = 1, TOTAL = 1, navLock = false;
-  let nextPrefetch = null, prevPrefetch = null;
+  // ===== أصوات =====
+  let actx = null;
+  function _ac(){ if(!actx) try{ actx=new(window.AudioContext||window.webkitAudioContext)(); }catch{} if(actx?.state==='suspended') actx.resume(); return actx; }
+  function _tone(f,s,d,g=0.5){ const c=_ac(); if(!c) return; try{ const o=c.createOscillator(),gn=c.createGain(); o.connect(gn); gn.connect(c.destination); o.frequency.value=f; gn.gain.setValueAtTime(0,c.currentTime+s); gn.gain.linearRampToValueAtTime(g,c.currentTime+s+0.01); gn.gain.exponentialRampToValueAtTime(0.001,c.currentTime+s+d); o.start(c.currentTime+s); o.stop(c.currentTime+s+d+0.05); }catch{} }
+  function playBuzz(){ _tone(880,0,0.10,0.5); _tone(1109,0.09,0.10,0.5); _tone(1319,0.18,0.25,0.55); }
+  function playEnd(){  _tone(523,0,0.10,0.6);  _tone(415,0.12,0.10,0.6); _tone(330,0.24,0.35,0.7); }
+  document.addEventListener('click', _ac, {once:true});
+  document.addEventListener('touchstart', _ac, {once:true, passive:true});
 
-  function prefetch(url){
-    if (!url) return null;
-    const im = new Image(); im.src = url; return im;
+  // ===== ألوان الفرق =====
+  function applyColors(t1, t2){
+    if(t1){ document.documentElement.style.setProperty('--t1', t1); document.querySelector('.score-card.t1').style.borderColor=t1; document.querySelector('.score-card.t1 .score-name').style.color=t1; document.querySelector('.score-card.t1 .score-val').style.color=t1; }
+    if(t2){ document.documentElement.style.setProperty('--t2', t2); document.querySelector('.score-card.t2').style.borderColor=t2; document.querySelector('.score-card.t2 .score-name').style.color=t2; document.querySelector('.score-card.t2 .score-val').style.color=t2; }
   }
 
-  /* ===== الكشف ===== */
-  const EYE_OPEN   = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  const EYE_CLOSED = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
-
-  function toggleReveal(type) {
-    const isHint  = type === 'hint';
-    const field   = document.getElementById(isHint ? 'hintField'       : 'answerField');
-    const ph      = document.getElementById(isHint ? 'hintPlaceholder' : 'answerPlaceholder');
-    const btn     = document.getElementById(isHint ? 'hintRevealBtn'   : 'answerRevealBtn');
-    const btnText = document.getElementById(isHint ? 'hintBtnText'     : 'answerBtnText');
-    const eyeIcon = document.getElementById(isHint ? 'hintEyeIcon'     : 'answerEyeIcon');
-    const isHidden = field.style.display === 'none';
-    if (isHidden) {
-      ph.style.display    = 'none';
-      field.style.display = 'block';
-      btnText.textContent = 'إخفاء';
-      btn.classList.add('revealed');
-      eyeIcon.innerHTML   = EYE_CLOSED;
+  // ===== شعار الجلسة =====
+  function applySessionLogo(name, sub){
+    const nameEl = document.getElementById('slName');
+    const maaEl  = document.getElementById('slMaaName');
+    if(!nameEl || !maaEl) return;
+    if(name){
+      nameEl.textContent = name;
+      maaEl.classList.add('visible');
     } else {
-      field.style.display = 'none';
-      ph.style.display    = 'flex';
-      btnText.textContent = 'اكشف';
-      btn.classList.remove('revealed');
-      eyeIcon.innerHTML   = EYE_OPEN;
+      nameEl.textContent = '';
+      maaEl.classList.remove('visible');
     }
   }
 
-  function setField(el, text) {
-    el.textContent      = (text || '').trim() || '—';
-    el.style.display    = 'none';
-    const isHint = el.id === 'hintField';
-    document.getElementById(isHint ? 'hintPlaceholder'  : 'answerPlaceholder').style.display  = 'flex';
-    document.getElementById(isHint ? 'hintBtnText'      : 'answerBtnText').textContent         = 'اكشف';
-    document.getElementById(isHint ? 'hintRevealBtn'    : 'answerRevealBtn').classList.remove('revealed');
-    document.getElementById(isHint ? 'hintEyeIcon'      : 'answerEyeIcon').innerHTML           = EYE_OPEN;
-  }
-
-  /* ===== نسخ الروابط ===== */
-  async function copyLink(type){
-    const urls = { display: DISPLAY_URL, contestants: CONTEST_URL, host: location.href };
-    try{ await navigator.clipboard.writeText(urls[type]); }
-    catch{ alert(urls[type]); return; }
-    const t = document.getElementById('copyToast');
-    t.style.display = 'inline';
-    setTimeout(()=>{ t.style.display='none'; }, 1800);
-  }
-
-  /* ===== تحميل الصورة ===== */
-  function showImage(url){
-    if (!url){ $placeholder.style.display='flex'; $img.style.display='none'; return; }
-    $img.src = url; $img.alt = 'صورة اللغز';
-    $img.onload = ()=>{ $placeholder.style.display='none'; $img.style.display='block'; };
-    $img.onerror = ()=>{ $placeholder.style.display='flex'; $img.style.display='none'; };
+  // ===== الصورة =====
+  function showPic(url, idx, total){
+    const img = document.getElementById('pic');
+    const ph  = document.getElementById('imgPlaceholder');
+    const ctr = document.getElementById('picCounter');
+    if(!url){ img.style.display='none'; ph.style.display='flex'; ctr.style.display='none'; return; }
+    img.onload = ()=>{ ph.style.display='none'; img.style.display='block'; };
+    img.onerror = ()=>{ ph.style.display='flex'; img.style.display='none'; };
+    img.src = url;
+    if(idx && total){ document.getElementById('picCur').textContent=idx; document.getElementById('picTotal').textContent=total; ctr.style.display='block'; }
   }
 
   async function loadCurrent(){
     try{
-      const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`,{cache:'no-store'});
-      if (r.status===410){ alert('انتهت صلاحية الجلسة'); return location.href=HOME_URL; }
-      if (!r.ok) return;
-      const data = await r.json();
-      const cur  = data.current || {};
-      showImage(cur.image_url || '');
-      setField($hint, cur.hint || '');
-      setField($ans,  cur.answer || '');
-      LOCAL_IDX = data.current_index || 1;
-      TOTAL     = data.count || 1;
-      $cur.textContent   = LOCAL_IDX;
-      $count.textContent = TOTAL;
-      $prev.disabled = LOCAL_IDX <= 1;
-      $next.disabled = LOCAL_IDX >= TOTAL;
-      prevPrefetch = prefetch(data.prev_image_url);
-      nextPrefetch = prefetch(data.next_image_url);
-    }catch(e){ console.error(e); }
-  }
-
-  /* ===== تنقل ===== */
-  async function go(dir){
-    if (navLock) return; navLock = true;
-    const target = Math.max(1, Math.min(LOCAL_IDX+(dir==='next'?1:-1), TOTAL));
-    if (target===LOCAL_IDX){ navLock=false; return; }
-    if (dir==='next' && nextPrefetch?.src) showImage(nextPrefetch.src);
-    else if (dir==='prev' && prevPrefetch?.src) showImage(prevPrefetch.src);
-    LOCAL_IDX=target; $cur.textContent=LOCAL_IDX;
-    $prev.disabled=LOCAL_IDX<=1; $next.disabled=LOCAL_IDX>=TOTAL;
-    try{
-      const ep  = dir==='next' ? '/games/api/images-next/' : '/games/api/images-prev/';
-      const res = await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:SESSION_ID})});
-      if (res.status===410){ alert('انتهت صلاحية الجلسة'); location.href=HOME_URL; return; }
-      if (!res.ok){ LOCAL_IDX=dir==='next'?Math.max(1,LOCAL_IDX-1):Math.min(TOTAL,LOCAL_IDX+1); $cur.textContent=LOCAL_IDX; return; }
-      const data = await res.json();
-      const cur  = data.current || {};
-      LOCAL_IDX=data.current_index||LOCAL_IDX; TOTAL=data.count||TOTAL;
-      showImage(cur.image_url||'');
-      setField($hint, cur.hint||''); setField($ans, cur.answer||'');
-      $cur.textContent=LOCAL_IDX; $count.textContent=TOTAL;
-      $prev.disabled=LOCAL_IDX<=1; $next.disabled=LOCAL_IDX>=TOTAL;
-      prevPrefetch=prefetch(data.prev_image_url); nextPrefetch=prefetch(data.next_image_url);
-    }catch{ LOCAL_IDX=dir==='next'?Math.max(1,LOCAL_IDX-1):Math.min(TOTAL,LOCAL_IDX+1); $cur.textContent=LOCAL_IDX; }
-    finally{ navLock=false; }
-  }
-
-  $prev.addEventListener('click',()=>go('prev'));
-  $next.addEventListener('click',()=>go('next'));
-  document.addEventListener('keydown',e=>{
-    if(e.key==='ArrowLeft'){ e.preventDefault(); go('prev'); }
-    if(e.key==='ArrowRight'){ e.preventDefault(); go('next'); }
-  });
-
-  /* ===== النقاط ===== */
-  function reflectScores(t1,t2){
-    document.getElementById('t1Score').textContent=t1;
-    document.getElementById('t2Score').textContent=t2;
-  }
-  function updateScore(team,delta){
-    const t1=parseInt(document.getElementById('t1Score').textContent||'0');
-    const t2=parseInt(document.getElementById('t2Score').textContent||'0');
-    const n1=team==='team1'?Math.max(0,t1+delta):t1;
-    const n2=team==='team2'?Math.max(0,t2+delta):t2;
-    reflectScores(n1,n2);
-    if(ws&&ws.readyState===1) ws.send(JSON.stringify({type:'update_scores',team1_score:n1,team2_score:n2}));
-    else fetch('/games/api/update-scores/',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:SESSION_ID,team1_score:n1,team2_score:n2})});
-  }
-
-  /* ===== إشعار البازر ===== */
-  function showBuzzNotif(name,team){
-    const t1n=document.getElementById('t1Name').textContent;
-    const t2n=document.getElementById('t2Name').textContent;
-    const n=document.getElementById('buzzNotif');
-    n.textContent=`🚨 ${name||'متسابق'} من ${team==='team1'?t1n:t2n} ضغط الزر!`;
-    n.classList.add('buzz-show');
-    setTimeout(()=>n.classList.remove('buzz-show'),2500);
-  }
-
-  /* ===== المؤقت (مجاني) ===== */
-  async function initFreeTimer(){
-    if (!IS_FREE) return;
-    try{
-      const r = await fetch(`/games/api/session-expiry-info/?session_id=${encodeURIComponent(SESSION_ID)}`);
-      if (!r.ok) return;
-      const data = await r.json();
-      const secs = data?.expiry_info?.time_remaining_seconds;
-      if (!secs || secs<=0) return;
-      const bar=document.getElementById('sessionTimer'), el=document.getElementById('timeRemaining');
-      bar.classList.add('show');
-      let left=parseInt(secs);
-      const tick=()=>{ const m=Math.floor(left/60),s=left%60; el.textContent=`${m}:${String(s).padStart(2,'0')}`; };
-      tick();
-      const t=setInterval(()=>{ left=Math.max(0,left-1); tick(); if(left===0){ clearInterval(t); alert('انتهت صلاحية الجلسة.'); location.href=HOME_URL; }},1000);
+      const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if(r.status===410){ return; }
+      if(!r.ok) return;
+      const d = await r.json();
+      showPic(d.current?.image_url, d.current_index, d.count);
     }catch{}
   }
 
-  /* ===== WebSocket ===== */
-  let ws=null,hb=null;
-  function connectWS(){
-    const proto=location.protocol==='https:'?'wss':'ws';
-    ws=new WebSocket(`${proto}://${location.host}/ws/pictures/${encodeURIComponent(SESSION_ID)}/?role=host`);
-    ws.onopen=()=>{ hb&&clearInterval(hb); hb=setInterval(()=>{ try{ ws.readyState===1&&ws.send(JSON.stringify({type:'ping'})); }catch{} },20000); };
-    ws.onmessage=(ev)=>{
-      let d={}; try{ d=JSON.parse(ev.data||'{}'); }catch{}
-      if(d.type==='puzzle_updated'){ showImage(d.image_url||''); if(typeof d.hint!=='undefined') setField($hint,d.hint||''); if(typeof d.answer!=='undefined') setField($ans,d.answer||''); LOCAL_IDX=d.index||LOCAL_IDX; TOTAL=d.total||TOTAL; $cur.textContent=LOCAL_IDX; $count.textContent=TOTAL; $prev.disabled=LOCAL_IDX<=1; $next.disabled=LOCAL_IDX>=TOTAL; }
-      else if(d.type==='scores_updated'){ reflectScores(d.team1_score||0,d.team2_score||0); }
-      else if(d.type==='contestant_buzz_accepted'){ showBuzzNotif(d.contestant_name,d.team); }
-      else if(d.type==='broadcast_image_index'||d.type==='image_index_updated'){ loadCurrent(); }
+  // ===== بازر =====
+  function showBuzz(name, team){
+    playBuzz();
+    document.getElementById('bzName').textContent = name || '—';
+    const badge = document.getElementById('bzTeam');
+    badge.textContent = team==='team1'
+      ? document.getElementById('t1Name').textContent
+      : document.getElementById('t2Name').textContent;
+    badge.style.background = team==='team1'
+      ? getComputedStyle(document.documentElement).getPropertyValue('--t1').trim()
+      : getComputedStyle(document.documentElement).getPropertyValue('--t2').trim();
+    document.getElementById('buzzOverlay').classList.add('show');
+    startCd();
+  }
+  function hideBuzz(){ clearInterval(cdInterval); document.getElementById('buzzOverlay').classList.remove('show'); }
+  function startCd(){
+    clearInterval(cdInterval); let n=3;
+    document.getElementById('bzCd').textContent=n;
+    cdInterval = setInterval(()=>{ n--; document.getElementById('bzCd').textContent=n; if(n<=0){ clearInterval(cdInterval); playEnd(); setTimeout(hideBuzz,400); } },1000);
+  }
+
+  // ===== إعدادات أولية =====
+  async function loadSettings(){
+    try{
+      const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if(!r.ok) return;
+      const { settings: s } = await r.json();
+      if(!s) return;
+      applyColors(s.team1_color, s.team2_color);
+      if(s.team1_name){ document.getElementById('t1Name').textContent=s.team1_name; }
+      if(s.team2_name){ document.getElementById('t2Name').textContent=s.team2_name; }
+      if(s.show_name) applySessionLogo(s.show_name, s.show_subtitle);
+    }catch{}
+  }
+
+  // ===== WebSocket =====
+  function connect(){
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/pictures/${SESSION_ID}/?role=display`);
+
+    ws.onopen = ()=>{
+      delay=1000;
+      clearInterval(hb);
+      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} },20000);
     };
-    ws.onclose=()=>{ hb&&clearInterval(hb); setTimeout(connectWS,800); };
-    ws.onerror=()=>{ try{ ws.close(); }catch{} };
+
+    ws.onmessage = (ev)=>{
+      let d={}; try{ d=JSON.parse(ev.data||'{}'); }catch{ return; }
+      switch(d.type){
+        case 'puzzle_updated':
+          showPic(d.image_url, d.index, d.total);
+          break;
+        case 'broadcast_image_index':
+          loadCurrent();
+          break;
+        case 'scores_updated':
+          document.getElementById('t1Score').textContent = d.team1_score ?? 0;
+          document.getElementById('t2Score').textContent = d.team2_score ?? 0;
+          break;
+        case 'contestant_buzz_accepted':
+          showBuzz(d.contestant_name, d.team);
+          break;
+        case 'buzz_unlocked':
+        case 'buzz_reset_by_host':
+          hideBuzz();
+          break;
+        case 'settings_updated': {
+          const s = d.settings || {};
+          applyColors(s.team1_color, s.team2_color);
+          if(s.team1_name){ document.getElementById('t1Name').textContent=s.team1_name; }
+          if(s.team2_name){ document.getElementById('t2Name').textContent=s.team2_name; }
+          if(s.show_name !== undefined) applySessionLogo(s.show_name, s.show_subtitle);
+          break;
+        }
+      }
+    };
+
+    ws.onclose = ()=>{ clearInterval(hb); setTimeout(connect, delay); delay=Math.min(delay*2,5000); };
+    ws.onerror = ()=>{ try{ ws.close(); }catch{} };
   }
 
-  /* ===== الإعدادات ===== */
-  const DEFAULT_T1 = '#22c55e';
-  const DEFAULT_T2 = '#f97316';
-
-  function applyTeamColors(t1, t2) {
-    document.documentElement.style.setProperty('--t1-color', t1 || DEFAULT_T1);
-    document.documentElement.style.setProperty('--t2-color', t2 || DEFAULT_T2);
-  }
-
-  function syncColorPicker(team, hex) {
-    const preview = document.getElementById(team + 'ColorPreview');
-    const picker  = document.getElementById(team + 'ColorPicker');
-    const text    = document.getElementById(team + 'ColorText');
-    if (preview) preview.style.background = hex;
-    if (picker)  picker.value  = hex;
-    if (text)    text.value    = hex;
-  }
-
-  function openSettings() {
-    const t1 = getComputedStyle(document.documentElement).getPropertyValue('--t1-color').trim() || DEFAULT_T1;
-    const t2 = getComputedStyle(document.documentElement).getPropertyValue('--t2-color').trim() || DEFAULT_T2;
-    document.getElementById('setting_t1_name').value = document.getElementById('t1Name').textContent;
-    document.getElementById('setting_t2_name').value = document.getElementById('t2Name').textContent;
-    document.getElementById('setting_session_name').value = document.getElementById('headerSessionName').textContent === '—' ? '' : document.getElementById('headerSessionName').textContent;
-    syncColorPicker('t1', t1);
-    syncColorPicker('t2', t2);
-    document.getElementById('settingsOverlay').classList.add('open');
-  }
-
-  function closeSettings() {
-    document.getElementById('settingsOverlay').classList.remove('open');
-  }
-
-  function closeSettingsBackdrop(e) {
-    if (e.target === document.getElementById('settingsOverlay')) closeSettings();
-  }
-
-function saveSettings() {
-    const t1Name = document.getElementById('setting_t1_name').value.trim();
-    const t2Name = document.getElementById('setting_t2_name').value.trim();
-    const t1Color = document.getElementById('t1ColorText').value.trim() || DEFAULT_T1;
-    const t2Color = document.getElementById('t2ColorText').value.trim() || DEFAULT_T2;
-    const sessionName = document.getElementById('setting_session_name').value.trim();
-
-    if (t1Name) { document.getElementById('t1Name').textContent = t1Name; }
-    if (t2Name) { document.getElementById('t2Name').textContent = t2Name; }
-
-    const nameEl  = document.getElementById('headerSessionName');
-    const maaName = document.getElementById('logoMaaName');
-    if (sessionName) {
-      nameEl.textContent = sessionName;
-      maaName.classList.add('visible');
-    } else {
-      nameEl.textContent = '';
-      maaName.classList.remove('visible');
-    }
-
-    applyTeamColors(t1Color, t2Color);
-
-    const btn = document.getElementById('btnSaveSettings');
-    btn.textContent = '✅ تم الحفظ';
-    setTimeout(() => { btn.textContent = '💾 حفظ'; closeSettings(); }, 800);
-  }
-
-  // ربط color pickers
-  document.addEventListener('DOMContentLoaded', () => {
-    applyTeamColors(DEFAULT_T1, DEFAULT_T2);
-    syncColorPicker('t1', DEFAULT_T1);
-    syncColorPicker('t2', DEFAULT_T2);
-
-    ['t1','t2'].forEach(team => {
-      const picker = document.getElementById(team + 'ColorPicker');
-      const text   = document.getElementById(team + 'ColorText');
-      if (picker) picker.addEventListener('input', e => {
-        syncColorPicker(team, e.target.value);
-      });
-      if (text) text.addEventListener('input', e => {
-        const val = e.target.value.trim();
-        if (/^#[0-9a-fA-F]{6}$/.test(val)) syncColorPicker(team, val);
-      });
-    });
+  // ===== تهيئة =====
+  document.addEventListener('DOMContentLoaded', ()=>{
+    loadSettings();
+    loadCurrent();
+    connect();
   });
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
-  /* ===== تهيئة ===== */
-  document.addEventListener('DOMContentLoaded',()=>{
-    initFreeTimer(); loadCurrent(); connectWS();
+  window.addEventListener('beforeunload', ()=>{
+    clearInterval(hb); clearInterval(cdInterval);
+    try{ ws?.readyState===1 && ws.close(1000,'unload'); }catch{}
   });
 </script>
 </body>
