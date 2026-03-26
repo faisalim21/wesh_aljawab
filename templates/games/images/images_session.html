@@ -770,6 +770,89 @@
 
       
 
+      <div class="modal-body">
+
+        <!-- شعار الجلسة — أول شيء -->
+        <div class="setting-section">
+          <div class="setting-section-title">🎨 شعار الجلسة</div>
+          <div class="setting-row">
+            <label class="setting-label">اكتب اسمك — يظهر في الهيدر وشاشة العرض والمتسابقين</label>
+            <input class="setting-input" id="setting_session_name" type="text" maxlength="25" placeholder="مثال: فيصل">
+          </div>
+          <div id="logoPreviewBox" style="
+            background: linear-gradient(160deg,#052e16,#071a0e);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px; padding: 14px;
+            display: flex; flex-direction: column; align-items: center;
+            line-height:1; gap:2px; margin-top:8px;
+          ">
+            <span style="font-size:0.52rem;font-weight:800;color:#fff;letter-spacing:2px;">تحدّي</span>
+            <span style="font-size:1.1rem;font-weight:900;color:#fbbf24;">الصور</span>
+            <div id="previewMaaRow" style="display:none;align-items:baseline;gap:3px;">
+              <span style="font-size:0.52rem;font-weight:700;color:#fff;">مع</span>
+              <span id="previewNameEl" style="font-size:0.85rem;font-weight:900;color:#86efac;"></span>
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:6px;font-weight:600;">— معاينة مباشرة —</div>
+          </div>
+        </div>
+
+        <!-- الفريقان -->
+        <div class="setting-section">
+          <div class="setting-section-title">🏆 الفريقان</div>
+          <div class="setting-row">
+            <label class="setting-label">اسم الفريق الأول</label>
+            <input class="setting-input" id="setting_t1_name" type="text" maxlength="30" placeholder="الفريق الأول">
+          </div>
+          <div class="setting-row">
+            <label class="setting-label">لون الفريق الأول</label>
+            <div class="color-row">
+              <div class="color-preview" id="t1ColorPreview" onclick="document.getElementById('t1ColorPicker').click()"></div>
+              <input type="color" id="t1ColorPicker" class="color-input-hidden">
+              <input class="setting-input color-text" id="t1ColorText" type="text" maxlength="7" placeholder="#22c55e">
+            </div>
+          </div>
+          <div class="setting-row">
+            <label class="setting-label">اسم الفريق الثاني</label>
+            <input class="setting-input" id="setting_t2_name" type="text" maxlength="30" placeholder="الفريق الثاني">
+          </div>
+          <div class="setting-row">
+            <label class="setting-label">لون الفريق الثاني</label>
+            <div class="color-row">
+              <div class="color-preview" id="t2ColorPreview" onclick="document.getElementById('t2ColorPicker').click()"></div>
+              <input type="color" id="t2ColorPicker" class="color-input-hidden">
+              <input class="setting-input color-text" id="t2ColorText" type="text" maxlength="7" placeholder="#f97316">
+            </div>
+          </div>
+        </div>
+
+        <!-- قريباً: وضع بدون مقدم -->
+        <div class="setting-section" style="opacity:0.6;">
+          <div class="setting-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🎭 وضع بدون مقدم</span>
+            <span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.25);border-radius:999px;padding:2px 10px;font-size:0.68rem;font-weight:800;color:#4ade80;">قريباً</span>
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-weight:600;line-height:1.6;">
+            التحكم الكامل من شاشة العرض بدون الحاجة لصفحة المقدم.
+          </div>
+        </div>
+
+        <!-- قريباً: مقدم آلي -->
+        <div class="setting-section" style="opacity:0.6;">
+          <div class="setting-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🤖 مقدم آلي</span>
+            <span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.25);border-radius:999px;padding:2px 10px;font-size:0.68rem;font-weight:800;color:#4ade80;">قريباً</span>
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-weight:600;line-height:1.6;">
+            اللعبة تسير تلقائياً بدون أي تدخل يدوي.
+          </div>
+        </div>
+
+        <div class="coming-soon-note">
+          ⏱️ قريباً: زيادة وقت الزر، مؤقت العقوبة، وإعدادات أكثر
+        </div>
+
+      </div>
+
       <div class="modal-footer">
         <button class="btn-cancel" onclick="closeSettings()">إلغاء</button>
         <button class="btn-save" id="btnSaveSettings" onclick="saveSettings()">💾 حفظ</button>
