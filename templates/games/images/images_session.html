@@ -270,15 +270,15 @@
 
     .image-wrap {
       position: relative;
-      background: rgba(0,0,0,0.35);
+      background: transparent;
       border: 1px solid rgba(34,197,94,0.12);
       border-radius: var(--radius);
       overflow: hidden;
-      min-height: 280px;
       display: flex; align-items: center; justify-content: center;
+      min-height: 120px;
     }
     .image-wrap img {
-      max-width: 100%; max-height: 65vh;
+      width: 100%; height: auto;
       display: block; border-radius: 12px;
       object-fit: contain;
     }
@@ -799,10 +799,57 @@
         </div>
 
         <!-- قريباً -->
-        <div class="coming-soon-note">
-          🚀 قريباً إعدادات أكثر — خلك قريب
+        <!-- معاينة شعار الجلسة -->
+        <div class="setting-section">
+          <div class="setting-section-title">🎨 شعار الجلسة</div>
+          <div class="setting-row">
+            <label class="setting-label">اسمك — يظهر في الهيدر وشاشة العرض والمتسابقين</label>
+            <input class="setting-input" id="setting_session_name" type="text" maxlength="25" placeholder="مثال: فيصل">
+          </div>
+          <!-- معاينة الشعار -->
+          <div id="logoPreviewBox" style="
+            background: linear-gradient(160deg,#052e16,#071a0e);
+            border: 1px solid rgba(34,197,94,0.2);
+            border-radius: 12px; padding: 14px;
+            display: flex; flex-direction: column; align-items: center;
+            line-height:1; gap:2px; margin-top:8px;
+          ">
+            <span style="font-size:0.52rem;font-weight:800;color:#fff;letter-spacing:2px;">تحدّي</span>
+            <span style="font-size:1.1rem;font-weight:900;color:#fbbf24;">الصور</span>
+            <div id="previewMaaRow" style="display:none;align-items:baseline;gap:3px;">
+              <span style="font-size:0.52rem;font-weight:700;color:#fff;">مع</span>
+              <span id="previewNameEl" style="font-size:0.85rem;font-weight:900;color:#86efac;"></span>
+            </div>
+            <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);margin-top:6px;font-weight:600;">— معاينة مباشرة —</div>
+          </div>
         </div>
 
+        <!-- قريباً: وضع بدون مقدم -->
+        <div class="setting-section" style="opacity:0.6;">
+          <div class="setting-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🎭 وضع بدون مقدم</span>
+            <span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.25);border-radius:999px;padding:2px 10px;font-size:0.68rem;font-weight:800;color:#4ade80;">قريباً</span>
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-weight:600;line-height:1.6;">
+            التحكم الكامل من شاشة العرض بدون الحاجة لصفحة المقدم.
+          </div>
+        </div>
+
+        <!-- قريباً: مقدم آلي -->
+        <div class="setting-section" style="opacity:0.6;">
+          <div class="setting-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>🤖 مقدم آلي</span>
+            <span style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.25);border-radius:999px;padding:2px 10px;font-size:0.68rem;font-weight:800;color:#4ade80;">قريباً</span>
+          </div>
+          <div style="font-size:0.8rem;color:rgba(255,255,255,0.4);font-weight:600;line-height:1.6;">
+            اللعبة تسير تلقائياً بدون أي تدخل يدوي.
+          </div>
+        </div>
+
+        <!-- قريباً: إعدادات أكثر -->
+        <div class="coming-soon-note">
+          ⏱️ قريباً: زيادة وقت الزر، مؤقت العقوبة، وإعدادات أكثر
+        </div>
       </div>
 
       <div class="modal-footer">
@@ -1092,6 +1139,23 @@ function saveSettings() {
   });
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
+
+  // معاينة شعار الجلسة في real-time
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('setting_session_name');
+    if (!input) return;
+    input.addEventListener('input', () => {
+      const val = input.value.trim();
+      const row = document.getElementById('previewMaaRow');
+      const nameEl = document.getElementById('previewNameEl');
+      if (val) {
+        nameEl.textContent = val;
+        row.style.display = 'flex';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
   /* ===== تهيئة ===== */
   document.addEventListener('DOMContentLoaded',()=>{
     initFreeTimer(); loadCurrent(); connectWS();
