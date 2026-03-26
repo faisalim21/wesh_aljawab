@@ -3,481 +3,536 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
-  <meta name="theme-color" content="#7c3aed" />
-
   <title>{% block title %}{{ page_title|default:"وش الجواب - صفحة المتسابق (تحدّي الصور)" }}{% endblock %}</title>
-
-  <!-- Social + SEO (مختصر) -->
   <meta name="description" content="{% block meta_description %}{{ page_description|default:'صفحة المتسابق لتحدّي الصور من وش الجواب.' }}{% endblock %}">
   <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
   <meta property="og:site_name" content="وش الجواب">
   <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - صفحة المتسابق (تحدّي الصور)' }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'صفحة المتسابق لتحدّي الصور من وش الجواب.' }}{% endblock %}">
   <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
   <meta name="twitter:card" content="summary_large_image">
-
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
-
   <style>
     :root{
-      --bg1:#c084fc;--bg2:#7c3aed;--bg3:#5b21b6;
-      --white:#fff; --glass:rgba(255,255,255,.1); --glass-b:rgba(255,255,255,.2);
-      --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --gray:#94a3b8;
+      --green-900:#052e16; --green-800:#14532d; --green-700:#166534;
+      --green-600:#15803d; --green-400:#22c55e; --green-300:#4ade80;
+      --t1:#22c55e; --t2:#f97316;
       --btn1:#ef4444; --btn2:#dc2626; --btn3:#b91c1c;
+      --radius:16px; --radius-sm:10px;
+      --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
     }
-    *{ box-sizing:border-box }
-    html,body{ height:100% }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    html,body{ height:100%; }
     body{
-      margin:0; padding:0;
-      font-family:'Tajawal',system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      color:var(--white);
+      font-family:'Tajawal',sans-serif; color:#fff;
+      background: linear-gradient(160deg, var(--green-900) 0%, #071a0e 40%, #030f07 100%);
+      min-height:100dvh; overflow-x:hidden;
+    }
+    body::before{
+      content:''; position:fixed; inset:0;
       background:
-        radial-gradient(1200px 600px at 70% -20%, rgba(255,255,255,.08), transparent 60%),
-        linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
-      overflow-x:hidden;
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(21,128,61,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(74,222,128,0.08) 0%, transparent 60%);
+      pointer-events:none; z-index:0;
     }
 
-    /* شِعار */
-    .logo{
-      position: fixed; top: env(safe-area-inset-top, 12px); right: 12px;
-      background: rgba(255,255,255,.95);
-      padding: 8px 12px; border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.25); z-index: 10;
+    /* ===== هيدر الجلسة ===== */
+    .session-header {
+      position: sticky; top:0; z-index:50;
+      background: rgba(5,46,22,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(34,197,94,0.15);
+      padding: 8px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap:10px;
+      flex-wrap: nowrap; min-height: 52px;
     }
-    .logo img{ max-height: 46px; display:block }
+    .sh-logo-wrap { display:flex; align-items:center; gap:8px; }
+    .sh-logo-img {
+      background: rgba(255,255,255,0.92); border-radius:9px;
+      padding:4px 6px;
+    }
+    .sh-logo-img img { height:32px; width:auto; display:block; }
+    .sh-game-logo {
+      display:flex; flex-direction:column; align-items:center;
+      line-height:1; gap:1px;
+    }
+    .sh-l1 { font-size:0.52rem; font-weight:800; color:#fff; letter-spacing:2px; }
+    .sh-l2 { font-size:0.95rem; font-weight:900; color:#fbbf24; letter-spacing:-0.3px; line-height:1.1; }
+    .sh-l3 { display:none; align-items:baseline; gap:3px; }
+    .sh-l3.visible { display:flex; }
+    .sh-maa { font-size:0.5rem; font-weight:700; color:#fff; }
+    .sh-name { font-size:0.78rem; font-weight:900; color:#86efac; max-width:80px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
     /* لمبة الاتصال */
     .conn{
-      position: fixed; top: calc(env(safe-area-inset-top, 12px) + 8px); left: 12px; z-index: 10;
-      padding: 8px 12px; border-radius: 999px; font-weight:800; font-size:.85rem;
+      padding:5px 11px; border-radius:999px; font-weight:800; font-size:0.75rem;
     }
-    .conn.connected{ background: rgba(34,197,94,.92) }    /* كلا القناتين متصل */
-    .conn.partial{ background: rgba(245,158,11,.92) }     /* قناة واحدة متصلة */
-    .conn.disconnected{ background: rgba(239,68,68,.92); animation: blink 1s infinite }
+    .conn.connected    { background:rgba(34,197,94,.92); }
+    .conn.partial      { background:rgba(245,158,11,.92); }
+    .conn.disconnected { background:rgba(239,68,68,.92); animation:blink 1s infinite; }
     @keyframes blink{ 0%,50%{opacity:1} 51%,100%{opacity:.6} }
 
-    .main{
-      min-height:100dvh; display:flex; align-items:center; justify-content:center;
-      padding: clamp(12px, 3vw, 28px);
+    /* ===== المحتوى ===== */
+    .main {
+      min-height: calc(100dvh - 52px);
+      display:flex; align-items:center; justify-content:center;
+      padding: clamp(12px,3vw,24px);
+      position:relative; z-index:1;
     }
-    .card-ct{
-      width: min(720px, 96vw);
-      background: var(--glass);
-      border: 1px solid var(--glass-b);
-      border-radius: 24px;
-      padding: clamp(18px, 3.2vw, 34px);
+
+    .card-ct {
+      width: min(600px, 96vw);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(34,197,94,0.18);
+      border-radius: 22px;
+      padding: clamp(18px,3.2vw,30px);
       backdrop-filter: blur(18px);
-      box-shadow: 0 20px 50px rgba(0,0,0,.25);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
       text-align:center;
     }
-    .title h1{
-      font-size: clamp(1.6rem, 5.5vw, 2.2rem);
-      margin:0; font-weight:900; letter-spacing:.3px;
-      background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
-      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+
+    /* عنوان البطاقة */
+    .card-title {
+      font-size: clamp(1.3rem,4.5vw,1.8rem);
+      font-weight:900; margin-bottom:4px;
+      color:#fff;
     }
-    .subtitle{ color:#e2e8f0; margin-top: 6px; font-size:.95rem }
+    .card-title span { color:#fbbf24; }
+    .card-subtitle { font-size:0.85rem; color:rgba(255,255,255,0.5); font-weight:700; margin-bottom:14px; }
 
     /* إطار الصورة */
-    .frame{
-      margin: 14px 0 10px;
-      background: rgba(0,0,0,.65);
-      border: 1px solid rgba(255,255,255,.25);
-      border-radius: 18px;
-      width: 100%; min-height: clamp(180px, 38vh, 420px);
+    .frame {
+      margin:0 0 12px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(34,197,94,0.15);
+      border-radius: var(--radius);
+      width:100%; min-height:clamp(160px,32vh,360px);
       display:flex; align-items:center; justify-content:center;
       overflow:hidden;
-      box-shadow: 0 14px 34px rgba(0,0,0,.3);
     }
-    .frame img{ max-width:100%; max-height:70vh; display:block }
+    .frame img { max-width:100%; max-height:50vh; display:block; object-fit:contain; }
+    .frame-placeholder {
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      color:rgba(255,255,255,0.15); font-size:0.85rem; font-weight:700;
+    }
+    .frame-placeholder svg { opacity:0.2; }
 
-    /* نقاط مختصرة */
-    .scores{
-      display:flex; gap:8px; justify-content:center; margin-bottom: 6px; flex-wrap:wrap;
+    /* النقاط */
+    .scores-row {
+      display:flex; gap:8px; justify-content:center; margin-bottom:12px; flex-wrap:wrap;
     }
-    .score{
-      background: rgba(255,255,255,.14);
-      border: 1px solid rgba(255,255,255,.3);
-      border-radius: 12px;
-      padding: 6px 10px; font-weight:900;
+    .score-pill {
+      background: rgba(255,255,255,0.07);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:10px; padding:6px 12px;
+      font-weight:900; font-size:0.85rem;
+      display:flex; align-items:center; gap:6px;
     }
-    .score .nm{ opacity:.9; font-size:.9rem }
-    .score .val{ font-size:1.3rem }
+    .score-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .score-val { font-size:1.1rem; }
 
-    /* الحقول */
-    .name-input{
-      width:100%; margin: 10px 0 12px;
-      background: rgba(255,255,255,.96); color:#1f2937;
-      border: 2px solid rgba(255,255,255,.45); border-radius: 14px;
-      padding: 12px 14px; font-weight:800; font-size:1.05rem; text-align:center;
-      transition:.2s ease;
+    /* حقل الاسم */
+    .name-input {
+      width:100%; margin:0 0 10px;
+      background:rgba(255,255,255,0.96); color:#1f2937;
+      border:2px solid rgba(255,255,255,0.3); border-radius:12px;
+      padding:12px 14px; font-weight:800; font-size:1rem; text-align:center;
+      transition:var(--transition); font-family:'Tajawal',sans-serif;
+      outline:none;
     }
-    .name-input:focus{
-      outline:none; border-color:#8b5cf6; box-shadow:0 0 0 4px rgba(139,92,246,.22);
-      transform: scale(1.01);
+    .name-input:focus {
+      border-color:#4ade80;
+      box-shadow:0 0 0 4px rgba(34,197,94,0.2);
+      transform:scale(1.01);
     }
-    .teams{ margin: 6px 0 12px }
-    .teams label.h{ display:block; font-weight:800; margin-bottom:8px; color:#e2e8f0 }
-    .team-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px }
-    .topt{ position:relative }
-    .topt input{ position:absolute; inset:0; opacity:0 }
+
+    /* اختيار الفريق */
+    .teams { margin:0 0 12px; }
+    .teams-label { font-weight:800; font-size:0.85rem; color:rgba(255,255,255,0.7); margin-bottom:8px; display:block; }
+    .team-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .topt { position:relative; }
+    .topt input { position:absolute; inset:0; opacity:0; cursor:pointer; }
     .tbtn {
-      white-space: nowrap;       /* اجبره على سطر واحد */
-      font-size: clamp(0.85rem, 2.8vw, 1rem); /* يكبر على الشاشات الواسعة ويصغر على الجوال */
-      line-height: 1.3;
-      min-height: 56px;          /* ثبات الارتفاع */
-      display: flex; align-items: center; justify-content: center;
-      padding: 10px;
+      border:1.5px solid rgba(255,255,255,0.15);
+      border-radius:12px; color:rgba(255,255,255,0.7);
+      background:rgba(255,255,255,0.06);
+      transition:var(--transition);
+      font-size:clamp(0.82rem,2.6vw,0.95rem);
+      min-height:52px; display:flex; align-items:center; justify-content:center;
+      gap:6px; padding:10px; cursor:pointer; font-weight:800;
+      font-family:'Tajawal',sans-serif;
     }
-    @media (max-width: 380px){
-      .tbtn{ font-size: .95rem; min-height: 56px; }
+    .tbtn .tdot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .topt input:checked + .tbtn.team1 {
+      border-color:var(--t1); color:var(--t1);
+      background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.06));
+      box-shadow:0 6px 18px rgba(34,197,94,.2);
     }
-    .topt input:checked + .tbtn.team1{
-      box-sizing: border-box;
-      border-color:#22c55e; color:#22c55e;
-      background: linear-gradient(135deg, rgba(34,197,94,.25), rgba(34,197,94,.08));
-      box-shadow: 0 10px 25px rgba(34,197,94,.25);
-    }
-    .topt input:checked + .tbtn.team2{
-      box-sizing: border-box;
-      border-color:#f97316; color:#f97316;
-      background: linear-gradient(135deg, rgba(249,115,22,.25), rgba(249,115,22,.08));
-      box-shadow: 0 10px 25px rgba(249,115,22,.25);
+    .topt input:checked + .tbtn.team2 {
+      border-color:var(--t2); color:var(--t2);
+      background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(249,115,22,.06));
+      box-shadow:0 6px 18px rgba(249,115,22,.2);
     }
 
-    /* زر الطنطيط */
-    .buzz-wrap{ margin-top: 8px }
-    .buzz-btn{
-      --size: clamp(120px, 34vw, 170px);
-      width: var(--size); height: var(--size);
-      margin-inline:auto; border-radius: 999px; position: relative; border: 0; cursor: pointer;
-      display: grid; place-items:center; font-weight: 900; letter-spacing:.4px;
-      font-size: clamp(1.15rem, 4.2vw, 1.6rem); color:#fff; outline: none;
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    /* ===== زر الطنطيط ===== */
+    .buzz-wrap { margin:4px 0 8px; }
+    .buzz-btn {
+      --size:clamp(120px,32vw,160px);
+      width:var(--size); height:var(--size);
+      margin-inline:auto; border-radius:999px; border:0; cursor:pointer;
+      display:grid; place-items:center; font-weight:900;
+      font-size:clamp(1.1rem,4vw,1.5rem); color:#fff; outline:none;
+      position:relative; isolation:isolate;
+      transition:transform .12s ease, box-shadow .12s ease;
       background:
         radial-gradient(140% 60% at 50% 8%, rgba(255,255,255,.35), transparent 40%),
         linear-gradient(165deg, var(--btn1) 0%, var(--btn2) 45%, var(--btn3) 100%);
-      box-shadow: 0 18px 35px rgba(239,68,68,.45), inset 0 -10px 18px rgba(0,0,0,.25), inset 0 8px 12px rgba(255,255,255,.08);
-      isolation:isolate;
+      box-shadow:0 16px 32px rgba(239,68,68,.45), inset 0 -10px 18px rgba(0,0,0,.25), inset 0 8px 12px rgba(255,255,255,.08);
     }
-    .buzz-btn::before{
+    .buzz-btn::before {
       content:""; position:absolute; inset:0; border-radius:inherit;
-      background: linear-gradient(180deg, rgba(255,255,255,.45), transparent 35% 90%, rgba(0,0,0,.25));
-      mix-blend-mode: soft-light; pointer-events:none;
+      background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 35% 90%,rgba(0,0,0,.25));
+      mix-blend-mode:soft-light; pointer-events:none;
     }
-    .buzz-btn::after{
+    .buzz-btn::after {
       content:""; position:absolute; top:6%; left:16%; width:68%; height:18%;
-      border-radius:999px; background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.15));
-      filter: blur(1px); transform: rotate(-6deg); pointer-events:none;
+      border-radius:999px;
+      background:linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.15));
+      filter:blur(1px); transform:rotate(-6deg); pointer-events:none;
     }
-    .buzz-btn.wave > i{
-      content:""; position:absolute; inset:0; border-radius:inherit;
-      animation: wave .6s ease-out forwards;
-      background: radial-gradient(circle, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 60%);
-      mix-blend-mode: screen; pointer-events:none;
+    .buzz-btn.wave > i {
+      position:absolute; inset:0; border-radius:inherit;
+      animation:wave .6s ease-out forwards;
+      background:radial-gradient(circle,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 60%);
+      mix-blend-mode:screen; pointer-events:none;
     }
-    @keyframes wave{ from{ transform: scale(.1); opacity:1 } to{ transform: scale(2.2); opacity:0 } }
-    .buzz-btn:hover{ transform: translateY(-2px) scale(1.03) }
-    .buzz-btn:active:not(:disabled){ transform: translateY(1px) scale(.97); filter: saturate(1.1) }
-    .buzz-btn:disabled{
-      background: linear-gradient(165deg, #6b7280, #4b5563);
-      box-shadow: 0 10px 20px rgba(0,0,0,.25), inset 0 -10px 18px rgba(0,0,0,.2);
-      cursor:not-allowed;
+    @keyframes wave{ from{transform:scale(.1);opacity:1} to{transform:scale(2.2);opacity:0} }
+    .buzz-btn:hover  { transform:translateY(-2px) scale(1.03); }
+    .buzz-btn:active:not(:disabled){ transform:translateY(1px) scale(.97); }
+    .buzz-btn:disabled {
+      background:linear-gradient(165deg,#4b5563,#374151);
+      box-shadow:0 8px 16px rgba(0,0,0,.25); cursor:not-allowed;
     }
-    .buzz-label{ position:relative; z-index:2; text-shadow: 0 2px 0 rgba(0,0,0,.2) }
+    .buzz-label { position:relative; z-index:2; text-shadow:0 2px 0 rgba(0,0,0,.2); }
+
+    /* ===== تلميح الزر ===== */
+    .buzz-tip {
+      margin-top:10px;
+      background: rgba(34,197,94,0.07);
+      border: 1px solid rgba(34,197,94,0.15);
+      border-radius:10px; padding:8px 12px;
+      font-size:0.75rem; font-weight:700;
+      color:rgba(255,255,255,0.45); line-height:1.6;
+      text-align:right;
+    }
+    .buzz-tip strong { color:rgba(74,222,128,0.7); font-weight:800; }
 
     /* رسائل الحالة */
-    .status{
-      margin-top: 14px; display:none;
-      border-radius: 14px; padding: 12px 14px; font-weight:800; text-align:center;
+    .status {
+      margin-top:10px; display:none;
+      border-radius:12px; padding:11px 14px;
+      font-weight:800; text-align:center; font-size:0.9rem;
     }
-    .status.show{ display:block }
-    .status.ok{ background: rgba(34,197,94,.2); border:1px solid var(--ok); color: var(--ok); animation: pulse .4s ease }
-    .status.err{ background: rgba(239,68,68,.2); border:1px solid var(--err); color: var(--err); animation: shake .38s ease }
-    .status.info{ background: rgba(59,130,246,.2); border:1px solid #3b82f6; color:#3b82f6 }
+    .status.show { display:block; }
+    .status.ok   { background:rgba(34,197,94,.15);  border:1px solid #22c55e; color:#4ade80; animation:pulse .4s ease; }
+    .status.err  { background:rgba(239,68,68,.15);  border:1px solid #ef4444; color:#fca5a5; animation:shake .38s ease; }
+    .status.info { background:rgba(59,130,246,.15); border:1px solid #3b82f6; color:#93c5fd; }
     @keyframes pulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
-    @keyframes shake{ 0%,100%{ transform:translateX(0) } 25%{ transform:translateX(-6px) } 75%{ transform:translateX(6px) } }
+    @keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 
-    @media (max-width: 768px){
-      .card-ct{ padding: 20px 16px; border-radius: 20px }
-      .logo{ right:10px; top:10px }
-      .frame{ min-height: 200px }
+    @media(max-width:480px){
+      .card-ct { padding:16px 14px; border-radius:18px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- لمبة الاتصال -->
-  <div id="conn" class="conn disconnected">🔴 منقطع</div>
-
-  <!-- الشعار -->
-  <div class="logo">
-    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب" />
+  <!-- هيدر الجلسة -->
+  <div class="session-header">
+    <div class="sh-logo-wrap">
+      <div class="sh-logo-img">
+        <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
+      </div>
+      <div class="sh-game-logo">
+        <span class="sh-l1">تحدّي</span>
+        <span class="sh-l2">الصور</span>
+        <div class="sh-l3" id="shMaaName">
+          <span class="sh-maa">مع</span>
+          <span class="sh-name" id="shName"></span>
+        </div>
+      </div>
+    </div>
+    <div id="conn" class="conn disconnected">🔴 منقطع</div>
   </div>
 
   <!-- المحتوى -->
   <main class="main">
-    <section class="card-ct" aria-labelledby="title">
-      <div class="title" id="title">
-        <h1>🎤 صفحة المتسابق — تحدّي الصور</h1>
-        <div class="subtitle">
-          {{ session.package.get_game_type_display }} — حزمة {{ session.package.package_number }}
+    <div class="card-ct">
+
+      <div class="card-title">🎤 <span>صفحة المتسابق</span></div>
+      <div class="card-subtitle">{{ session.package.get_game_type_display }} — حزمة {{ session.package.package_number }}</div>
+
+      <!-- الصورة -->
+      <div class="frame" id="imgFrame">
+        <div class="frame-placeholder" id="imgPlaceholder">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <path d="M21 15l-5-5L5 21"/>
+          </svg>
+          <span>في انتظار الصورة</span>
+        </div>
+        <img id="puzzleImg" src="" alt="" style="display:none;" />
+      </div>
+
+      <!-- النقاط -->
+      <div class="scores-row">
+        <div class="score-pill">
+          <div class="score-dot" id="t1Dot" style="background:var(--t1);"></div>
+          <span id="t1Name">{{ session.team1_name }}</span>
+          <span class="score-val" id="t1Score">0</span>
+        </div>
+        <div class="score-pill">
+          <div class="score-dot" id="t2Dot" style="background:var(--t2);"></div>
+          <span id="t2Name">{{ session.team2_name }}</span>
+          <span class="score-val" id="t2Score">0</span>
         </div>
       </div>
 
-      <!-- الصورة الحالية (متزامنة مع المقدم) -->
-      <div class="frame">
-        <img id="puzzleImg" src="" alt="الصورة الحالية للغز" />
-      </div>
+      <!-- الاسم -->
+      <input id="name" class="name-input" type="text" inputmode="text"
+             maxlength="20" placeholder="🏷️ اكتب اسمك هنا"
+             autocomplete="off" aria-label="اسم المتسابق" />
 
-      <!-- نقاط (اختياري للعرض) -->
-      <div class="scores">
-        <div class="score">
-          <div class="nm">🟢 {{ session.team1_name }}</div>
-          <div class="val" id="t1">0</div>
-        </div>
-        <div class="score">
-          <div class="nm">🟠 {{ session.team2_name }}</div>
-          <div class="val" id="t2">0</div>
-        </div>
-      </div>
-
-      <!-- الاسم والفريق -->
-      <input id="name" class="name-input" type="text" inputmode="text" maxlength="20"
-             placeholder="🏷️ اكتب اسمك هنا" autocomplete="off" aria-label="اسم المتسابق" />
-
+      <!-- الفريق -->
       <div class="teams">
-        <label class="h">اختر فريقك:</label>
+        <span class="teams-label">اختر فريقك:</span>
         <div class="team-grid">
           <label class="topt">
             <input id="t1r" type="radio" name="team" value="team1" />
-            <div class="tbtn team1">🟢 {{ session.team1_name }}</div>
+            <div class="tbtn team1">
+              <span class="tdot" style="background:var(--t1);"></span>
+              <span id="t1BtnLabel">{{ session.team1_name }}</span>
+            </div>
           </label>
           <label class="topt">
             <input id="t2r" type="radio" name="team" value="team2" />
-            <div class="tbtn team2">🟠 {{ session.team2_name }}</div>
+            <div class="tbtn team2">
+              <span class="tdot" style="background:var(--t2);"></span>
+              <span id="t2BtnLabel">{{ session.team2_name }}</span>
+            </div>
           </label>
         </div>
       </div>
 
       <!-- زر الطنطيط -->
       <div class="buzz-wrap">
-        <button id="buzz" class="buzz-btn" type="button" aria-live="polite" aria-label="اضغط للإجابة">
+        <button id="buzz" class="buzz-btn" type="button" aria-label="اضغط للإجابة">
           <span class="buzz-label" id="buzzText">جاوِب!</span>
         </button>
       </div>
 
+      <!-- تلميح الأداء -->
+      <div class="buzz-tip">
+        💡 إذا لاحظت تأخراً في الزر، قلّل عدد الأجهزة المفتوحة على رابط المتسابقين —
+        <strong>كثرة الاتصالات قد تؤثر على السرعة.</strong>
+      </div>
+
       <!-- رسائل الحالة -->
       <div id="status" class="status" role="status" aria-live="polite"></div>
-    </section>
+    </div>
   </main>
 
-  <script>
-    // ======== ثوابت عامة ========
-    const sessionId = '{{ session.id }}';
-    const LS_NAME_KEY = `wjg_img_name_${sessionId}`;
-    const LS_TEAM_KEY = `wjg_img_team_${sessionId}`;
+<script>
+  const sessionId   = '{{ session.id }}';
+  const LS_NAME_KEY = `wjg_img_name_${sessionId}`;
+  const LS_TEAM_KEY = `wjg_img_team_${sessionId}`;
 
-    // قناتان: (1) قناة المتسابق للإرسال، (2) قناة عرض/استقبال لتحديث الصورة والنقاط
-    let wsContest = null;   // role=contestant
-    let wsFeed = null;      // role=display (قراءة فقط)
-    let d1 = 1000, d2 = 1000;          // backoff
-    const MAX_DELAY = 5000;
-    let hb1 = null, hb2 = null;
+  let wsContest=null, wsFeed=null;
+  let d1=1000, d2=1000;
+  const MAX_DELAY=5000;
+  let hb1=null, hb2=null, busy=false;
 
-    // ======== عناصر ========
-    const el = {
-      conn: document.getElementById('conn'),
-      img:  document.getElementById('puzzleImg'),
-      name: document.getElementById('name'),
-      t1r:  document.getElementById('t1r'),
-      t2r:  document.getElementById('t2r'),
-      buzz: document.getElementById('buzz'),
-      status: document.getElementById('status'),
-      buzzText: document.getElementById('buzzText'),
-      s1: document.getElementById('t1'),
-      s2: document.getElementById('t2'),
+  const el = {
+    conn:     document.getElementById('conn'),
+    img:      document.getElementById('puzzleImg'),
+    ph:       document.getElementById('imgPlaceholder'),
+    name:     document.getElementById('name'),
+    t1r:      document.getElementById('t1r'),
+    t2r:      document.getElementById('t2r'),
+    buzz:     document.getElementById('buzz'),
+    buzzText: document.getElementById('buzzText'),
+    status:   document.getElementById('status'),
+    t1Score:  document.getElementById('t1Score'),
+    t2Score:  document.getElementById('t2Score'),
+  };
+
+  function setConn(){
+    const c1 = wsContest?.readyState===1;
+    const c2 = wsFeed?.readyState===1;
+    el.conn.className = 'conn '+(c1&&c2?'connected':c1||c2?'partial':'disconnected');
+    el.conn.textContent = c1&&c2?'🟢 متصل':c1||c2?'🟡 جزئي':'🔴 منقطع';
+  }
+
+  function showMsg(kind,text,ms){
+    el.status.className='status show '+(kind||'info');
+    el.status.textContent=text||'';
+    if(ms) setTimeout(()=>el.status.classList.remove('show'),ms);
+  }
+
+  function waveButton(){
+    el.buzz.classList.add('wave');
+    const i=document.createElement('i');
+    el.buzz.appendChild(i);
+    setTimeout(()=>{i.remove();el.buzz.classList.remove('wave');},600);
+  }
+
+  function haptic(ms=35){ try{ navigator.vibrate&&navigator.vibrate(ms); }catch{} }
+
+  function tone(freq=740,dur=160,gain=.35){
+    try{
+      const ac=new(window.AudioContext||window.webkitAudioContext)();
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.connect(g);g.connect(ac.destination);
+      o.frequency.value=freq;g.gain.value=gain;
+      o.start();o.stop(ac.currentTime+dur/1000);
+    }catch{}
+  }
+
+  function loadPrefs(){
+    const n=localStorage.getItem(LS_NAME_KEY)||'';
+    if(n) el.name.value=n;
+    const t=localStorage.getItem(LS_TEAM_KEY);
+    if(t==='team1') el.t1r.checked=true;
+    if(t==='team2') el.t2r.checked=true;
+  }
+  function savePrefs(){
+    const n=(el.name.value||'').trim();
+    if(n) localStorage.setItem(LS_NAME_KEY,n);
+    const t=document.querySelector('input[name="team"]:checked')?.value;
+    if(t) localStorage.setItem(LS_TEAM_KEY,t);
+  }
+
+  function setImage(url){
+    if(!url){ el.img.style.display='none'; el.ph.style.display='flex'; return; }
+    el.img.onload=()=>{ el.ph.style.display='none'; el.img.style.display='block'; };
+    el.img.onerror=()=>{ el.ph.style.display='flex'; el.img.style.display='none'; };
+    el.img.src=url;
+  }
+
+  function applySettings(s){
+    if(!s) return;
+    if(s.team1_color){
+      document.documentElement.style.setProperty('--t1',s.team1_color);
+      document.getElementById('t1Dot').style.background=s.team1_color;
+    }
+    if(s.team2_color){
+      document.documentElement.style.setProperty('--t2',s.team2_color);
+      document.getElementById('t2Dot').style.background=s.team2_color;
+    }
+    if(s.team1_name){
+      document.getElementById('t1Name').textContent=s.team1_name;
+      document.getElementById('t1BtnLabel').textContent=s.team1_name;
+    }
+    if(s.team2_name){
+      document.getElementById('t2Name').textContent=s.team2_name;
+      document.getElementById('t2BtnLabel').textContent=s.team2_name;
+    }
+    if(s.show_name){
+      const nameEl=document.getElementById('shName');
+      const maaEl=document.getElementById('shMaaName');
+      nameEl.textContent=s.show_name;
+      maaEl.classList.add('visible');
+    }
+  }
+
+  async function loadCurrentOnce(){
+    try{
+      const r=await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(sessionId)}`);
+      if(!r.ok) return;
+      const data=await r.json();
+      setImage(data.current?.image_url||'');
+      if(el.t1Score) el.t1Score.textContent=data.team1_score||0;
+      if(el.t2Score) el.t2Score.textContent=data.team2_score||0;
+    }catch{}
+  }
+
+  async function loadSettings(){
+    try{
+      const r=await fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`);
+      if(!r.ok) return;
+      const {settings}=await r.json();
+      applySettings(settings);
+    }catch{}
+  }
+
+  function disableBuzz(permanent=false){
+    busy=true; el.buzz.disabled=true;
+    el.buzzText.textContent=permanent?'غير متاح':'جارٍ...';
+  }
+  function enableBuzz(){
+    busy=false; el.buzz.disabled=false; el.buzzText.textContent='جاوِب!';
+  }
+
+  function sendBuzz(){
+    const name=(el.name.value||'').trim();
+    const team=document.querySelector('input[name="team"]:checked')?.value;
+    if(!name){ showMsg('err','اكتب اسمك أولاً',2200); el.name.focus(); haptic(30); return; }
+    if(!team){ showMsg('err','اختر فريقك',2200); haptic(30); return; }
+    if(!wsContest||wsContest.readyState!==1){ showMsg('err','الاتصال غير جاهز',2200); haptic(30); return; }
+    if(busy) return;
+    waveButton(); haptic(50); tone(760,130,.35);
+    disableBuzz(); savePrefs();
+    try{
+      wsContest.send(JSON.stringify({type:'contestant_buzz',contestant_name:name,team,timestamp:new Date().toISOString()}));
+      setTimeout(()=>{ if(busy) enableBuzz(); },1200);
+      showMsg('info','⏳ تم الإرسال...',1200);
+    }catch{
+      showMsg('err','تعذّر الإرسال، حاول مجددًا',2500);
+      enableBuzz();
+    }
+  }
+
+  function connectContestantWS(){
+    const proto=location.protocol==='https:'?'wss':'ws';
+    try{ wsContest=new WebSocket(`${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=contestant`); }catch{ setConn(); return; }
+    wsContest.onopen=()=>{ d1=1000; setConn(); clearInterval(hb1); hb1=setInterval(()=>{ try{wsContest.readyState===1&&wsContest.send(JSON.stringify({type:'ping'}));}catch{} },20000); };
+    wsContest.onmessage=(ev)=>{
+      let d={}; try{d=JSON.parse(ev.data||'{}');}catch{return;}
+      if(d.type==='buzz_confirmed'){ showMsg('ok',d.message||'✅ تم تسجيل ضغطتك!',2500); tone(840,220,.4); haptic(30); setTimeout(enableBuzz,900); }
+      else if(d.type==='buzz_rejected'){ showMsg('err',d.message||'⚠️ الزر محجوز الآن',3000); tone(360,180,.25); haptic(40); setTimeout(enableBuzz,400); }
+      else if(d.type==='error'){ showMsg('err',d.message||'حدث خطأ.',3200); setTimeout(enableBuzz,600); }
     };
+    wsContest.onclose=(e)=>{ clearInterval(hb1); setConn(); if(e&&(e.code===4401||e.code===4404)){ showMsg('err','انتهت صلاحية الجلسة.'); disableBuzz(true); return; } setTimeout(connectContestantWS,d1); d1=Math.min(d1*2,MAX_DELAY); };
+    wsContest.onerror=()=>{ try{wsContest.close();}catch{} };
+  }
 
-    // ======== أدوات واجهة ========
-    function setConn(){
-      const c1 = wsContest && wsContest.readyState === 1;
-      const c2 = wsFeed && wsFeed.readyState === 1;
-      el.conn.className = 'conn ' + (c1 && c2 ? 'connected' : (c1 || c2 ? 'partial' : 'disconnected'));
-      el.conn.textContent = c1 && c2 ? '🟢 متصل' : (c1 || c2 ? '🟡 اتصال جزئي' : '🔴 منقطع');
-    }
-    function showMsg(kind, text, autoHideMs){
-      el.status.className = 'status show ' + (kind||'info');
-      el.status.textContent = text || '';
-      if (autoHideMs){ setTimeout(()=>{ el.status.classList.remove('show'); }, autoHideMs); }
-    }
-    function waveButton(){
-      el.buzz.classList.add('wave'); const i = document.createElement('i');
-      el.buzz.appendChild(i); setTimeout(()=>{ i.remove(); el.buzz.classList.remove('wave'); }, 600);
-    }
-    function haptic(ms=35){ try{ navigator.vibrate && navigator.vibrate(ms); }catch{} }
-    function tone(freq=740, dur=160, gain=.35){
-      try{
-        const actx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = actx.createOscillator(), g = actx.createGain();
-        o.connect(g); g.connect(actx.destination);
-        o.frequency.value = freq; g.gain.value = gain;
-        o.start(); o.stop(actx.currentTime + dur/1000);
-      }catch{}
-    }
+  function connectFeedWS(){
+    const proto=location.protocol==='https:'?'wss':'ws';
+    try{ wsFeed=new WebSocket(`${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=display`); }catch{ setConn(); return; }
+    wsFeed.onopen=()=>{ d2=1000; setConn(); clearInterval(hb2); hb2=setInterval(()=>{ try{wsFeed.readyState===1&&wsFeed.send(JSON.stringify({type:'ping'}));}catch{} },20000); };
+    wsFeed.onmessage=(ev)=>{
+      let d={}; try{d=JSON.parse(ev.data||'{}');}catch{return;}
+      if(d.type==='puzzle_updated'){ setImage(d.image_url||''); }
+      else if(d.type==='scores_updated'){ el.t1Score.textContent=d.team1_score||0; el.t2Score.textContent=d.team2_score||0; }
+      else if(d.type==='settings_updated'){ applySettings(d.settings); }
+    };
+    wsFeed.onclose=()=>{ clearInterval(hb2); setConn(); setTimeout(connectFeedWS,d2); d2=Math.min(d2*2,MAX_DELAY); };
+    wsFeed.onerror=()=>{ try{wsFeed.close();}catch{} };
+  }
 
-    // ======== LocalStorage ========
-    function loadPrefs(){
-      const n = localStorage.getItem(LS_NAME_KEY) || '';
-      if (n){ el.name.value = n; }
-      const t = localStorage.getItem(LS_TEAM_KEY);
-      if (t === 'team1') el.t1r.checked = true;
-      if (t === 'team2') el.t2r.checked = true;
-    }
-    function savePrefs(){
-      const n = (el.name.value || '').trim();
-      if (n) localStorage.setItem(LS_NAME_KEY, n);
-      const t = document.querySelector('input[name="team"]:checked')?.value;
-      if (t) localStorage.setItem(LS_TEAM_KEY, t);
-    }
-
-    // ======== تحميل الحالة الحالية عبر HTTP (Fallback/بدء) ========
-    async function loadCurrentOnce(){
-      try{
-        const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(sessionId)}`);
-        if (!r.ok) return;
-        const data = await r.json();
-        const cur = data.current || {};
-        setImage(cur.image_url || '');
-        setScores(data.team1_score || 0, data.team2_score || 0);
-      }catch{}
-    }
-    function setImage(url){
-      if (!url) return;
-      el.img.src = url;
-      el.img.alt = 'الصورة الحالية للغز';
-    }
-    function setScores(a,b){
-      if (el.s1) el.s1.textContent = a;
-      if (el.s2) el.s2.textContent = b;
-    }
-
-    // ======== WS: قناة المتسابق ========
-    function connectContestantWS(){
-      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const url = `${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=contestant`;
-      try{ wsContest = new WebSocket(url); }catch{ setConn(); return; }
-
-      wsContest.onopen = ()=>{
-        d1 = 1000; setConn();
-        clearInterval(hb1);
-        hb1 = setInterval(()=>{ try{ wsContest.readyState===1 && wsContest.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
-      };
-      wsContest.onmessage = (ev)=>{
-        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
-        if (d.type === 'buzz_confirmed'){
-          showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
-          tone(840, 220, .4); haptic(30);
-          setTimeout(enableBuzz, 900);
-        } else if (d.type === 'buzz_rejected'){
-          showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
-          tone(360, 180, .25); haptic(40);
-          setTimeout(enableBuzz, 400);
-        } else if (d.type === 'error'){
-          showMsg('err', d.message || 'حدث خطأ.', 3200);
-          setTimeout(enableBuzz, 600);
-        }
-      };
-      wsContest.onclose = (e)=>{
-        clearInterval(hb1); setConn();
-        if (e && (e.code===4401 || e.code===4404)){ showMsg('err','انتهت صلاحية الجلسة أو الرابط غير صحيح.'); disableBuzz(true); return; }
-        setTimeout(connectContestantWS, d1); d1 = Math.min(d1*2, MAX_DELAY);
-      };
-      wsContest.onerror = ()=>{ try{ wsContest.close(); }catch{} };
-    }
-
-    // ======== WS: قناة العرض/التغذية (لاستقبال الصورة والنقاط) ========
-    function connectFeedWS(){
-      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-      const url = `${proto}://${location.host}/ws/pictures/${encodeURIComponent(sessionId)}/?role=display`;
-      try{ wsFeed = new WebSocket(url); }catch{ setConn(); return; }
-
-      wsFeed.onopen = ()=>{
-        d2 = 1000; setConn();
-        clearInterval(hb2);
-        hb2 = setInterval(()=>{ try{ wsFeed.readyState===1 && wsFeed.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
-      };
-      wsFeed.onmessage = (ev)=>{
-        let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
-        if (d.type === 'puzzle_updated'){
-          setImage(d.image_url || '');
-        } else if (d.type === 'scores_updated'){
-          setScores(d.team1_score||0, d.team2_score||0);
-        }
-        // نتجاهل أحداث البازر/العدّ التنازلي هنا
-      };
-      wsFeed.onclose = ()=>{
-        clearInterval(hb2); setConn();
-        setTimeout(connectFeedWS, d2); d2 = Math.min(d2*2, MAX_DELAY);
-      };
-      wsFeed.onerror = ()=>{ try{ wsFeed.close(); }catch{} };
-    }
-
-    // ======== إرسال الطنطيط ========
-    let busy = false;
-    function disableBuzz(permanent=false){
-      busy = true; el.buzz.disabled = true; el.buzzText.textContent = permanent ? 'غير متاح' : 'جارٍ...';
-    }
-    function enableBuzz(){ busy = false; el.buzz.disabled = false; el.buzzText.textContent = 'جاوِب!' }
-    function sendBuzz(){
-      const name = (el.name.value || '').trim();
-      const team = document.querySelector('input[name="team"]:checked')?.value;
-
-      if (!name){ showMsg('err','اكتب اسمك أولاً', 2200); el.name.focus(); haptic(30); return; }
-      if (!team){ showMsg('err','اختر فريقك', 2200); haptic(30); return; }
-      if (!wsContest || wsContest.readyState !== 1){ showMsg('err','الاتصال غير جاهز', 2200); haptic(30); return; }
-      if (busy) return;
-
-      waveButton(); haptic(50); tone(760, 130, .35);
-      disableBuzz();
-      savePrefs();
-
-      try{
-        wsContest.send(JSON.stringify({
-          type:'contestant_buzz',
-          contestant_name:name,
-          team,
-          timestamp:new Date().toISOString()
-        }));
-        // fallback فتح الزر لو ما وصل رد سريع
-        setTimeout(()=>{ if (busy) enableBuzz(); }, 1200);
-        showMsg('info','⏳ تم الإرسال...', 1200);
-      }catch{
-        showMsg('err','تعذّر الإرسال، حاول مجددًا', 2500);
-        enableBuzz();
-      }
-    }
-
-    // ======== تهيئة ========
-    document.addEventListener('DOMContentLoaded', ()=>{
-      loadPrefs();
-      loadCurrentOnce();     // مبدئيًا قبل استقبال WS
-      connectContestantWS(); // للإرسال
-      connectFeedWS();       // لاستقبال الصورة/النقاط
-
-      el.buzz.addEventListener('click', sendBuzz);
-      el.name.addEventListener('keypress', (e)=>{ if (e.key === 'Enter') sendBuzz(); });
-
-      // تحسينات صوت على الموبايل (فتح AudioContext)
-      document.addEventListener('touchstart', ()=>tone(1,1,.0001), { once:true, passive:true });
-
-      // حالة أونلاين/أوفلاين
-      window.addEventListener('online',  setConn);
-      window.addEventListener('offline', setConn);
-    });
-
-    window.buzzAnswer = sendBuzz; // لو احتجت تناديها من HTML
-  </script>
+  document.addEventListener('DOMContentLoaded',()=>{
+    loadPrefs();
+    loadSettings();
+    loadCurrentOnce();
+    connectContestantWS();
+    connectFeedWS();
+    el.buzz.addEventListener('click',sendBuzz);
+    el.name.addEventListener('keypress',(e)=>{ if(e.key==='Enter') sendBuzz(); });
+    document.addEventListener('touchstart',()=>tone(1,1,.0001),{once:true,passive:true});
+    window.addEventListener('online',setConn);
+    window.addEventListener('offline',setConn);
+  });
+</script>
 </body>
 </html>
