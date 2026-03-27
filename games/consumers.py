@@ -28,8 +28,20 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
     # ============ Group broadcasts (called by views/group_send) ============
     async def broadcast_letters_replace(self, event):
-        # لا نرسل للمتسابقين
         if self.role == 'contestant':
+            try:
+                from games.models import GameSettings
+                show = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                )()
+                if show:
+                    await self.send(text_data=json.dumps({
+                        'type': 'letters_updated',
+                        'letters': event.get('letters', []),
+                        'reset_progress': bool(event.get('reset_progress', False)),
+                    }))
+            except Exception:
+                pass
             return
         await self.send(text_data=json.dumps({
             'type': 'letters_updated',
@@ -112,14 +124,26 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         await self.broadcast_score_update(event)
 
     async def broadcast_letter_selected(self, event):
-        """يُستخدم عند البث من views أو من نفس هذا الـConsumer"""
         if self.role == 'contestant':
+            try:
+                from games.models import GameSettings
+                show = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                )()
+                if show:
+                    await self.send(text_data=json.dumps({
+                        "type": "letter_selected",
+                        "letter": event.get("letter")
+                    }))
+            except Exception:
+                pass
             return
         await self.send(text_data=json.dumps({
             "type": "letter_selected",
             "letter": event.get("letter")
         }))
 
+        
     # ============================== Lifecycle ==============================
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']

@@ -1531,8 +1531,8 @@ function getLettersForGrid(gridSize, baseLetters) {
   const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
   let result = [...src];
   while (result.length < count) {
-    result = result.concat([...src].sort(() => Math.random() - 0.5));
-  }
+    result = result.concat([...src]);
+}
   return result.slice(0, count);
 }
 
@@ -1552,8 +1552,6 @@ function buildHexBackground(svg, viewW, viewH, color1, color2) {
   svg.insertBefore(defs, svg.firstChild);
 
   const g = document.createElementNS(NS, 'g');
-  g.setAttribute('data-index', idx);
-  g.setAttribute('data-letter', letter);
   g.setAttribute('class','hex-bg');
   g.setAttribute('clip-path','url(#hexBgClip)');
 

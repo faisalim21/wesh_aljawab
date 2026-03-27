@@ -803,6 +803,7 @@
           if (s.show_grid_to_contestants === true) {
             document.getElementById('contestantGridWrap').style.display = 'block';
           }
+
           renderContestantScores(
             s.team1_name || '{{ session.team1_name|escapejs }}',
             s.team2_name || '{{ session.team2_name|escapejs }}',
@@ -811,6 +812,35 @@
             s.team1_color || contestantT1Color,
             s.team2_color || contestantT2Color
           );
+
+        } else if (d.type === 'letters_updated') {
+            if (d.letters && d.letters.length) {
+                const size = document.getElementById('contestantHoneycombSvg')
+                    ?.getAttribute('data-grid-size') || '5x5';
+                buildContestantGrid(size, d.letters, {}, contestantT1Color, contestantT2Color);
+            }
+
+          } else if (d.type === 'letter_selected') {
+              const svg = document.getElementById('contestantHoneycombSvg');
+              if (!svg || !d.letter) return;
+              // أزل أي تظليل سابق
+              svg.querySelectorAll('polygon[data-highlighted]').forEach(p => {
+                  p.removeAttribute('data-highlighted');
+                  p.style.filter = '';
+                  p.style.stroke = '#6b21a8';
+                  p.style.strokeWidth = '1.5';
+              });
+              // ظلل الخلية الجديدة
+              const g = svg.querySelector(`[data-letter="${d.letter}"]`);
+              if (g) {
+                  const poly = g.querySelector('polygon');
+                  if (poly) {
+                      poly.setAttribute('data-highlighted', '1');
+                      poly.style.stroke = '#f59e0b';
+                      poly.style.strokeWidth = '3';
+                      poly.style.filter = 'drop-shadow(0 0 6px rgba(245,158,11,0.6))';
+                  }
+              }
 
         } else if (d.type === 'grid_state'){
           if (d.team1_color) { contestantT1Color = d.team1_color; document.documentElement.style.setProperty('--team1-color', d.team1_color); }
@@ -995,6 +1025,7 @@
 
       const svg = document.getElementById('contestantHoneycombSvg');
       if (!svg) return;
+      svg.setAttribute('data-grid-size', gridSize);
       const NS = 'http://www.w3.org/2000/svg';
       svg.innerHTML = '';
 
