@@ -1981,7 +1981,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
-                'game_title':       getattr(progress, 'game_title', None) or 'فاميلي فيود',
+                'game_title': self._get_game_title(),
             }
 
         state = await sync_to_async(_get)()
@@ -2017,7 +2017,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
-                'game_title': getattr(p, 'game_title', None) or 'فاميلي فيود',
+                'game_title': self._get_game_title(),
             }
 
         state = await sync_to_async(_get)()
@@ -2031,3 +2031,14 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return parse_qs(self.scope.get('query_string', b'').decode())
         except Exception:
             return {}
+        
+
+    def _get_game_title(self):
+        try:
+            from games.models import GameSettings
+            s = GameSettings.objects.filter(session=self.session).first()
+            if s and s.show_name:
+                return s.show_name
+        except Exception:
+            pass
+        return 'فاميلي فيود'
