@@ -341,6 +341,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
     async def handle_update_cell_state(self, data):
         letter = (data.get('letter') or '').strip()
         state = (data.get('state') or '').strip()
+        cell_index = data.get('cell_index')  # ← هنا قبل الدالة
 
         if not letter or state not in ('normal', 'team1', 'team2'):
             return
