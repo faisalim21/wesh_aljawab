@@ -3,266 +3,376 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  {# ==== META + SOCIAL PACK (مطابق لقالب خلية الحروف) ==== #}
-  <title>{% block title %}{{ page_title|default:"وش الجواب - شاشة العرض (تحدّي الصور)" }}{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
-  <meta name="robots" content="index,follow">
-  <link rel="canonical" href="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-  <meta property="og:locale" content="ar_SA">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="وش الجواب">
-  <meta property="og:title" content="{% block og_title %}{{ page_title|default:'وش الجواب - شاشة العرض (تحدّي الصور)' }}{% endblock %}">
-  <meta property="og:description" content="{% block og_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
-  <meta property="og:url" content="{% if request %}{{ request.build_absolute_uri }}{% else %}https://wesh-aljawab.onrender.com/{% endif %}">
-  <meta property="og:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:secure_url" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta property="og:image:alt" content="{% block og_image_alt %}{{ page_og_alt|default:'شعار وش الجواب' }}{% endblock %}">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{% block twitter_title %}{{ page_title|default:'وش الجواب - شاشة العرض (تحدّي الصور)' }}{% endblock %}">
-  <meta name="twitter:description" content="{% block twitter_description %}{{ page_description|default:'شاشة العرض لتحدّي الصور من منصة وش الجواب.' }}{% endblock %}">
-  <meta name="twitter:image" content="{% firstof page_og_image 'https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png' %}">
-  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4f46e5">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#4f46e5">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  <link rel="apple-touch-icon" href="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png">
-  {% block meta_overrides %}{% endblock %}
-
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet" />
-
+  <title>تحدّي الصور — شاشة العرض</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    body{
-      margin:0; padding:0; overflow:hidden;
-      min-height:100vh;
-      background:linear-gradient(135deg,#1e3a8a,#3730a3,#581c87);
-      font-family:'Tajawal',sans-serif; color:#fff;
+    :root {
+      --t1: #22c55e;
+      --t2: #f97316;
+    }
+    * { font-family: 'Tajawal', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: linear-gradient(160deg, #052e16 0%, #071a0e 40%, #030f07 100%);
+      min-height: 100vh; width: 100vw; height: 100vh;
+      overflow: hidden; color: #fff;
+      display: flex; flex-direction: column;
     }
 
-    /* بطاقات النقاط (مطابقة لقالب خلية الحروف) */
-    .scores-container {
-      position: fixed; top: 22px; left: 22px; z-index: 100;
-      display: flex; flex-direction: column; gap: 14px;
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(21,128,61,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(74,222,128,0.07) 0%, transparent 60%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ===== هيدر ===== */
+    .top-bar {
+      position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px;
+      background: rgba(5,46,22,0.75);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(34,197,94,0.15);
+      flex-shrink: 0; min-height: 80px;
+    }
+
+    /* شعار الجلسة */
+    .session-logo {
+      display: flex; flex-direction: column; align-items: center; line-height: 1; gap: 2px;
+    }
+    .sl-l1 {
+      font-size: clamp(0.6rem, 1vw, 0.85rem); font-weight: 800; color: #fff; letter-spacing: 2px;
+    }
+    .sl-l2 {
+      font-size: clamp(1.3rem, 3vw, 2.2rem); font-weight: 900;
+      color: #fbbf24; letter-spacing: -0.5px; line-height: 1.1;
+    }
+    .sl-l3 { display: none; align-items: baseline; gap: 4px; }
+    .sl-l3.visible { display: flex; }
+    .sl-maa { font-size: clamp(0.6rem, 1vw, 0.85rem); font-weight: 700; color: #fff; }
+    .sl-name {
+      font-size: clamp(1rem, 2vw, 1.5rem); font-weight: 900; color: #86efac;
+      max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* النقاط */
+    .scores-wrap {
+      display: flex; gap: 12px; align-items: center;
     }
     .score-card {
-      background: rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(16px);
-      border-radius: 16px;
-      padding: 14px 18px;
-      text-align: center;
-      border: 3px solid;
-      min-width: 150px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-    }
-    .score-card.team1 { border-color: #22c55e; background: linear-gradient(135deg, rgba(34,197,94,0.35), rgba(34,197,94,0.12)); }
-    .score-card.team2 { border-color: #f97316; background: linear-gradient(135deg, rgba(249,115,22,0.35), rgba(249,115,22,0.12)); }
-    .team-name  { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; letter-spacing: .3px; }
-    .team1 .team-name { color: #22c55e; }
-    .team2 .team-name { color: #f97316; }
-    .team-score { font-size: 2.2rem; font-weight: 900; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.35); }
-
-    /* الإطار الأوسط للصورة */
-    .stage{position:fixed;inset:0;display:grid;place-items:center}
-    .frame{
-      width:min(92vw,1200px);height:min(80vh,760px);
-      background:#000;border-radius:18px;overflow:hidden;
-      display:grid;place-items:center;
-      box-shadow:0 22px 60px rgba(0,0,0,.4)
-    }
-    .frame img{max-width:100%;max-height:100%;display:block}
-
-    /* الشعار أعلى اليمين */
-    .logo{
-      position:fixed;top:16px;right:16px;z-index:100;
-      background:#fff;border-radius:16px;padding:10px 14px;
-      box-shadow:0 10px 28px rgba(0,0,0,0.25);
+      background: rgba(255,255,255,0.07);
       backdrop-filter: blur(10px);
-      border:1px solid rgba(255,255,255,0.3);
+      border-radius: 16px; padding: 12px 24px;
+      text-align: center; border: 2.5px solid;
+      min-width: clamp(120px, 14vw, 180px);
     }
-    .logo img{max-height:90px;width:auto;display:block}
+    .score-card.t1 { border-color: var(--t1); }
+    .score-card.t2 { border-color: var(--t2); }
+    .score-name { font-size: clamp(0.85rem, 1.5vw, 1.1rem); font-weight: 900; margin-bottom: 4px; }
+    .score-card.t1 .score-name { color: var(--t1); }
+    .score-card.t2 .score-name { color: var(--t2); }
+    .score-val {
+      font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; line-height: 1;
+    }
+    .score-card.t1 .score-val { color: var(--t1); }
+    .score-card.t2 .score-val { color: var(--t2); }
+    /* لوجو وش الجواب */
+    .wesh-logo {
+      background: rgba(255,255,255,0.92);
+      border-radius: 12px; padding: 6px 10px;
+    }
+    .wesh-logo img { height: clamp(44px, 6vw, 68px); width: auto; display: block; }
 
-    /* طبقة البازر */
-    .buzz{
-      position:fixed;inset:0;display:none;z-index:200;
-      align-items:center;justify-content:center;flex-direction:column;text-align:center;
-      background:linear-gradient(135deg,rgba(239,68,68,.98),rgba(220,38,38,.98));
-      animation:bzPulse .6s ease-in-out infinite alternate;
+    /* ===== منطقة الصورة ===== */
+    .stage {
+      flex: 1; position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      padding: clamp(12px, 2vw, 24px);
+      overflow: hidden;
     }
-    .buzz.show{display:flex}
-    @keyframes bzPulse{from{filter:brightness(1)}to{filter:brightness(1.05)}}
-    .bzname{font-size:4.8rem;font-weight:900;text-shadow:3px 3px 6px rgba(0,0,0,0.5)}
-    .bzteam{margin-top:10px;padding:12px 28px;border-radius:28px;border:4px solid rgba(255,255,255,.85);font-size:1.8rem;font-weight:800}
-    .cd{font-size:9rem;font-weight:900;margin-top:10px;text-shadow:5px 5px 10px rgba(0,0,0,0.8)}
 
-    @media (min-width: 1200px){
-      .logo img { max-height: 110px; }
-      .scores-container { top: 28px; left: 28px; }
-      .score-card { min-width: 180px; padding: 16px 20px; }
-      .team-name { font-size: 1.15rem; }
-      .team-score { font-size: 2.6rem; }
-      .bzname { font-size: 5.4rem; }
-      .cd { font-size: 10.5rem; }
+    .image-frame {
+      position: relative;
+      max-width: min(94vw, calc(100vh - 140px) * 1.6);
+      max-height: calc(100vh - 140px);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 2px solid rgba(34,197,94,0.2);
+      background: transparent;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.08), 0 24px 60px rgba(0,0,0,0.3);
     }
-    @media (max-width:768px){
-      .scores-container, .logo { display: none; } /* نفس سلوك قالب خلية الحروف */
-      .bzname{font-size:3.2rem}
-      .bzteam{font-size:1.3rem}
-      .cd{font-size:6.2rem}
+
+    .image-frame img {
+      max-width: 100%; max-height: calc(100vh - 140px);
+      width: auto; height: auto;
+      display: block;
+      border-radius: 14px;
+      object-fit: contain;
+    }
+
+    .img-placeholder {
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+      color: rgba(255,255,255,0.2); font-size: 1.1rem; font-weight: 700;
+    }
+    .img-placeholder svg { opacity: 0.15; }
+
+    /* رقم الصورة */
+    .pic-counter {
+      position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+      background: rgba(5,46,22,0.85); backdrop-filter: blur(10px);
+      border: 1px solid rgba(34,197,94,0.25);
+      border-radius: 999px; padding: 4px 16px;
+      font-size: 0.78rem; font-weight: 800; color: rgba(255,255,255,0.7);
+      z-index: 5;
+    }
+    .pic-counter span { color: #4ade80; }
+
+    /* ===== طبقة البازر ===== */
+    .buzz-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(220,38,38,0.97), rgba(185,28,28,0.97));
+      animation: bzPulse 0.6s ease-in-out infinite alternate;
+    }
+    .buzz-overlay.show { display: flex; }
+    @keyframes bzPulse { from{filter:brightness(1)} to{filter:brightness(1.06)} }
+
+    .bz-name {
+      font-size: clamp(3rem, 8vw, 5.5rem); font-weight: 900;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.5); margin-bottom: 16px;
+    }
+    .bz-team {
+      padding: 10px 28px; border-radius: 28px;
+      border: 3px solid rgba(255,255,255,0.75);
+      font-size: clamp(1.2rem, 2.5vw, 1.8rem); font-weight: 800;
+      margin-bottom: 24px;
+    }
+    .bz-cd {
+      font-size: clamp(5rem, 12vw, 9rem); font-weight: 900;
+      text-shadow: 5px 5px 10px rgba(0,0,0,0.8);
+      animation: cdPop 1s ease;
+    }
+    @keyframes cdPop { 0%{transform:scale(0.7);opacity:0} 50%{transform:scale(1.2)} 100%{transform:scale(1);opacity:1} }
+
+    @media(max-width:768px){
+      .scores-wrap { gap: 8px; }
+      .score-card { min-width: 80px; padding: 6px 10px; }
+      .score-name { font-size: 0.65rem; }
     }
   </style>
 </head>
 <body>
 
-  <!-- بطاقات النقاط (مطابقة تمامًا لقالب خلية الحروف) -->
-  <div class="scores-container">
-    <div class="score-card team1">
-      <div class="team-name">{{ session.team1_name }}</div>
-      <div class="team-score" id="team1Score">0</div>
+  <!-- هيدر -->
+  <div class="top-bar">
+
+    <!-- شعار الجلسة -->
+    <div class="session-logo">
+      <span class="sl-l1">تحدّي</span>
+      <span class="sl-l2">الصور</span>
+      <div class="sl-l3" id="slMaaName">
+        <span class="sl-maa">مع</span>
+        <span class="sl-name" id="slName"></span>
+      </div>
     </div>
-    <div class="score-card team2">
-      <div class="team-name">{{ session.team2_name }}</div>
-      <div class="team-score" id="team2Score">0</div>
+
+    <!-- النقاط -->
+    <div class="scores-wrap">
+      <div class="score-card t1">
+        <div class="score-name" id="t1Name">{{ session.team1_name }}</div>
+        <div class="score-val"  id="t1Score">0</div>
+      </div>
+      <div class="score-card t2">
+        <div class="score-name" id="t2Name">{{ session.team2_name }}</div>
+        <div class="score-val"  id="t2Score">0</div>
+      </div>
+    </div>
+
+    <!-- لوجو وش الجواب -->
+    <div class="wesh-logo">
+      <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
     </div>
   </div>
 
-  <!-- الشعار -->
-  <div class="logo">
-    <img src="https://res.cloudinary.com/drbfhq7t1/image/upload/v1754178528/weshaljawab_tltnqt.png" alt="وش الجواب">
-  </div>
-
-  <!-- الإطار الأوسط للصورة -->
+  <!-- منطقة الصورة -->
   <div class="stage">
-    <div class="frame">
-      <img id="pic" alt="الصورة الحالية" />
+    <div class="image-frame" id="imageFrame">
+      <div class="img-placeholder" id="imgPlaceholder">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <path d="M21 15l-5-5L5 21"/>
+        </svg>
+        <span>في انتظار الصورة...</span>
+      </div>
+      <img id="pic" src="" alt="" style="display:none;" />
+      <div class="pic-counter" id="picCounter" style="display:none;">
+        صورة <span id="picCur">1</span> من <span id="picTotal">—</span>
+      </div>
     </div>
   </div>
 
   <!-- طبقة البازر -->
-  <div id="buzz" class="buzz">
-    <div id="bzname" class="bzname">اسم المتسابق</div>
-    <div id="bzteam" class="bzteam">الفريق</div>
-    <div id="cd" class="cd">3</div>
+  <div id="buzzOverlay" class="buzz-overlay">
+    <div id="bzName" class="bz-name">—</div>
+    <div id="bzTeam" class="bz-team">—</div>
+    <div id="bzCd"   class="bz-cd">3</div>
   </div>
 
 <script>
-  // ====== إعدادات أساسية ======
   const SESSION_ID = '{{ session.id }}';
-  const TEAM1 = '{{ session.team1_name|escapejs }}';
-  const TEAM2 = '{{ session.team2_name|escapejs }}';
-  const WS_URL = `${location.protocol==='https:'?'wss':'ws'}://${location.host}/ws/pictures/${SESSION_ID}/?role=display`;
+  const T1_INIT    = '{{ session.team1_name|escapejs }}';
+  const T2_INIT    = '{{ session.team2_name|escapejs }}';
 
-  // عناصر DOM
-  const $img = document.getElementById('pic');
-  const $t1  = document.getElementById('team1Score');
-  const $t2  = document.getElementById('team2Score');
-  const $buzz= document.getElementById('buzz');
-  const $bzN = document.getElementById('bzname');
-  const $bzT = document.getElementById('bzteam');
-  const $cd  = document.getElementById('cd');
+  let ws = null, hb = null, delay = 1000, cdInterval = null;
 
-  // ====== صوتيات خفيفة ======
-  let audioCtx;
-  function ensureAudio(){ try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch{} }
-  function tone(f=800,ms=300,gain=0.55){
-    try{
-      ensureAudio(); if(!audioCtx) return;
-      const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
-      o.frequency.value=f; g.gain.value=gain;
-      const t=audioCtx.currentTime; o.start(t); o.stop(t+ms/1000);
-    }catch{}
-  }
-  function playBuzz(){ tone(880,320,0.6); }
-  function playEnd(){ tone(520,200,0.4); }
+  // ===== أصوات =====
+  let actx = null;
+  function _ac(){ if(!actx) try{ actx=new(window.AudioContext||window.webkitAudioContext)(); }catch{} if(actx?.state==='suspended') actx.resume(); return actx; }
+  function _tone(f,s,d,g=0.5){ const c=_ac(); if(!c) return; try{ const o=c.createOscillator(),gn=c.createGain(); o.connect(gn); gn.connect(c.destination); o.frequency.value=f; gn.gain.setValueAtTime(0,c.currentTime+s); gn.gain.linearRampToValueAtTime(g,c.currentTime+s+0.01); gn.gain.exponentialRampToValueAtTime(0.001,c.currentTime+s+d); o.start(c.currentTime+s); o.stop(c.currentTime+s+d+0.05); }catch{} }
+  function playBuzz(){ _tone(880,0,0.10,0.5); _tone(1109,0.09,0.10,0.5); _tone(1319,0.18,0.25,0.55); }
+  function playEnd(){  _tone(523,0,0.10,0.6);  _tone(415,0.12,0.10,0.6); _tone(330,0.24,0.35,0.7); }
+  document.addEventListener('click', _ac, {once:true});
+  document.addEventListener('touchstart', _ac, {once:true, passive:true});
 
-  // ====== عرض البازر + العد التنازلي ======
-  let cdTimer=null;
-  function showBuzz(name, team){
-    playBuzz();
-    $bzN.textContent = name || 'متسابق';
-    $bzT.textContent = team==='team1'? TEAM1 : TEAM2;
-    $buzz.classList.add('show');
-    startCountdown();
-  }
-  function hideBuzz(){ $buzz.classList.remove('show'); clearInterval(cdTimer); }
-  function startCountdown(){
-    clearInterval(cdTimer);
-    let n=3; $cd.textContent = n;
-    cdTimer = setInterval(()=>{
-      n--; $cd.textContent=n;
-      if(n<=0){ clearInterval(cdTimer); playEnd(); setTimeout(hideBuzz, 200); }
-    },1000);
+  // ===== ألوان الفرق =====
+  function applyColors(t1, t2){
+    if(t1){ document.documentElement.style.setProperty('--t1', t1); document.querySelector('.score-card.t1').style.borderColor=t1; document.querySelector('.score-card.t1 .score-name').style.color=t1; document.querySelector('.score-card.t1 .score-val').style.color=t1; }
+    if(t2){ document.documentElement.style.setProperty('--t2', t2); document.querySelector('.score-card.t2').style.borderColor=t2; document.querySelector('.score-card.t2 .score-name').style.color=t2; document.querySelector('.score-card.t2 .score-val').style.color=t2; }
   }
 
-  // ====== تحديثات الواجهة ======
-  function setPic(url){ $img.src = url || ''; $img.alt = 'الصورة الحالية'; }
-  function setScores(a,b){ $t1.textContent = a||0; $t2.textContent = b||0; }
+  // ===== شعار الجلسة =====
+  function applySessionLogo(name, sub){
+    const nameEl = document.getElementById('slName');
+    const maaEl  = document.getElementById('slMaaName');
+    if(!nameEl || !maaEl) return;
+    if(name){
+      nameEl.textContent = name;
+      maaEl.classList.add('visible');
+    } else {
+      nameEl.textContent = '';
+      maaEl.classList.remove('visible');
+    }
+  }
 
-  // ====== جلب الحالة الأولية للصورة ======
+  // ===== الصورة =====
+  function showPic(url, idx, total){
+    const img = document.getElementById('pic');
+    const ph  = document.getElementById('imgPlaceholder');
+    const ctr = document.getElementById('picCounter');
+    if(!url){ img.style.display='none'; ph.style.display='flex'; ctr.style.display='none'; return; }
+    img.onload = ()=>{ ph.style.display='none'; img.style.display='block'; };
+    img.onerror = ()=>{ ph.style.display='flex'; img.style.display='none'; };
+    img.src = url;
+    if(idx && total){ document.getElementById('picCur').textContent=idx; document.getElementById('picTotal').textContent=total; ctr.style.display='block'; }
+  }
+
   async function loadCurrent(){
     try{
       const r = await fetch(`/games/api/images-get-current/?session_id=${encodeURIComponent(SESSION_ID)}`);
-      if(r.status===410){ alert('انتهت صلاحية الجلسة'); return; }
+      if(r.status===410){ return; }
       if(!r.ok) return;
-      const data = await r.json();
-      const cur = (data && data.current) || {};
-      setPic(cur.image_url || '');
-      // النقاط تُحدّث عبر WS
-    }catch(e){}
+      const d = await r.json();
+      showPic(d.current?.image_url, d.current_index, d.count);
+    }catch{}
   }
 
-  // ====== WebSocket (استقبال أحداث: التالي/السابق/النقاط/البازر) ======
-  let ws=null, hb=null, delay=1000, maxDelay=5000;
+  // ===== بازر =====
+  function showBuzz(name, team){
+    playBuzz();
+    document.getElementById('bzName').textContent = name || '—';
+    const badge = document.getElementById('bzTeam');
+    badge.textContent = team==='team1'
+      ? document.getElementById('t1Name').textContent
+      : document.getElementById('t2Name').textContent;
+    badge.style.background = team==='team1'
+      ? getComputedStyle(document.documentElement).getPropertyValue('--t1').trim()
+      : getComputedStyle(document.documentElement).getPropertyValue('--t2').trim();
+    document.getElementById('buzzOverlay').classList.add('show');
+    startCd();
+  }
+  function hideBuzz(){ clearInterval(cdInterval); document.getElementById('buzzOverlay').classList.remove('show'); }
+  function startCd(){
+    clearInterval(cdInterval); let n=3;
+    document.getElementById('bzCd').textContent=n;
+    cdInterval = setInterval(()=>{ n--; document.getElementById('bzCd').textContent=n; if(n<=0){ clearInterval(cdInterval); playEnd(); setTimeout(hideBuzz,400); } },1000);
+  }
+
+  // ===== إعدادات أولية =====
+  async function loadSettings(){
+    try{
+      const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(SESSION_ID)}`);
+      if(!r.ok) return;
+      const { settings: s } = await r.json();
+      if(!s) return;
+      applyColors(s.team1_color, s.team2_color);
+      if(s.team1_name){ document.getElementById('t1Name').textContent=s.team1_name; }
+      if(s.team2_name){ document.getElementById('t2Name').textContent=s.team2_name; }
+      if(s.show_name) applySessionLogo(s.show_name, s.show_subtitle);
+    }catch{}
+  }
+
+  // ===== WebSocket =====
   function connect(){
-    ws = new WebSocket(WS_URL);
+    const proto = location.protocol==='https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws/pictures/${SESSION_ID}/?role=display`);
 
     ws.onopen = ()=>{
       delay=1000;
-      hb && clearInterval(hb);
-      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} }, 20000);
+      clearInterval(hb);
+      hb = setInterval(()=>{ try{ ws.readyState===1 && ws.send(JSON.stringify({type:'ping'})); }catch{} },20000);
     };
 
     ws.onmessage = (ev)=>{
-      let d={}; try{ d = JSON.parse(ev.data||'{}'); }catch{ return; }
+      let d={}; try{ d=JSON.parse(ev.data||'{}'); }catch{ return; }
       switch(d.type){
-        case 'puzzle_updated':   // يأتي من صور: next/prev/set_index
-          setPic(d.image_url);
+        case 'puzzle_updated':
+          showPic(d.image_url, d.index, d.total);
           break;
-        case 'scores_updated':   // تحديث النقاط
-          setScores(d.team1_score, d.team2_score);
+        case 'broadcast_image_index':
+          loadCurrent();
           break;
-        case 'contestant_buzz_accepted': // البازر
+        case 'scores_updated':
+          document.getElementById('t1Score').textContent = d.team1_score ?? 0;
+          document.getElementById('t2Score').textContent = d.team2_score ?? 0;
+          break;
+        case 'contestant_buzz_accepted':
           showBuzz(d.contestant_name, d.team);
           break;
         case 'buzz_unlocked':
         case 'buzz_reset_by_host':
           hideBuzz();
           break;
-        case 'pong': break;
-        default: break;
+        case 'settings_updated': {
+          const s = d.settings || {};
+          applyColors(s.team1_color, s.team2_color);
+          if(s.team1_name){ document.getElementById('t1Name').textContent=s.team1_name; }
+          if(s.team2_name){ document.getElementById('t2Name').textContent=s.team2_name; }
+          if(s.show_name !== undefined) applySessionLogo(s.show_name, s.show_subtitle);
+          break;
+        }
       }
     };
 
-    ws.onclose = ()=>{
-      hb && clearInterval(hb);
-      setTimeout(connect, delay);
-      delay = Math.min(delay*2, maxDelay);
-    };
+    ws.onclose = ()=>{ clearInterval(hb); setTimeout(connect, delay); delay=Math.min(delay*2,5000); };
     ws.onerror = ()=>{ try{ ws.close(); }catch{} };
   }
 
-  // ====== تهيئة ======
+  // ===== تهيئة =====
   document.addEventListener('DOMContentLoaded', ()=>{
-    // تفعيل الصوت على أول تفاعل (لهواتف iOS)
-    document.addEventListener('touchstart', ensureAudio, {once:true, passive:true});
-    document.addEventListener('click', ensureAudio, {once:true});
-
+    loadSettings();
     loadCurrent();
     connect();
   });
 
   window.addEventListener('beforeunload', ()=>{
-    try{ hb && clearInterval(hb); cdTimer && clearInterval(cdTimer); ws && ws.close(1000,'page unload'); }catch{}
+    clearInterval(hb); clearInterval(cdInterval);
+    try{ ws?.readyState===1 && ws.close(1000,'unload'); }catch{}
   });
 </script>
 </body>

@@ -338,9 +338,7 @@
         <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
           <span class="card-title">حزمة {{ package.package_number }}</span>
         </div>
-        {% if package.id in completed_packages_ids %}
-          <span class="used-before"><i class="fa-solid fa-rotate-left"></i> سبق شراؤها</span>
-        {% endif %}
+
         {% if package.description %}
           <div class="card-desc">{{ package.description }}</div>
         {% endif %}

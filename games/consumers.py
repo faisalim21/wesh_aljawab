@@ -663,6 +663,9 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             if t == 'buzz_reset':
                 await self._handle_buzz_reset()
                 return
+            if t == 'update_settings':
+                await self._handle_update_settings(data.get('settings', {}))
+                return
 
     # --------------------- handlers: puzzle ---------------------
     async def _handle_nav(self, dir_):
@@ -923,6 +926,54 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             return parse_qs(self.scope.get('query_string', b'').decode())
         except Exception:
             return {}
+
+
+    async def _handle_update_settings(self, settings: dict):
+        """يستقبل الإعدادات من المقدم ويبثها لكافة الصفحات"""
+        if not settings:
+            return
+        try:
+            def _save():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                if 'team1_name' in settings and settings['team1_name']:
+                    s.team1_name = settings['team1_name']
+                if 'team2_name' in settings and settings['team2_name']:
+                    s.team2_name = settings['team2_name']
+                if 'team1_color' in settings and settings['team1_color']:
+                    s.team1_color = settings['team1_color']
+                if 'team2_color' in settings and settings['team2_color']:
+                    s.team2_color = settings['team2_color']
+                if 'show_name' in settings:
+                    s.show_name = settings['show_name']
+                if 'show_subtitle' in settings:
+                    s.show_subtitle = settings['show_subtitle']
+                s.save()
+                return {
+                    'team1_name':    s.team1_name,
+                    'team2_name':    s.team2_name,
+                    'team1_color':   s.team1_color,
+                    'team2_color':   s.team2_color,
+                    'show_name':     s.show_name or '',
+                    'show_subtitle': s.show_subtitle or '',
+                }
+            saved = await sync_to_async(_save)()
+        except Exception as e:
+            logger.error(f'Pics settings save error: {e}')
+            return
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_settings_update',
+            'settings': saved,
+        })
+
+    async def broadcast_settings_update(self, event):
+        """يبث الإعدادات لجميع المتصلين"""
+        await self.send(text_data=json.dumps({
+            'type': 'settings_updated',
+            'settings': event.get('settings', {}),
+        }))
+
 
     async def _reply_contestant(self, confirmed=False, name="", team="", rejected="", error=""):
         if confirmed:
