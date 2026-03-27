@@ -474,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(data => {
       const s = data.settings || {};
       if (s.show_name) {
-        const gt = `${s.show_name} فيود`;
+        const gt = s.show_name;
         localStorage.setItem(`feud_title_${sessionId}`, gt);
         document.querySelector('.feud-logo').textContent = gt;
         document.title = gt + ' | وش الجواب';

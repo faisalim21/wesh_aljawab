@@ -1048,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (s.team1_name) { document.getElementById('t1Name').textContent = s.team1_name; document.getElementById('t1StrikesLabel').textContent = s.team1_name; }
       if (s.team2_name) { document.getElementById('t2Name').textContent = s.team2_name; document.getElementById('t2StrikesLabel').textContent = s.team2_name; }
       if (s.show_name) {
-        const gt = `${s.show_name} فيود`;
+        const gt = s.show_name;
         document.querySelector('.header-logo').textContent = gt;
         document.title = gt + ' | وش الجواب';
       }
