@@ -207,6 +207,17 @@
 
     .hint { color: rgba(255,255,255,.6); font-size: .9rem; margin-top: 10px; }
 
+    /* ===== تلميح الزر ===== */
+    .buzz-tip {
+      margin-top:10px;
+      background: rgba(34,197,94,0.07);
+      border: 1px solid rgba(34,197,94,0.15);
+      border-radius:10px; padding:8px 12px;
+      font-size:0.75rem; font-weight:700;
+      color:rgba(255,255,255,0.45); line-height:1.6;
+      text-align:right;
+    }
+
     @media(max-width:768px) {
       .logo { right: 10px; top: 10px; }
       .card-ct { padding: 20px 16px; border-radius: 20px; }
@@ -261,6 +272,10 @@
 
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <p class="hint">أول ضاغط يُقبل — تأكد من كتابة اسمك واختيار فريقك</p>
+    <div class="buzz-tip">
+      💡 إذا لاحظت تأخراً في الزر، قلّل عدد الأجهزة المفتوحة على رابط المتسابقين —
+      <strong>كثرة الاتصالات قد تؤثر على السرعة.</strong>
+    </div>
 
   </section>
 </main>
@@ -383,11 +398,10 @@ function connectWS() {
         const t2btn = document.querySelector('.tbtn.team2');
        if (t2btn) t2btn.lastChild.textContent = ' ' + d.team2_name;
       }
-      if (d.game_title) {
-        localStorage.setItem(`feud_title_${sessionId}`, d.game_title);
-        document.querySelector('.feud-logo').textContent = d.game_title;
-        document.title = d.game_title + ' | وش الجواب';
-      }
+      const gt = d.game_title || 'فاميلي فيود';
+      localStorage.setItem(`feud_title_${sessionId}`, gt);
+      document.querySelector('.feud-logo').textContent = gt;
+      document.title = gt + ' | وش الجواب';
 
     } else if (d.type === 'team_names_updated') {
       const t1btn = document.querySelector('.tbtn.team1');

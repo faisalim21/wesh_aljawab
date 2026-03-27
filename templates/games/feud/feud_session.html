@@ -580,10 +580,10 @@
     .ctrl-btn.blue:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(37,99,235,0.4); }
     .ctrl-btn.gold   { background: linear-gradient(135deg,#d97706,#f59e0b); color: #fff; }
     .ctrl-btn.gold:hover { transform: translateY(-2px); }
-    .ctrl-btn.green  { background: linear-gradient(135deg,#15803d,#22c55e); color: #fff; }
-    .ctrl-btn.green:hover { transform: translateY(-2px); }
-    .ctrl-btn.orange { background: linear-gradient(135deg,#c2410c,#f97316); color: #fff; }
-    .ctrl-btn.orange:hover { transform: translateY(-2px); }
+    .ctrl-btn.green  { background: var(--t1); color: #fff; }
+    .ctrl-btn.green:hover { transform: translateY(-2px); filter: brightness(1.15); }
+    .ctrl-btn.orange { background: var(--t2); color: #fff; }
+    .ctrl-btn.orange:hover { transform: translateY(-2px); filter: brightness(1.15); }
     .ctrl-btn.ghost  { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.15); }
     .ctrl-btn.ghost:hover { background: rgba(255,255,255,0.12); color: #fff; }
     .ctrl-btn.red    { background: linear-gradient(135deg,#b91c1c,#dc2626); color: #fff; }
@@ -1768,6 +1768,8 @@ function saveSettings() {
 
   st.t1n = t1;
   st.t2n = t2;
+  document.documentElement.style.setProperty('--t1', '#f59e0b');
+  document.documentElement.style.setProperty('--t2', '#60a5fa');
 
   document.getElementById('t1Name').textContent = t1;
   document.getElementById('t2Name').textContent = t2;
