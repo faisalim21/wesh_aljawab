@@ -2138,7 +2138,7 @@
       if (now - lastClickAt < 150) return;
       lastClickAt = now;
 
-      showQuestion(letter);
+      showQuestion(letter, cellIndex); // ← أضف cellIndex
 
       if (lastClickedIndex === cellIndex) {
         let newState = 'team1';
@@ -2184,7 +2184,7 @@
   }
 
   // ========= الأسئلة =========
-  async function showQuestion(letter){
+  async function showQuestion(letter, cellIndex) {
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
       if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
@@ -2245,9 +2245,9 @@
       // بثّ اختيار الحرف لشاشة العرض (API موحّد)
       try{
         await fetch('/games/api/letters-select-letter/', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ session_id: sessionId, letter })
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ session_id: sessionId, letter, cell_index: cellIndex })
         });
       }catch(e){}
     }catch{}

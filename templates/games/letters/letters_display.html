@@ -1270,27 +1270,29 @@
   }
 
   // تطبيق إبراز داخلي واضح للخلية (بدون أي تحريك للنص/الخلية)
-  function applySelectedHighlight(letter){
-    if (selectedLetter && selectedLetter !== letter){
-      clearInlineHighlight(selectedLetter);
-    }
-    selectedLetter = letter || null;
-    if (!letter) return;
+  function applySelectedHighlight(letter, cellIndex) {
+      if (selectedLetter && selectedLetter !== letter) {
+          clearInlineHighlight(selectedLetter);
+      }
+      selectedLetter = letter || null;
+      if (!letter && cellIndex == null) return;
 
-    ensureInnerGlowFilter();
+      ensureInnerGlowFilter();
 
-    const g = document.querySelector(`[data-letter="${letter}"]`);
-    if (!g) return;
-    const poly = g.querySelector('polygon');
-    if (!poly) return;
-
-    // فلتر التظليل الداخلي
-    poly.style.filter = 'url(#wjgInnerGlow)';
-    // حدود رفيعة لتأكيد التحديد (بدون تغيير الحجم)
-    poly.setAttribute('stroke', '#06b6d4');      // teal
-    poly.setAttribute('stroke-width', '2.5');
-    poly.setAttribute('stroke-linejoin', 'round');
-    // لا نلمس <text> نهائياً
+      let g;
+      if (cellIndex !== undefined && cellIndex !== null) {
+          g = document.querySelector(`[data-index="${cellIndex}"]`);
+      }
+      if (!g && letter) {
+          g = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!g) return;
+      const poly = g.querySelector('polygon');
+      if (!poly) return;
+      poly.style.filter = 'url(#wjgInnerGlow)';
+      poly.setAttribute('stroke', '#06b6d4');
+      poly.setAttribute('stroke-width', '2.5');
+      poly.setAttribute('stroke-linejoin', 'round');
   }
 
   // ===================== أصوات + عدّ تنازلي =====================
@@ -1442,7 +1444,7 @@
             setTimeout(loadSessionState, 50);
             break;
           case 'letter_selected':
-            if (d.letter) applySelectedHighlight(d.letter);
+            if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
             break;
           case 'settings_updated':
             if (d.settings) {
