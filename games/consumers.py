@@ -133,16 +133,17 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 if show:
                     await self.send(text_data=json.dumps({
                         "type": "letter_selected",
-                        "letter": event.get("letter")
+                        "letter": event.get("letter"),
+                        "cell_index": event.get("cell_index"),
                     }))
             except Exception:
                 pass
             return
         await self.send(text_data=json.dumps({
             "type": "letter_selected",
-            "letter": event.get("letter")
+            "letter": event.get("letter"),
+            "cell_index": event.get("cell_index"),
         }))
-
 
     # ============================== Lifecycle ==============================
     async def connect(self):
