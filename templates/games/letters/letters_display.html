@@ -1053,6 +1053,7 @@
 
   // الحرف الحالي المظلّل (يبقى حتى يحدث تغيير آخر)
   let selectedLetter = null;
+  let selectedIndex = null;
   // تخزين بيانات الشعار
   let _dispLogoName = '';
   let _dispLogoSub  = '';
@@ -1255,10 +1256,13 @@
   }
 
   // إزالة إبراز الخلية المحددة
-  function clearInlineHighlight(letter){
-    if (!letter) return;
-    const g = document.querySelector(`[data-letter="${letter}"]`);
-    if (!g) return;
+  function clearInlineHighlight(letter, cellIndex){
+      let g = null;
+      if (cellIndex !== undefined && cellIndex !== null) {
+          g = document.querySelector(`[data-index="${cellIndex}"]`);
+      }
+      if (!g && letter) g = document.querySelector(`[data-letter="${letter}"]`);
+      if (!g) return;
     const poly = g.querySelector('polygon');
     if (poly){
       poly.style.filter = '';
@@ -1270,11 +1274,12 @@
   }
 
   // تطبيق إبراز داخلي واضح للخلية (بدون أي تحريك للنص/الخلية)
-  function applySelectedHighlight(letter, cellIndex) {
-      if (selectedLetter && selectedLetter !== letter) {
-          clearInlineHighlight(selectedLetter);
+  function applySelectedHighlight(letter, cellIndex){
+      if (selectedLetter !== null || selectedIndex !== null){
+        clearInlineHighlight(selectedLetter, selectedIndex);
       }
       selectedLetter = letter || null;
+      selectedIndex = (cellIndex !== undefined && cellIndex !== null) ? cellIndex : null;
       if (!letter && cellIndex == null) return;
 
       ensureInnerGlowFilter();

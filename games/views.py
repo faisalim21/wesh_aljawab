@@ -1416,25 +1416,17 @@ def api_letters_select_letter(request):
     if letter not in letters:
         return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
 
-    cell_index = payload.get("cell_index")
-    async_to_sync(channel_layer.group_send)(
-        f"letters_session_{session.id}",
-        {
-            "type": "broadcast_letter_selected",
-            "letter": letter,
-            "cell_index": cell_index,
-        }
-    )
-
     # بثّ إلى المجموعة
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
+            cell_index = payload.get("cell_index")
             async_to_sync(channel_layer.group_send)(
                 f"letters_session_{session.id}",
                 {
-                    "type": "broadcast_letter_selected",  # سيحوّلها الـ consumer إلى payload لعملاء WS
+                    "type": "broadcast_letter_selected",
                     "letter": letter,
+                    "cell_index": cell_index,
                 }
             )
     except Exception as e:
