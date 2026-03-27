@@ -143,7 +143,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             "letter": event.get("letter")
         }))
 
-        
+
     # ============================== Lifecycle ==============================
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
@@ -353,7 +353,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 )
                 if not isinstance(progress.cell_states, dict):
                     progress.cell_states = {}
-                progress.cell_states[letter] = state
+                key = str(cell_index) if cell_index is not None else letter
+                progress.cell_states[key] = state
 
                 if not isinstance(progress.used_letters, list):
                     progress.used_letters = []

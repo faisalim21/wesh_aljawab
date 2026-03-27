@@ -2409,7 +2409,14 @@
       if (!isWithinPendingAckWindow()){
         reflectScores(data.team1_score||0, data.team2_score||0);
       }
-      if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
+      if (data.cell_states) Object.entries(data.cell_states).forEach(([key, st]) => {
+          const idx = parseInt(key);
+          if (!isNaN(idx)) {
+              applyCellState(null, st, idx);
+          } else {
+              applyCellState(key, st);
+          }
+      });
       if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
     }catch{}
   }

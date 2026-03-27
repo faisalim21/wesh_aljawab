@@ -1385,10 +1385,13 @@
 
       updateScores(data.team1_score || 0, data.team2_score || 0);
 
-      if (data.cell_states && typeof data.cell_states === 'object') {
-        for (const [ltr, st] of Object.entries(data.cell_states)) {
-          updateCell(ltr, st);
-        }
+      for (const [key, st] of Object.entries(data.cell_states)) {
+          const idx = parseInt(key);
+          if (!isNaN(idx)) {
+              updateCell(null, st, idx);
+          } else {
+              updateCell(key, st);
+          }
       }
 
       if (selectedLetter) applySelectedHighlight(selectedLetter, true);
