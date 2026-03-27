@@ -1039,6 +1039,21 @@ function showAwardPop(text) {
 // ========= تهيئة =========
 document.addEventListener('DOMContentLoaded', () => {
   connect();
+
+  // تحميل الشعار عند الفتح
+  fetch(`/games/api/settings/?session_id=${encodeURIComponent(SESSION_ID)}`)
+    .then(r => r.json())
+    .then(data => {
+      const s = data.settings || {};
+      if (s.team1_name) { document.getElementById('t1Name').textContent = s.team1_name; document.getElementById('t1StrikesLabel').textContent = s.team1_name; }
+      if (s.team2_name) { document.getElementById('t2Name').textContent = s.team2_name; document.getElementById('t2StrikesLabel').textContent = s.team2_name; }
+      if (s.show_name) {
+        const gt = `${s.show_name} فيود`;
+        document.querySelector('.header-logo').textContent = gt;
+        document.title = gt + ' | وش الجواب';
+      }
+    })
+    .catch(() => {});
 });
 
 window.addEventListener('beforeunload', () => {
