@@ -834,6 +834,10 @@ function connect() {
         if (d.game_title) {
           document.querySelector('.header-logo').textContent = d.game_title;
           document.title = d.game_title + ' | وش الجواب';
+        } else {
+          // لو ما أرسل game_title، نبني من الأسماء
+          const inferred = `${d.team1_name || ''} فيود`.trim();
+          document.querySelector('.header-logo').textContent = inferred;
         }
         break;
 
@@ -859,10 +863,10 @@ function connect() {
         if (d.team1_name) document.getElementById('t1StrikesLabel').textContent = d.team1_name;
         if (d.team2_name) document.getElementById('t2StrikesLabel').textContent = d.team2_name;
 
-        if (d.game_title) {
-          document.querySelector('.header-logo').textContent = d.game_title;
-          document.title = d.game_title + ' | وش الجواب';
-        }
+        const gt = d.game_title || 'فاميلي فيود';
+        document.querySelector('.header-logo').textContent = gt;
+        document.title = gt + ' | وش الجواب';
+
         buildBoard(state.answers, state.revealed);
         updateStrikes(state.t1Strikes, state.t2Strikes, null);
         updateMultiplier(state.multiplier);

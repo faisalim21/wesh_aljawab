@@ -227,6 +227,14 @@
       box-shadow: 0 8px 22px rgba(245,158,11,.4);
       color: #fff; text-decoration: none;
     }
+    .btn-play.btn-available {
+      background: #1a3a8f;
+      box-shadow: none;
+    }
+    .btn-play.btn-available:hover {
+      background: #1e4099;
+      color: #fff; text-decoration: none;
+    }
     .btn-play:disabled {
       background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
       color: #94a3b8; cursor: not-allowed; box-shadow: none; transform: none;
@@ -300,14 +308,14 @@
 
         {% if request.user.is_authenticated %}
           {% if free_active_session %}
-            <a class="btn-play btn-gold" href="{% url 'games:feud_session' free_active_session.id %}" target="_blank">
+            <a class="btn-play btn-available" href="{% url 'games:feud_session' free_active_session.id %}" target="_blank">
               <i class="fas fa-play"></i> ارجع إلى جلستك
             </a>
           {% elif free_session_eligible %}
             <form method="POST" action="{% url 'games:create_feud_session' %}" target="_blank">
               {% csrf_token %}
               <input type="hidden" name="package_id" value="{{ free_package.id }}">
-              <button type="submit" class="btn-play btn-gold">
+              <button type="submit" class="btn-play btn-available">
                 <i class="fas fa-play"></i> ابدأ الجولة المجانية
               </button>
             </form>
@@ -356,7 +364,7 @@
           <form method="POST" action="{% url 'games:create_feud_session' %}" target="_blank">
             {% csrf_token %}
             <input type="hidden" name="package_id" value="{{ package.id }}">
-            <button type="submit" class="btn-play btn-gold">
+            <button type="submit" class="btn-play btn-available">
               <i class="fas fa-play"></i> ابدأ اللعب
             </button>
           </form>

@@ -506,8 +506,8 @@ class GameSession(models.Model):
         help_text="الشراء المرتبط بهذه الجلسة (إن وُجد)"
     )
 
-    team1_name = models.CharField(max_length=50, default="الفريق الأخضر")
-    team2_name = models.CharField(max_length=50, default="الفريق البرتقالي")
+    team1_name = models.CharField(max_length=50, default="الفريق الأول")
+    team2_name = models.CharField(max_length=50, default="الفريق الثاني")
 
     is_active = models.BooleanField(default=True)
     is_completed = models.BooleanField(default=False)
@@ -1027,12 +1027,19 @@ class GameSettings(models.Model):
     @classmethod
     def get_or_create_for_session(cls, session):
         """جلب أو إنشاء الإعدادات مع الأخذ من أسماء الجلسة الأصلية"""
+        feud_defaults = {
+            'team1_name': 'الفريق الذهبي',
+            'team2_name': 'الفريق الأزرق',
+            'team1_color': '#f59e0b',
+            'team2_color': '#60a5fa',
+        }
+        game_defaults = feud_defaults if (session.package and session.package.game_type == 'feud') else {
+            'team1_name': session.team1_name,
+            'team2_name': session.team2_name,
+        }
         obj, _ = cls.objects.get_or_create(
             session=session,
-            defaults={
-                'team1_name': session.team1_name,
-                'team2_name': session.team2_name,
-            }
+            defaults=game_defaults
         )
         return obj
 
