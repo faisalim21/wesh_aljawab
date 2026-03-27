@@ -1043,6 +1043,8 @@
           }
 
           const g = document.createElementNS(NS, 'g');
+          g.setAttribute('data-index', idx);
+          g.setAttribute('data-letter', letter);
 
           const poly = document.createElementNS(NS, 'polygon');
           poly.setAttribute('points', pts.join(' '));
@@ -1073,17 +1075,29 @@
       }
     }
     function updateContestantCell(letter, state, cellIndex) {
-      const svg = document.getElementById('contestantHoneycombSvg');
-      if (!svg) return;
-      if (cellIndex === undefined || cellIndex === null) return;
-      const g = svg.querySelectorAll('g')[cellIndex];
-      if (!g) return;
-      const poly = g.querySelector('polygon');
-      const txt  = g.querySelector('text');
-      if (poly) poly.setAttribute('fill',
-        state === 'team1' ? contestantT1Color :
-        state === 'team2' ? contestantT2Color : 'white');
-      if (txt)  txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
+        const svg = document.getElementById('contestantHoneycombSvg');
+        if (!svg) return;
+
+        let g = null;
+
+        // البحث بالـ index أولاً — دائماً فريد
+        if (cellIndex !== undefined && cellIndex !== null) {
+            g = svg.querySelector(`[data-index="${cellIndex}"]`);
+        }
+
+        // fallback بالحرف
+        if (!g && letter) {
+            g = svg.querySelector(`[data-letter="${letter}"]`);
+        }
+
+        if (!g) return;
+
+        const poly = g.querySelector('polygon');
+        const txt  = g.querySelector('text');
+        if (poly) poly.setAttribute('fill',
+            state === 'team1' ? contestantT1Color :
+            state === 'team2' ? contestantT2Color : 'white');
+        if (txt) txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
     }
 
     function renderContestantScores(team1Name, team2Name, team1Score, team2Score, team1Color, team2Color) {

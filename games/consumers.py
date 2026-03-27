@@ -124,27 +124,42 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"letters_session_{self.session_id}"
-
+    
         qs = self._parse_qs()
         self.role = qs.get('role', ['viewer'])[0]
-
+    
+        # قيمة المؤقت — تُحمّل مرة وحدة وتُحدَّث عند تغيير الإعدادات
+        self.buzz_timer = 3
+        self._unlock_task = None
+    
         try:
             self.session = await self.get_session()
         except ObjectDoesNotExist:
             await self.close(code=4404)
             return
-
+    
         if await self._is_session_expired(self.session) or not self.session.is_active:
             await self.close(code=4401)
             return
-
+    
+        # حمّل القيمة الحقيقية من الإعدادات
+        try:
+            def _load_timer():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                return max(1, s.buzz_timer_seconds or 3)
+            self.buzz_timer = await sync_to_async(_load_timer)()
+        except Exception:
+            pass
+    
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
-        # لو متسابق وإعداد إظهار الخلية مفعّل، أرسل الحالة
+    
         if self.role == 'contestant':
             await self._send_grid_to_contestant_if_enabled()
+    
+        logger.info(f"WS connected: session={self.session_id}, role={self.role}, buzz_timer={self.buzz_timer}")
 
-        logger.info(f"WS connected: session={self.session_id}, role={self.role}")
 
     async def disconnect(self, close_code):
         try:
@@ -239,11 +254,11 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         contestant_name = (data.get("contestant_name") or "").strip()
         team = data.get("team")
         timestamp = data.get("timestamp")
-
+    
         if not contestant_name or team not in ("team1", "team2"):
             await self._reply_contestant(error="اسم المتسابق والفريق مطلوبان")
             return
-
+    
         buzz_lock_key = f"buzz_lock_{self.session_id}"
         lock_payload = {
             'name': contestant_name,
@@ -252,21 +267,23 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'session_id': self.session_id,
             'method': 'WS',
         }
-
+    
+        # timeout = buzz_timer + 2 (buffer) لضمان عدم انتهاء الـ cache قبل العداد
+        lock_ttl = self.buzz_timer + 2
+    
         try:
-            added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=3)  # يمكن ترفعها 4
+            added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=lock_ttl)
         except Exception:
             added = False
-
+    
         if not added:
             current_buzzer = await sync_to_async(cache.get)(buzz_lock_key) or {}
             await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
             return
-
+    
         await self.ensure_contestant(self.session, contestant_name, team)
-
         await self._reply_contestant(confirmed=True, name=contestant_name, team=team)
-
+    
         team_display = await self.get_team_display_name(self.session, team)
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_buzz_event',
@@ -276,10 +293,15 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,
             'action': 'buzz_accepted'
         })
+    
+        # إلغاء أي task فتح سابق وإنشاء واحد جديد
+        if self._unlock_task and not self._unlock_task.done():
+            self._unlock_task.cancel()
+        self._unlock_task = asyncio.create_task(self._auto_unlock_after_timer())
+    
+        logger.info(f"INSTANT Buzz: {contestant_name} from {team} in session {self.session_id}, timer={self.buzz_timer}s")
+ 
 
-        asyncio.create_task(self._auto_unlock_after_3_seconds())  # يمكن تغييره لـ 4
-
-        logger.info(f"INSTANT Buzz (atomic): {contestant_name} from {team} in session {self.session_id}")
 
     async def handle_buzz_reset(self):
         try:
@@ -387,24 +409,39 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             return session.team2_name
         return 'فريق غير معروف'
 
-    async def _auto_unlock_after_3_seconds(self):
+    async def _auto_unlock_after_timer(self):
+        """فتح الزر بعد انتهاء المؤقت المحدد في الإعدادات."""
         try:
-            # اقرأ المدة من إعدادات الجلسة
-            def _get_timer():
-                from games.models import GameSettings
-                s = GameSettings.get_or_create_for_session(self.session)
-                return s.buzz_timer_seconds or 3
-
-            timer = await sync_to_async(_get_timer)()
-            await asyncio.sleep(timer)
+            await asyncio.sleep(self.buzz_timer)
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             await sync_to_async(cache.delete)(buzz_lock_key)
             await self.channel_layer.group_send(self.group_name, {
                 'type': 'broadcast_buzz_event',
                 'action': 'buzz_unlock'
             })
+        except asyncio.CancelledError:
+            pass  # تم الإلغاء يدوياً — طبيعي
         except Exception as e:
             logger.error(f"Auto unlock error for session {self.session_id}: {e}")
+
+    async def broadcast_settings_update(self, event):
+        settings = event.get('settings', {})
+    
+        # تحديث المؤقت فورياً بدون قراءة DB
+        if 'buzz_timer_seconds' in settings:
+            try:
+                self.buzz_timer = max(1, int(settings['buzz_timer_seconds']))
+            except (ValueError, TypeError):
+                pass
+    
+        await self.send(text_data=json.dumps({
+            'type': 'settings_updated',
+            'settings': settings
+        }))
+    
+        if self.role == 'contestant' and settings.get('show_grid_to_contestants'):
+            await self._send_grid_to_contestant_if_enabled()
+
 
     async def _is_session_expired(self, session: GameSession) -> bool:
         """
@@ -430,16 +467,6 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         except Exception:
             return {}
 
-    async def broadcast_settings_update(self, event):
-        settings = event.get('settings', {})
-        await self.send(text_data=json.dumps({
-            'type': 'settings_updated',
-            'settings': settings
-        }))
-
-        # لو متسابق والإعداد فُعِّل الآن، أرسل الخلية فوراً
-        if self.role == 'contestant' and settings.get('show_grid_to_contestants'):
-            await self._send_grid_to_contestant_if_enabled()
 
     async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
         if confirmed:
@@ -568,27 +595,36 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
         self.group_name = f"images_session_{self.session_id}"
 
-        # استخرج الدور
         self.role = self._parse_qs().get('role', ['viewer'])[0]
 
-        # جرّب الحصول على الجلسة
+        # مؤقت الزر — يُحمّل مرة وتُحدَّث عند تغيير الإعدادات
+        self.buzz_timer = 3
+        self._unlock_task = None
+
         try:
             self.session = await self._get_session()
         except ObjectDoesNotExist:
             await self.close(code=4404)
             return
 
-        # لو منتهية لا نقبل
         if await self._is_session_expired(self.session) or not self.session.is_active:
             await self.close(code=4401)
             return
 
-        # *** اقبل الاتصال أولًا ثم أكمل التهيئة ***
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         logger.info(f"WS connected (images): session={self.session_id}, role={self.role}")
 
-        # حمّل قائمة الألغاز بشكل آمن
+        # حمّل القيمة الحقيقية من الإعدادات
+        try:
+            def _load_timer():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                return max(1, s.buzz_timer_seconds or 3)
+            self.buzz_timer = await sync_to_async(_load_timer)()
+        except Exception:
+            pass
+
         self.riddles = []
         try:
             self.riddles = await sync_to_async(lambda: list(
@@ -599,16 +635,15 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             logger.error(f'Pics: failed to load riddles for {self.session_id}: {e}')
 
-        # تأكد من progress
         self.current_index, self.total = 1, max(1, len(self.riddles) or 1)
         try:
             self.current_index, self.total = await self._ensure_progress_bounds()
         except Exception as e:
             logger.error(f'Pics: ensure progress failed for {self.session_id}: {e}')
 
-        # بثّ الحالة الأولية للمقدم/العرض
         if self.role in ('host', 'display'):
             await self._send_puzzle_state()
+
 
             
 
@@ -732,26 +767,30 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         name = (data.get('contestant_name') or '').strip()
         team = data.get('team')
         timestamp = data.get('timestamp')
-
+    
         if not name or team not in ('team1', 'team2'):
             await self._reply_contestant(error='اسم المتسابق والفريق مطلوبان')
             return
-
+    
         key = f'buzz_lock_{self.session_id}'
-        payload = {'name': name, 'team': team, 'timestamp': timestamp, 'session_id': self.session_id, 'method': 'WS'}
+        payload = {'name': name, 'team': team, 'timestamp': timestamp,
+                'session_id': self.session_id, 'method': 'WS'}
+    
+        lock_ttl = self.buzz_timer + 2  # buffer
+    
         try:
-            added = await sync_to_async(cache.add)(key, payload, timeout=3)
+            added = await sync_to_async(cache.add)(key, payload, timeout=lock_ttl)
         except Exception:
             added = False
-
+    
         if not added:
             cur = await sync_to_async(cache.get)(key) or {}
             await self._reply_contestant(rejected=f'الزر محجوز من {cur.get("name","مشارك")}')
             return
-
+    
         await self._ensure_contestant(name, team)
         await self._reply_contestant(confirmed=True, name=name, team=team)
-
+    
         team_display = self.session.team1_name if team == 'team1' else self.session.team2_name
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_buzz_event',
@@ -759,8 +798,11 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
             'team_display': team_display, 'timestamp': timestamp,
             'action': 'buzz_accepted'
         })
+    
+        if self._unlock_task and not self._unlock_task.done():
+            self._unlock_task.cancel()
+        self._unlock_task = asyncio.create_task(self._auto_unlock_after_timer())
 
-        asyncio.create_task(self._auto_unlock_3s())
 
     async def _handle_buzz_reset(self):
         try:
@@ -893,15 +935,20 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
                 Contestant.objects.create(session=self.session, name=name, team=team)
         await sync_to_async(_ensure)()
 
-    async def _auto_unlock_3s(self):
+    async def _auto_unlock_after_timer(self):
+        """فتح الزر بعد انتهاء المؤقت."""
         try:
-            await asyncio.sleep(3)
+            await asyncio.sleep(self.buzz_timer)
             await sync_to_async(cache.delete)(f'buzz_lock_{self.session_id}')
             await self.channel_layer.group_send(self.group_name, {
                 'type': 'broadcast_buzz_event', 'action': 'buzz_unlock'
             })
+        except asyncio.CancelledError:
+            pass
         except Exception as e:
             logger.error(f'auto unlock error: {e}')
+ 
+
 
     async def _is_session_expired(self, session: GameSession) -> bool:
         """
@@ -969,9 +1016,18 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
 
     async def broadcast_settings_update(self, event):
         """يبث الإعدادات لجميع المتصلين"""
+        settings = event.get('settings', {})
+
+        # تحديث المؤقت فورياً
+        if 'buzz_timer_seconds' in settings:
+            try:
+                self.buzz_timer = max(1, int(settings['buzz_timer_seconds']))
+            except (ValueError, TypeError):
+                pass
+
         await self.send(text_data=json.dumps({
             'type': 'settings_updated',
-            'settings': event.get('settings', {}),
+            'settings': settings,
         }))
 
 
@@ -1834,8 +1890,22 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
         buzz_key = f"buzz_lock_feud_{self.session_id}"
         payload = {'name': name, 'team': team}
 
+        # اقرأ المؤقت من cache — نفس منطق Letters
+        timer_cache_key = f"buzz_timer_{self.session_id}"
+        buzz_timer = await sync_to_async(cache.get)(timer_cache_key)
+        if buzz_timer is None:
+            try:
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                buzz_timer = max(1, s.buzz_timer_seconds or 3)
+            except Exception:
+                buzz_timer = 3
+            await sync_to_async(cache.set)(timer_cache_key, buzz_timer, timeout=600)
+
+        lock_ttl = buzz_timer + 2
+
         try:
-            added = await sync_to_async(cache.add)(buzz_key, payload, timeout=3)
+            added = await sync_to_async(cache.add)(buzz_key, payload, timeout=lock_ttl)
         except Exception:
             added = False
 

@@ -1552,6 +1552,8 @@ function buildHexBackground(svg, viewW, viewH, color1, color2) {
   svg.insertBefore(defs, svg.firstChild);
 
   const g = document.createElementNS(NS, 'g');
+  g.setAttribute('data-index', idx);
+  g.setAttribute('data-letter', letter);
   g.setAttribute('class','hex-bg');
   g.setAttribute('clip-path','url(#hexBgClip)');
 
@@ -1614,6 +1616,7 @@ function createHoneycombCells() {
       const g = document.createElementNS(NS, 'g');
       g.setAttribute('class','hex-cell');
       g.setAttribute('data-letter', letter);
+      g.setAttribute('data-index', idx);
 
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class','hex-shape');
@@ -1973,8 +1976,19 @@ function nohostHandleCellClick(letter) {
       if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
       else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
       else                                          { cellEl.classList.add('team1'); }
-      if (socket && socket.readyState === 1)
-        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState }));
+      if (socket && socket.readyState === 1) {
+          const allCells = document.querySelectorAll('#honeycombSvg [data-letter]');
+          let cellIndex = null;
+          allCells.forEach((cell, i) => {
+              if (cell === cellEl) cellIndex = i;
+          });
+          socket.send(JSON.stringify({ 
+              type: 'update_cell_state', 
+              letter, 
+              state: newState,
+              cell_index: cellIndex
+          }));
+      }
     }
   } else {
     // ضغطة أولى = عرض السؤال
