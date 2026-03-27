@@ -1270,27 +1270,29 @@
   }
 
   // تطبيق إبراز داخلي واضح للخلية (بدون أي تحريك للنص/الخلية)
-  function applySelectedHighlight(letter){
-    if (selectedLetter && selectedLetter !== letter){
-      clearInlineHighlight(selectedLetter);
-    }
-    selectedLetter = letter || null;
-    if (!letter) return;
+  function applySelectedHighlight(letter, cellIndex) {
+      if (selectedLetter && selectedLetter !== letter) {
+          clearInlineHighlight(selectedLetter);
+      }
+      selectedLetter = letter || null;
+      if (!letter && cellIndex == null) return;
 
-    ensureInnerGlowFilter();
+      ensureInnerGlowFilter();
 
-    const g = document.querySelector(`[data-letter="${letter}"]`);
-    if (!g) return;
-    const poly = g.querySelector('polygon');
-    if (!poly) return;
-
-    // فلتر التظليل الداخلي
-    poly.style.filter = 'url(#wjgInnerGlow)';
-    // حدود رفيعة لتأكيد التحديد (بدون تغيير الحجم)
-    poly.setAttribute('stroke', '#06b6d4');      // teal
-    poly.setAttribute('stroke-width', '2.5');
-    poly.setAttribute('stroke-linejoin', 'round');
-    // لا نلمس <text> نهائياً
+      let g;
+      if (cellIndex !== undefined && cellIndex !== null) {
+          g = document.querySelector(`[data-index="${cellIndex}"]`);
+      }
+      if (!g && letter) {
+          g = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!g) return;
+      const poly = g.querySelector('polygon');
+      if (!poly) return;
+      poly.style.filter = 'url(#wjgInnerGlow)';
+      poly.setAttribute('stroke', '#06b6d4');
+      poly.setAttribute('stroke-width', '2.5');
+      poly.setAttribute('stroke-linejoin', 'round');
   }
 
   // ===================== أصوات + عدّ تنازلي =====================
@@ -1352,12 +1354,17 @@
     if (s2) s2.textContent = t2;
   }
 
-  function updateCell(letter, state) {
-    const el = document.querySelector(`[data-letter="${letter}"]`);
-    if (!el) return;
-    el.classList.remove('team1', 'team2');
-    if (state && state !== 'normal') el.classList.add(state);
-    // لا نلمس إبراز الحرف المختار هنا — يبقى كما هو
+  function updateCell(letter, state, cellIndex) {
+      let el;
+      if (cellIndex !== undefined && cellIndex !== null) {
+          el = document.querySelector(`[data-index="${cellIndex}"]`);
+      }
+      if (!el && letter) {
+          el = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!el) return;
+      el.classList.remove('team1', 'team2');
+      if (state && state !== 'normal') el.classList.add(state);
   }
 
   // ===================== مزامنة أوليّة من الخادم =====================
@@ -1380,10 +1387,13 @@
 
       updateScores(data.team1_score || 0, data.team2_score || 0);
 
-      if (data.cell_states && typeof data.cell_states === 'object') {
-        for (const [ltr, st] of Object.entries(data.cell_states)) {
-          updateCell(ltr, st);
-        }
+      for (const [key, st] of Object.entries(data.cell_states)) {
+          const idx = parseInt(key);
+          if (!isNaN(idx)) {
+              updateCell(null, st, idx);
+          } else {
+              updateCell(key, st);
+          }
       }
 
       if (selectedLetter) applySelectedHighlight(selectedLetter, true);
@@ -1418,8 +1428,8 @@
             endBuzz();
             break;
           case 'cell_state_updated':
-            updateCell(d.letter, d.state);
-            break;
+              updateCell(d.letter, d.state, d.cell_index);
+              break;
           case 'scores_updated':
             updateScores(d.team1_score, d.team2_score);
             break;
@@ -1434,7 +1444,7 @@
             setTimeout(loadSessionState, 50);
             break;
           case 'letter_selected':
-            if (d.letter) applySelectedHighlight(d.letter);
+            if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
             break;
           case 'settings_updated':
             if (d.settings) {
@@ -1531,8 +1541,8 @@ function getLettersForGrid(gridSize, baseLetters) {
   const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
   let result = [...src];
   while (result.length < count) {
-    result = result.concat([...src].sort(() => Math.random() - 0.5));
-  }
+    result = result.concat([...src]);
+}
   return result.slice(0, count);
 }
 
@@ -1614,6 +1624,7 @@ function createHoneycombCells() {
       const g = document.createElementNS(NS, 'g');
       g.setAttribute('class','hex-cell');
       g.setAttribute('data-letter', letter);
+      g.setAttribute('data-index', idx);
 
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class','hex-shape');
@@ -1973,8 +1984,19 @@ function nohostHandleCellClick(letter) {
       if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
       else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
       else                                          { cellEl.classList.add('team1'); }
-      if (socket && socket.readyState === 1)
-        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState }));
+      if (socket && socket.readyState === 1) {
+          const allCells = document.querySelectorAll('#honeycombSvg [data-letter]');
+          let cellIndex = null;
+          allCells.forEach((cell, i) => {
+              if (cell === cellEl) cellIndex = i;
+          });
+          socket.send(JSON.stringify({ 
+              type: 'update_cell_state', 
+              letter, 
+              state: newState,
+              cell_index: cellIndex
+          }));
+      }
     }
   } else {
     // ضغطة أولى = عرض السؤال

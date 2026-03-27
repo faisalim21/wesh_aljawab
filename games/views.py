@@ -1215,11 +1215,9 @@ def api_session_expiry_info(request):
 # -------------------------------
 @csrf_exempt
 @require_http_methods(["POST"])
+@csrf_exempt
+@require_http_methods(["POST"])
 def api_contestant_buzz_http(request):
-    """
-    زر الطنطيط عبر HTTP بقفل ذرّي (3 ثواني).
-    يقبل أول محاولة فقط خلال مدة القفل، والبقية تُرفض برسالة 'محجوز'.
-    """
     try:
         data = json.loads(request.body or "{}")
         session_id = data.get('session_id')
@@ -1238,6 +1236,21 @@ def api_contestant_buzz_http(request):
         if session.is_time_expired:
             return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
+        # ─── قراءة المؤقت من cache ───────────────────────────
+        timer_cache_key = f"buzz_timer_{session_id}"
+        buzz_timer = cache.get(timer_cache_key)
+        if buzz_timer is None:
+            try:
+                from .models import GameSettings
+                s = GameSettings.get_or_create_for_session(session)
+                buzz_timer = max(1, s.buzz_timer_seconds or 3)
+            except Exception:
+                buzz_timer = 3
+            cache.set(timer_cache_key, buzz_timer, timeout=600)
+
+        lock_ttl = buzz_timer + 2
+
+        # ─── قفل ذري ─────────────────────────────────────────
         buzz_lock_key = f"buzz_lock_{session_id}"
         lock_payload = {
             'name': contestant_name,
@@ -1248,8 +1261,7 @@ def api_contestant_buzz_http(request):
         }
 
         try:
-            added = cache.add(buzz_lock_key, lock_payload, timeout=4)
-
+            added = cache.add(buzz_lock_key, lock_payload, timeout=lock_ttl)
         except Exception:
             added = False
 
@@ -1262,6 +1274,7 @@ def api_contestant_buzz_http(request):
                 'locked_team': current_buzzer.get('team')
             })
 
+        # ─── تسجيل المتسابق ──────────────────────────────────
         contestant, created = Contestant.objects.get_or_create(
             session=session,
             name=contestant_name,
@@ -1271,23 +1284,26 @@ def api_contestant_buzz_http(request):
             contestant.team = team
             contestant.save(update_fields=['team'])
 
+        # ─── بث عبر WebSocket ────────────────────────────────
         try:
             channel_layer = get_channel_layer()
             if channel_layer:
-                group_name = f"letters_session_{session_id}"
                 team_display = session.team1_name if team == 'team1' else session.team2_name
-                async_to_sync(channel_layer.group_send)(group_name, {
-                    'type': 'broadcast_buzz_event',
-                    'contestant_name': contestant_name,
-                    'team': team,
-                    'team_display': team_display,
-                    'timestamp': timestamp,
-                    'action': 'buzz_accepted',
-                })
+                async_to_sync(channel_layer.group_send)(
+                    f"letters_session_{session_id}",
+                    {
+                        'type': 'broadcast_buzz_event',
+                        'contestant_name': contestant_name,
+                        'team': team,
+                        'team_display': team_display,
+                        'timestamp': timestamp,
+                        'action': 'buzz_accepted',
+                    }
+                )
         except Exception as e:
             logger.error(f"Error sending HTTP buzz to WebSocket: {e}")
 
-        logger.info(f"HTTP Buzz accepted (atomic): {contestant_name} from {team} in session {session_id}")
+        logger.info(f"HTTP Buzz accepted: {contestant_name} from {team} in session {session_id}, timer={buzz_timer}s")
         return JsonResponse({
             'success': True,
             'message': f'تم تسجيل إجابتك يا {contestant_name}!',
@@ -1301,6 +1317,7 @@ def api_contestant_buzz_http(request):
     except Exception as e:
         logger.error(f'HTTP Buzz error: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
 
 # -------------------------------
 # بدء جولة جديدة (مدفوعة فقط) — لا تلمس النقاط أبدًا
@@ -1398,6 +1415,16 @@ def api_letters_select_letter(request):
     letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
     if letter not in letters:
         return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+
+    cell_index = payload.get("cell_index")
+    async_to_sync(channel_layer.group_send)(
+        f"letters_session_{session.id}",
+        {
+            "type": "broadcast_letter_selected",
+            "letter": letter,
+            "cell_index": cell_index,
+        }
+    )
 
     # بثّ إلى المجموعة
     try:
@@ -2018,6 +2045,7 @@ def api_save_settings(request):
     settings.show_subtitle = data.get('show_subtitle', '')[:50]
 
     settings.save()
+    cache.set(f"buzz_timer_{session_id}", settings.buzz_timer_seconds, timeout=600)
 
     changed_session = False
     if t1_name and session.team1_name != settings.team1_name:

@@ -803,6 +803,7 @@
           if (s.show_grid_to_contestants === true) {
             document.getElementById('contestantGridWrap').style.display = 'block';
           }
+
           renderContestantScores(
             s.team1_name || '{{ session.team1_name|escapejs }}',
             s.team2_name || '{{ session.team2_name|escapejs }}',
@@ -811,6 +812,39 @@
             s.team1_color || contestantT1Color,
             s.team2_color || contestantT2Color
           );
+
+        } else if (d.type === 'letters_updated') {
+            if (d.letters && d.letters.length) {
+                const size = document.getElementById('contestantHoneycombSvg')
+                    ?.getAttribute('data-grid-size') || '5x5';
+                buildContestantGrid(size, d.letters, {}, contestantT1Color, contestantT2Color);
+            }
+
+          } else if (d.type === 'letter_selected') {
+              const svg = document.getElementById('contestantHoneycombSvg');
+              if (!svg) return;
+              svg.querySelectorAll('polygon[data-highlighted]').forEach(p => {
+                  p.removeAttribute('data-highlighted');
+                  p.style.filter = '';
+                  p.style.stroke = '#6b21a8';
+                  p.style.strokeWidth = '1.5';
+              });
+              let g = null;
+              if (d.cell_index !== undefined && d.cell_index !== null) {
+                  g = svg.querySelector(`[data-index="${d.cell_index}"]`);
+              }
+              if (!g && d.letter) {
+                  g = svg.querySelector(`[data-letter="${d.letter}"]`);
+              }
+              if (g) {
+                  const poly = g.querySelector('polygon');
+                  if (poly) {
+                      poly.setAttribute('data-highlighted', '1');
+                      poly.style.stroke = '#f59e0b';
+                      poly.style.strokeWidth = '3';
+                      poly.style.filter = 'drop-shadow(0 0 6px rgba(245,158,11,0.6))';
+                  }
+              }
 
         } else if (d.type === 'grid_state'){
           if (d.team1_color) { contestantT1Color = d.team1_color; document.documentElement.style.setProperty('--team1-color', d.team1_color); }
@@ -995,6 +1029,7 @@
 
       const svg = document.getElementById('contestantHoneycombSvg');
       if (!svg) return;
+      svg.setAttribute('data-grid-size', gridSize);
       const NS = 'http://www.w3.org/2000/svg';
       svg.innerHTML = '';
 
@@ -1022,8 +1057,9 @@
       // حساب عدد الخلايا المطلوب وتكرار الحروف إذا نقصت
       const sizeMap2 = {'3x3':9,'4x4':16,'5x5':25,'6x6':36,'7x7':49};
       const needed = sizeMap2[gridSize] || 25;
-      let src = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
-      while (src.length < needed) src = [...src, ...ARABIC_28_C];
+      const baseSrc = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
+      let src = [...baseSrc];
+      while (src.length < needed) src = [...src, ...baseSrc];
       src = src.slice(0, needed);
 
       let idx = 0;
@@ -1043,6 +1079,8 @@
           }
 
           const g = document.createElementNS(NS, 'g');
+          g.setAttribute('data-index', idx);
+          g.setAttribute('data-letter', letter);
 
           const poly = document.createElementNS(NS, 'polygon');
           poly.setAttribute('points', pts.join(' '));
@@ -1073,17 +1111,29 @@
       }
     }
     function updateContestantCell(letter, state, cellIndex) {
-      const svg = document.getElementById('contestantHoneycombSvg');
-      if (!svg) return;
-      if (cellIndex === undefined || cellIndex === null) return;
-      const g = svg.querySelectorAll('g')[cellIndex];
-      if (!g) return;
-      const poly = g.querySelector('polygon');
-      const txt  = g.querySelector('text');
-      if (poly) poly.setAttribute('fill',
-        state === 'team1' ? contestantT1Color :
-        state === 'team2' ? contestantT2Color : 'white');
-      if (txt)  txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
+        const svg = document.getElementById('contestantHoneycombSvg');
+        if (!svg) return;
+
+        let g = null;
+
+        // البحث بالـ index أولاً — دائماً فريد
+        if (cellIndex !== undefined && cellIndex !== null) {
+            g = svg.querySelector(`[data-index="${cellIndex}"]`);
+        }
+
+        // fallback بالحرف
+        if (!g && letter) {
+            g = svg.querySelector(`[data-letter="${letter}"]`);
+        }
+
+        if (!g) return;
+
+        const poly = g.querySelector('polygon');
+        const txt  = g.querySelector('text');
+        if (poly) poly.setAttribute('fill',
+            state === 'team1' ? contestantT1Color :
+            state === 'team2' ? contestantT2Color : 'white');
+        if (txt) txt.setAttribute('fill', state === 'normal' ? '#4c1d95' : 'white');
     }
 
     function renderContestantScores(team1Name, team2Name, team1Score, team2Score, team1Color, team2Color) {

@@ -2138,7 +2138,7 @@
       if (now - lastClickAt < 150) return;
       lastClickAt = now;
 
-      showQuestion(letter);
+      showQuestion(letter, cellIndex); // ← أضف cellIndex
 
       if (lastClickedIndex === cellIndex) {
         let newState = 'team1';
@@ -2157,18 +2157,22 @@
 
 
   function applyCellState(letter, state, cellIndex) {
-    let el;
-    if (cellIndex !== undefined) {
-      el = document.querySelector(`[data-cell-index="${cellIndex}"]`);
-    } else {
-      el = document.querySelector(`[data-letter="${letter}"]`);
-    }
-    if (!el) return;
-    el.classList.remove('team1','team2');
-    if (state && state !== 'normal') el.classList.add(state);
-    cellStates[cellIndex ?? letter] = state || 'normal';
+      let el;
+      // ابحث بالـ index أولاً — دائماً فريد حتى لو تكرر الحرف
+      if (cellIndex !== undefined && cellIndex !== null) {
+          el = document.querySelector(`[data-cell-index="${cellIndex}"]`);
+      }
+      // fallback بالحرف فقط لو ما في index
+      if (!el && letter) {
+          el = document.querySelector(`[data-cell-index]`);
+          // ابحث عن الخلية الصحيحة بالحرف
+          el = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!el) return;
+      el.classList.remove('team1','team2');
+      if (state && state !== 'normal') el.classList.add(state);
+      cellStates[cellIndex ?? letter] = state || 'normal';
   }
-
   function toggleAltCard(idPrefix, exists, questionText, answerText){
     const col = document.getElementById(idPrefix+'Col');
     const qEl = document.getElementById(`${idPrefix}Question`);
@@ -2180,7 +2184,7 @@
   }
 
   // ========= الأسئلة =========
-  async function showQuestion(letter){
+  async function showQuestion(letter, cellIndex) {
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
       if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
@@ -2241,9 +2245,9 @@
       // بثّ اختيار الحرف لشاشة العرض (API موحّد)
       try{
         await fetch('/games/api/letters-select-letter/', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({ session_id: sessionId, letter })
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ session_id: sessionId, letter, cell_index: cellIndex })
         });
       }catch(e){}
     }catch{}
@@ -2405,7 +2409,14 @@
       if (!isWithinPendingAckWindow()){
         reflectScores(data.team1_score||0, data.team2_score||0);
       }
-      if (data.cell_states) Object.entries(data.cell_states).forEach(([ltr,st])=>applyCellState(ltr,st));
+      if (data.cell_states) Object.entries(data.cell_states).forEach(([key, st]) => {
+          const idx = parseInt(key);
+          if (!isNaN(idx)) {
+              applyCellState(null, st, idx);
+          } else {
+              applyCellState(key, st);
+          }
+      });
       if (typeof data.time_remaining_seconds==='number' && isFreeSession) startSessionTimer(data.time_remaining_seconds);
     }catch{}
   }
@@ -2896,7 +2907,7 @@ function getLettersForGrid(gridSize, baseLetters) {
   const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
   let result = [...src];
   while (result.length < count) {
-    result = result.concat([...src].sort(() => Math.random() - 0.5));
+      result = result.concat([...src]);
   }
   return result.slice(0, count);
 }
