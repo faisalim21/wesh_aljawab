@@ -1770,7 +1770,7 @@ function saveSettings() {
       session_id: SESSION_ID,
       team1_name: t1,
       team2_name: t2,
-      show_name:  namePart,
+      show_name:  gameTitle,
     }),
   })
   .then(r => r.json())
@@ -1842,7 +1842,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (s.team1_name) { document.getElementById('t1StrikeLabel').textContent = `${s.team1_name}:`; }
       if (s.team2_name) { document.getElementById('t2StrikeLabel').textContent = `${s.team2_name}:`; }
       if (s.show_name) {
-        const gt = `${s.show_name} فيود`;
+        const gt = s.show_name;
         st.gameTitle = gt;
         const titleEl = document.querySelector('.header-game-title');
         if (titleEl) titleEl.textContent = gt;

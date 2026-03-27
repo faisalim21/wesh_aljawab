@@ -1645,18 +1645,36 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return
 
         def _save():
+            from games.models import GameSettings
+
             session = GameSession.objects.get(id=self.session_id)
             session.team1_name = t1_name[:50]
             session.team2_name = t2_name[:50]
             session.save(update_fields=['team1_name', 'team2_name'])
 
-        await sync_to_async(_save)()
+            settings = GameSettings.get_or_create_for_session(self.session)
+
+            clean_title = (game_title or '').strip()
+            if clean_title and clean_title != 'فاميلي فيود':
+                if clean_title.endswith(' فيود'):
+                    clean_title = clean_title[:-5].strip()
+                settings.show_name = clean_title
+                settings.save(update_fields=['show_name'])
+                final_title = f'{clean_title} فيود'
+            else:
+                settings.show_name = ''
+                settings.save(update_fields=['show_name'])
+                final_title = 'فاميلي فيود'
+
+            return final_title
+
+        final_title = await sync_to_async(_save)()
 
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_team_names',
             'team1_name': t1_name,
             'team2_name': t2_name,
-            'game_title': game_title or 'فاميلي فيود',
+            'game_title': final_title,
         })
 
     async def broadcast_team_names(self, event):
@@ -1981,7 +1999,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
-                'game_title':       getattr(progress, 'game_title', None) or 'فاميلي فيود',
+                'game_title': self._get_game_title(),
             }
 
         state = await sync_to_async(_get)()
@@ -2017,7 +2035,7 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
                 'team2_score':      session.team2_score,
                 'team1_name':       session.team1_name,
                 'team2_name':       session.team2_name,
-                'game_title': getattr(p, 'game_title', None) or 'فاميلي فيود',
+                'game_title': self._get_game_title(),
             }
 
         state = await sync_to_async(_get)()
@@ -2031,3 +2049,16 @@ class FamilyFeudConsumer(AsyncWebsocketConsumer):
             return parse_qs(self.scope.get('query_string', b'').decode())
         except Exception:
             return {}
+        
+
+    def _get_game_title(self):
+        try:
+            from games.models import GameSettings
+            s = GameSettings.objects.filter(session=self.session).first()
+            if s and s.show_name:
+                custom_name = s.show_name.strip()
+                if custom_name:
+                    return f'{custom_name} فيود'
+        except Exception:
+            pass
+        return 'فاميلي فيود'
