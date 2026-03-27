@@ -1352,12 +1352,17 @@
     if (s2) s2.textContent = t2;
   }
 
-  function updateCell(letter, state) {
-    const el = document.querySelector(`[data-letter="${letter}"]`);
-    if (!el) return;
-    el.classList.remove('team1', 'team2');
-    if (state && state !== 'normal') el.classList.add(state);
-    // لا نلمس إبراز الحرف المختار هنا — يبقى كما هو
+  function updateCell(letter, state, cellIndex) {
+      let el;
+      if (cellIndex !== undefined && cellIndex !== null) {
+          el = document.querySelector(`[data-index="${cellIndex}"]`);
+      }
+      if (!el && letter) {
+          el = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!el) return;
+      el.classList.remove('team1', 'team2');
+      if (state && state !== 'normal') el.classList.add(state);
   }
 
   // ===================== مزامنة أوليّة من الخادم =====================
@@ -1418,8 +1423,8 @@
             endBuzz();
             break;
           case 'cell_state_updated':
-            updateCell(d.letter, d.state);
-            break;
+              updateCell(d.letter, d.state, d.cell_index);
+              break;
           case 'scores_updated':
             updateScores(d.team1_score, d.team2_score);
             break;

@@ -1053,8 +1053,9 @@
       // حساب عدد الخلايا المطلوب وتكرار الحروف إذا نقصت
       const sizeMap2 = {'3x3':9,'4x4':16,'5x5':25,'6x6':36,'7x7':49};
       const needed = sizeMap2[gridSize] || 25;
-      let src = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
-      while (src.length < needed) src = [...src, ...ARABIC_28_C];
+      const baseSrc = (letters && letters.length) ? [...letters] : [...ARABIC_28_C];
+      let src = [...baseSrc];
+      while (src.length < needed) src = [...src, ...baseSrc];
       src = src.slice(0, needed);
 
       let idx = 0;

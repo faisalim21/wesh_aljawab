@@ -2157,18 +2157,22 @@
 
 
   function applyCellState(letter, state, cellIndex) {
-    let el;
-    if (cellIndex !== undefined) {
-      el = document.querySelector(`[data-cell-index="${cellIndex}"]`);
-    } else {
-      el = document.querySelector(`[data-letter="${letter}"]`);
-    }
-    if (!el) return;
-    el.classList.remove('team1','team2');
-    if (state && state !== 'normal') el.classList.add(state);
-    cellStates[cellIndex ?? letter] = state || 'normal';
+      let el;
+      // ابحث بالـ index أولاً — دائماً فريد حتى لو تكرر الحرف
+      if (cellIndex !== undefined && cellIndex !== null) {
+          el = document.querySelector(`[data-cell-index="${cellIndex}"]`);
+      }
+      // fallback بالحرف فقط لو ما في index
+      if (!el && letter) {
+          el = document.querySelector(`[data-cell-index]`);
+          // ابحث عن الخلية الصحيحة بالحرف
+          el = document.querySelector(`[data-letter="${letter}"]`);
+      }
+      if (!el) return;
+      el.classList.remove('team1','team2');
+      if (state && state !== 'normal') el.classList.add(state);
+      cellStates[cellIndex ?? letter] = state || 'normal';
   }
-
   function toggleAltCard(idPrefix, exists, questionText, answerText){
     const col = document.getElementById(idPrefix+'Col');
     const qEl = document.getElementById(`${idPrefix}Question`);
@@ -2896,7 +2900,7 @@ function getLettersForGrid(gridSize, baseLetters) {
   const src = (baseLetters && baseLetters.length) ? baseLetters : ARABIC_28;
   let result = [...src];
   while (result.length < count) {
-    result = result.concat([...src].sort(() => Math.random() - 0.5));
+      result = result.concat([...src]);
   }
   return result.slice(0, count);
 }
