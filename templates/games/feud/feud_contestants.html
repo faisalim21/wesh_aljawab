@@ -468,6 +468,30 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   connectWS();
 
+  // تحميل الشعار عند الفتح
+  fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`)
+    .then(r => r.json())
+    .then(data => {
+      const s = data.settings || {};
+      if (s.show_name) {
+        const gt = `${s.show_name} فيود`;
+        localStorage.setItem(`feud_title_${sessionId}`, gt);
+        document.querySelector('.feud-logo').textContent = gt;
+        document.title = gt + ' | وش الجواب';
+      }
+      if (s.team1_name) {
+        const t1btn = document.querySelector('.tbtn.team1');
+        if (t1btn) t1btn.lastChild.textContent = ' ' + s.team1_name;
+      }
+      if (s.team2_name) {
+        const t2btn = document.querySelector('.tbtn.team2');
+        if (t2btn) t2btn.lastChild.textContent = ' ' + s.team2_name;
+      }
+    })
+    .catch(() => {});
+
+  
+
   el.buzz.addEventListener('click', sendBuzz);
   el.name.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendBuzz(); });
   document.addEventListener('touchstart', () => tone(1, 1, .0001), { once: true, passive: true });
