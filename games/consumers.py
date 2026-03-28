@@ -13,9 +13,58 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from games.models import GameSession, Contestant, LettersGameProgress
 
+import re
+
+EQUIVALENT_GROUPS = [
+    {'أ', 'إ', 'آ', 'ا', 'ء', 'ئ', 'ؤ'},  # كل الهمزات
+    {'ة', 'ه'},                               # تاء مربوطة
+    {'ي', 'ى'},                               # ياء
+]
+
+def _remove_tashkeel(text: str) -> str:
+    return re.sub('[\u064b-\u065f\u0670]', '', text).strip()
+
+def _chars_equivalent(c1: str, c2: str) -> bool:
+    for group in EQUIVALENT_GROUPS:
+        if c1 in group and c2 in group:
+            return True
+    return c1 == c2
+
+def _answers_equivalent(a: str, b: str) -> bool:
+    a = _remove_tashkeel(a)
+    b = _remove_tashkeel(b)
+    if len(a) != len(b):
+        return False
+    return all(_chars_equivalent(c1, c2) for c1, c2 in zip(a, b))
+
+def check_answer(user_answer: str, correct_answer: str, accepted_answers: list, answer_type: str, smart_correction: bool = True) -> dict:
+    """
+    يرجع dict:
+    - is_correct: True/False
+    - exact_match: True إذا مطابق تماماً
+    - corrected: True إذا النظام صحح إملائياً
+    """
+    user = user_answer.strip()
+    all_accepted = [correct_answer.strip()] + [a.strip() for a in (accepted_answers or [])]
+
+    # مطابقة حرفية أولاً
+    if any(user == a for a in all_accepted):
+        return {'is_correct': True, 'exact_match': True, 'corrected': False}
+
+    if answer_type == 'arabic' and smart_correction:
+        if any(_answers_equivalent(user, a) for a in all_accepted):
+            return {'is_correct': True, 'exact_match': False, 'corrected': True}
+
+    return {'is_correct': False, 'exact_match': False, 'corrected': False}
+
+
+
 logger = logging.getLogger('games')
 
 
+
+
+    
 class LettersGameConsumer(AsyncWebsocketConsumer):
     """
     Consumer محسّن مع ربط فوري بين الصفحات:
@@ -219,6 +268,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 await self.handle_contestant_buzz_instant(data)
                 return
 
+            # المتسابق: إجابة المقدم الآلي
+            if message_type == "auto_host_answer" and self.role == "contestant":
+                await self.handle_auto_host_answer(data)
+                return
+                
+
             # المقدم أو شاشة العرض: أوامر وضع بدون مقدم
             if self.role in ("host", "display"):
                 if message_type == "nohost_letter_select":
@@ -269,6 +324,9 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                         "type": "broadcast_penalty_end",
                         "team": data.get("team"),
                     })
+                    return
+                if message_type == "auto_host_reveal":
+                    await self.handle_auto_host_reveal(data)
                     return
 
         except Exception as e:
@@ -580,6 +638,131 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'type': 'nohost_question',
             'letter': event.get('letter'),
             'question': event.get('question'),
+        }))
+
+
+    async def handle_auto_host_answer(self, data):
+        """
+        يستقبل إجابة المتسابق ويصححها
+        - يتحقق أن هذا المتسابق هو من ضغط الزر (buzz_lock)
+        - يجلب السؤال الحالي ويقارن
+        - يبث النتيجة
+        """
+        contestant_name = (data.get('contestant_name') or '').strip()
+        team = data.get('team')
+        user_answer = (data.get('answer') or '').strip()
+        letter = (data.get('letter') or '').strip()
+        question_type = data.get('question_type', 'main')
+
+        if not all([contestant_name, team, user_answer, letter]):
+            await self._reply_contestant(error='بيانات ناقصة')
+            return
+
+        # تحقق أن هذا المتسابق هو صاحب الـ buzz
+        buzz_lock_key = f"buzz_lock_{self.session_id}"
+        current_buzzer = await sync_to_async(cache.get)(buzz_lock_key)
+        if not current_buzzer or current_buzzer.get('name') != contestant_name:
+            await self._reply_contestant(error='ليس دورك للإجابة')
+            return
+
+        # جلب السؤال والتحقق
+        try:
+            def _get_question_and_settings():
+                from games.models import LettersGameQuestion, GameSettings
+                q = LettersGameQuestion.objects.filter(
+                    package=self.session.package,
+                    letter=letter,
+                    question_type=question_type
+                ).first()
+                settings = GameSettings.objects.filter(session=self.session).first()
+                return q, settings
+
+            question, settings = await sync_to_async(_get_question_and_settings)()
+
+            if not question:
+                await self._reply_contestant(error='السؤال غير موجود')
+                return
+
+            # التصحيح
+            result = check_answer(
+                user_answer=user_answer,
+                correct_answer=question.answer,
+                accepted_answers=question.accepted_answers or [],
+                answer_type=question.answer_type,
+                smart_correction=settings.auto_host_smart_correction if settings else True
+            )
+
+        except Exception as e:
+            logger.error(f'auto_host_answer error: {e}')
+            await self._reply_contestant(error='حدث خطأ')
+            return
+
+        if result['is_correct']:
+            await sync_to_async(cache.delete)(buzz_lock_key)
+            await self.channel_layer.group_send(self.group_name, {
+                'type': 'broadcast_auto_host_result',
+                'result': 'correct',
+                'corrected': result['corrected'],
+                'contestant_name': contestant_name,
+                'team': team,
+                'user_answer': user_answer,
+                'correct_answer': question.answer,
+                'letter': letter,
+            })
+        else:
+            await sync_to_async(cache.delete)(buzz_lock_key)
+            await self.channel_layer.group_send(self.group_name, {
+                'type': 'broadcast_auto_host_result',
+                'result': 'wrong',
+                'corrected': False,
+                'contestant_name': contestant_name,
+                'team': team,
+                'user_answer': user_answer,
+                'letter': letter,
+            })
+
+
+    async def handle_auto_host_reveal(self, data):
+        """المقدم/النظام يكشف الإجابة يدوياً"""
+        letter = (data.get('letter') or '').strip()
+        question_type = data.get('question_type', 'main')
+
+        try:
+            def _get_answer():
+                from games.models import LettersGameQuestion
+                q = LettersGameQuestion.objects.filter(
+                    package=self.session.package,
+                    letter=letter,
+                    question_type=question_type
+                ).first()
+                return q.answer if q else ''
+
+            correct_answer = await sync_to_async(_get_answer)()
+        except Exception as e:
+            logger.error(f'auto_host_reveal error: {e}')
+            return
+
+        buzz_lock_key = f"buzz_lock_{self.session_id}"
+        await sync_to_async(cache.delete)(buzz_lock_key)
+
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_auto_host_result',
+            'result': 'revealed',
+            'correct_answer': correct_answer,
+            'letter': letter,
+        })
+
+
+    async def broadcast_auto_host_result(self, event):
+        """يبث نتيجة الإجابة لكل الشاشات"""
+        await self.send(text_data=json.dumps({
+            'type': 'auto_host_result',
+            'result': event.get('result'),           # correct / wrong / revealed
+            'contestant_name': event.get('contestant_name', ''),
+            'team': event.get('team', ''),
+            'user_answer': event.get('user_answer', ''),
+            'correct_answer': event.get('correct_answer', ''),
+            'letter': event.get('letter', ''),
         }))
 
 

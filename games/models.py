@@ -306,6 +306,25 @@ class LettersGameQuestion(models.Model):
         verbose_name="مستوى الصعوبة"
     )
 
+
+    ANSWER_TYPE_CHOICES = [
+        ('arabic', 'عربي'),
+        ('foreign', 'شبهة / كلمة أجنبية'),
+    ]
+    answer_type = models.CharField(
+        max_length=10,
+        choices=ANSWER_TYPE_CHOICES,
+        default='arabic',
+        verbose_name="نوع الإجابة",
+        help_text="عربي = النظام يراعي الإملاء | شبهة = تنبيه للمتسابق بالدقة"
+    )
+    accepted_answers = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name="إجابات بديلة مقبولة",
+        help_text="قائمة بإجابات إضافية صحيحة (مفيد للكلمات الأجنبية المعربة)"
+    )
+
     class Meta:
         verbose_name = "سؤال خلية حروف"
         verbose_name_plural = "أسئلة خلية الحروف"
@@ -1012,6 +1031,23 @@ class GameSettings(models.Model):
     show_grid_to_contestants = models.BooleanField(
         default=False,
         verbose_name="إظهار الخلية للمتسابقين"
+    )
+
+    auto_host_mode = models.BooleanField(
+        default=False,
+        verbose_name="وضع المقدم الآلي",
+        help_text="يتيح للمتسابقين كتابة إجاباتهم والتصحيح التلقائي"
+    )
+    auto_host_timer_seconds = models.PositiveIntegerField(
+        default=10,
+        verbose_name="مدة الإجابة (ثواني)",
+        help_text="الوقت المتاح للمتسابق لكتابة إجابته بعد ضغط الزر"
+    )
+
+    auto_host_smart_correction = models.BooleanField(
+        default=True,
+        verbose_name="المصحح الذكي للإملاء",
+        help_text="يراعي أخطاء الهمزات والتاء المربوطة تلقائياً"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)

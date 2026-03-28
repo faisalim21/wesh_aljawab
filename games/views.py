@@ -1955,12 +1955,12 @@ def api_get_settings(request):
             'nohost_mode': settings.nohost_mode,
             'show_name': settings.show_name,
             'show_subtitle': settings.show_subtitle,
-            'nohost_mode': settings.nohost_mode,
             'nohost_allow_cell_color': settings.nohost_allow_cell_color,
             'nohost_hide_answer': settings.nohost_hide_answer,
+            'auto_host_mode': settings.auto_host_mode,
+            'auto_host_timer_seconds': settings.auto_host_timer_seconds,
+            'auto_host_smart_correction': settings.auto_host_smart_correction,
         }
-
-    
     })
 
 
@@ -2036,6 +2036,19 @@ def api_save_settings(request):
     settings.show_name = data.get('show_name', '')[:50]
     settings.show_subtitle = data.get('show_subtitle', '')[:50]
 
+    # المقدم الآلي
+    if 'auto_host_mode' in data:
+        settings.auto_host_mode = bool(data['auto_host_mode'])
+
+    if 'auto_host_timer_seconds' in data:
+        try:
+            settings.auto_host_timer_seconds = max(5, min(120, int(data['auto_host_timer_seconds'])))
+        except (ValueError, TypeError):
+            pass
+
+    if 'auto_host_smart_correction' in data:
+        settings.auto_host_smart_correction = bool(data['auto_host_smart_correction'])
+
     settings.save()
     cache.set(f"buzz_timer_{session_id}", settings.buzz_timer_seconds, timeout=600)
 
@@ -2064,6 +2077,9 @@ def api_save_settings(request):
         'show_subtitle': settings.show_subtitle,
         'nohost_allow_cell_color': settings.nohost_allow_cell_color,
         'nohost_hide_answer': settings.nohost_hide_answer,
+        'auto_host_mode': settings.auto_host_mode,
+        'auto_host_timer_seconds': settings.auto_host_timer_seconds,
+        'auto_host_smart_correction': settings.auto_host_smart_correction,
     }
 
     try:

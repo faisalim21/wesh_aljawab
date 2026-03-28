@@ -175,7 +175,7 @@ class LettersGameQuestionInline(admin.TabularInline):
     model = LettersGameQuestion
     fk_name = 'package'
     extra = 1
-    fields = ('letter', 'question_type', 'question', 'answer', 'category', 'difficulty')
+    fields = ('letter', 'question_type', 'question', 'answer', 'category', 'difficulty', 'answer_type', 'accepted_answers')
     show_change_link = True
 
     def question_type_display(self, obj):
@@ -649,14 +649,14 @@ class LettersPackageAdmin(admin.ModelAdmin):
 
 @admin.register(LettersGameQuestion)
 class LettersGameQuestionAdmin(admin.ModelAdmin):
-    list_display = ('package_num', 'letter', 'question_order', 'category', 'difficulty_badge', 'question_preview', 'answer')
-    list_filter = ('package__package_number', 'letter', 'question_type', 'category', 'difficulty')
+    list_display = ('package_num', 'letter', 'question_order', 'category', 'difficulty_badge', 'answer_type', 'question_preview', 'answer')
+    list_filter = ('package__package_number', 'letter', 'question_type', 'category', 'difficulty', 'answer_type')
     search_fields = ('question', 'answer', 'letter', 'category')
     list_per_page = 30
     list_select_related = ('package',)
 
     # الحقول في شاشة الإضافة/التعديل
-    fields = ('package', 'letter', 'question_type', 'question', 'answer', 'category', 'difficulty')
+    fields = ('package', 'letter', 'question_type', 'question', 'answer', 'category', 'difficulty', 'answer_type', 'accepted_answers')
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == 'package':
