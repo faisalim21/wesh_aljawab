@@ -322,7 +322,7 @@ class LettersGameQuestion(models.Model):
         default=list,
         blank=True,
         verbose_name="إجابات بديلة مقبولة",
-        help_text="قائمة بإجابات إضافية صحيحة (مفيد للكلمات الأجنبية المعربة)"
+        help_text='اكتب الإجابات البديلة هكذا: ["إجابة1", "إجابة2"] — اتركه فارغاً هكذا [] إذا ما في بدائل'
     )
 
     class Meta:

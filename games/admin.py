@@ -1852,8 +1852,9 @@ class TimeRiddleInline(admin.TabularInline):
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         field = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if db_field.name == 'answer':
-            field.help_text = "الإجابة تظهر للمقدّم فقط أثناء اللعب، ولا تظهر للمتسابقين."
+        if db_field.name == 'accepted_answers':
+            field.widget.attrs['placeholder'] = '["إجابة بديلة 1", "إجابة بديلة 2"]'
+            field.widget.attrs['style'] = 'font-family: monospace; direction: ltr;'
         return field
 
 

@@ -1720,6 +1720,81 @@
                 </label>
               </div>
 
+              <!-- ===== قسم المقدم الآلي ===== -->
+              <div class="settings-section">
+                <div class="settings-section-label">
+                  <span class="settings-section-icon">🤖</span>
+                  المقدم الآلي
+                  <span class="new-pill">جديد</span>
+                </div>
+                <div class="settings-section-desc">
+                  يتيح للمتسابقين كتابة إجاباتهم مباشرة — النظام يصحح تلقائياً ويكشف الإجابة الصحيحة.
+                  <br><span class="warn-pill">⚠️ ابتكار حصري من وش الجواب</span>
+                </div>
+
+                <!-- تفعيل المقدم الآلي -->
+                <div class="toggle-setting">
+                  <div class="toggle-setting-info">
+                    <div class="toggle-setting-title">
+                      تفعيل المقدم الآلي
+                      <span class="new-pill">مميز</span>
+                    </div>
+                    <div class="toggle-setting-desc">
+                      بعد ضغط الزر، يظهر للمتسابق حقل كتابة الإجابة — النظام يقرر صح أو خطأ تلقائياً.
+                    </div>
+                  </div>
+                  <label class="big-toggle">
+                    <input type="checkbox" id="autoHostModeToggle" onchange="toggleAutoHostSettings(this.checked)"/>
+                    <span class="big-toggle-track">
+                      <span class="big-toggle-thumb"></span>
+                    </span>
+                  </label>
+                </div>
+
+                <!-- إعدادات فرعية — تظهر فقط لو مفعّل -->
+                <div id="autoHostSubSettings" style="margin-top:12px; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
+
+                  <!-- مدة الإجابة -->
+                  <div class="timer-setting">
+                    <div class="timer-setting-info">
+                      <div class="timer-setting-title">مدة كتابة الإجابة</div>
+                      <div class="timer-setting-desc">
+                        الوقت المتاح للمتسابق لكتابة إجابته بعد ضغط الزر.
+                        <span class="recommend-pill">⭐ الموصى به: 10 ثوانٍ</span>
+                      </div>
+                    </div>
+                    <div class="timer-control">
+                      <button class="timer-btn" onclick="adjustTimer('autoHost', -1)" type="button">−</button>
+                      <div class="timer-display">
+                        <span id="autoHostTimerVal">10</span>
+                        <span class="timer-unit">ث</span>
+                      </div>
+                      <button class="timer-btn" onclick="adjustTimer('autoHost', 1)" type="button">+</button>
+                    </div>
+                  </div>
+
+                  <!-- المصحح الذكي -->
+                  <div class="toggle-setting">
+                    <div class="toggle-setting-info">
+                      <div class="toggle-setting-title">
+                        المصحح الذكي للإملاء
+                      </div>
+                      <div class="toggle-setting-desc">
+                        يتسامح مع أخطاء الهمزات والتاء المربوطة — مثال: "مأمن" تُقبل كـ "مؤمن".
+                        <br><span class="recommend-pill">⭐ يُنصح بتفعيله دائماً</span>
+                      </div>
+                    </div>
+                    <label class="big-toggle">
+                      <input type="checkbox" id="autoHostSmartCorrection" checked/>
+                      <span class="big-toggle-track">
+                        <span class="big-toggle-thumb"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                </div>
+              </div>
+
               <!-- إعدادات فرعية لوضع بدون مقدم -->
               <div id="nohostSubSettings" style="margin-top:10px; padding:12px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
                 <div style="
@@ -2617,6 +2692,15 @@
     }
   }
 
+
+  function toggleAutoHostSettings(enabled) {
+    const sub = document.getElementById('autoHostSubSettings');
+    if (sub) {
+      sub.style.opacity = enabled ? '1' : '0.4';
+      sub.style.pointerEvents = enabled ? 'auto' : 'none';
+    }
+  }
+
   function revealAnswer(btn) {
     const answerEl = btn.previousElementSibling;
     if (!answerEl) return;
@@ -2687,6 +2771,11 @@ async function loadCurrentSettings() {
 
     const nohostEnabled = !!settings.nohost_mode;
     document.getElementById('noHostModeToggle').checked = nohostEnabled;
+    const autoHostEnabled = !!settings.auto_host_mode;
+    document.getElementById('autoHostModeToggle').checked = autoHostEnabled;
+    toggleAutoHostSettings(autoHostEnabled);
+    document.getElementById('autoHostTimerVal').textContent = settings.auto_host_timer_seconds ?? 10;
+    document.getElementById('autoHostSmartCorrection').checked = settings.auto_host_smart_correction !== false;
     toggleNohostSettings(nohostEnabled);
     document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
     document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
@@ -2710,8 +2799,8 @@ document.querySelectorAll('.grid-option').forEach(label => {
 });
  
 // ===== تعديل المؤقتات =====
-const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 } };
- 
+const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 }, autoHost: { min:5, max:120 } };
+
 function adjustTimer(type, delta) {
   const el = document.getElementById(type === 'buzz' ? 'buzzTimerVal' : 'penaltyTimerVal');
   const lim = timerLimits[type];
@@ -2758,6 +2847,9 @@ async function saveSettings() {
     show_name: document.getElementById('setting_show_name').value.trim(),
     show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
     nohost_mode: document.getElementById('noHostModeToggle').checked,
+    auto_host_mode: document.getElementById('autoHostModeToggle').checked,
+    auto_host_timer_seconds: parseInt(document.getElementById('autoHostTimerVal').textContent),
+    auto_host_smart_correction: document.getElementById('autoHostSmartCorrection').checked,
   };
 
   const controller = new AbortController();
@@ -2872,6 +2964,14 @@ function applySettingsLocally(settings) {
 
   if (settings.penalty_timer_seconds) {
     window.PENALTY_TIMER_SECONDS = settings.penalty_timer_seconds;
+  }
+
+  if (settings.auto_host_mode !== undefined) {
+    const enabled = !!settings.auto_host_mode;
+    document.getElementById('autoHostModeToggle').checked = enabled;
+    toggleAutoHostSettings(enabled);
+    window.AUTO_HOST_MODE = enabled;
+    window.AUTO_HOST_TIMER = settings.auto_host_timer_seconds || 10;
   }
 }
 
