@@ -379,6 +379,15 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
             return
 
+        # تحقق مزدوج — تأكد إن اللي في الكاش هو نفس الشخص
+        try:
+            stored = await sync_to_async(cache.get)(buzz_lock_key)
+            if not stored or stored.get('name') != contestant_name:
+                await self._reply_contestant(rejected='الزر محجوز')
+                return
+        except Exception:
+            pass
+
         await self.ensure_contestant(self.session, contestant_name, team)
 
         # جلب مؤقت المقدم الآلي والحرف الحالي
