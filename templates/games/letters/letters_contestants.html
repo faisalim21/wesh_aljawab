@@ -1394,7 +1394,8 @@
 
     function startAutoHostTimer() {
       clearInterval(autoHostTimerInterval);
-      let left = autoHostTimer;
+      let left = parseInt(autoHostTimer) || 10;
+      console.log('autoHostTimer value:', autoHostTimer); // للتشخيص
       const numEl = document.getElementById('autoHostTimerNum');
       const circleEl = document.getElementById('autoHostTimerCircle');
       const circumference = 201;

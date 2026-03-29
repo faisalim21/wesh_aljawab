@@ -176,10 +176,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         if self.role == 'contestant':
             try:
                 from games.models import GameSettings
-                show = await sync_to_async(
-                    lambda: GameSettings.get_or_create_for_session(self.session).show_grid_to_contestants
+                s = await sync_to_async(
+                    lambda: GameSettings.get_or_create_for_session(self.session)
                 )()
-                if show:
+                # نرسل الحرف دائماً للمتسابق لو وضع الآلي مفعّل
+                # حتى لو show_grid_to_contestants معطّل
+                if s.show_grid_to_contestants or s.auto_host_mode:
                     await self.send(text_data=json.dumps({
                         "type": "letter_selected",
                         "letter": event.get("letter"),
@@ -193,7 +195,6 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             "letter": event.get("letter"),
             "cell_index": event.get("cell_index"),
         }))
-
     # ============================== Lifecycle ==============================
     async def connect(self):
         self.session_id = self.scope['url_route']['kwargs']['session_id']
