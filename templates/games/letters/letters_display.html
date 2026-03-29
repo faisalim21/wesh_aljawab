@@ -2058,6 +2058,7 @@ let nohostMode = false;
 let nohostPenaltyRunning = false;
 let nohostPenaltyTimeout = null;
 let nohostLastLetter = null;
+const nohostLetterQuestionIndex = {};
 let nohostLastClickAt = 0;
 let nohostCurrentRound = 'main';
 let nohostCurrentData  = null;
@@ -2130,8 +2131,6 @@ function nohostHandleCellClick(letter) {
   } else {
     // ضغطة أولى = عرض السؤال
     applySelectedHighlight(letter);
-    if (socket && socket.readyState === 1)
-      socket.send(JSON.stringify({ type: 'nohost_letter_select', letter }));
     nohostFetchQuestion(letter);
   }
   nohostLastLetter  = letter;
@@ -2143,9 +2142,30 @@ async function nohostFetchQuestion(letter) {
     const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
     if (!r.ok) return;
     const data = await r.json();
-    nohostCurrentData  = data.questions || {};
-    nohostCurrentRound = 'main';
-    const q = nohostCurrentData.main || {};
+    nohostCurrentData = data.questions || {};
+
+    // الأنواع المتاحة فقط
+    const types = ['main','alt1','alt2','alt3','alt4'].filter(t => nohostCurrentData[t]?.question);
+
+    // لو نفس الحرف السابق — تقدم للسؤال التالي
+    if (letter === nohostLastLetter && types.length > 1) {
+      nohostLetterQuestionIndex[letter] = ((nohostLetterQuestionIndex[letter] || 0) + 1) % types.length;
+    } else {
+      // حرف جديد — ابدأ من آخر موضع محفوظ أو من البداية
+      if (nohostLetterQuestionIndex[letter] === undefined) {
+        nohostLetterQuestionIndex[letter] = 0;
+      }
+    }
+
+    nohostCurrentRound = types[nohostLetterQuestionIndex[letter]] || 'main';
+    const q = nohostCurrentData[nohostCurrentRound] || {};
+    // أبلغ المتسابقين بنوع السؤال الحالي
+    if (socket && socket.readyState === 1)
+      socket.send(JSON.stringify({ 
+        type: 'nohost_letter_select', 
+        letter,
+        question_type: nohostCurrentRound
+      }));
 
     const nqpEmpty    = document.getElementById('nqpEmpty');
     const nqpContent  = document.getElementById('nqpContent');
@@ -2163,10 +2183,17 @@ async function nohostFetchQuestion(letter) {
       socket.send(JSON.stringify({ type: 'nohost_question_broadcast', letter, question: q.question || '' }));
   } catch {}
 }
-
 function nqpReveal() {
   const el = document.getElementById('nqpAnswer');
-  if (el) el.classList.add('revealed');
+  const btn = document.querySelector('.nqp-reveal-btn');
+  if (!el || !btn) return;
+  if (el.classList.contains('revealed')) {
+    el.classList.remove('revealed');
+    btn.textContent = '👁 اكشف الإجابة';
+  } else {
+    el.classList.add('revealed');
+    btn.textContent = '🙈 إخفاء الإجابة';
+  }
 }
 
 function nohostChangeQuestion() {

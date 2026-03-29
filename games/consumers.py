@@ -283,11 +283,14 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             if self.role in ("host", "display"):
                 if message_type == "nohost_letter_select":
                     letter = (data.get('letter') or '').strip()
+                    question_type = (data.get('question_type') or 'main').strip()
                     if letter:
-                        # خزّن الحرف في الكاش للمقدم الآلي
                         try:
                             await sync_to_async(cache.set)(
                                 f"current_letter_{self.session_id}", letter, timeout=3600
+                            )
+                            await sync_to_async(cache.set)(
+                                f"current_question_type_{self.session_id}", question_type, timeout=3600
                             )
                         except Exception:
                             pass
@@ -393,8 +396,9 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 from games.models import GameSettings
                 s = GameSettings.get_or_create_for_session(self.session)
                 letter = cache.get(f"current_letter_{self.session_id}") or ''
-                return s.auto_host_timer_seconds or 10, letter
-            auto_host_timer, current_letter = await sync_to_async(_get_settings_and_letter)()
+                question_type = cache.get(f"current_question_type_{self.session_id}") or 'main'
+                return s.auto_host_timer_seconds or 10, letter, question_type
+            auto_host_timer, current_letter, current_question_type = await sync_to_async(_get_settings_and_letter)()
         except Exception:
             pass
 
@@ -403,7 +407,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             name=contestant_name,
             team=team,
             auto_host_timer=auto_host_timer,
-            current_letter=current_letter
+            current_letter=current_letter,
+            current_question_type=current_question_type
         )
 
         team_display = await self.get_team_display_name(self.session, team)
@@ -422,42 +427,6 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
         logger.info(f"INSTANT Buzz: {contestant_name} from {team} in session {self.session_id}, timer={self.buzz_timer}s")
 
-        # جلب مؤقت المقدم الآلي والحرف الحالي
-        auto_host_timer = 10
-        current_letter = ''
-        try:
-            def _get_settings_and_letter():
-                from games.models import GameSettings
-                s = GameSettings.get_or_create_for_session(self.session)
-                letter = cache.get(f"current_letter_{self.session_id}") or ''
-                return s.auto_host_timer_seconds or 10, letter
-            auto_host_timer, current_letter = await sync_to_async(_get_settings_and_letter)()
-        except Exception:
-            pass
-
-        await self._reply_contestant(
-            confirmed=True,
-            name=contestant_name,
-            team=team,
-            auto_host_timer=auto_host_timer,
-            current_letter=current_letter
-        )
-
-        team_display = await self.get_team_display_name(self.session, team)
-        await self.channel_layer.group_send(self.group_name, {
-            'type': 'broadcast_buzz_event',
-            'contestant_name': contestant_name,
-            'team': team,
-            'team_display': team_display,
-            'timestamp': timestamp,
-            'action': 'buzz_accepted'
-        })
-
-        if self._unlock_task and not self._unlock_task.done():
-            self._unlock_task.cancel()
-        self._unlock_task = asyncio.create_task(self._auto_unlock_after_timer())
-
-        logger.info(f"INSTANT Buzz: {contestant_name} from {team} in session {self.session_id}, timer={self.buzz_timer}s")
  
 
 
@@ -630,7 +599,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             return {}
 
 
-    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = "", auto_host_timer: int = 10, current_letter: str = ""):
+    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = "", auto_host_timer: int = 10, current_letter: str = "", current_question_type: str = "main"):
         if confirmed:
             logger.info(f"_reply_contestant: sending buzz_confirmed to {name}, letter={current_letter}, timer={auto_host_timer}")
             await self.send(text_data=json.dumps({
@@ -640,6 +609,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 'message': f'تم تسجيل إجابتك يا {name}!',
                 'auto_host_timer': auto_host_timer,
                 'current_letter': current_letter,
+                'current_question_type': current_question_type,
             }))
             return
         if rejected:
@@ -1352,11 +1322,16 @@ class PicturesGameConsumer(AsyncWebsocketConsumer):
         }))
 
 
-    async def _reply_contestant(self, confirmed=False, name="", team="", rejected="", error=""):
+    async def _reply_contestant(self, confirmed=False, name="", team="", rejected="", error="", auto_host_timer=10, current_letter="", current_question_type="main"):
         if confirmed:
             await self.send(text_data=json.dumps({
-                'type': 'buzz_confirmed', 'contestant_name': name, 'team': team,
-                'message': f'تم تسجيل إجابتك يا {name}!'
+                'type': 'buzz_confirmed',
+                'contestant_name': name,
+                'team': team,
+                'message': f'تم تسجيل إجابتك يا {name}!',
+                'auto_host_timer': auto_host_timer,
+                'current_letter': current_letter,
+                'current_question_type': current_question_type,
             }))
             return
         if rejected:

@@ -919,9 +919,11 @@
           setTimeout(()=> enableBuzz(), 600);
         } else if (d.type === 'buzz_confirmed') {
           console.log('buzz_confirmed received, autoHostMode:', autoHostMode, 'currentLetter:', window._currentLetter);
+          if (d.current_question_type) {
+            window._currentQuestionType = d.current_question_type;
+          }
           if (d.auto_host_timer) autoHostTimer = d.auto_host_timer;
           if (d.current_letter) window._currentLetter = d.current_letter;
-          window._currentQuestionType = 'main';
 
           if (autoHostMode) {
             openAutoHostOverlay();

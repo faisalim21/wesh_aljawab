@@ -2951,7 +2951,9 @@ function applySettingsLocally(settings) {
     if (d2) d2.childNodes[0].textContent = `${settings.team2_name}: `;
   }
 
-  if (settings.buzz_timer_seconds) {
+  if (settings.auto_host_mode && settings.auto_host_timer_seconds) {
+    window.BUZZ_TIMER_SECONDS = settings.auto_host_timer_seconds;
+  } else if (settings.buzz_timer_seconds) {
     window.BUZZ_TIMER_SECONDS = settings.buzz_timer_seconds;
   }
 
