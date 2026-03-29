@@ -377,7 +377,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 self.buzz_timer = await sync_to_async(_refresh_timer)()
             except Exception:
                 pass
-            
+
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             lock_payload = {
                 'name': contestant_name,
@@ -724,16 +724,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         buzz_lock_key = f"buzz_lock_{self.session_id}"
         current_buzzer = await sync_to_async(cache.get)(buzz_lock_key)
         if not current_buzzer or current_buzzer.get('name') != contestant_name:
-            # الكاش انتهى — نبث نتيجة خطأ عشان ما تعلق الصفحة
-            await self.channel_layer.group_send(self.group_name, {
-                'type': 'broadcast_auto_host_result',
-                'result': 'wrong',
-                'corrected': False,
+            # انتهى الوقت — نرسل timeout فقط للمتسابق نفسه بدون إزعاج شاشة العرض
+            await self.send(text_data=json.dumps({
+                'type': 'auto_host_result',
+                'result': 'timeout',
                 'contestant_name': contestant_name,
-                'team': team,
-                'user_answer': user_answer,
-                'letter': letter,
-            })
+            }))
             return
 
         # جلب السؤال والتحقق
