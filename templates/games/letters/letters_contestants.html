@@ -1415,32 +1415,36 @@
 
     function startAutoHostTimer() {
       clearInterval(autoHostTimerInterval);
-      let left = parseInt(autoHostTimer) || 10;
-      console.log('autoHostTimer value:', autoHostTimer); // للتشخيص
-      const numEl = document.getElementById('autoHostTimerNum');
-      const circleEl = document.getElementById('autoHostTimerCircle');
+      const totalMs = (parseInt(autoHostTimer) || 10) * 1000;
+      const startTime = Date.now();
       const circumference = 201;
 
-      numEl.textContent = left;
+      const numEl = document.getElementById('autoHostTimerNum');
+      const circleEl = document.getElementById('autoHostTimerCircle');
+
+      numEl.textContent = parseInt(autoHostTimer) || 10;
       circleEl.style.strokeDashoffset = 0;
 
       autoHostTimerInterval = setInterval(() => {
-        left--;
-        numEl.textContent = left;
-        const offset = circumference * (1 - left / autoHostTimer);
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, totalMs - elapsed);
+        const secondsLeft = Math.ceil(remaining / 1000);
+
+        numEl.textContent = secondsLeft;
+        const offset = circumference * (1 - remaining / totalMs);
         circleEl.style.strokeDashoffset = offset;
 
-        if (left <= 3) {
+        if (secondsLeft <= 3) {
           circleEl.style.stroke = '#ef4444';
           numEl.style.color = '#fca5a5';
         }
 
-        if (left <= 0) {
+        if (remaining <= 0) {
           clearInterval(autoHostTimerInterval);
           closeAutoHostOverlay();
           enableBuzz();
         }
-      }, 1000);
+      }, 100); // كل 100ms بدل 1000ms للدقة
     }
 
     function closeAutoHostOverlay() {
