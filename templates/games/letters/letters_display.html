@@ -2500,7 +2500,7 @@ function startTypewriter(text, element, onComplete) {
       element.textContent += typewriterFullText[typewriterIndex];
       typewriterIndex++;
       // حفظ الجزء الحالي في الكاش كل 3 حروف
-      if (typewriterIndex % 3 === 0 && socket && socket.readyState === 1) {
+      if (socket && socket.readyState === 1) {
         socket.send(JSON.stringify({
           type: 'save_partial_question',
           partial: typewriterFullText.slice(0, typewriterIndex)
