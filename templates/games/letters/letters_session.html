@@ -2,13 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
   <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
-  <style>
-  @font-face {
-    font-family: 'HrofFont';
-    src: url('/static/fonts/hrof.woff2') format('woff2');
-    font-display: swap;
-  }
-  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
@@ -1104,66 +1097,58 @@
 
 
 
-/* ===== شعار الجلسة - مطابق فعلًا للمرجع ===== */
+/* ===== شعار حروف مع [الاسم] ===== */
 .logo-preview-wrap {
   margin-top: 14px;
   border-radius: 14px;
   overflow: hidden;
-  background: #613C88;
+  background: #5b21b6;
   position: relative;
-  min-height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  aspect-ratio: 16/5;
+  min-height: 90px;
+  display: flex; align-items: center; justify-content: center;
 }
-
-.logo-hex-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: .18;
-}
-
+.logo-hex-bg { position: absolute; inset: 0; pointer-events: none; }
 .logo-title-group {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: .9;
-  direction: rtl;
+  position: relative; z-index: 2;
+  text-align: center; line-height: 0.95;
+  display: flex; flex-direction: column; align-items: center;
+  font-family: 'Lalezar', sans-serif;
 }
-
-.logo-t-haroof,
-.logo-t-maa,
-.logo-t-name {
-  font-family: 'HrofFont', 'Lalezar', cursive;
-  font-weight: 400;
-  color: #f33;
-  text-shadow: 5px 5px 0 #2D1B4E;
-  white-space: nowrap;
-}
-
 .logo-t-haroof {
-  font-size: clamp(34px, 5vw, 62px);
-  margin-top: -10px;
+  font-size: clamp(22px,5vw,48px); color: #FCD34D;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
 }
-
 .logo-t-maa {
-  font-size: clamp(26px, 3.6vw, 44px);
-  margin-top: -14px;
-  margin-bottom: -8px;
+  font-size: clamp(12px,2.5vw,22px); color: #22D3EE;
+  -webkit-text-stroke: 1px #1a0035; paint-order: stroke fill;
+  display: block; margin: -0.05em 0;
 }
-
 .logo-t-name {
-  font-size: clamp(34px, 5vw, 62px);
-  margin-top: -2px;
+  font-size: clamp(22px,5vw,48px); color: #F87171;
+  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
+  display: block;
 }
-
-.logo-open-btn {
+/* ===== subtitle — badge موحد في كل الشعارات ===== */
+.logo-t-sub {
+  display: inline-block;
+  background: #FCD34D;
+  color: #1a0035;
+  border: 1.5px solid #92400e;
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: clamp(8px, 1.4vw, 14px);
+  font-weight: 900;
+  font-family: 'Tajawal', sans-serif;
+  box-shadow: 0 2px 0 #78350f;
+  margin-top: 4px;
+  white-space: nowrap;
+  min-height: 0;
+}
+.logo-t-sub:empty { display: none; }.logo-open-btn {
   margin-top: 10px;
   width: 100%;
   padding: 10px;
@@ -1177,159 +1162,134 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.logo-open-btn:hover {
-  background: linear-gradient(135deg, #6d28d9, #5b21b6);
-}
+.logo-open-btn:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
 
+/* ===== Overlay الشعار الكامل - ستايل شاشة العرض ===== */
 .logo-fullscreen-overlay {
-  position: fixed;
-  inset: 0;
-  background: #613C88;
-  z-index: 999999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  position: fixed; inset: 0;
+  background: #2e1065;
+  z-index: 999999; display: none;
+  align-items: center; justify-content: center; flex-direction: column;
 }
-
-.logo-fullscreen-overlay.open {
-  display: flex;
-}
+.logo-fullscreen-overlay.open { display: flex; }
 
 .logo-full-hex-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  opacity: .14;
+  position: absolute; inset: 0;
+  pointer-events: none; width: 100%; height: 100%;
 }
 
-.logo-full-group {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: .86;
-  direction: rtl;
-  padding: 24px;
-}
-
-.logo-full-haroof,
-.logo-full-maa,
-.logo-full-name {
-  font-family: 'HrofFont', 'Lalezar', cursive;
-  font-weight: 400;
-  color: #f33;
-  text-shadow: 5px 5px 0 #2D1B4E;
-  white-space: nowrap;
-}
-
+/* النص الرئيسي */
 .logo-full-haroof {
-  font-size: clamp(80px, 10vw, 170px);
-  margin-top: -10px;
-  opacity: 0;
-  transform: translateX(120%);
-}
-
-.logo-full-maa {
-  font-size: clamp(54px, 6vw, 105px);
-  margin-top: -26px;
-  margin-bottom: -14px;
-  opacity: 0;
-  transform: scale(.8) rotate(-8deg);
-}
-
-.logo-full-name {
-  font-size: clamp(80px, 10vw, 170px);
-  margin-top: 0;
-  opacity: 0;
-  transform: translateX(-120%);
-}
-
-@keyframes lf-fromR {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes lf-fromL {
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes lf-pop {
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0);
-  }
-}
-
-.lf-go-r {
-  animation: lf-fromR .75s cubic-bezier(.34,1.56,.64,1) .05s forwards;
-}
-
-.lf-go-f1 {
-  animation: lf-pop .5s cubic-bezier(.34,1.56,.64,1) .35s forwards;
-}
-
-.lf-go-l {
-  animation: lf-fromL .75s cubic-bezier(.34,1.56,.64,1) .18s forwards;
-}
-
-.logo-close-btn {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-  background: rgba(0,0,0,.45);
-  border: 1px solid rgba(255,255,255,.2);
-  color: #fff;
-  border-radius: 12px;
-  padding: 10px 18px;
-  font-family: 'Tajawal', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-}
-
-.logo-save-btn {
-  background: rgba(252,211,77,.2);
-  border: 1px solid rgba(252,211,77,.5);
+  font-size: clamp(90px, 16vw, 220px);
   color: #FCD34D;
-  border-radius: 12px;
-  padding: 10px 18px;
+  -webkit-text-stroke: 5px #1a0035;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #92400e,
+    6px 6px 0 #78350f,
+    9px 9px 0 #451a03,
+    0 0 40px rgba(252,211,77,0.3);
+  display: block;
+  transform: translateX(120%); opacity: 0;
+  letter-spacing: 4px;
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-maa {
+  font-size: clamp(38px, 6vw, 80px);
+  color: #22D3EE;
+  -webkit-text-stroke: 2.5px #164e63;
+  paint-order: stroke fill;
+  text-shadow: 2px 2px 0 #0e7490, 4px 4px 0 #155e75;
+  display: block; margin: -0.05em 0; opacity: 0;
+  transform: rotate(-8deg) scale(0.8);
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-name {
+  font-size: clamp(90px, 16vw, 220px);
+  color: #F87171;
+  -webkit-text-stroke: 5px #1a0035;
+  paint-order: stroke fill;
+  text-shadow:
+    3px 3px 0 #991b1b,
+    6px 6px 0 #7f1d1d,
+    9px 9px 0 #450a0a,
+    0 0 40px rgba(248,113,113,0.3);
+  display: block;
+  transform: translateX(-120%); opacity: 0;
+  letter-spacing: 4px;
+  font-family: 'Lalezar', cursive;
+}
+.logo-full-sub {
+  position: absolute;
+  bottom: -18px; right: -16px;
+  font-size: clamp(12px, 1.4vw, 22px);
+  color: #1a0035;
+  background: #FCD34D;
+  border: 2px solid #92400e;
+  border-radius: 999px;
+  padding: 2px 14px;
   font-family: 'Tajawal', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
+  font-weight: 900;
+  box-shadow: 0 3px 0 #78350f;
+  white-space: nowrap;
+  opacity: 0;
+  direction: rtl;
+}
+.logo-full-sub:empty {
+  display: none !important;
+  opacity: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
-.logo-replay-btn {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  background: rgba(139,92,246,.4);
-  border: 1px solid rgba(139,92,246,.6);
-  color: #fff;
-  border-radius: 12px;
-  padding: 10px 24px;
-  font-family: 'Tajawal', sans-serif;
-  font-weight: 700;
-  font-size: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
+/* الحاوية الرئيسية */
+.logo-full-group {
+  position: relative; z-index: 2;
+  text-align: center;
+  font-family: 'Lalezar', sans-serif;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0; line-height: 0.85;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
 }
+.logo-name-wrap {
+  position: relative; display: inline-block;
+}
+
+/* أنيميشن */
+@keyframes lf-fromR { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-fromL { to { transform: translateX(0); opacity: 1; } }
+@keyframes lf-pop   { to { opacity: 1; transform: rotate(-8deg) scale(1); } }
+@keyframes lf-badge { to { opacity: 1; } }
+
+.lf-go-r  { animation: lf-fromR .75s cubic-bezier(.34,1.56,.64,1) .05s forwards; }
+.lf-go-l  { animation: lf-fromL .75s cubic-bezier(.34,1.56,.64,1) .25s forwards; }
+.lf-go-f1 { animation: lf-pop .5s cubic-bezier(.34,1.56,.64,1) .42s forwards; }
+.lf-go-f2 { animation: lf-badge .4s ease .9s forwards; }
+
+/* أزرار التحكم */
+.logo-close-btn {
+  position: fixed; top: 20px; left: 20px; z-index: 10;
+  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.2);
+  color: #fff; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+.logo-save-btn {
+  background: rgba(252,211,77,.2); border: 1px solid rgba(252,211,77,.5);
+  color: #FCD34D; border-radius: 12px; padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+.logo-replay-btn {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
+  background: rgba(139,92,246,.4); border: 1px solid rgba(139,92,246,.6);
+  color: #fff; border-radius: 12px; padding: 10px 24px;
+  font-family: 'Tajawal', sans-serif; font-weight: 700;
+  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+}
+
+
 /* ===== مؤقت العقوبة ===== */
 .penalty-bar {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -1372,9 +1332,12 @@
        preserveAspectRatio="xMidYMid slice"></svg>
 
   <div class="logo-full-group" id="logoFullGroup">
-    <span class="logo-full-haroof" id="logoFullHaroof">حروف</span>
-    <span class="logo-full-maa" id="logoFullMaa">مع</span>
-    <span class="logo-full-name" id="logoFullName">اسمك</span>
+    <span class="logo-full-haroof lf-go-r">حروف</span>
+    <span class="logo-full-maa lf-go-f1">مــــع</span>
+    <div class="logo-name-wrap">
+      <span class="logo-full-name lf-go-l" id="logoFullName">—</span>
+      <span class="logo-full-sub lf-go-f2" id="logoFullSub"></span>
+    </div>
   </div>
 
   <button class="logo-close-btn" onclick="closeLogoOverlay()">✕ إغلاق</button>
@@ -1494,8 +1457,6 @@
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
                   <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
                 </div>
-                              <!-- الشعار الفرعي   -->
-
                 <div>
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
                   <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2026" maxlength="20">
@@ -1507,13 +1468,15 @@
                 <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
                 <div class="logo-title-group">
                   <span class="logo-t-haroof">حروف</span>
-                  <span class="logo-t-maa">مع</span>
-                  <span class="logo-t-name" id="previewName">اسمك</span>
+                  <span class="logo-t-maa">مــــع</span>
+                  <span class="logo-t-name" id="previewName">—</span>
+                  <span class="logo-t-sub" id="previewSub"></span>
                 </div>
               </div>
               <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
                 📺 فتح الشعار كامل الشاشة
               </button>
+            </div>
 
       
             <!-- ===== قسم 1: الفريقان ===== -->
@@ -3033,12 +2996,14 @@ function applySettingsLocally(settings) {
   }
 
   // ← شعار الجلسة
-  if (settings.show_name !== undefined) {
+  if (settings.show_name !== undefined || settings.show_subtitle !== undefined) {
     const n = settings.show_name || '';
-    updateLogoPreview(n);
-
+    const s = settings.show_subtitle || '';
+    updateLogoPreview(n, s);
     const fn = document.getElementById('logoFullName');
-    if (fn) fn.textContent = n || 'اسمك';
+    const fs = document.getElementById('logoFullSub');
+    if (fn) fn.textContent = n || '—';
+    if (fs) fs.textContent = s;
   }
 
   if (settings.penalty_timer_seconds) {
@@ -3377,30 +3342,39 @@ function buildLogoHexBg(svgEl, w, h) {
   svgEl.appendChild(g);
 }
 
-function updateLogoPreview(name) {
-  const safeName = (name || '').trim() || 'اسمك';
+function updateLogoPreview(name, subtitle) {
+  // المعاينة الداخلية (داخل الإعدادات)
+  const el  = document.getElementById('previewName');
+  const sub = document.getElementById('previewSub');
+  if (el)  el.textContent  = name     || '—';
+  if (sub) sub.textContent = subtitle || '';
 
-  const el = document.getElementById('previewName');
-  if (el) el.textContent = safeName;
-
+  // خلفية المعاينة
   const hex = document.getElementById('logoPreviewHex');
   if (hex) buildLogoHexBg(hex, 800, 200);
 
+  // الشريط الخارجي الكبير
   const barName = document.getElementById('sessionLogoBarName');
-  if (barName) barName.textContent = safeName;
+  const barSub  = document.getElementById('sessionLogoBarSub');
+  if (barName) barName.textContent = name || '—';
+  if (barSub) {
+    barSub.textContent = subtitle || '';
+    barSub.style.display = subtitle ? 'inline-block' : 'none';
+  }
 
+  // خلفية الشريط الخارجي
   const bgSvg = document.getElementById('sessionLogoBgSvg');
   if (bgSvg) buildLogoHexBg(bgSvg, 200, 130);
 }
 // ===== فتح الـ Overlay =====
 function openLogoOverlay() {
   const name = document.getElementById('setting_show_name')?.value.trim()
-    || document.getElementById('previewName')?.textContent
-    || 'اسمك';
+    || document.getElementById('previewName')?.textContent || '';
+  const sub = document.getElementById('setting_show_subtitle')?.value.trim()
+    || document.getElementById('previewSub')?.textContent || '';
 
-  document.getElementById('logoFullHaroof').textContent = 'حروف';
-  document.getElementById('logoFullMaa').textContent = 'مع';
-  document.getElementById('logoFullName').textContent = name;
+  document.getElementById('logoFullName').textContent = name || '—';
+  document.getElementById('logoFullSub').textContent = sub;
 
   const hex = document.getElementById('logoFullHex');
   hex.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
@@ -3417,24 +3391,25 @@ function closeLogoOverlay() {
 }
 
 function replayLogoAnim() {
-  const haroof = document.getElementById('logoFullHaroof');
-  const maa    = document.getElementById('logoFullMaa');
-  const name   = document.getElementById('logoFullName');
+  const haroof = document.querySelector('.logo-full-haroof');
+  const maa    = document.querySelector('.logo-full-maa');
+  const name   = document.querySelector('.logo-full-name');
+  const sub    = document.querySelector('.logo-full-sub');
 
-  [haroof, maa, name].forEach(el => {
+  [haroof, maa, name, sub].forEach(el => {
     if (!el) return;
-    el.classList.remove('lf-go-r', 'lf-go-f1', 'lf-go-l');
+    el.classList.remove('lf-go-r', 'lf-go-l', 'lf-go-f1', 'lf-go-f2');
     el.style.opacity = '0';
   });
-
   if (haroof) haroof.style.transform = 'translateX(120%)';
-  if (maa)    maa.style.transform    = 'scale(0.8) rotate(-8deg)';
   if (name)   name.style.transform   = 'translateX(-120%)';
+  if (maa)    maa.style.transform    = 'rotate(-8deg) scale(0.8)';
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (haroof) haroof.classList.add('lf-go-r');
     if (maa)    maa.classList.add('lf-go-f1');
     if (name)   name.classList.add('lf-go-l');
+    if (sub && sub.textContent.trim()) sub.classList.add('lf-go-f2');
   }));
 }
 
