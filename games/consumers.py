@@ -800,6 +800,9 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             })
         else:
             await sync_to_async(cache.delete)(buzz_lock_key)
+            # ألغِ مؤقت الفتح التلقائي عشان ما يقطع العداد في شاشة العرض
+            if self._unlock_task and not self._unlock_task.done():
+                self._unlock_task.cancel()
             await self.channel_layer.group_send(self.group_name, {
                 'type': 'broadcast_auto_host_result',
                 'result': 'wrong',
