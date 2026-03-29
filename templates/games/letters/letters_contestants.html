@@ -968,6 +968,9 @@
             }
 
           } else if (d.type === 'letter_selected') {
+              // احفظ الحرف الحالي للمقدم الآلي
+              window._currentLetter = d.letter || '';
+              window._currentQuestionType = 'main';
               const svg = document.getElementById('contestantHoneycombSvg');
               if (!svg) return;
               svg.querySelectorAll('polygon[data-highlighted]').forEach(p => {

@@ -1713,7 +1713,7 @@
                   </div>
                 </div>
                 <label class="big-toggle">
-                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNohostSettings(this.checked)"/>
+                  <input type="checkbox" id="noHostModeToggle" onchange="toggleNohostSettings(this.checked); if(this.checked){ document.getElementById('autoHostModeToggle').checked=false; toggleAutoHostSettings(false); }"/>
                   <span class="big-toggle-track">
                     <span class="big-toggle-thumb"></span>
                   </span>
@@ -2699,8 +2699,12 @@
       sub.style.opacity = enabled ? '1' : '0.4';
       sub.style.pointerEvents = enabled ? 'auto' : 'none';
     }
+    // لو فعّل الآلي، يطفئ بدون مقدم والعكس
+    if (enabled) {
+      document.getElementById('noHostModeToggle').checked = false;
+      toggleNohostSettings(false);
+    }
   }
-
   function revealAnswer(btn) {
     const answerEl = btn.previousElementSibling;
     if (!answerEl) return;
@@ -2802,13 +2806,18 @@ document.querySelectorAll('.grid-option').forEach(label => {
 const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 }, autoHost: { min:5, max:120 } };
 
 function adjustTimer(type, delta) {
-  const el = document.getElementById(type === 'buzz' ? 'buzzTimerVal' : 'penaltyTimerVal');
+  const idMap = {
+    buzz: 'buzzTimerVal',
+    penalty: 'penaltyTimerVal',
+    autoHost: 'autoHostTimerVal'
+  };
+  const el = document.getElementById(idMap[type]);
+  if (!el) return;
   const lim = timerLimits[type];
   let val = parseInt(el.textContent || '0') + delta;
   val = Math.max(lim.min, Math.min(lim.max, val));
   el.textContent = val;
- 
-  // إضافة نبضة بصرية
+
   el.parentElement.style.transform = 'scale(1.15)';
   setTimeout(() => el.parentElement.style.transform = '', 150);
 }
@@ -2846,7 +2855,7 @@ async function saveSettings() {
     show_grid_to_contestants: document.getElementById('showGridToContestants').checked,
     show_name: document.getElementById('setting_show_name').value.trim(),
     show_subtitle: document.getElementById('setting_show_subtitle').value.trim(),
-    nohost_mode: document.getElementById('noHostModeToggle').checked,
+    nohost_mode: document.getElementById('noHostModeToggle').checked || document.getElementById('autoHostModeToggle').checked,
     auto_host_mode: document.getElementById('autoHostModeToggle').checked,
     auto_host_timer_seconds: parseInt(document.getElementById('autoHostTimerVal').textContent),
     auto_host_smart_correction: document.getElementById('autoHostSmartCorrection').checked,
