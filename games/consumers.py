@@ -623,7 +623,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             return {}
 
 
-    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = "", auto_host_timer: int = 10, current_letter: str = "", current_question_type: str = "main"):
+    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = "", auto_host_timer: int = 10, current_letter: str = "", current_question_type: str = "main", partial_question: str = ""):
         if confirmed:
             logger.info(f"_reply_contestant: sending buzz_confirmed to {name}, letter={current_letter}, timer={auto_host_timer}")
             await self.send(text_data=json.dumps({
@@ -634,6 +634,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 'auto_host_timer': auto_host_timer,
                 'current_letter': current_letter,
                 'current_question_type': current_question_type,
+                'partial_question': partial_question,
             }))
             return
         if rejected:

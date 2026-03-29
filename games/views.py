@@ -2099,6 +2099,8 @@ def api_save_settings(request):
         'auto_host_mode': settings.auto_host_mode,
         'auto_host_timer_seconds': settings.auto_host_timer_seconds,
         'auto_host_smart_correction': settings.auto_host_smart_correction,
+        'typewriter_enabled': settings.typewriter_enabled,
+        'typewriter_speed': settings.typewriter_speed,
     }
 
     try:

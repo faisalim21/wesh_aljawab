@@ -1580,6 +1580,11 @@
                 if (el2) el2.textContent = d.settings.team2_name;
               }
 
+              if (d.settings.typewriter_enabled !== undefined) {
+                window.TYPEWRITER_ENABLED = !!d.settings.typewriter_enabled;
+                window.TYPEWRITER_SPEED = d.settings.typewriter_speed || 80;
+              }
+
               if (d.settings.show_name) {
                 _dispLogoName = d.settings.show_name;
                 _dispLogoSub  = d.settings.show_subtitle || '';

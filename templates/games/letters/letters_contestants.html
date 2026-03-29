@@ -924,6 +924,7 @@
           }
           if (d.auto_host_timer) autoHostTimer = d.auto_host_timer;
           if (d.current_letter) window._currentLetter = d.current_letter;
+          if (d.partial_question) window._partialQuestion = d.partial_question;
 
           if (autoHostMode) {
             openAutoHostOverlay();
@@ -1389,7 +1390,8 @@
 
           document.getElementById('autoHostLetter').textContent = letter;
           const partial = d?.partial_question || window._partialQuestion || '';
-          document.getElementById('autoHostQuestion').textContent = partial || autoHostCurrentQuestion;
+          const partial = d?.partial_question || '';
+          document.getElementById('autoHostQuestion').textContent = window._partialQuestion || autoHostCurrentQuestion;
           document.getElementById('autoHostInput').value = '';
           document.getElementById('autoHostResult').className = 'auto-host-result';
           document.getElementById('autoHostResult').textContent = '';
