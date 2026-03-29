@@ -2051,6 +2051,10 @@ def api_save_settings(request):
         except (ValueError, TypeError):
             pass
 
+    # لو وضع الآلي مفعّل، buzz_timer = auto_host_timer عشان يتزامنوا
+    if settings.auto_host_mode:
+        settings.buzz_timer_seconds = settings.auto_host_timer_seconds
+
     if 'auto_host_smart_correction' in data:
         settings.auto_host_smart_correction = bool(data['auto_host_smart_correction'])
 

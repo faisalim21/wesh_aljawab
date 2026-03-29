@@ -1090,8 +1090,7 @@
 
       // إرسال
       try{
-        window._currentLetter = localStorage.getItem(`wjg_last_letter_${sessionId}`) || '';
-        window._currentQuestionType = 'main';
+
         socket.send(JSON.stringify({
           type: 'contestant_buzz',
           contestant_name: name,
