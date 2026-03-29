@@ -2010,7 +2010,7 @@ def api_save_settings(request):
         settings.grid_size = grid_size
 
     if 'typewriter_enabled' in data:
-    settings.typewriter_enabled = bool(data['typewriter_enabled'])
+        settings.typewriter_enabled = bool(data['typewriter_enabled'])
     if 'typewriter_speed' in data:
         try:
             settings.typewriter_speed = max(20, min(300, int(data['typewriter_speed'])))
