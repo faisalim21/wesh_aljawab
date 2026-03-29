@@ -1102,6 +1102,7 @@
   const maxDelay = 5000;
   let countdownInterval = null;
   let heartbeatTimer = null;
+  let ignoreNextBuzzUnlock = false;
 
   // الحرف الحالي المظلّل (يبقى حتى يحدث تغيير آخر)
   let selectedLetter = null;
@@ -1496,7 +1497,10 @@
             break;
           case 'buzz_unlocked':
           case 'buzz_reset_by_host':
-            // لو مو في وضع الآلي فقط أنهي العداد
+            if (ignoreNextBuzzUnlock) {
+              ignoreNextBuzzUnlock = false;
+              break;
+            }
             if (!buzzActive) break;
             endBuzz();
             break;
@@ -1523,6 +1527,8 @@
             clearInterval(countdownInterval);
             countdownInterval = null;
             buzzActive = false;
+            ignoreNextBuzzUnlock = true;
+            setTimeout(() => { ignoreNextBuzzUnlock = false; }, 15000);
             document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);
             break;
