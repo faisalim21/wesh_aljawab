@@ -977,6 +977,7 @@
           } else if (d.type === 'letter_selected') {
               // احفظ الحرف الحالي للمقدم الآلي
               window._currentLetter = d.letter || '';
+              window._partialQuestion = '';
               // لو فيه overlay معلق، افتحه الحين
 
               window._currentQuestionType = 'main';
