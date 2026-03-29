@@ -802,15 +802,25 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
 
 
     async def broadcast_auto_host_result(self, event):
-        """يبث نتيجة الإجابة لكل الشاشات"""
+        """يبث نتيجة الإجابة — للمتسابق صاحب الإجابة فقط إذا خطأ، للجميع إذا صح"""
+        result = event.get('result')
+        contestant_name = event.get('contestant_name', '')
+
+        # لو خطأ — نرسل للمتسابق صاحب الإجابة فقط
+        if result == 'wrong' and self.role == 'contestant':
+            # نتحقق من اسم المتسابق الحالي عبر الـ buzz المؤقت
+            # نرسل للجميع لكن الواجهة تتجاهله لو مو صاحبه
+            pass
+
         await self.send(text_data=json.dumps({
             'type': 'auto_host_result',
-            'result': event.get('result'),           # correct / wrong / revealed
-            'contestant_name': event.get('contestant_name', ''),
+            'result': result,
+            'contestant_name': contestant_name,
             'team': event.get('team', ''),
             'user_answer': event.get('user_answer', ''),
             'correct_answer': event.get('correct_answer', ''),
             'letter': event.get('letter', ''),
+            'corrected': event.get('corrected', False),
         }))
 
 

@@ -1493,9 +1493,15 @@
         }, 2000);
 
       } else if (result === 'wrong') {
+        // فقط صاحب الإجابة يشوف الخطأ
+        const myName = (el.name.value || '').trim();
+        if (d.contestant_name && d.contestant_name !== myName) {
+          // مو إجابتي — افتح الزر بصمت
+          enableBuzz();
+          return;
+        }
         resultEl.className = 'auto-host-result wrong';
         resultEl.textContent = `❌ إجابة خاطئة، حاول مرة أخرى`;
-
         tone(300, 200, .3); haptic(80);
         setTimeout(() => {
           closeAutoHostOverlay();

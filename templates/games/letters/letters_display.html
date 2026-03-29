@@ -1504,13 +1504,17 @@
             if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
             break;
           case 'auto_host_result':
+            clearInterval(countdownInterval);
+            endBuzz();
             showAutoHostResultDisplay(d);
             break;
           case 'settings_updated':
             if (d.settings) {
               applyTeamColors(d.settings);
 
-              if (d.settings.buzz_timer_seconds) {
+              if (d.settings.auto_host_mode && d.settings.auto_host_timer_seconds) {
+                window.BUZZ_TIMER_SECONDS = d.settings.auto_host_timer_seconds;
+              } else if (d.settings.buzz_timer_seconds) {
                 window.BUZZ_TIMER_SECONDS = d.settings.buzz_timer_seconds;
               }
 
@@ -1803,7 +1807,9 @@ function showAutoHostResultDisplay(d) {
         window.currentGridSize = s.grid_size;
       }
 
-      if (s.buzz_timer_seconds) {
+      if (s.auto_host_mode && s.auto_host_timer_seconds) {
+        window.BUZZ_TIMER_SECONDS = s.auto_host_timer_seconds;
+      } else if (s.buzz_timer_seconds) {
         window.BUZZ_TIMER_SECONDS = s.buzz_timer_seconds;
       }
 
