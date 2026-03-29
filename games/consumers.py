@@ -282,6 +282,13 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 if message_type == "nohost_letter_select":
                     letter = (data.get('letter') or '').strip()
                     if letter:
+                        # خزّن الحرف في الكاش للمقدم الآلي
+                        try:
+                            await sync_to_async(cache.set)(
+                                f"current_letter_{self.session_id}", letter, timeout=3600
+                            )
+                        except Exception:
+                            pass
                         await self.channel_layer.group_send(self.group_name, {
                             "type": "broadcast_letter_selected",
                             "letter": letter
@@ -309,6 +316,12 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 if message_type == "letter_selected":
                     letter = (data.get('letter') or '').strip()
                     if letter:
+                        try:
+                            await sync_to_async(cache.set)(
+                                f"current_letter_{self.session_id}", letter, timeout=3600
+                            )
+                        except Exception:
+                            pass
                         await self.channel_layer.group_send(self.group_name, {
                             "type": "broadcast_letter_selected",
                             "letter": letter
