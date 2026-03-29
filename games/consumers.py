@@ -701,7 +701,16 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         buzz_lock_key = f"buzz_lock_{self.session_id}"
         current_buzzer = await sync_to_async(cache.get)(buzz_lock_key)
         if not current_buzzer or current_buzzer.get('name') != contestant_name:
-            await self._reply_contestant(error='ليس دورك للإجابة')
+            # الكاش انتهى — نبث نتيجة خطأ عشان ما تعلق الصفحة
+            await self.channel_layer.group_send(self.group_name, {
+                'type': 'broadcast_auto_host_result',
+                'result': 'wrong',
+                'corrected': False,
+                'contestant_name': contestant_name,
+                'team': team,
+                'user_answer': user_answer,
+                'letter': letter,
+            })
             return
 
         # جلب السؤال والتحقق
