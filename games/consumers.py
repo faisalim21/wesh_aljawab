@@ -292,6 +292,10 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                             await sync_to_async(cache.set)(
                                 f"current_question_type_{self.session_id}", question_type, timeout=3600
                             )
+
+                            await sync_to_async(cache.delete)(
+                                f"partial_question_{self.session_id}"
+                            )
                         except Exception:
                             pass
                         await self.channel_layer.group_send(self.group_name, {
