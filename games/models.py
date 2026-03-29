@@ -984,6 +984,8 @@ class GameSettings(models.Model):
     nohost_mode = models.BooleanField(default=False)
     nohost_allow_cell_color = models.BooleanField(default=True, verbose_name="السماح بتغيير لون الخلية")
     nohost_hide_answer = models.BooleanField(default=True, verbose_name="إخفاء الإجابة كاملاً")
+    typewriter_enabled = models.BooleanField(default=False, verbose_name="محاكاة المقدم البشري")
+    typewriter_speed = models.PositiveIntegerField(default=80, verbose_name="سرعة الظهور (ms)")
 
     show_name = models.CharField(max_length=50, blank=True, default='')
     show_subtitle = models.CharField(max_length=50, blank=True, default='')

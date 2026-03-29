@@ -625,7 +625,7 @@
       stroke-width: 5; stroke-linecap: round;
       stroke-dasharray: 201;
       stroke-dashoffset: 0;
-      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+      transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
     }
     .auto-host-timer-num {
       position: absolute; inset: 0;
@@ -1388,7 +1388,8 @@
           autoHostCurrentAnswerType = q.answer_type || 'arabic';
 
           document.getElementById('autoHostLetter').textContent = letter;
-          document.getElementById('autoHostQuestion').textContent = autoHostCurrentQuestion;
+          const partial = d?.partial_question || window._partialQuestion || '';
+          document.getElementById('autoHostQuestion').textContent = partial || autoHostCurrentQuestion;
           document.getElementById('autoHostInput').value = '';
           document.getElementById('autoHostResult').className = 'auto-host-result';
           document.getElementById('autoHostResult').textContent = '';

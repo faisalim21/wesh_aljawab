@@ -1965,6 +1965,8 @@ def api_get_settings(request):
             'auto_host_mode': settings.auto_host_mode,
             'auto_host_timer_seconds': settings.auto_host_timer_seconds,
             'auto_host_smart_correction': settings.auto_host_smart_correction,
+            'typewriter_enabled': settings.typewriter_enabled,
+            'typewriter_speed': settings.typewriter_speed,
         }
     })
 
@@ -2006,6 +2008,14 @@ def api_save_settings(request):
     valid_sizes = ['3x3', '4x4', '5x5', '6x6', '7x7']
     if grid_size in valid_sizes:
         settings.grid_size = grid_size
+
+    if 'typewriter_enabled' in data:
+    settings.typewriter_enabled = bool(data['typewriter_enabled'])
+    if 'typewriter_speed' in data:
+        try:
+            settings.typewriter_speed = max(20, min(300, int(data['typewriter_speed'])))
+        except (ValueError, TypeError):
+            pass
 
     buzz_timer = data.get('buzz_timer_seconds')
     if buzz_timer is not None:

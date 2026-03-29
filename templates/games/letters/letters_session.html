@@ -1792,6 +1792,33 @@
                     </label>
                   </div>
 
+                  <!-- محاكاة المقدم البشري -->
+                  <div class="toggle-setting">
+                    <div class="toggle-setting-info">
+                      <div class="toggle-setting-title">محاكاة المقدم البشري</div>
+                      <div class="toggle-setting-desc">
+                        السؤال يظهر حرف حرف — يمكن للمتسابق الضغط في أثناء القراءة.
+                      </div>
+                    </div>
+                    <label class="big-toggle">
+                      <input type="checkbox" id="typewriterEnabled" onchange="toggleTypewriterSettings(this.checked)"/>
+                      <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+                    </label>
+                  </div>
+
+                  <div id="typewriterSubSettings" style="margin-top:12px; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
+                    <div class="timer-setting-desc" style="margin-bottom:8px;">
+                      سرعة ظهور الحروف — <span class="recommend-pill">⭐ الموصى به: 80ms</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                      <span style="font-size:0.8rem;color:#6b7280;">بطيء</span>
+                      <input type="range" id="typewriterSpeed" min="20" max="300" step="10" value="80"
+                        style="flex:1;" oninput="document.getElementById('typewriterSpeedVal').textContent = this.value + 'ms'"/>
+                      <span style="font-size:0.8rem;color:#6b7280;">سريع</span>
+                      <span id="typewriterSpeedVal" style="font-weight:900;min-width:40px;text-align:center;">80ms</span>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
@@ -2756,6 +2783,10 @@ async function loadCurrentSettings() {
     document.getElementById('team2Dot').style.background = c2;
     document.getElementById('team1ColorHex').textContent = c1;
     document.getElementById('team2ColorHex').textContent = c2;
+    document.getElementById('typewriterEnabled').checked = !!settings.typewriter_enabled;
+    toggleTypewriterSettings(!!settings.typewriter_enabled);
+    document.getElementById('typewriterSpeed').value = settings.typewriter_speed || 80;
+    document.getElementById('typewriterSpeedVal').textContent = (settings.typewriter_speed || 80) + 'ms';
 
     const gs = settings.grid_size || '5x5';
     document.querySelectorAll('.grid-option').forEach(el => {
@@ -2859,6 +2890,8 @@ async function saveSettings() {
     auto_host_mode: document.getElementById('autoHostModeToggle').checked,
     auto_host_timer_seconds: parseInt(document.getElementById('autoHostTimerVal').textContent),
     auto_host_smart_correction: document.getElementById('autoHostSmartCorrection').checked,
+    typewriter_enabled: document.getElementById('typewriterEnabled').checked,
+    typewriter_speed: parseInt(document.getElementById('typewriterSpeed').value),
   };
 
   const controller = new AbortController();
@@ -2983,6 +3016,10 @@ function applySettingsLocally(settings) {
     toggleAutoHostSettings(enabled);
     window.AUTO_HOST_MODE = enabled;
     window.AUTO_HOST_TIMER = settings.auto_host_timer_seconds || 10;
+  }
+  if (settings.typewriter_enabled !== undefined) {
+    window.TYPEWRITER_ENABLED = !!settings.typewriter_enabled;
+    window.TYPEWRITER_SPEED = settings.typewriter_speed || 80;
   }
 }
 
@@ -3594,7 +3631,13 @@ function startPenalty() {
     }
   }, 1000);
 }
-
+function toggleTypewriterSettings(enabled) {
+  const sub = document.getElementById('typewriterSubSettings');
+  if (sub) {
+    sub.style.opacity = enabled ? '1' : '0.4';
+    sub.style.pointerEvents = enabled ? 'auto' : 'none';
+  }
+}
 // تحديث مدة العقوبة من الإعدادات
 window.PENALTY_TIMER_SECONDS = 10;
 </script>

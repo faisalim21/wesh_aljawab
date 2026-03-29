@@ -299,6 +299,16 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                             "letter": letter
                         })
                     return
+                
+                if message_type == "save_partial_question":
+                    partial = (data.get('partial') or '').strip()
+                    try:
+                        await sync_to_async(cache.set)(
+                            f"partial_question_{self.session_id}", partial, timeout=3600
+                        )
+                    except Exception:
+                        pass
+                    return
                 if message_type == "nohost_question_broadcast":
                     await self.channel_layer.group_send(self.group_name, {
                         "type": "broadcast_nohost_question",
@@ -409,8 +419,9 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 s = GameSettings.get_or_create_for_session(self.session)
                 letter = cache.get(f"current_letter_{self.session_id}") or ''
                 question_type = cache.get(f"current_question_type_{self.session_id}") or 'main'
-                return s.auto_host_timer_seconds or 10, letter, question_type
-            auto_host_timer, current_letter, current_question_type = await sync_to_async(_get_settings_and_letter)()
+                partial_question = cache.get(f"partial_question_{self.session_id}") or ''
+                return s.auto_host_timer_seconds or 10, letter, question_type, partial_question
+            auto_host_timer, current_letter, current_question_type, partial_question = await sync_to_async(_get_settings_and_letter)()
         except Exception:
             pass
 
@@ -420,7 +431,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             team=team,
             auto_host_timer=auto_host_timer,
             current_letter=current_letter,
-            current_question_type=current_question_type
+            current_question_type=current_question_type,
+            partial_question=partial_question
         )
 
         team_display = await self.get_team_display_name(self.session, team)
