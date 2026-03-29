@@ -1356,8 +1356,17 @@
       const questionType = window._currentQuestionType || 'main';
 
       if (!letter) {
-        showMsg('ok', '✅ تم تسجيل ضغطتك!', 2500);
-        setTimeout(enableBuzz, 900);
+        showMsg('info', '⏳ انتظر اختيار الحرف...', 2000);
+        // أعد المحاولة بعد ثانية
+        setTimeout(() => {
+          const retryLetter = window._currentLetter || '';
+          if (retryLetter) {
+            openAutoHostOverlay();
+          } else {
+            showMsg('ok', '✅ تم تسجيل ضغطتك!', 2500);
+            setTimeout(enableBuzz, 900);
+          }
+        }, 1000);
         return;
       }
 

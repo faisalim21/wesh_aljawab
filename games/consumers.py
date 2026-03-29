@@ -222,6 +222,8 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             def _load_timer():
                 from games.models import GameSettings
                 s = GameSettings.get_or_create_for_session(self.session)
+                if s.auto_host_mode:
+                    return max(1, s.auto_host_timer_seconds or 10)
                 return max(1, s.buzz_timer_seconds or 3)
             self.buzz_timer = await sync_to_async(_load_timer)()
         except Exception:
@@ -532,11 +534,13 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         settings = event.get('settings', {})
     
         # تحديث المؤقت فورياً بدون قراءة DB
-        if 'buzz_timer_seconds' in settings:
-            try:
+        try:
+            if settings.get('auto_host_mode'):
+                self.buzz_timer = max(1, int(settings.get('auto_host_timer_seconds') or 10))
+            elif 'buzz_timer_seconds' in settings:
                 self.buzz_timer = max(1, int(settings['buzz_timer_seconds']))
-            except (ValueError, TypeError):
-                pass
+        except (ValueError, TypeError):
+            pass
     
         await self.send(text_data=json.dumps({
             'type': 'settings_updated',
