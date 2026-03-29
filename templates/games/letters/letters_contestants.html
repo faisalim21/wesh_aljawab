@@ -923,13 +923,7 @@
           window._currentQuestionType = 'main';
 
           if (autoHostMode) {
-            if (window._currentLetter) {
-              openAutoHostOverlay();
-            } else {
-              // انتظر رسالة letter_selected
-              window._pendingAutoHostOverlay = true;
-              showMsg('info', '⏳ انتظر اختيار الحرف...', 3000);
-            }
+            openAutoHostOverlay();
           } else {
             showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
             tone(840, 220, .4); haptic(30);
@@ -980,10 +974,7 @@
               // احفظ الحرف الحالي للمقدم الآلي
               window._currentLetter = d.letter || '';
               // لو فيه overlay معلق، افتحه الحين
-              if (window._pendingAutoHostOverlay && window._currentLetter) {
-                window._pendingAutoHostOverlay = false;
-                openAutoHostOverlay();
-              }
+
               window._currentQuestionType = 'main';
               const svg = document.getElementById('contestantHoneycombSvg');
               if (!svg) return;
@@ -1081,6 +1072,11 @@
       if (!team){ showMsg('err','اختر فريقك', 2200); haptic(30); return; }
       if (!socket || socket.readyState !== 1){ showMsg('err','الاتصال غير جاهز', 2200); haptic(30); return; }
       if (busy) return;
+      if (autoHostMode && !window._currentLetter) {
+        showMsg('err', '⏳ انتظر المقدم يختار الحرف أولاً', 2500);
+        haptic(30);
+        return;
+      }
 
       // حركات حسّية
       waveButton(); haptic(50); tone(760, 130, .35);
