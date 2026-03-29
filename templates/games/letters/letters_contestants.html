@@ -927,7 +927,7 @@
           if (d.partial_question) window._partialQuestion = d.partial_question;
 
           if (autoHostMode) {
-            openAutoHostOverlay();
+            setTimeout(openAutoHostOverlay, 300);
           } else {
             showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
             tone(840, 220, .4); haptic(30);

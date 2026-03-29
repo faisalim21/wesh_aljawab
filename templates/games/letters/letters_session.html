@@ -2,6 +2,13 @@
 <html lang="ar" dir="rtl">
 <head>
   <link href="https://fonts.googleapis.com/css2?family=Lalezar&display=swap" rel="stylesheet">
+  <style>
+  @font-face {
+    font-family: 'HrofFont';
+    src: url('/static/fonts/hrof.woff2') format('woff2');
+    font-display: swap;
+  }
+  </style>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   {# ==== META + SOCIAL PACK (Paste inside <head>) ==== #}
@@ -1098,57 +1105,58 @@
 
 
 /* ===== شعار حروف مع [الاسم] ===== */
+/* ===== شعار الجلسة - مطابق لستايل المرجع ===== */
 .logo-preview-wrap {
   margin-top: 14px;
   border-radius: 14px;
   overflow: hidden;
-  background: #5b21b6;
+  background: #613C88;
   position: relative;
-  aspect-ratio: 16/5;
-  min-height: 90px;
-  display: flex; align-items: center; justify-content: center;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 20px;
 }
-.logo-hex-bg { position: absolute; inset: 0; pointer-events: none; }
+
+.logo-hex-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .18;
+}
+
 .logo-title-group {
-  position: relative; z-index: 2;
-  text-align: center; line-height: 0.95;
-  display: flex; flex-direction: column; align-items: center;
-  font-family: 'Lalezar', sans-serif;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  text-align: center;
+  line-height: 1;
+  direction: rtl;
 }
-.logo-t-haroof {
-  font-size: clamp(22px,5vw,48px); color: #FCD34D;
-  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
-  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
-  display: block;
-}
-.logo-t-maa {
-  font-size: clamp(12px,2.5vw,22px); color: #22D3EE;
-  -webkit-text-stroke: 1px #1a0035; paint-order: stroke fill;
-  display: block; margin: -0.05em 0;
-}
+
+.logo-t-fixed,
 .logo-t-name {
-  font-size: clamp(22px,5vw,48px); color: #F87171;
-  -webkit-text-stroke: 1.5px #1a0035; paint-order: stroke fill;
-  text-shadow: 2px 2px 0 #1a0035, 4px 4px 0 #1a0035;
-  display: block;
-}
-/* ===== subtitle — badge موحد في كل الشعارات ===== */
-.logo-t-sub {
-  display: inline-block;
-  background: #FCD34D;
-  color: #1a0035;
-  border: 1.5px solid #92400e;
-  border-radius: 999px;
-  padding: 1px 10px;
-  font-size: clamp(8px, 1.4vw, 14px);
-  font-weight: 900;
-  font-family: 'Tajawal', sans-serif;
-  box-shadow: 0 2px 0 #78350f;
-  margin-top: 4px;
+  font-family: 'HrofFont', 'Lalezar', cursive;
+  font-weight: 400;
+  color: #ff3333;
+  text-shadow: 5px 5px 0 #2D1B4E;
   white-space: nowrap;
-  min-height: 0;
 }
-.logo-t-sub:empty { display: none; }.logo-open-btn {
+
+.logo-t-fixed {
+  font-size: clamp(28px, 4.2vw, 52px);
+}
+
+.logo-t-name {
+  font-size: clamp(28px, 4.2vw, 52px);
+}
+
+.logo-open-btn {
   margin-top: 10px;
   width: 100%;
   padding: 10px;
@@ -1162,134 +1170,126 @@
   cursor: pointer;
   transition: all 0.2s;
 }
-.logo-open-btn:hover { background: linear-gradient(135deg, #6d28d9, #5b21b6); }
-
-/* ===== Overlay الشعار الكامل - ستايل شاشة العرض ===== */
-.logo-fullscreen-overlay {
-  position: fixed; inset: 0;
-  background: #2e1065;
-  z-index: 999999; display: none;
-  align-items: center; justify-content: center; flex-direction: column;
+.logo-open-btn:hover {
+  background: linear-gradient(135deg, #6d28d9, #5b21b6);
 }
-.logo-fullscreen-overlay.open { display: flex; }
+
+/* ===== Overlay الشعار الكامل ===== */
+.logo-fullscreen-overlay {
+  position: fixed;
+  inset: 0;
+  background: #613C88;
+  z-index: 999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logo-fullscreen-overlay.open {
+  display: flex;
+}
 
 .logo-full-hex-bg {
-  position: absolute; inset: 0;
-  pointer-events: none; width: 100%; height: 100%;
-}
-
-/* النص الرئيسي */
-.logo-full-haroof {
-  font-size: clamp(90px, 16vw, 220px);
-  color: #FCD34D;
-  -webkit-text-stroke: 5px #1a0035;
-  paint-order: stroke fill;
-  text-shadow:
-    3px 3px 0 #92400e,
-    6px 6px 0 #78350f,
-    9px 9px 0 #451a03,
-    0 0 40px rgba(252,211,77,0.3);
-  display: block;
-  transform: translateX(120%); opacity: 0;
-  letter-spacing: 4px;
-  font-family: 'Lalezar', cursive;
-}
-.logo-full-maa {
-  font-size: clamp(38px, 6vw, 80px);
-  color: #22D3EE;
-  -webkit-text-stroke: 2.5px #164e63;
-  paint-order: stroke fill;
-  text-shadow: 2px 2px 0 #0e7490, 4px 4px 0 #155e75;
-  display: block; margin: -0.05em 0; opacity: 0;
-  transform: rotate(-8deg) scale(0.8);
-  font-family: 'Lalezar', cursive;
-}
-.logo-full-name {
-  font-size: clamp(90px, 16vw, 220px);
-  color: #F87171;
-  -webkit-text-stroke: 5px #1a0035;
-  paint-order: stroke fill;
-  text-shadow:
-    3px 3px 0 #991b1b,
-    6px 6px 0 #7f1d1d,
-    9px 9px 0 #450a0a,
-    0 0 40px rgba(248,113,113,0.3);
-  display: block;
-  transform: translateX(-120%); opacity: 0;
-  letter-spacing: 4px;
-  font-family: 'Lalezar', cursive;
-}
-.logo-full-sub {
   position: absolute;
-  bottom: -18px; right: -16px;
-  font-size: clamp(12px, 1.4vw, 22px);
-  color: #1a0035;
-  background: #FCD34D;
-  border: 2px solid #92400e;
-  border-radius: 999px;
-  padding: 2px 14px;
-  font-family: 'Tajawal', sans-serif;
-  font-weight: 900;
-  box-shadow: 0 3px 0 #78350f;
-  white-space: nowrap;
-  opacity: 0;
-  direction: rtl;
-}
-.logo-full-sub:empty {
-  display: none !important;
-  opacity: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: .14;
 }
 
-/* الحاوية الرئيسية */
 .logo-full-group {
-  position: relative; z-index: 2;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
   text-align: center;
-  font-family: 'Lalezar', sans-serif;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 0; line-height: 0.85;
-  filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
-}
-.logo-name-wrap {
-  position: relative; display: inline-block;
+  line-height: 1;
+  direction: rtl;
+  padding: 24px;
 }
 
-/* أنيميشن */
-@keyframes lf-fromR { to { transform: translateX(0); opacity: 1; } }
-@keyframes lf-fromL { to { transform: translateX(0); opacity: 1; } }
-@keyframes lf-pop   { to { opacity: 1; transform: rotate(-8deg) scale(1); } }
-@keyframes lf-badge { to { opacity: 1; } }
+.logo-full-fixed,
+.logo-full-name {
+  font-family: 'HrofFont', 'Lalezar', cursive;
+  font-weight: 400;
+  color: #ff3333;
+  text-shadow: 8px 8px 0 #2D1B4E;
+  white-space: nowrap;
+}
 
-.lf-go-r  { animation: lf-fromR .75s cubic-bezier(.34,1.56,.64,1) .05s forwards; }
-.lf-go-l  { animation: lf-fromL .75s cubic-bezier(.34,1.56,.64,1) .25s forwards; }
-.lf-go-f1 { animation: lf-pop .5s cubic-bezier(.34,1.56,.64,1) .42s forwards; }
-.lf-go-f2 { animation: lf-badge .4s ease .9s forwards; }
+.logo-full-fixed {
+  font-size: clamp(54px, 8vw, 140px);
+  opacity: 0;
+  transform: translateX(80px);
+}
 
-/* أزرار التحكم */
+.logo-full-name {
+  font-size: clamp(54px, 8vw, 140px);
+  opacity: 0;
+  transform: translateX(-80px);
+}
+
+@keyframes logoSlideRight {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes logoSlideLeft {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.lf-go-fixed {
+  animation: logoSlideRight .55s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+
+.lf-go-name {
+  animation: logoSlideLeft .55s cubic-bezier(.34,1.56,.64,1) .08s forwards;
+}
+
 .logo-close-btn {
-  position: fixed; top: 20px; left: 20px; z-index: 10;
-  background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.2);
-  color: #fff; border-radius: 12px; padding: 10px 18px;
-  font-family: 'Tajawal', sans-serif; font-weight: 700;
-  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  background: rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.2);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
 }
-.logo-save-btn {
-  background: rgba(252,211,77,.2); border: 1px solid rgba(252,211,77,.5);
-  color: #FCD34D; border-radius: 12px; padding: 10px 18px;
-  font-family: 'Tajawal', sans-serif; font-weight: 700;
-  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
-}
+
 .logo-replay-btn {
-  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 10;
-  background: rgba(139,92,246,.4); border: 1px solid rgba(139,92,246,.6);
-  color: #fff; border-radius: 12px; padding: 10px 24px;
-  font-family: 'Tajawal', sans-serif; font-weight: 700;
-  font-size: 14px; cursor: pointer; backdrop-filter: blur(8px);
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: rgba(139,92,246,.4);
+  border: 1px solid rgba(139,92,246,.6);
+  color: #fff;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
 }
-
-
 /* ===== مؤقت العقوبة ===== */
 .penalty-bar {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
@@ -1467,16 +1467,13 @@
               <div class="logo-preview-wrap" id="logoPreviewWrap">
                 <svg class="logo-hex-bg" id="logoPreviewHex" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
                 <div class="logo-title-group">
-                  <span class="logo-t-haroof">حروف</span>
-                  <span class="logo-t-maa">مــــع</span>
-                  <span class="logo-t-name" id="previewName">—</span>
-                  <span class="logo-t-sub" id="previewSub"></span>
+                  <span class="logo-t-fixed">حروف مع</span>
+                  <span class="logo-t-name" id="previewName">اسمك</span>
                 </div>
               </div>
               <button type="button" class="logo-open-btn" onclick="openLogoOverlay()">
                 📺 فتح الشعار كامل الشاشة
               </button>
-            </div>
 
       
             <!-- ===== قسم 1: الفريقان ===== -->
