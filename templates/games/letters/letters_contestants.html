@@ -1389,8 +1389,7 @@
           autoHostCurrentAnswerType = q.answer_type || 'arabic';
 
           document.getElementById('autoHostLetter').textContent = letter;
-          const partial = d?.partial_question || window._partialQuestion || '';
-          const partial = d?.partial_question || '';
+
           document.getElementById('autoHostQuestion').textContent = window._partialQuestion || autoHostCurrentQuestion;
           document.getElementById('autoHostInput').value = '';
           document.getElementById('autoHostResult').className = 'auto-host-result';
