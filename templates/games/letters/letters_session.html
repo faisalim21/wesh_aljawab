@@ -1104,8 +1104,7 @@
 
 
 
-/* ===== شعار حروف مع [الاسم] ===== */
-/* ===== شعار الجلسة - مطابق لستايل المرجع ===== */
+/* ===== شعار الجلسة - مطابق للمرجع ===== */
 .logo-preview-wrap {
   margin-top: 14px;
   border-radius: 14px;
@@ -1143,17 +1142,19 @@
 .logo-t-name {
   font-family: 'HrofFont', 'Lalezar', cursive;
   font-weight: 400;
-  color: #ff3333;
+  color: #f33;
   text-shadow: 5px 5px 0 #2D1B4E;
   white-space: nowrap;
 }
 
 .logo-t-fixed {
   font-size: clamp(28px, 4.2vw, 52px);
+  margin-top: -10px;
 }
 
 .logo-t-name {
   font-size: clamp(28px, 4.2vw, 52px);
+  margin-top: -10px;
 }
 
 .logo-open-btn {
@@ -1174,7 +1175,6 @@
   background: linear-gradient(135deg, #6d28d9, #5b21b6);
 }
 
-/* ===== Overlay الشعار الكامل ===== */
 .logo-fullscreen-overlay {
   position: fixed;
   inset: 0;
@@ -1217,19 +1217,21 @@
 .logo-full-name {
   font-family: 'HrofFont', 'Lalezar', cursive;
   font-weight: 400;
-  color: #ff3333;
-  text-shadow: 8px 8px 0 #2D1B4E;
+  color: #f33;
+  text-shadow: 5px 5px 0 #2D1B4E;
   white-space: nowrap;
 }
 
 .logo-full-fixed {
   font-size: clamp(54px, 8vw, 140px);
+  margin-top: -10px;
   opacity: 0;
   transform: translateX(80px);
 }
 
 .logo-full-name {
   font-size: clamp(54px, 8vw, 140px);
+  margin-top: -10px;
   opacity: 0;
   transform: translateX(-80px);
 }
@@ -1264,6 +1266,19 @@
   background: rgba(0,0,0,.45);
   border: 1px solid rgba(255,255,255,.2);
   color: #fff;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-family: 'Tajawal', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+
+.logo-save-btn {
+  background: rgba(252,211,77,.2);
+  border: 1px solid rgba(252,211,77,.5);
+  color: #FCD34D;
   border-radius: 12px;
   padding: 10px 18px;
   font-family: 'Tajawal', sans-serif;
@@ -1332,12 +1347,8 @@
        preserveAspectRatio="xMidYMid slice"></svg>
 
   <div class="logo-full-group" id="logoFullGroup">
-    <span class="logo-full-haroof lf-go-r">حروف</span>
-    <span class="logo-full-maa lf-go-f1">مــــع</span>
-    <div class="logo-name-wrap">
-      <span class="logo-full-name lf-go-l" id="logoFullName">—</span>
-      <span class="logo-full-sub lf-go-f2" id="logoFullSub"></span>
-    </div>
+    <span class="logo-full-fixed" id="logoFullFixed">حروف مع</span>
+    <span class="logo-full-name" id="logoFullName">اسمك</span>
   </div>
 
   <button class="logo-close-btn" onclick="closeLogoOverlay()">✕ إغلاق</button>
@@ -1457,6 +1468,8 @@
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">الاسم</label>
                   <input type="text" id="setting_show_name" class="settings-input" style="margin-bottom:0" placeholder="مثال: فيصل" maxlength="20">
                 </div>
+                              <!-- الشعار الفرعي   -->
+
                 <div>
                   <label style="font-size:0.8rem;font-weight:700;color:#6b7280;font-family:'Tajawal',sans-serif;display:block;margin-bottom:5px;">عنوان فرعي (اختياري)</label>
                   <input type="text" id="setting_show_subtitle" class="settings-input" style="margin-bottom:0" placeholder="مثال: رمضان 2026" maxlength="20">
@@ -3339,12 +3352,12 @@ function buildLogoHexBg(svgEl, w, h) {
   svgEl.appendChild(g);
 }
 
-function updateLogoPreview(name, subtitle) {
-  // المعاينة الداخلية (داخل الإعدادات)
-  const el  = document.getElementById('previewName');
-  const sub = document.getElementById('previewSub');
-  if (el)  el.textContent  = name     || '—';
-  if (sub) sub.textContent = subtitle || '';
+function updateLogoPreview(name) {
+  const safeName = (name || '').trim() || 'اسمك';
+
+  // المعاينة الداخلية
+  const el = document.getElementById('previewName');
+  if (el) el.textContent = safeName;
 
   // خلفية المعاينة
   const hex = document.getElementById('logoPreviewHex');
@@ -3352,12 +3365,7 @@ function updateLogoPreview(name, subtitle) {
 
   // الشريط الخارجي الكبير
   const barName = document.getElementById('sessionLogoBarName');
-  const barSub  = document.getElementById('sessionLogoBarSub');
-  if (barName) barName.textContent = name || '—';
-  if (barSub) {
-    barSub.textContent = subtitle || '';
-    barSub.style.display = subtitle ? 'inline-block' : 'none';
-  }
+  if (barName) barName.textContent = safeName;
 
   // خلفية الشريط الخارجي
   const bgSvg = document.getElementById('sessionLogoBgSvg');
@@ -3366,12 +3374,11 @@ function updateLogoPreview(name, subtitle) {
 // ===== فتح الـ Overlay =====
 function openLogoOverlay() {
   const name = document.getElementById('setting_show_name')?.value.trim()
-    || document.getElementById('previewName')?.textContent || '';
-  const sub = document.getElementById('setting_show_subtitle')?.value.trim()
-    || document.getElementById('previewSub')?.textContent || '';
+    || document.getElementById('previewName')?.textContent
+    || 'اسمك';
 
-  document.getElementById('logoFullName').textContent = name || '—';
-  document.getElementById('logoFullSub').textContent = sub;
+  document.getElementById('logoFullFixed').textContent = 'حروف مع';
+  document.getElementById('logoFullName').textContent = name;
 
   const hex = document.getElementById('logoFullHex');
   hex.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
@@ -3388,25 +3395,21 @@ function closeLogoOverlay() {
 }
 
 function replayLogoAnim() {
-  const haroof = document.querySelector('.logo-full-haroof');
-  const maa    = document.querySelector('.logo-full-maa');
-  const name   = document.querySelector('.logo-full-name');
-  const sub    = document.querySelector('.logo-full-sub');
+  const fixed = document.getElementById('logoFullFixed');
+  const name  = document.getElementById('logoFullName');
 
-  [haroof, maa, name, sub].forEach(el => {
+  [fixed, name].forEach(el => {
     if (!el) return;
-    el.classList.remove('lf-go-r', 'lf-go-l', 'lf-go-f1', 'lf-go-f2');
+    el.classList.remove('lf-go-fixed', 'lf-go-name');
     el.style.opacity = '0';
   });
-  if (haroof) haroof.style.transform = 'translateX(120%)';
-  if (name)   name.style.transform   = 'translateX(-120%)';
-  if (maa)    maa.style.transform    = 'rotate(-8deg) scale(0.8)';
+
+  if (fixed) fixed.style.transform = 'translateX(80px)';
+  if (name)  name.style.transform  = 'translateX(-80px)';
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (haroof) haroof.classList.add('lf-go-r');
-    if (maa)    maa.classList.add('lf-go-f1');
-    if (name)   name.classList.add('lf-go-l');
-    if (sub && sub.textContent.trim()) sub.classList.add('lf-go-f2');
+    if (fixed) fixed.classList.add('lf-go-fixed');
+    if (name)  name.classList.add('lf-go-name');
   }));
 }
 
