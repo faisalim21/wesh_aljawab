@@ -990,6 +990,58 @@
         body.nohost-active .penalty-display-bar.show {
           display: flex !important;
         }
+
+        /* ===== المقدم الآلي - شاشة العرض ===== */
+        .ahd-overlay {
+          position: fixed;
+          bottom: 40px; left: 50%;
+          transform: translateX(-50%);
+          z-index: 500;
+          min-width: 320px; max-width: min(600px, 90vw);
+          border-radius: 20px;
+          padding: 20px 28px;
+          text-align: center;
+          backdrop-filter: blur(16px);
+          display: none;
+          font-family: 'Tajawal', sans-serif;
+          box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+          animation: ahdSlideUp 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        .ahd-overlay.show { display: block; }
+        .ahd-overlay.correct {
+          background: rgba(22,163,74,0.92);
+          border: 2px solid #4ade80;
+        }
+        .ahd-overlay.wrong {
+          background: rgba(220,38,38,0.92);
+          border: 2px solid #fca5a5;
+        }
+        .ahd-overlay.revealed {
+          background: rgba(124,58,237,0.92);
+          border: 2px solid #c4b5fd;
+        }
+        @keyframes ahdSlideUp {
+          from { transform: translateX(-50%) translateY(30px); opacity: 0; }
+          to   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+        }
+        .ahd-result-label {
+          font-size: 1.2rem; font-weight: 900; color: #fff;
+          margin-bottom: 6px; display: block;
+        }
+        .ahd-name {
+          font-size: 1.8rem; font-weight: 900; color: #fff;
+          display: block; margin-bottom: 4px;
+        }
+        .ahd-answer {
+          font-size: 1.5rem; font-weight: 800; color: rgba(255,255,255,0.9);
+          display: block; margin-bottom: 6px;
+        }
+        .ahd-corrected {
+          font-size: 0.8rem; color: rgba(255,255,255,0.7);
+          font-weight: 700; display: none;
+          background: rgba(0,0,0,0.2); border-radius: 8px;
+          padding: 4px 10px; margin-top: 6px;
+        }
     </style>
 </head>
 <body>
@@ -1451,6 +1503,9 @@
           case 'letter_selected':
             if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
             break;
+          case 'auto_host_result':
+            showAutoHostResultDisplay(d);
+            break;
           case 'settings_updated':
             if (d.settings) {
               applyTeamColors(d.settings);
@@ -1694,7 +1749,46 @@ function getLetters() {
 
 window.BUZZ_TIMER_SECONDS = window.BUZZ_TIMER_SECONDS || 3;
 window.currentGridSize = window.currentGridSize || '5x5';
+// ===== المقدم الآلي - عرض النتيجة على شاشة العرض =====
+let autoHostDisplayTimeout = null;
 
+function showAutoHostResultDisplay(d) {
+  const result = d.result;
+  const overlay = document.getElementById('autoHostDisplayOverlay');
+  const nameEl  = document.getElementById('ahdName');
+  const answerEl = document.getElementById('ahdAnswer');
+  const correctEl = document.getElementById('ahdCorrect');
+  const correctedEl = document.getElementById('ahdCorrected');
+
+  if (!overlay) return;
+
+  clearTimeout(autoHostDisplayTimeout);
+
+  if (result === 'correct') {
+    overlay.className = 'ahd-overlay correct show';
+    nameEl.textContent = d.contestant_name || '';
+    answerEl.textContent = `"${d.user_answer}"`;
+    correctEl.textContent = `✅ صحيح!`;
+    correctedEl.style.display = d.corrected ? 'block' : 'none';
+    autoHostDisplayTimeout = setTimeout(() => overlay.classList.remove('show'), 4000);
+
+  } else if (result === 'wrong') {
+    overlay.className = 'ahd-overlay wrong show';
+    nameEl.textContent = d.contestant_name || '';
+    answerEl.textContent = `"${d.user_answer}"`;
+    correctEl.textContent = `❌ خطأ`;
+    correctedEl.style.display = 'none';
+    autoHostDisplayTimeout = setTimeout(() => overlay.classList.remove('show'), 3000);
+
+  } else if (result === 'revealed') {
+    overlay.className = 'ahd-overlay revealed show';
+    nameEl.textContent = '';
+    answerEl.textContent = d.correct_answer || '';
+    correctEl.textContent = '💡 الإجابة الصحيحة';
+    correctedEl.style.display = 'none';
+    autoHostDisplayTimeout = setTimeout(() => overlay.classList.remove('show'), 5000);
+  }
+}
   // ===================== تهيئة الصفحة =====================
   document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -2480,6 +2574,16 @@ function _roundRect(ctx, x, y, w, h, r) {
     </div>
 
   </div>
+</div>
+
+<!-- ===== المقدم الآلي - نتيجة على شاشة العرض ===== -->
+<div id="autoHostDisplayOverlay" class="ahd-overlay">
+  <span class="ahd-result-label" id="ahdCorrect">✅ صحيح!</span>
+  <span class="ahd-name" id="ahdName"></span>
+  <span class="ahd-answer" id="ahdAnswer"></span>
+  <span class="ahd-corrected" id="ahdCorrected">
+    🔧 النظام صحح الإملاء تلقائياً
+  </span>
 </div>
 </body>
 </html>

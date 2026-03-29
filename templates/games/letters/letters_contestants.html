@@ -529,6 +529,136 @@
     .nohost-toggle-btn.active {
       background: rgba(124,58,237,0.9); border-color: #8b5cf6; color: #fff;
     }
+
+
+    /* ===== المقدم الآلي - overlay الإجابة ===== */
+    .auto-host-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(10, 5, 30, 0.96);
+      backdrop-filter: blur(12px);
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px;
+      gap: 16px;
+    }
+    .auto-host-overlay.show { display: flex; }
+
+    .auto-host-card {
+      width: min(520px, 94vw);
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(139,92,246,0.35);
+      border-radius: 24px;
+      padding: clamp(20px, 4vw, 32px);
+      text-align: center;
+      backdrop-filter: blur(20px);
+    }
+
+    .auto-host-letter {
+      display: inline-block;
+      background: linear-gradient(135deg, #7c3aed, #4c1d95);
+      color: #fff; font-size: 1.8rem; font-weight: 900;
+      padding: 6px 24px; border-radius: 999px;
+      margin-bottom: 12px; font-family: 'Tajawal', sans-serif;
+      box-shadow: 0 4px 16px rgba(124,58,237,0.4);
+    }
+
+    .auto-host-question {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      font-weight: 800; color: #f1f5f9;
+      line-height: 1.7; margin-bottom: 20px;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .auto-host-warning {
+      display: none;
+      background: rgba(245,158,11,0.15);
+      border: 1.5px solid rgba(245,158,11,0.4);
+      border-radius: 12px; padding: 10px 14px;
+      color: #fbbf24; font-size: 0.85rem;
+      font-weight: 700; margin-bottom: 14px;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .auto-host-warning.show { display: block; }
+
+    .auto-host-input {
+      width: 100%; padding: 14px 16px;
+      background: rgba(255,255,255,0.96);
+      color: #1f2937; border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 14px; font-weight: 800;
+      font-size: 1.1rem; text-align: center;
+      font-family: 'Tajawal', sans-serif;
+      outline: none; margin-bottom: 14px;
+      transition: border-color 0.2s;
+    }
+    .auto-host-input:focus {
+      border-color: #8b5cf6;
+      box-shadow: 0 0 0 4px rgba(139,92,246,0.2);
+    }
+
+    .auto-host-submit {
+      width: 100%; padding: 14px;
+      border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #7c3aed, #4c1d95);
+      color: #fff; font-family: 'Tajawal', sans-serif;
+      font-weight: 900; font-size: 1.05rem;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+    }
+    .auto-host-submit:hover { transform: translateY(-2px); }
+    .auto-host-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* عداد تنازلي دائري */
+    .auto-host-timer {
+      position: relative; width: 72px; height: 72px;
+      margin: 0 auto 16px;
+    }
+    .auto-host-timer svg {
+      transform: rotate(-90deg);
+      width: 72px; height: 72px;
+    }
+    .auto-host-timer-circle {
+      fill: none; stroke: rgba(139,92,246,0.2);
+      stroke-width: 5;
+    }
+    .auto-host-timer-progress {
+      fill: none; stroke: #8b5cf6;
+      stroke-width: 5; stroke-linecap: round;
+      stroke-dasharray: 201;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke 0.3s;
+    }
+    .auto-host-timer-num {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; font-weight: 900; color: #c4b5fd;
+      font-family: monospace;
+    }
+
+    /* نتيجة الإجابة */
+    .auto-host-result {
+      display: none; border-radius: 16px;
+      padding: 16px 20px; text-align: center;
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 800; font-size: 1.1rem;
+    }
+    .auto-host-result.correct {
+      display: block;
+      background: rgba(34,197,94,0.15);
+      border: 1.5px solid #22c55e; color: #4ade80;
+    }
+    .auto-host-result.wrong {
+      display: block;
+      background: rgba(239,68,68,0.15);
+      border: 1.5px solid #ef4444; color: #fca5a5;
+    }
+    .auto-host-result.corrected-notice {
+      margin-top: 8px;
+      background: rgba(245,158,11,0.1);
+      border: 1px solid rgba(245,158,11,0.3);
+      border-radius: 10px; padding: 8px 12px;
+      color: #fbbf24; font-size: 0.78rem; font-weight: 700;
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -642,6 +772,13 @@
     let reconnectDelay = 1000;
     const maxDelay = 5000;
     let heartbeat = null;
+    let autoHostMode = false;
+    let autoHostTimer = 10;
+    let autoHostTimerInterval = null;
+    let autoHostCurrentLetter = '';
+    let autoHostCurrentQuestion = '';
+    let autoHostCurrentQuestionType = 'main';
+    let autoHostCurrentAnswerType = 'arabic';
 
     // ======== عناصر ========
     const el = {
@@ -771,13 +908,7 @@
         let d = {};
         try{ d = JSON.parse(ev.data || '{}'); }catch{ return; }
 
-        if (d.type === 'buzz_confirmed'){
-          showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
-          tone(840, 220, .4);
-          haptic(30);
-          setTimeout(()=> enableBuzz(), 900);
-
-        } else if (d.type === 'buzz_rejected'){
+        if (d.type === 'buzz_rejected'){
           showMsg('err', d.message || '⚠️ الزر محجوز الآن', 3000);
           tone(360, 180, .25);
           haptic(40);
@@ -786,10 +917,26 @@
         } else if (d.type === 'error'){
           showMsg('err', d.message || 'حدث خطأ.', 3200);
           setTimeout(()=> enableBuzz(), 600);
+        } else if (d.type === 'buzz_confirmed') {
+          // لو وضع المقدم الآلي مفعّل
+          if (autoHostMode) {
+            openAutoHostOverlay();
+          } else {
+            showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
+            tone(840, 220, .4); haptic(30);
+            setTimeout(enableBuzz, 900);
+          }
+
+        } else if (d.type === 'auto_host_result') {
+          handleAutoHostResult(d);
 
         } else if (d.type === 'settings_updated'){
           const s = d.settings;
           if (!s) return;
+          if (s.auto_host_mode !== undefined) {
+            autoHostMode = !!s.auto_host_mode;
+            autoHostTimer = s.auto_host_timer_seconds || 10;
+          }
 
          applyContestantTeamColors(s.team1_color, s.team2_color);
           if (s.show_name) {
@@ -929,6 +1076,8 @@
 
       // إرسال
       try{
+        window._currentLetter = localStorage.getItem(`wjg_last_letter_${sessionId}`) || '';
+        window._currentQuestionType = 'main';
         socket.send(JSON.stringify({
           type: 'contestant_buzz',
           contestant_name: name,
@@ -979,11 +1128,12 @@
           }
 
           // الشعار والمؤقت
-          if (s.show_name) {
-            showSessionLogo(s.show_name, s.show_subtitle);
-          }
           if (s.buzz_timer_seconds) {
             buzzTimerSeconds = s.buzz_timer_seconds;
+          }
+          if (s.auto_host_mode !== undefined) {
+            autoHostMode = !!s.auto_host_mode;
+            autoHostTimer = s.auto_host_timer_seconds || 10;
           }
         })
         .catch(() => {});
@@ -1184,12 +1334,210 @@
       }, 1000);
     }
 
-function hidePenaltyContestant() {
-  if (penConInterval) { clearInterval(penConInterval); penConInterval = null; }
-  document.getElementById('penaltyContestantBar')?.classList.remove('show');
-}
+    function hidePenaltyContestant() {
+      if (penConInterval) { clearInterval(penConInterval); penConInterval = null; }
+      document.getElementById('penaltyContestantBar')?.classList.remove('show');
+    }
+
+    // ===== المقدم الآلي =====
+
+    function openAutoHostOverlay() {
+      // جلب السؤال الحالي
+      const letter = window._currentLetter || '';
+      const questionType = window._currentQuestionType || 'main';
+
+      if (!letter) {
+        showMsg('ok', '✅ تم تسجيل ضغطتك!', 2500);
+        setTimeout(enableBuzz, 900);
+        return;
+      }
+
+      autoHostCurrentLetter = letter;
+      autoHostCurrentQuestionType = questionType;
+
+      // جلب السؤال من API
+      fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`)
+        .then(r => r.json())
+        .then(data => {
+          const q = data.questions?.[questionType] || data.questions?.main || {};
+          autoHostCurrentQuestion = q.question || '—';
+          autoHostCurrentAnswerType = q.answer_type || 'arabic';
+
+          document.getElementById('autoHostLetter').textContent = letter;
+          document.getElementById('autoHostQuestion').textContent = autoHostCurrentQuestion;
+          document.getElementById('autoHostInput').value = '';
+          document.getElementById('autoHostResult').className = 'auto-host-result';
+          document.getElementById('autoHostResult').textContent = '';
+          document.getElementById('autoHostCorrectedNotice').style.display = 'none';
+          document.getElementById('autoHostSubmit').disabled = false;
+
+          // تنبيه الشبهة
+          const warning = document.getElementById('autoHostWarning');
+          if (autoHostCurrentAnswerType === 'foreign') {
+            warning.classList.add('show');
+          } else {
+            warning.classList.remove('show');
+          }
+
+          document.getElementById('autoHostOverlay').classList.add('show');
+          setTimeout(() => document.getElementById('autoHostInput').focus(), 300);
+          startAutoHostTimer();
+        })
+        .catch(() => {
+          showMsg('ok', '✅ تم تسجيل ضغطتك!', 2500);
+          setTimeout(enableBuzz, 900);
+        });
+    }
+
+    function startAutoHostTimer() {
+      clearInterval(autoHostTimerInterval);
+      let left = autoHostTimer;
+      const numEl = document.getElementById('autoHostTimerNum');
+      const circleEl = document.getElementById('autoHostTimerCircle');
+      const circumference = 201;
+
+      numEl.textContent = left;
+      circleEl.style.strokeDashoffset = 0;
+
+      autoHostTimerInterval = setInterval(() => {
+        left--;
+        numEl.textContent = left;
+        const offset = circumference * (1 - left / autoHostTimer);
+        circleEl.style.strokeDashoffset = offset;
+
+        if (left <= 3) {
+          circleEl.style.stroke = '#ef4444';
+          numEl.style.color = '#fca5a5';
+        }
+
+        if (left <= 0) {
+          clearInterval(autoHostTimerInterval);
+          closeAutoHostOverlay();
+          enableBuzz();
+        }
+      }, 1000);
+    }
+
+    function closeAutoHostOverlay() {
+      clearInterval(autoHostTimerInterval);
+      document.getElementById('autoHostOverlay').classList.remove('show');
+      document.getElementById('autoHostTimerCircle').style.stroke = '#8b5cf6';
+      document.getElementById('autoHostTimerNum').style.color = '#c4b5fd';
+    }
+
+    function submitAutoHostAnswer() {
+      const answer = (document.getElementById('autoHostInput').value || '').trim();
+      if (!answer) {
+        document.getElementById('autoHostInput').focus();
+        return;
+      }
+
+      document.getElementById('autoHostSubmit').disabled = true;
+      clearInterval(autoHostTimerInterval);
+
+      const name = (el.name.value || '').trim();
+      const team = document.querySelector('input[name="team"]:checked')?.value;
+
+      if (!socket || socket.readyState !== 1) return;
+
+      socket.send(JSON.stringify({
+        type: 'auto_host_answer',
+        contestant_name: name,
+        team: team,
+        answer: answer,
+        letter: autoHostCurrentLetter,
+        question_type: autoHostCurrentQuestionType,
+      }));
+    }
+
+    function handleAutoHostResult(d) {
+      const result = d.result;
+      const resultEl = document.getElementById('autoHostResult');
+      const noticeEl = document.getElementById('autoHostCorrectedNotice');
+
+      if (result === 'correct') {
+        resultEl.className = 'auto-host-result correct';
+        resultEl.textContent = `✅ إجابة صحيحة! "${d.correct_answer}"`;
+
+        if (d.corrected) {
+          noticeEl.style.display = 'block';
+        }
+
+        tone(840, 300, .5); haptic(50);
+        setTimeout(() => {
+          closeAutoHostOverlay();
+          enableBuzz();
+        }, 2000);
+
+      } else if (result === 'wrong') {
+        resultEl.className = 'auto-host-result wrong';
+        resultEl.textContent = `❌ إجابة خاطئة، حاول مرة أخرى`;
+
+        tone(300, 200, .3); haptic(80);
+        setTimeout(() => {
+          closeAutoHostOverlay();
+          enableBuzz();
+        }, 1500);
+
+      } else if (result === 'revealed') {
+        resultEl.className = 'auto-host-result correct';
+        resultEl.textContent = `الإجابة الصحيحة: "${d.correct_answer}"`;
+        setTimeout(() => {
+          closeAutoHostOverlay();
+          enableBuzz();
+        }, 2500);
+      }
+    }
 
     window.buzzAnswer = sendBuzz; // إن احتجت تناديها من HTML
   </script>
+
+
+<!-- ===== overlay المقدم الآلي ===== -->
+<div id="autoHostOverlay" class="auto-host-overlay">
+  <div class="auto-host-card">
+
+    <!-- العداد -->
+    <div class="auto-host-timer">
+      <svg viewBox="0 0 72 72">
+        <circle class="auto-host-timer-circle" cx="36" cy="36" r="32"/>
+        <circle class="auto-host-timer-progress" id="autoHostTimerCircle" cx="36" cy="36" r="32"/>
+      </svg>
+      <div class="auto-host-timer-num" id="autoHostTimerNum">10</div>
+    </div>
+
+    <!-- الحرف والسؤال -->
+    <div class="auto-host-letter" id="autoHostLetter">أ</div>
+    <div class="auto-host-question" id="autoHostQuestion">—</div>
+
+    <!-- تنبيه الشبهة -->
+    <div class="auto-host-warning" id="autoHostWarning">
+      ⚠️ هذا السؤال يحتاج دقة في الكتابة — تأكد من الإملاء الصحيح
+    </div>
+
+    <!-- حقل الإجابة -->
+    <input
+      id="autoHostInput"
+      class="auto-host-input"
+      type="text"
+      placeholder="اكتب إجابتك هنا..."
+      autocomplete="off"
+      maxlength="100"
+    />
+
+    <!-- زر الإرسال -->
+    <button id="autoHostSubmit" class="auto-host-submit" onclick="submitAutoHostAnswer()">
+      ✅ أرسل الإجابة
+    </button>
+
+    <!-- نتيجة -->
+    <div id="autoHostResult" class="auto-host-result"></div>
+    <div id="autoHostCorrectedNotice" class="auto-host-result corrected-notice" style="display:none;">
+      🔧 النظام صحح الإملاء تلقائياً — إذا في خلل
+      <a href="https://wa.me/966550799857" target="_blank" style="color:#fbbf24;">تواصل معنا</a>
+    </div>
+
+  </div>
+</div>
 </body>
 </html>
