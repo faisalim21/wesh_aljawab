@@ -1109,6 +1109,7 @@
   // تخزين بيانات الشعار
   let _dispLogoName = '';
   let _dispLogoSub  = '';
+  let buzzActive = false;
 
   function hexToRgb(hex) {
   if (!hex) return null;
@@ -1366,6 +1367,11 @@
   function playEnd()  { tone(420, 600); }
 
   function showBuzz(name, team) {
+    // أوقف أي عداد سابق أولاً
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+    buzzActive = true;
+
     playBuzz();
     document.getElementById('buzzedName').textContent = name;
 
@@ -1385,16 +1391,24 @@
 
   function startCountdown() {
     clearInterval(countdownInterval);
-    let n = window.BUZZ_TIMER_SECONDS || 3;
+    let n = window.BUZZ_TIMER_SECONDS || 10;
     const el = document.getElementById('countdown');
     el.textContent = n;
     countdownInterval = setInterval(() => {
-      n -= 1; el.textContent = n;
-      if (n <= 0) { clearInterval(countdownInterval); endBuzz(); }
+      n -= 1;
+      el.textContent = n;
+      if (n <= 0) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+        endBuzz();
+      }
     }, 1000);
   }
 
   function endBuzz() {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+    buzzActive = false;
     playEnd();
     setTimeout(() => {
       document.getElementById('buzzedOverlay').classList.remove('show');
@@ -1482,6 +1496,8 @@
             break;
           case 'buzz_unlocked':
           case 'buzz_reset_by_host':
+            // لو مو في وضع الآلي فقط أنهي العداد
+            if (!buzzActive) break;
             endBuzz();
             break;
           case 'cell_state_updated':
@@ -1505,7 +1521,9 @@
             break;
           case 'auto_host_result':
             clearInterval(countdownInterval);
-            endBuzz();
+            countdownInterval = null;
+            buzzActive = false;
+            document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);
             break;
           case 'settings_updated':
