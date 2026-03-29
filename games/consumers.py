@@ -338,11 +338,11 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         contestant_name = (data.get("contestant_name") or "").strip()
         team = data.get("team")
         timestamp = data.get("timestamp")
-    
+
         if not contestant_name or team not in ("team1", "team2"):
             await self._reply_contestant(error="اسم المتسابق والفريق مطلوبان")
             return
-    
+
         buzz_lock_key = f"buzz_lock_{self.session_id}"
         lock_payload = {
             'name': contestant_name,
@@ -351,23 +351,42 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'session_id': self.session_id,
             'method': 'WS',
         }
-    
-        # timeout = buzz_timer + 2 (buffer) لضمان عدم انتهاء الـ cache قبل العداد
+
         lock_ttl = self.buzz_timer + 2
-    
+
         try:
             added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=lock_ttl)
         except Exception:
             added = False
-    
+
         if not added:
             current_buzzer = await sync_to_async(cache.get)(buzz_lock_key) or {}
             await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
             return
-    
+
         await self.ensure_contestant(self.session, contestant_name, team)
-        await self._reply_contestant(confirmed=True, name=contestant_name, team=team)
-    
+
+        # جلب مؤقت المقدم الآلي والحرف الحالي
+        auto_host_timer = 10
+        current_letter = ''
+        try:
+            def _get_settings_and_letter():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                letter = cache.get(f"current_letter_{self.session_id}") or ''
+                return s.auto_host_timer_seconds or 10, letter
+            auto_host_timer, current_letter = await sync_to_async(_get_settings_and_letter)()
+        except Exception:
+            pass
+
+        await self._reply_contestant(
+            confirmed=True,
+            name=contestant_name,
+            team=team,
+            auto_host_timer=auto_host_timer,
+            current_letter=current_letter
+        )
+
         team_display = await self.get_team_display_name(self.session, team)
         await self.channel_layer.group_send(self.group_name, {
             'type': 'broadcast_buzz_event',
@@ -377,12 +396,11 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'timestamp': timestamp,
             'action': 'buzz_accepted'
         })
-    
-        # إلغاء أي task فتح سابق وإنشاء واحد جديد
+
         if self._unlock_task and not self._unlock_task.done():
             self._unlock_task.cancel()
         self._unlock_task = asyncio.create_task(self._auto_unlock_after_timer())
-    
+
         logger.info(f"INSTANT Buzz: {contestant_name} from {team} in session {self.session_id}, timer={self.buzz_timer}s")
  
 
@@ -554,13 +572,15 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             return {}
 
 
-    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = ""):
+    async def _reply_contestant(self, confirmed: bool = False, name: str = "", team: str = "", rejected: str = "", error: str = "", auto_host_timer: int = 10, current_letter: str = ""):
         if confirmed:
             await self.send(text_data=json.dumps({
                 'type': 'buzz_confirmed',
                 'contestant_name': name,
                 'team': team,
-                'message': f'تم تسجيل إجابتك يا {name}!'
+                'message': f'تم تسجيل إجابتك يا {name}!',
+                'auto_host_timer': auto_host_timer,
+                'current_letter': current_letter,
             }))
             return
         if rejected:

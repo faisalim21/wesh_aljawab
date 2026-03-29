@@ -1415,6 +1415,11 @@ def api_letters_select_letter(request):
     letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
     if letter not in letters:
         return JsonResponse({'success': False, 'error': f'الحرف {letter} غير متاح في هذه الجلسة'}, status=400)
+    # خزّن الحرف الحالي للمقدم الآلي
+    try:
+        cache.set(f"current_letter_{session.id}", letter, timeout=3600)
+    except Exception:
+        pass
 
     # بثّ إلى المجموعة
     try:
