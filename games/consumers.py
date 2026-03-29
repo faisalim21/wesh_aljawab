@@ -63,7 +63,9 @@ logger = logging.getLogger('games')
 
 
 
-
+# قفل asyncio لكل جلسة — يمنع تزامن البازر
+_buzz_session_locks: dict = {}
+_buzz_locks_meta = None  # asyncio.Lock — يتهيأ عند أول استخدام
     
 class LettersGameConsumer(AsyncWebsocketConsumer):
     """
@@ -358,37 +360,67 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             await self._reply_contestant(error="اسم المتسابق والفريق مطلوبان")
             return
 
-        buzz_lock_key = f"buzz_lock_{self.session_id}"
-        lock_payload = {
-            'name': contestant_name,
-            'team': team,
-            'timestamp': timestamp,
-            'session_id': self.session_id,
-            'method': 'WS',
-        }
+        # قفل asyncio يمنع الـ race condition
+        buzz_lock = await self._get_buzz_lock()
+        async with buzz_lock:
+            buzz_lock_key = f"buzz_lock_{self.session_id}"
+            lock_payload = {
+                'name': contestant_name,
+                'team': team,
+                'timestamp': timestamp,
+                'session_id': self.session_id,
+                'method': 'WS',
+            }
+            lock_ttl = self.buzz_timer + 2
 
-        lock_ttl = self.buzz_timer + 2
+            try:
+                added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=lock_ttl)
+            except Exception:
+                added = False
 
-        try:
-            added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=lock_ttl)
-        except Exception:
-            added = False
-
-        if not added:
-            current_buzzer = await sync_to_async(cache.get)(buzz_lock_key) or {}
-            await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
-            return
-
-        # تحقق مزدوج — تأكد إن اللي في الكاش هو نفس الشخص
-        try:
-            stored = await sync_to_async(cache.get)(buzz_lock_key)
-            if not stored or stored.get('name') != contestant_name:
-                await self._reply_contestant(rejected='الزر محجوز')
+            if not added:
+                current_buzzer = await sync_to_async(cache.get)(buzz_lock_key) or {}
+                await self._reply_contestant(rejected=f'الزر محجوز من {current_buzzer.get("name", "مشارك")}')
                 return
+
+        await self.ensure_contestant(self.session, contestant_name, team)
+
+        # جلب مؤقت المقدم الآلي والحرف الحالي
+        auto_host_timer = 10
+        current_letter = ''
+        try:
+            def _get_settings_and_letter():
+                from games.models import GameSettings
+                s = GameSettings.get_or_create_for_session(self.session)
+                letter = cache.get(f"current_letter_{self.session_id}") or ''
+                return s.auto_host_timer_seconds or 10, letter
+            auto_host_timer, current_letter = await sync_to_async(_get_settings_and_letter)()
         except Exception:
             pass
 
-        await self.ensure_contestant(self.session, contestant_name, team)
+        await self._reply_contestant(
+            confirmed=True,
+            name=contestant_name,
+            team=team,
+            auto_host_timer=auto_host_timer,
+            current_letter=current_letter
+        )
+
+        team_display = await self.get_team_display_name(self.session, team)
+        await self.channel_layer.group_send(self.group_name, {
+            'type': 'broadcast_buzz_event',
+            'contestant_name': contestant_name,
+            'team': team,
+            'team_display': team_display,
+            'timestamp': timestamp,
+            'action': 'buzz_accepted'
+        })
+
+        if self._unlock_task and not self._unlock_task.done():
+            self._unlock_task.cancel()
+        self._unlock_task = asyncio.create_task(self._auto_unlock_after_timer())
+
+        logger.info(f"INSTANT Buzz: {contestant_name} from {team} in session {self.session_id}, timer={self.buzz_timer}s")
 
         # جلب مؤقت المقدم الآلي والحرف الحالي
         auto_host_timer = 10
@@ -831,6 +863,15 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'letter': event.get('letter', ''),
             'corrected': event.get('corrected', False),
         }))
+
+    async def _get_buzz_lock(self) -> asyncio.Lock:
+        global _buzz_locks_meta
+        if _buzz_locks_meta is None:
+            _buzz_locks_meta = asyncio.Lock()
+        async with _buzz_locks_meta:
+            if self.session_id not in _buzz_session_locks:
+                _buzz_session_locks[self.session_id] = asyncio.Lock()
+            return _buzz_session_locks[self.session_id]
 
 
         
