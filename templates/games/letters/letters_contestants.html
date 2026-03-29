@@ -1488,7 +1488,18 @@
           noticeEl.style.display = 'block';
         }
 
-        tone(840, 300, .5); haptic(50);
+        // نغمة صعودية احترافية للإجابة الصحيحة
+        try {
+          const actx = new (window.AudioContext || window.webkitAudioContext)();
+          [523, 659, 784].forEach((freq, i) => {
+            const o = actx.createOscillator(), g = actx.createGain();
+            o.connect(g); g.connect(actx.destination);
+            o.frequency.value = freq; g.gain.value = 0.3;
+            o.start(actx.currentTime + i * 0.12);
+            o.stop(actx.currentTime + i * 0.12 + 0.18);
+          });
+        } catch {}
+        haptic(50);
         setTimeout(() => {
           closeAutoHostOverlay();
           enableBuzz();

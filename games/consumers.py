@@ -366,6 +366,18 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
         # قفل asyncio يمنع الـ race condition
         buzz_lock = await self._get_buzz_lock()
         async with buzz_lock:
+            # تحديث المؤقت من DB عند كل ضغطة — يضمن التزامن
+            try:
+                def _refresh_timer():
+                    from games.models import GameSettings
+                    s = GameSettings.get_or_create_for_session(self.session)
+                    if s.auto_host_mode:
+                        return max(1, s.auto_host_timer_seconds or 10)
+                    return max(1, s.buzz_timer_seconds or 3)
+                self.buzz_timer = await sync_to_async(_refresh_timer)()
+            except Exception:
+                pass
+            
             buzz_lock_key = f"buzz_lock_{self.session_id}"
             lock_payload = {
                 'name': contestant_name,
@@ -374,7 +386,7 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 'session_id': self.session_id,
                 'method': 'WS',
             }
-            lock_ttl = self.buzz_timer + 2
+            lock_ttl = self.buzz_timer + 5  # buffer أكبر
 
             try:
                 added = await sync_to_async(cache.add)(buzz_lock_key, lock_payload, timeout=lock_ttl)
