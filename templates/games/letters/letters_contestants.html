@@ -918,15 +918,18 @@
           showMsg('err', d.message || 'حدث خطأ.', 3200);
           setTimeout(()=> enableBuzz(), 600);
         } else if (d.type === 'buzz_confirmed') {
-          if (d.current_letter) {
-            window._currentLetter = d.current_letter;
-            window._currentQuestionType = 'main';
-          }
-          if (d.auto_host_timer) {
-            autoHostTimer = d.auto_host_timer;
-          }
+          if (d.auto_host_timer) autoHostTimer = d.auto_host_timer;
+          if (d.current_letter) window._currentLetter = d.current_letter;
+          window._currentQuestionType = 'main';
+
           if (autoHostMode) {
-            openAutoHostOverlay();
+            if (window._currentLetter) {
+              openAutoHostOverlay();
+            } else {
+              // انتظر رسالة letter_selected
+              window._pendingAutoHostOverlay = true;
+              showMsg('info', '⏳ انتظر اختيار الحرف...', 3000);
+            }
           } else {
             showMsg('ok', d.message || '✅ تم تسجيل ضغطتك!', 2500);
             tone(840, 220, .4); haptic(30);
@@ -976,6 +979,11 @@
           } else if (d.type === 'letter_selected') {
               // احفظ الحرف الحالي للمقدم الآلي
               window._currentLetter = d.letter || '';
+              // لو فيه overlay معلق، افتحه الحين
+              if (window._pendingAutoHostOverlay && window._currentLetter) {
+                window._pendingAutoHostOverlay = false;
+                openAutoHostOverlay();
+              }
               window._currentQuestionType = 'main';
               const svg = document.getElementById('contestantHoneycombSvg');
               if (!svg) return;
