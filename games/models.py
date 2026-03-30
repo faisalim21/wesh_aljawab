@@ -989,6 +989,7 @@ class GameSettings(models.Model):
 
     show_name = models.CharField(max_length=50, blank=True, default='')
     show_subtitle = models.CharField(max_length=50, blank=True, default='')
+    auto_host_speech_enabled = models.BooleanField(default=False, verbose_name="قراءة السؤال صوتياً")
 
     # ===== أسماء وألوان الفريقين =====
     team1_name = models.CharField(max_length=50, default="الفريق الأخضر", verbose_name="اسم الفريق الأول")

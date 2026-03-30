@@ -1116,6 +1116,45 @@
   let typewriterSpeed = 80; // ms بين كل حرف
   let buzzActive = false;
 
+
+  // ===== قراءة السؤال =====
+  let speechUtterance = null;
+
+  function speakQuestion(text) {
+    if (!window.AUTO_HOST_SPEECH) return;
+    if (!window.speechSynthesis) return;
+    stopSpeech();
+
+    speechUtterance = new SpeechSynthesisUtterance(text);
+    speechUtterance.lang = 'ar-SA';
+    speechUtterance.rate = 0.9;
+    speechUtterance.pitch = 1;
+
+    // اختر أفضل صوت عربي متاح
+    const voices = window.speechSynthesis.getVoices();
+    const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
+    if (arabicVoice) speechUtterance.voice = arabicVoice;
+
+    window.speechSynthesis.speak(speechUtterance);
+  }
+
+  function pauseSpeech() {
+    if (window.speechSynthesis?.speaking) {
+      window.speechSynthesis.pause();
+    }
+  }
+
+  function resumeSpeech() {
+    if (window.speechSynthesis?.paused) {
+      window.speechSynthesis.resume();
+    }
+  }
+
+  function stopSpeech() {
+    window.speechSynthesis?.cancel();
+    speechUtterance = null;
+  }
+
   function hexToRgb(hex) {
   if (!hex) return null;
   let c = hex.replace('#', '').trim();
@@ -1501,6 +1540,7 @@
         switch (d.type) {
           case 'contestant_buzz_accepted':
             pauseTypewriter();
+            pauseSpeech();
             window._partialQuestion = getPartialQuestion();
             if (socket && socket.readyState === 1) {
               socket.send(JSON.stringify({
@@ -1520,6 +1560,7 @@
             endBuzz();
             const nqpEl2 = document.getElementById('nqpQuestion');
             if (nqpEl2) resumeTypewriter(nqpEl2);
+            resumeSpeech();
             break;
           case 'cell_state_updated':
               updateCell(d.letter, d.state, d.cell_index);
@@ -1547,6 +1588,7 @@
             ignoreNextBuzzUnlock = true;
             const nqpEl = document.getElementById('nqpQuestion');
             if (nqpEl) resumeTypewriter(nqpEl);
+            resumeSpeech();
             setTimeout(() => { ignoreNextBuzzUnlock = false; }, 15000);
             document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);
@@ -1564,6 +1606,10 @@
               if (d.settings.grid_size && d.settings.grid_size !== window.currentGridSize) {
                 window.currentGridSize = d.settings.grid_size;
                 rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+              }
+
+              if (d.settings.auto_host_speech_enabled !== undefined) {
+                window.AUTO_HOST_SPEECH = !!d.settings.auto_host_speech_enabled;
               }
 
               if (d.settings.team1_name) {
@@ -1849,6 +1895,10 @@ function showAutoHostResultDisplay(d) {
       const s = data.settings || {};
       window.TYPEWRITER_ENABLED = !!s.typewriter_enabled;
       window.TYPEWRITER_SPEED = s.typewriter_speed || 80;
+      window.AUTO_HOST_SPEECH = !!s.auto_host_speech_enabled;
+      // تحميل الأصوات مسبقاً
+      window.speechSynthesis?.getVoices();
+      speechSynthesis.onvoiceschanged = () => { window.speechSynthesis?.getVoices(); };
 
       // طبّق الألوان أول شيء قبل بناء الخلية
       applyTeamColors(s);
@@ -2210,6 +2260,16 @@ async function nohostFetchQuestion(letter) {
         typewriterFullText = questionText;
         typewriterIndex = questionText.length;
       }
+      if (window.TYPEWRITER_ENABLED) {
+        typewriterSpeed = window.TYPEWRITER_SPEED || 80;
+        startTypewriter(questionText, nqpQuestion);
+      } else {
+        nqpQuestion.textContent = questionText;
+        typewriterFullText = questionText;
+        typewriterIndex = questionText.length;
+      }
+      // قراءة السؤال
+      speakQuestion(questionText);
     }
     if (nqpAnswer)   { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
     if (nqpEmpty)    nqpEmpty.style.display   = 'none';
@@ -2217,7 +2277,22 @@ async function nohostFetchQuestion(letter) {
 
     if (socket && socket.readyState === 1)
       socket.send(JSON.stringify({ type: 'nohost_question_broadcast', letter, question: q.question || '' }));
+
+    if (nqpQuestion) {
+      const questionText = q.question || '—';
+      if (window.TYPEWRITER_ENABLED) {
+        typewriterSpeed = window.TYPEWRITER_SPEED || 80;
+        startTypewriter(questionText, nqpQuestion);
+      } else {
+        nqpQuestion.textContent = questionText;
+        typewriterFullText = questionText;
+        typewriterIndex = questionText.length;
+      }
+      speakQuestion(questionText);
+    }
   } catch {}
+
+
 }
 function nqpReveal() {
   const el = document.getElementById('nqpAnswer');

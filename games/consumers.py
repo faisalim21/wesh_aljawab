@@ -37,6 +37,17 @@ def _answers_equivalent(a: str, b: str) -> bool:
         return False
     return all(_chars_equivalent(c1, c2) for c1, c2 in zip(a, b))
 
+def _strip_al(text: str) -> str:
+    """يحذف 'ال' التعريف من بداية الكلمة"""
+    text = text.strip()
+    if text.startswith('ال'):
+        return text[2:]
+    return text
+
+def _normalize_al(text: str) -> str:
+    """يحذف 'ال' من كل كلمة في الجملة"""
+    return ' '.join(_strip_al(w) for w in text.split())
+
 def check_answer(user_answer: str, correct_answer: str, accepted_answers: list, answer_type: str, smart_correction: bool = True) -> dict:
     """
     يرجع dict:
@@ -50,6 +61,11 @@ def check_answer(user_answer: str, correct_answer: str, accepted_answers: list, 
     # مطابقة حرفية أولاً
     if any(user == a for a in all_accepted):
         return {'is_correct': True, 'exact_match': True, 'corrected': False}
+
+    # مطابقة مع حذف "ال" التعريف
+    user_no_al = _normalize_al(user)
+    if any(user_no_al == _normalize_al(a) for a in all_accepted):
+        return {'is_correct': True, 'exact_match': False, 'corrected': True}
 
     if answer_type == 'arabic' and smart_correction:
         if any(_answers_equivalent(user, a) for a in all_accepted):

@@ -1967,6 +1967,7 @@ def api_get_settings(request):
             'auto_host_smart_correction': settings.auto_host_smart_correction,
             'typewriter_enabled': settings.typewriter_enabled,
             'typewriter_speed': settings.typewriter_speed,
+            'auto_host_speech_enabled': settings.auto_host_speech_enabled,
         }
     })
 
@@ -2081,6 +2082,9 @@ def api_save_settings(request):
     if changed_session:
         session.save(update_fields=['team1_name', 'team2_name'])
 
+    if 'auto_host_speech_enabled' in data:
+        settings.auto_host_speech_enabled = bool(data['auto_host_speech_enabled'])
+
     settings_payload = {
         'team1_name': settings.team1_name,
         'team2_name': settings.team2_name,
@@ -2101,6 +2105,7 @@ def api_save_settings(request):
         'auto_host_smart_correction': settings.auto_host_smart_correction,
         'typewriter_enabled': settings.typewriter_enabled,
         'typewriter_speed': settings.typewriter_speed,
+        'auto_host_speech_enabled': settings.auto_host_speech_enabled,
     }
 
     try:
