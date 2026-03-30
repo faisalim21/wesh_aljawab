@@ -1127,15 +1127,17 @@
 
     speechUtterance = new SpeechSynthesisUtterance(text);
     speechUtterance.lang = 'ar-SA';
-    speechUtterance.rate = 0.9;
+    speechUtterance.rate = 0.85;
     speechUtterance.pitch = 1;
 
-    // اختر أفضل صوت عربي متاح
     const voices = window.speechSynthesis.getVoices();
     const arabicVoice = voices.find(v => v.lang.startsWith('ar'));
     if (arabicVoice) speechUtterance.voice = arabicVoice;
 
-    window.speechSynthesis.speak(speechUtterance);
+    // ابدأ النطق بعد تأخير بسيط يتوافق مع بداية الكتابة
+    setTimeout(() => {
+      window.speechSynthesis.speak(speechUtterance);
+    }, 200);
   }
 
   function pauseSpeech() {

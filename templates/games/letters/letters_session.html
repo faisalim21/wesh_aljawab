@@ -2798,6 +2798,7 @@ async function loadCurrentSettings() {
     document.getElementById('team2ColorHex').textContent = c2;
     document.getElementById('typewriterEnabled').checked = !!settings.typewriter_enabled;
     toggleTypewriterSettings(!!settings.typewriter_enabled);
+    toggleTypewriterSettings(!!settings.typewriter_enabled);
     document.getElementById('typewriterSpeed').value = settings.typewriter_speed || 80;
     document.getElementById('typewriterSpeedVal').textContent = (settings.typewriter_speed || 80) + 'ms';
     document.getElementById('autoHostSpeechEnabled').checked = !!settings.auto_host_speech_enabled;
