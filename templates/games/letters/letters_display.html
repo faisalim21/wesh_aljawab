@@ -1419,6 +1419,7 @@
     buzzActive = true;
     // أوقف السؤال التدريجي وخزّن ما تم عرضه
     pauseTypewriter();
+    stopSpeech();
     window._partialQuestion = getPartialQuestion();
 
     playBuzz();
@@ -1562,11 +1563,8 @@
             endBuzz();
             const nqpEl2 = document.getElementById('nqpQuestion');
             if (nqpEl2) resumeTypewriter(nqpEl2);
-            if (window.speechSynthesis?.paused) {
-              window.speechSynthesis.resume();
-            } else if (typewriterIndex < typewriterFullText.length) {
-              speakQuestion(typewriterFullText.slice(typewriterIndex));
-            }
+            stopSpeech();
+            if (typewriterFullText) speakQuestion(typewriterFullText.slice(typewriterIndex));
             break;
           case 'cell_state_updated':
               updateCell(d.letter, d.state, d.cell_index);
@@ -1594,11 +1592,8 @@
             ignoreNextBuzzUnlock = true;
             const nqpEl = document.getElementById('nqpQuestion');
             if (nqpEl) resumeTypewriter(nqpEl);
-            if (window.speechSynthesis?.paused) {
-              window.speechSynthesis.resume();
-            } else if (typewriterIndex < typewriterFullText.length) {
-              speakQuestion(typewriterFullText.slice(typewriterIndex));
-            }
+            stopSpeech();
+            if (typewriterFullText) speakQuestion(typewriterFullText.slice(typewriterIndex));
             setTimeout(() => { ignoreNextBuzzUnlock = false; }, 15000);
             document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);
