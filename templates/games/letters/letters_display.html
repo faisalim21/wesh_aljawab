@@ -2317,8 +2317,24 @@ function nohostChangeQuestion() {
   const q = nohostCurrentData[nohostCurrentRound] || {};
   const nqpQuestion = document.getElementById('nqpQuestion');
   const nqpAnswer   = document.getElementById('nqpAnswer');
-  if (nqpQuestion) nqpQuestion.textContent = q.question || '—';
-  if (nqpAnswer)   { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+
+  // أوقف القراءة والكتابة السابقة
+  stopSpeech();
+  pauseTypewriter();
+
+  const questionText = q.question || '—';
+  if (nqpQuestion) {
+    if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
+      typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
+      startTypewriter(questionText, nqpQuestion);
+    } else {
+      nqpQuestion.textContent = questionText;
+      typewriterFullText = questionText;
+      typewriterIndex = questionText.length;
+    }
+    speakQuestion(questionText);
+  }
+  if (nqpAnswer) { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
 }
 
 function nohostChangePenaltySec(delta) {
@@ -2612,6 +2628,21 @@ function resumeTypewriter(element) {
 function getPartialQuestion() {
   return typewriterFullText.slice(0, typewriterIndex);
 }
+
+
+function rereadQuestion() {
+  const nqpQuestion = document.getElementById('nqpQuestion');
+  if (!nqpQuestion) return;
+  stopSpeech();
+  pauseTypewriter();
+  const questionText = typewriterFullText || nqpQuestion.textContent || '';
+  if (!questionText) return;
+  if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
+    typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
+    startTypewriter(questionText, nqpQuestion);
+  }
+  speakQuestion(questionText);
+}
 </script>
 
 
@@ -2673,8 +2704,10 @@ function getPartialQuestion() {
     <div class="nqp-answer-box">
       <div class="nqp-answer-label">الإجابة</div>
       <div class="nqp-answer-text" id="nqpAnswer">—</div>
+      <button class="nqp-change-btn" onclick="rereadQuestion()">🔁 إعادة القراءة</button>
       <button class="nqp-reveal-btn" onclick="nqpReveal()">👁 اكشف الإجابة</button>
       <button class="nqp-change-btn" onclick="nohostChangeQuestion()">🔀 غير السؤال</button>
+
     </div>
   </div>
 </div>

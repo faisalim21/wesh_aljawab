@@ -3666,6 +3666,11 @@ function toggleSpeechMode(enabled) {
   if (enabled) {
     typewriterToggle.checked = true;
     toggleTypewriterSettings(true);
+    // أعد السرعة للقيمة المتزامنة مع الصوت
+    const speedSlider = document.getElementById('typewriterSpeed');
+    const speedVal = document.getElementById('typewriterSpeedVal');
+    if (speedSlider) speedSlider.value = 280;
+    if (speedVal) speedVal.textContent = '280ms';
     // أقفل السرعة فقط مو الزر
     if (typewriterSub) {
       typewriterSub.style.opacity = '0.4';
@@ -3678,7 +3683,9 @@ function toggleSpeechMode(enabled) {
       typewriterSub.style.pointerEvents = typewriterToggle.checked ? 'auto' : 'none';
     }
   }
-}// تحديث مدة العقوبة من الإعدادات
+}
+
+// تحديث مدة العقوبة من الإعدادات
 window.PENALTY_TIMER_SECONDS = 10;
 </script>
 
