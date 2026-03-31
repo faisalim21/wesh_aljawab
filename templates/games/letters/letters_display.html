@@ -1562,7 +1562,11 @@
             endBuzz();
             const nqpEl2 = document.getElementById('nqpQuestion');
             if (nqpEl2) resumeTypewriter(nqpEl2);
-            resumeSpeech();
+            if (window.speechSynthesis?.paused) {
+              window.speechSynthesis.resume();
+            } else if (typewriterIndex < typewriterFullText.length) {
+              speakQuestion(typewriterFullText.slice(typewriterIndex));
+            }
             break;
           case 'cell_state_updated':
               updateCell(d.letter, d.state, d.cell_index);
@@ -1590,7 +1594,11 @@
             ignoreNextBuzzUnlock = true;
             const nqpEl = document.getElementById('nqpQuestion');
             if (nqpEl) resumeTypewriter(nqpEl);
-            resumeSpeech();
+            if (window.speechSynthesis?.paused) {
+              window.speechSynthesis.resume();
+            } else if (typewriterIndex < typewriterFullText.length) {
+              speakQuestion(typewriterFullText.slice(typewriterIndex));
+            }
             setTimeout(() => { ignoreNextBuzzUnlock = false; }, 15000);
             document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);

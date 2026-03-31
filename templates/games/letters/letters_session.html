@@ -1821,13 +1821,13 @@
 
                   <div id="typewriterSubSettings" style="margin-top:12px; opacity:0.4; pointer-events:none; transition:opacity 0.25s;">
                     <div class="timer-setting-desc" style="margin-bottom:8px;">
-                      سرعة ظهور الحروف — <span class="recommend-pill">⭐ الموصى به: 80ms</span>
+                      سرعة ظهور الحروف — <span class="recommend-pill">⭐ الموصى به: 100</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:10px;">
-                      <span style="font-size:0.8rem;color:#6b7280;">بطيء</span>
+                      <span style="font-size:0.8rem;color:#6b7280;">سريع</span>
                       <input type="range" id="typewriterSpeed" min="20" max="300" step="10" value="80"
                         style="flex:1;" oninput="document.getElementById('typewriterSpeedVal').textContent = this.value + 'ms'"/>
-                      <span style="font-size:0.8rem;color:#6b7280;">سريع</span>
+                      <span style="font-size:0.8rem;color:#6b7280;">بطيء</span>
                       <span id="typewriterSpeedVal" style="font-weight:900;min-width:40px;text-align:center;">80ms</span>
                     </div>
                   </div>
@@ -3672,8 +3672,8 @@ function toggleSpeechMode(enabled) {
     // أعد السرعة للقيمة المتزامنة مع الصوت
     const speedSlider = document.getElementById('typewriterSpeed');
     const speedVal = document.getElementById('typewriterSpeedVal');
-    if (speedSlider) speedSlider.value = 280;
-    if (speedVal) speedVal.textContent = '280ms';
+    if (speedSlider) speedSlider.value = 100;
+    if (speedVal) speedVal.textContent = '100ms';
     // أقفل السرعة فقط مو الزر
     if (typewriterSub) {
       typewriterSub.style.opacity = '0.4';
