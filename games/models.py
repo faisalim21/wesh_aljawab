@@ -981,7 +981,6 @@ class GameSettings(models.Model):
         verbose_name="الجلسة"
     )
     nohost_mode = models.BooleanField(default=False)
-    nohost_mode = models.BooleanField(default=False)
     nohost_allow_cell_color = models.BooleanField(default=True, verbose_name="السماح بتغيير لون الخلية")
     nohost_hide_answer = models.BooleanField(default=True, verbose_name="إخفاء الإجابة كاملاً")
     typewriter_enabled = models.BooleanField(default=False, verbose_name="محاكاة المقدم البشري")

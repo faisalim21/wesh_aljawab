@@ -3662,25 +3662,23 @@ function toggleTypewriterSettings(enabled) {
 function toggleSpeechMode(enabled) {
   const typewriterToggle = document.getElementById('typewriterEnabled');
   const typewriterSub = document.getElementById('typewriterSubSettings');
-  const typewriterParent = typewriterToggle?.closest('.toggle-setting');
 
   if (enabled) {
-    // فعّل الـ typewriter تلقائياً وأقفله
     typewriterToggle.checked = true;
     toggleTypewriterSettings(true);
-    if (typewriterParent) {
-      typewriterParent.style.opacity = '0.4';
-      typewriterParent.style.pointerEvents = 'none';
+    // أقفل السرعة فقط مو الزر
+    if (typewriterSub) {
+      typewriterSub.style.opacity = '0.4';
+      typewriterSub.style.pointerEvents = 'none';
     }
   } else {
     // أعد التحكم للمستخدم
-    if (typewriterParent) {
-      typewriterParent.style.opacity = '1';
-      typewriterParent.style.pointerEvents = 'auto';
+    if (typewriterSub) {
+      typewriterSub.style.opacity = typewriterToggle.checked ? '1' : '0.4';
+      typewriterSub.style.pointerEvents = typewriterToggle.checked ? 'auto' : 'none';
     }
   }
-}
-// تحديث مدة العقوبة من الإعدادات
+}// تحديث مدة العقوبة من الإعدادات
 window.PENALTY_TIMER_SECONDS = 10;
 </script>
 
