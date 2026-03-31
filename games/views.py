@@ -2069,6 +2069,9 @@ def api_save_settings(request):
     if 'auto_host_smart_correction' in data:
         settings.auto_host_smart_correction = bool(data['auto_host_smart_correction'])
 
+    if 'auto_host_speech_enabled' in data:
+        settings.auto_host_speech_enabled = bool(data['auto_host_speech_enabled'])
+
     settings.save()
     cache.set(f"buzz_timer_{session_id}", settings.buzz_timer_seconds, timeout=600)
 
@@ -2082,8 +2085,6 @@ def api_save_settings(request):
     if changed_session:
         session.save(update_fields=['team1_name', 'team2_name'])
 
-    if 'auto_host_speech_enabled' in data:
-        settings.auto_host_speech_enabled = bool(data['auto_host_speech_enabled'])
 
     settings_payload = {
         'team1_name': settings.team1_name,

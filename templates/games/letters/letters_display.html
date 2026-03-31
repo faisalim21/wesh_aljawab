@@ -2282,8 +2282,9 @@ async function nohostFetchQuestion(letter) {
 
     if (nqpQuestion) {
       const questionText = q.question || '—';
-      if (window.TYPEWRITER_ENABLED) {
-        typewriterSpeed = window.TYPEWRITER_SPEED || 80;
+      if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
+        // لو الصوت مفعّل، يتجاهل السرعة المحددة ويتزامن مع النطق
+        typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
         startTypewriter(questionText, nqpQuestion);
       } else {
         nqpQuestion.textContent = questionText;
