@@ -2284,7 +2284,7 @@ async function nohostFetchQuestion(letter) {
       const questionText = q.question || '—';
       if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
         // لو الصوت مفعّل، يتجاهل السرعة المحددة ويتزامن مع النطق
-        typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
+        typewriterSpeed = window.AUTO_HOST_SPEECH ? 100 : (window.TYPEWRITER_SPEED || 80);
         startTypewriter(questionText, nqpQuestion);
       } else {
         nqpQuestion.textContent = questionText;
@@ -2325,7 +2325,7 @@ function nohostChangeQuestion() {
   const questionText = q.question || '—';
   if (nqpQuestion) {
     if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
-      typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
+      typewriterSpeed = window.AUTO_HOST_SPEECH ? 100 : (window.TYPEWRITER_SPEED || 80);
       startTypewriter(questionText, nqpQuestion);
     } else {
       nqpQuestion.textContent = questionText;
@@ -2638,7 +2638,7 @@ function rereadQuestion() {
   const questionText = typewriterFullText || nqpQuestion.textContent || '';
   if (!questionText) return;
   if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
-    typewriterSpeed = window.AUTO_HOST_SPEECH ? 280 : (window.TYPEWRITER_SPEED || 80);
+    typewriterSpeed = window.AUTO_HOST_SPEECH ? 100 : (window.TYPEWRITER_SPEED || 80);
     startTypewriter(questionText, nqpQuestion);
   }
   speakQuestion(questionText);

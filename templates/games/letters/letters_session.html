@@ -3653,9 +3653,12 @@ function startPenalty() {
 }
 function toggleTypewriterSettings(enabled) {
   const sub = document.getElementById('typewriterSubSettings');
+  const speechEnabled = document.getElementById('autoHostSpeechEnabled')?.checked;
   if (sub) {
-    sub.style.opacity = enabled ? '1' : '0.4';
-    sub.style.pointerEvents = enabled ? 'auto' : 'none';
+    // لو القراءة مفعلة، العداد يبقى مقفل دائماً
+    const shouldLock = !enabled || speechEnabled;
+    sub.style.opacity = shouldLock ? '0.4' : '1';
+    sub.style.pointerEvents = shouldLock ? 'none' : 'auto';
   }
 }
 
