@@ -816,25 +816,25 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                     errors.append(str(e))
 
             # ===== حفظ أسئلة الفقرات المطورة =====
+            import re as _re
             cat_saved = 0
-            for key, value in request.POST.items():
-                if not key.startswith('cat_') or not key.endswith('_answer'):
+            # نجمع كل المفاتيح الخاصة بالفقرات
+            cat_answer_keys = [k for k in request.POST if _re.match(r'^cat_(\d+)_(\d+)_answer$', k)]
+            for key in cat_answer_keys:
+                m = _re.match(r'^cat_(\d+)_(\d+)_answer$', key)
+                if not m:
                     continue
-                value = value.strip()
-                if not value:
+                cat_id = m.group(1)
+                idx = m.group(2)
+                answer = request.POST.get(key, '').strip()
+                if not answer:
                     continue
-                parts = key.split('_')
-                if len(parts) < 4:
-                    continue
-                cat_id = parts[1]
-                idx = parts[2]
-                answer = value
                 question = request.POST.get(f'cat_{cat_id}_{idx}_question', '').strip()
                 image = request.POST.get(f'cat_{cat_id}_{idx}_image', '').strip()
                 accepted_raw = request.POST.get(f'cat_{cat_id}_{idx}_accepted', '').strip()
                 accepted = [a.strip() for a in accepted_raw.split(',') if a.strip()] if accepted_raw else []
                 try:
-                    cat_obj = LettersCellCategory.objects.get(id=cat_id)
+                    cat_obj = LettersCellCategory.objects.get(id=int(cat_id))
                     LettersCategoryQuestion.objects.create(
                         category=cat_obj,
                         package=package,
@@ -845,7 +845,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                     )
                     cat_saved += 1
                 except Exception as e:
-                    errors.append(str(e))
+                    errors.append(f"فقرة {cat_id}: {str(e)}")
 
             if duplicates:
                 messages.warning(request, f'⚠️ تم تخطي {len(duplicates)} سؤال مكرر.')
