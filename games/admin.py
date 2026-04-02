@@ -222,6 +222,12 @@ class PictureRiddleInline(admin.TabularInline):
 # ========= Admin: حِزم خلية الحروف =========
 
 
+class LettersCategoryQuestionPackageInline(admin.TabularInline):
+    model = LettersCategoryQuestion
+    extra = 1
+    fields = ['category', 'question', 'answer', 'accepted_answers', 'image', 'order']
+    verbose_name = "سؤال فقرة مطورة"
+    verbose_name_plural = "أسئلة الفقرات المطورة"
 
 
 
@@ -995,12 +1001,6 @@ class LettersCellCategoryAdmin(admin.ModelAdmin):
     search_fields = ['name']
     inlines = [LettersCategoryQuestionInline]
 
-class LettersCategoryQuestionPackageInline(admin.TabularInline):
-    model = LettersCategoryQuestion
-    extra = 1
-    fields = ['category', 'question', 'answer', 'accepted_answers', 'image', 'order']
-    verbose_name = "سؤال فقرة مطورة"
-    verbose_name_plural = "أسئلة الفقرات المطورة"
 
 
 # ========= Admin: حِزم الصور =========
