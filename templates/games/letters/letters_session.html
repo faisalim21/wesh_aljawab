@@ -2690,7 +2690,7 @@
   });
 
   document.addEventListener('DOMContentLoaded', ()=>{
-    createHoneycombCells();
+    loadEnhancedGridAndRebuild();
     loadSessionState();
     setupWebSocket();
     setInterval(loadSessionState, 30000);
@@ -3079,9 +3079,169 @@ function applySettingsLocally(settings) {
   if (settings.auto_host_speech_enabled !== undefined) {
     window.AUTO_HOST_SPEECH = !!settings.auto_host_speech_enabled;
   }
+  if (settings.enhanced_mode !== undefined) {
+    window.ENHANCED_MODE = !!settings.enhanced_mode;
+    window.ENABLED_CATEGORIES = settings.enabled_categories || [];
+    window.ALLOW_CATEGORY_REPEAT = !!settings.allow_category_repeat;
+    // أعد بناء الخلية لو تغير الوضع
+    loadEnhancedGridAndRebuild();
+  }
 }
 
+async function loadEnhancedGridAndRebuild() {
+  if (!window.ENHANCED_MODE) {
+    // وضع عادي — استخدم الحروف الاعتيادية
+    createHoneycombCells();
+    return;
+  }
+  try {
+    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}`);
+    const data = await r.json();
+    if (!data.success) { createHoneycombCells(); return; }
+    window._enhancedGrid = data.grid;
+    createHoneycombCellsEnhanced(data.grid);
+  } catch {
+    createHoneycombCells();
+  }
+}
 
+function createHoneycombCellsEnhanced(grid) {
+  const svg = document.getElementById('honeycombSvg');
+  const NS = 'http://www.w3.org/2000/svg';
+
+  const gridSize = window.currentGridSize || '5x5';
+  const t1Color = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
+  const t2Color = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
+
+  const sizeMap = { '3x3':3,'4x4':4,'5x5':5,'6x6':6,'7x7':7 };
+  const cols = sizeMap[gridSize] || 5;
+  const rows = cols;
+  const R = GRID_R[gridSize] || 32;
+
+  const hexW = R * Math.sqrt(3);
+  const hexH = R * 2;
+  const colStep = hexW;
+  const rowStep = hexH * 0.75;
+  const pad = R * 1.4;
+  const totalW = colStep * (cols + 0.5) + pad * 2;
+  const totalH = rowStep * (rows - 1) + hexH + pad * 2;
+  const viewW = Math.ceil(Math.max(totalW, 300));
+  const viewH = Math.ceil(Math.max(totalH, 240));
+
+  svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+  svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
+  buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
+
+  const startX = (viewW - colStep * (cols - 0.5)) / 2;
+  const gridH = rowStep * (rows - 1) + hexH;
+  const startY = (viewH - gridH) / 2 + hexH / 2;
+  const fontSize = Math.round(R * 0.68);
+  const emojiFontSize = Math.round(R * 0.72);
+
+  let idx = 0;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
+      const cy = startY + row * rowStep;
+      const cell = grid[idx] || { type: 'letter', value: '؟', display: '؟' };
+
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'hex-cell');
+      g.setAttribute('data-cell-index', idx);
+
+      if (cell.type === 'letter') {
+        g.setAttribute('data-letter', cell.value);
+        g.setAttribute('data-cell-type', 'letter');
+      } else {
+        g.setAttribute('data-category-id', cell.value);
+        g.setAttribute('data-category-name', cell.name || '');
+        g.setAttribute('data-cell-type', 'category');
+      }
+
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('class', 'hex-shape');
+      poly.setAttribute('points', hexPoints(cx, cy, R));
+      // لون مميز للفقرات
+      if (cell.type === 'category') {
+        poly.style.fill = 'rgba(109,40,217,0.25)';
+        poly.style.stroke = '#8b5cf6';
+        poly.style.strokeWidth = '2';
+      }
+      g.appendChild(poly);
+
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('class', 'hex-text');
+      txt.setAttribute('x', cx.toFixed(1));
+      txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('text-anchor', 'middle');
+      txt.style.fontSize = `${cell.type === 'category' ? emojiFontSize : fontSize}px`;
+      txt.textContent = cell.display;
+      g.appendChild(txt);
+
+      ;(function(el, cell, cellIdx) {
+        el.addEventListener('click', function() {
+          if (cell.type === 'category') {
+            onCategoryClick(el, cell, cellIdx);
+          } else {
+            if (typeof onCellClick === 'function') onCellClick(el, cell.value, cellIdx);
+          }
+        });
+      })(g, cell, idx);
+
+      svg.appendChild(g);
+      idx++;
+    }
+  }
+}
+
+function onCategoryClick(el, cell, cellIdx) {
+  // نفس منطق onCellClick بس للفقرات
+  const now = Date.now();
+  if (now - lastClickAt < 150) return;
+  lastClickAt = now;
+  showCategoryQuestion(cell, cellIdx);
+  lastClickedIndex = cellIdx;
+}
+
+async function showCategoryQuestion(cell, cellIdx) {
+  try {
+    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.success) return;
+
+    const q = data.question;
+    document.getElementById('questionPanel').style.display = 'block';
+    document.getElementById('currentLetter').textContent = `${cell.display} ${cell.name}`;
+
+    // عرض السؤال في نفس مكان الحرف العادي
+    if (document.getElementById('r1Question')) {
+      document.getElementById('r1Question').textContent = q.question || cell.name;
+      document.getElementById('r1Answer').textContent = q.answer || '—';
+    }
+    document.getElementById('questionDisplay').textContent = `${cell.display} ${cell.name}`;
+
+    // بث اختيار الفقرة
+    try {
+      await fetch('/games/api/letters-select-letter/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          session_id: sessionId,
+          letter: cell.display,
+          cell_index: cellIdx,
+          is_category: true,
+          category_id: cell.value,
+          category_name: cell.name,
+          question: q.question,
+          answer: q.answer,
+          image: q.image,
+        })
+      });
+    } catch {}
+  } catch {}
+}
 
 // ============================================================
 // محرك الشبكة السداسية - النسخة المصححة
