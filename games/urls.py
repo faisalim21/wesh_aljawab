@@ -113,5 +113,6 @@ path('feud/contestants/<str:contestants_link>/', views.feud_contestants, name='f
     path('api/time-get-current/', views_time.api_time_get_current, name='api_time_get_current'),
     path('api/get-category-question/', views.api_get_category_question, name='api_get_category_question'),
     path('api/get-enhanced-grid/', views.api_get_enhanced_grid, name='api_get_enhanced_grid'),
+    path('api/categories/', views.api_get_categories, name='api_get_categories'),
 
 ]
