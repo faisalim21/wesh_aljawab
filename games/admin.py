@@ -1020,8 +1020,13 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 
 class LettersCategoryQuestionInline(admin.TabularInline):
     model = LettersCategoryQuestion
-    extra = 1
-    fields = ['question', 'answer', 'accepted_answers', 'image', 'order']
+    extra = 0
+    fields = ['package', 'question', 'answer', 'accepted_answers', 'image', 'order']
+    
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == 'package':
+            kwargs['queryset'] = GamePackage.objects.filter(game_type='letters').order_by('package_number')
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(LettersCellCategory)
