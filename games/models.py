@@ -692,9 +692,13 @@ class FreeTrialUsage(models.Model):
         return f"FreeTrial({self.user_id}, {self.game_type})"
 
 class LettersCellCategory(models.Model):
-    """فقرات خلية الحروف المطورة — مشتركة بين الحزم"""
+    INPUT_TYPE_CHOICES = [
+        ('text', 'سؤال نصي'),
+        ('image', 'صورة'),
+    ]
     name = models.CharField(max_length=50, verbose_name="اسم الفقرة")
     emoji = models.CharField(max_length=10, verbose_name="الإيموجي")
+    input_type = models.CharField(max_length=10, choices=INPUT_TYPE_CHOICES, default='text', verbose_name="نوع المحتوى")
     is_active = models.BooleanField(default=True, verbose_name="مفعّلة")
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
 
@@ -708,7 +712,6 @@ class LettersCellCategory(models.Model):
 
 
 class LettersCategoryQuestion(models.Model):
-    """أسئلة فقرات خلية الحروف — مختلفة لكل حزمة"""
     category = models.ForeignKey(
         LettersCellCategory,
         on_delete=models.CASCADE,
@@ -716,18 +719,15 @@ class LettersCategoryQuestion(models.Model):
         verbose_name="الفقرة"
     )
     package = models.ForeignKey(
-        'LettersPackage',
+        'GamePackage',
         on_delete=models.CASCADE,
         related_name='category_questions',
         verbose_name="الحزمة"
     )
     question = models.TextField(verbose_name="السؤال", blank=True, default='')
     answer = models.CharField(max_length=200, verbose_name="الإجابة")
-    image = models.ImageField(
-        upload_to='category_questions/',
-        blank=True, null=True,
-        verbose_name="صورة (اختياري)"
-    )
+    accepted_answers = models.JSONField(default=list, blank=True, verbose_name="إجابات بديلة")
+    image = models.CharField(max_length=500, blank=True, default='', verbose_name="رابط الصورة")
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
 
     class Meta:

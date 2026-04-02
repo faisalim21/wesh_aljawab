@@ -116,13 +116,17 @@ def imposter_packages(request):
             if not p.is_completed:
                 continue
 
-            # شراء نشط
-            if p.expires_at and p.expires_at > now:
-                active_packages_ids.add(p.package_id)
-                continue
+            for p in purchases:
+                used_before_ids.add(p.package_id)
 
-            # شراء منتهي
-            expired_packages_ids.add(p.package_id)
+                if not p.is_completed:
+                    continue
+
+                # ✅ الإصلاح: المدفوع بدون expires_at = صلاحية دائمة
+                if p.expires_at is None or p.expires_at > now:
+                    active_packages_ids.add(p.package_id)
+                else:
+                    expired_packages_ids.add(p.package_id)
 
     context = {
         "packages": packages,

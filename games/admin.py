@@ -222,12 +222,6 @@ class PictureRiddleInline(admin.TabularInline):
 # ========= Admin: حِزم خلية الحروف =========
 
 
-class LettersCategoryQuestionPackageInline(admin.TabularInline):
-    model = LettersCategoryQuestion
-    extra = 1
-    fields = ['category', 'question', 'answer', 'image', 'order']
-    verbose_name = "سؤال فقرة مطورة"
-    verbose_name_plural = "أسئلة الفقرات المطورة"
 
 
 
@@ -991,21 +985,20 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
 class LettersCategoryQuestionInline(admin.TabularInline):
     model = LettersCategoryQuestion
     extra = 1
-    fields = ['question', 'answer', 'image', 'order']
+    fields = ['question', 'answer', 'accepted_answers', 'image', 'order']
 
 
 @admin.register(LettersCellCategory)
 class LettersCellCategoryAdmin(admin.ModelAdmin):
-    list_display = ['emoji', 'name', 'is_active', 'order']
+    list_display = ['emoji', 'name', 'input_type', 'is_active', 'order']
     list_editable = ['is_active', 'order']
     search_fields = ['name']
     inlines = [LettersCategoryQuestionInline]
 
-
 class LettersCategoryQuestionPackageInline(admin.TabularInline):
     model = LettersCategoryQuestion
     extra = 1
-    fields = ['category', 'question', 'answer', 'image', 'order']
+    fields = ['category', 'question', 'answer', 'accepted_answers', 'image', 'order']
     verbose_name = "سؤال فقرة مطورة"
     verbose_name_plural = "أسئلة الفقرات المطورة"
 
