@@ -826,6 +826,180 @@ def get_question(request):
 
 
 @require_http_methods(["GET"])
+def api_get_categories(request):
+    """يجيب الفقرات المتاحة للحزمة"""
+    session_id = request.GET.get('session_id')
+    if not session_id:
+        return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
+    try:
+        session = GameSession.objects.get(id=session_id, is_active=True)
+        from .models import LettersCellCategory, LettersCategoryQuestion
+        cats = LettersCellCategory.objects.filter(is_active=True)
+        result = []
+        for cat in cats:
+            if LettersCategoryQuestion.objects.filter(category=cat, package=session.package).exists():
+                result.append({'id': cat.id, 'name': cat.name, 'emoji': cat.emoji, 'input_type': cat.input_type})
+        return JsonResponse({'success': True, 'categories': result})
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
+    
+    
+@require_http_methods(["GET"])
+def api_get_category_question(request):
+    """يجيب سؤال عشوائي من فقرة معينة للحزمة"""
+    session_id = request.GET.get('session_id')
+    category_id = request.GET.get('category_id')
+
+    if not session_id or not category_id:
+        return JsonResponse({'success': False, 'error': 'المعاملات مطلوبة'}, status=400)
+
+    try:
+        session = GameSession.objects.get(id=session_id, is_active=True)
+
+        if session.is_time_expired:
+            return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+        from .models import LettersCellCategory, LettersCategoryQuestion
+        import random
+
+        category = LettersCellCategory.objects.get(id=category_id, is_active=True)
+        questions = list(LettersCategoryQuestion.objects.filter(
+            category=category,
+            package=session.package
+        ))
+
+        if not questions:
+            return JsonResponse({'success': False, 'error': 'لا توجد أسئلة لهذه الفقرة في الحزمة'}, status=404)
+
+        q = random.choice(questions)
+
+        return JsonResponse({
+            'success': True,
+            'category': {
+                'id': category.id,
+                'name': category.name,
+                'emoji': category.emoji,
+                'input_type': category.input_type,
+            },
+            'question': {
+                'id': q.id,
+                'question': q.question,
+                'answer': q.answer,
+                'image': q.image,
+                'accepted_answers': q.accepted_answers or [],
+            }
+        })
+
+    except LettersCellCategory.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الفقرة غير موجودة'}, status=404)
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
+    except Exception as e:
+        logger.error(f'Error fetching category question: {e}')
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+    
+
+@require_http_methods(["GET"])
+def api_get_enhanced_grid(request):
+    """
+    يجيب محتوى الخلية المطورة:
+    - حروف عادية + فقرات مطورة مخلوطة
+    - يراعي إعدادات الجلسة (الفقرات المفعّلة، التكرار)
+    """
+    session_id = request.GET.get('session_id')
+    if not session_id:
+        return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
+
+    try:
+        session = GameSession.objects.get(id=session_id, is_active=True)
+
+        if session.is_time_expired:
+            return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
+
+        from .models import LettersCellCategory, LettersCategoryQuestion, GameSettings
+        import random
+
+        settings = GameSettings.get_or_create_for_session(session)
+
+        # لو الوضع المطور مش مفعّل — ارجع الحروف العادية فقط
+        if not settings.enhanced_mode:
+            letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
+            grid = [{'type': 'letter', 'value': l, 'display': l} for l in letters]
+            return JsonResponse({'success': True, 'enhanced': False, 'grid': grid})
+
+        # جلب الفقرات المفعّلة في هذه الجلسة واللي عندها أسئلة في الحزمة
+        enabled_ids = settings.enabled_categories or []
+        categories_qs = LettersCellCategory.objects.filter(is_active=True)
+        if enabled_ids:
+            categories_qs = categories_qs.filter(id__in=enabled_ids)
+
+        # فلتر: الفقرات اللي عندها أسئلة فعلاً في هذه الحزمة
+        available_categories = []
+        for cat in categories_qs:
+            has_q = LettersCategoryQuestion.objects.filter(
+                category=cat,
+                package=session.package
+            ).exists()
+            if has_q:
+                available_categories.append(cat)
+
+        # بناء قائمة الفقرات في الخلية
+        cat_items = []
+        for cat in available_categories:
+            cat_items.append({
+                'type': 'category',
+                'value': str(cat.id),
+                'display': cat.emoji,
+                'name': cat.name,
+                'input_type': cat.input_type,
+            })
+
+        # الحروف العادية
+        letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
+        letter_items = [{'type': 'letter', 'value': l, 'display': l} for l in letters]
+
+        # حساب حجم الخلية
+        grid_size_map = {'3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36, '7x7': 49}
+        total_cells = grid_size_map.get(settings.grid_size, 25)
+
+        # دمج: الفقرات أولاً ثم الحروف لتملأ الباقي
+        if settings.allow_category_repeat:
+            # مع التكرار: وزّع الفقرات بالتساوي
+            grid = []
+            cat_cycle = cat_items.copy()
+            while len(grid) < total_cells:
+                if cat_cycle:
+                    grid.append(cat_cycle.pop(0))
+                    if not cat_cycle:
+                        cat_cycle = cat_items.copy()
+                elif letter_items:
+                    grid.append(letter_items.pop(0))
+                else:
+                    break
+        else:
+            # بدون تكرار: الفقرات مرة واحدة ثم الحروف
+            grid = cat_items[:total_cells]
+            remaining = total_cells - len(grid)
+            grid += letter_items[:remaining]
+
+        # خلط عشوائي
+        random.shuffle(grid)
+
+        return JsonResponse({
+            'success': True,
+            'enhanced': True,
+            'grid': grid,
+            'total': len(grid),
+        })
+
+    except GameSession.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
+    except Exception as e:
+        logger.error(f'Error building enhanced grid: {e}')
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
+
+
+@require_http_methods(["GET"])
 def get_session_letters(request):
     session_id = request.GET.get('session_id')
     if not session_id:
@@ -1968,6 +2142,9 @@ def api_get_settings(request):
             'typewriter_enabled': settings.typewriter_enabled,
             'typewriter_speed': settings.typewriter_speed,
             'auto_host_speech_enabled': settings.auto_host_speech_enabled,
+            'enhanced_mode': settings.enhanced_mode,
+            'enabled_categories': settings.enabled_categories,
+            'allow_category_repeat': settings.allow_category_repeat,
         }
     })
 
@@ -2066,6 +2243,13 @@ def api_save_settings(request):
     if settings.auto_host_mode:
         settings.buzz_timer_seconds = settings.auto_host_timer_seconds
 
+    if 'enhanced_mode' in data:
+        settings.enhanced_mode = bool(data['enhanced_mode'])
+    if 'enabled_categories' in data:
+        settings.enabled_categories = data['enabled_categories']
+    if 'allow_category_repeat' in data:
+        settings.allow_category_repeat = bool(data['allow_category_repeat'])
+
     if 'auto_host_smart_correction' in data:
         settings.auto_host_smart_correction = bool(data['auto_host_smart_correction'])
 
@@ -2107,6 +2291,9 @@ def api_save_settings(request):
         'typewriter_enabled': settings.typewriter_enabled,
         'typewriter_speed': settings.typewriter_speed,
         'auto_host_speech_enabled': settings.auto_host_speech_enabled,
+        'enhanced_mode': settings.enhanced_mode,
+        'enabled_categories': settings.enabled_categories,
+        'allow_category_repeat': settings.allow_category_repeat,
     }
 
     try:

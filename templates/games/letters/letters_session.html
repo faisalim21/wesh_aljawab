@@ -1622,6 +1622,37 @@
                 </label>
               </div>
             </div>
+
+            <!-- خلية الحروف المطورة -->
+            <div class="toggle-setting">
+              <div class="toggle-setting-info">
+                <div class="toggle-setting-title">✨ خلية الحروف المطورة <span class="new-pill">جديد</span></div>
+                <div class="toggle-setting-desc">يدمج الحروف العادية مع فقرات متنوعة في نفس الخلية.</div>
+              </div>
+              <label class="big-toggle">
+                <input type="checkbox" id="enhancedModeToggle" onchange="toggleEnhancedSettings(this.checked)"/>
+                <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+              </label>
+            </div>
+
+            <div id="enhancedSubSettings" style="margin-top:12px;opacity:0.4;pointer-events:none;transition:opacity 0.25s;">
+              <!-- تكرار الفقرة -->
+              <div class="toggle-setting">
+                <div class="toggle-setting-info">
+                  <div class="toggle-setting-title">تكرار الفقرة</div>
+                  <div class="toggle-setting-desc">يسمح بظهور نفس الفقرة أكثر من مرة في الخلية.</div>
+                </div>
+                <label class="big-toggle">
+                  <input type="checkbox" id="allowCategoryRepeat"/>
+                  <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+                </label>
+              </div>
+
+              <!-- الفقرات المتاحة -->
+              <div id="categoriesCheckboxes" style="margin-top:12px;">
+                <!-- تُبنى ديناميكياً -->
+              </div>
+            </div>
       
             <!-- ===== قسم 3: مؤقتات ===== -->
             <div class="settings-section">
@@ -2802,6 +2833,10 @@ async function loadCurrentSettings() {
     document.getElementById('typewriterSpeedVal').textContent = (settings.typewriter_speed || 80) + 'ms';
     document.getElementById('autoHostSpeechEnabled').checked = !!settings.auto_host_speech_enabled;
     toggleSpeechMode(!!settings.auto_host_speech_enabled);
+    document.getElementById('enhancedModeToggle').checked = !!settings.enhanced_mode;
+    toggleEnhancedSettings(!!settings.enhanced_mode);
+    document.getElementById('allowCategoryRepeat').checked = !!settings.allow_category_repeat;
+    loadEnhancedCategories(settings.enabled_categories || []);
 
     const gs = settings.grid_size || '5x5';
     document.querySelectorAll('.grid-option').forEach(el => {
@@ -2908,6 +2943,9 @@ async function saveSettings() {
     typewriter_enabled: document.getElementById('typewriterEnabled').checked,
     typewriter_speed: parseInt(document.getElementById('typewriterSpeed').value),
     auto_host_speech_enabled: document.getElementById('autoHostSpeechEnabled').checked,
+    enhanced_mode: document.getElementById('enhancedModeToggle').checked,
+    allow_category_repeat: document.getElementById('allowCategoryRepeat').checked,
+    enabled_categories: [...document.querySelectorAll('.cat-checkbox:checked')].map(el => parseInt(el.value)),
 
   };
 
@@ -3687,7 +3725,36 @@ function toggleSpeechMode(enabled) {
     }
   }
 }
+function toggleEnhancedSettings(enabled) {
+  const sub = document.getElementById('enhancedSubSettings');
+  if (sub) {
+    sub.style.opacity = enabled ? '1' : '0.4';
+    sub.style.pointerEvents = enabled ? 'auto' : 'none';
+  }
+}
 
+async function loadEnhancedCategories(enabledIds) {
+  try {
+    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}&categories_only=1`);
+    // نجيب الفقرات من API مختلف
+    const r2 = await fetch(`/games/api/categories/?session_id=${encodeURIComponent(sessionId)}`);
+    if (!r2.ok) return;
+    const data = await r2.json();
+    const container = document.getElementById('categoriesCheckboxes');
+    if (!container) return;
+    container.innerHTML = '<div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">الفقرات المتاحة:</div>';
+    (data.categories || []).forEach(cat => {
+      const checked = !enabledIds.length || enabledIds.includes(cat.id);
+      container.innerHTML += `
+        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" class="cat-checkbox" value="${cat.id}" ${checked ? 'checked' : ''}
+            style="width:16px;height:16px;cursor:pointer;"/>
+          <span style="font-size:16px;">${cat.emoji}</span>
+          <span style="color:#e2e8f0;font-size:13px;">${cat.name}</span>
+        </label>`;
+    });
+  } catch {}
+}
 // تحديث مدة العقوبة من الإعدادات
 window.PENALTY_TIMER_SECONDS = 10;
 </script>
