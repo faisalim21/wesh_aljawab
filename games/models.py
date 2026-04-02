@@ -691,6 +691,53 @@ class FreeTrialUsage(models.Model):
     def __str__(self):
         return f"FreeTrial({self.user_id}, {self.game_type})"
 
+class LettersCellCategory(models.Model):
+    """فقرات خلية الحروف المطورة — مشتركة بين الحزم"""
+    name = models.CharField(max_length=50, verbose_name="اسم الفقرة")
+    emoji = models.CharField(max_length=10, verbose_name="الإيموجي")
+    is_active = models.BooleanField(default=True, verbose_name="مفعّلة")
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "فقرة خلية الحروف"
+        verbose_name_plural = "فقرات خلية الحروف"
+
+    def __str__(self):
+        return f"{self.emoji} {self.name}"
+
+
+class LettersCategoryQuestion(models.Model):
+    """أسئلة فقرات خلية الحروف — مختلفة لكل حزمة"""
+    category = models.ForeignKey(
+        LettersCellCategory,
+        on_delete=models.CASCADE,
+        related_name='questions',
+        verbose_name="الفقرة"
+    )
+    package = models.ForeignKey(
+        'LettersPackage',
+        on_delete=models.CASCADE,
+        related_name='category_questions',
+        verbose_name="الحزمة"
+    )
+    question = models.TextField(verbose_name="السؤال", blank=True, default='')
+    answer = models.CharField(max_length=200, verbose_name="الإجابة")
+    image = models.ImageField(
+        upload_to='category_questions/',
+        blank=True, null=True,
+        verbose_name="صورة (اختياري)"
+    )
+    order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
+
+    class Meta:
+        ordering = ['order']
+        verbose_name = "سؤال فقرة"
+        verbose_name_plural = "أسئلة الفقرات"
+
+    def __str__(self):
+        return f"{self.category.name} — {self.answer}"
+    
 
 # =========================
 #  تحدّي الصور (ألغاز صور)
@@ -995,6 +1042,9 @@ class GameSettings(models.Model):
     team2_name = models.CharField(max_length=50, default="الفريق البرتقالي", verbose_name="اسم الفريق الثاني")
     team1_color = models.CharField(max_length=20, default="#22c55e", verbose_name="لون الفريق الأول")
     team2_color = models.CharField(max_length=20, default="#f97316", verbose_name="لون الفريق الثاني")
+    enhanced_mode = models.BooleanField(default=False, verbose_name="خلية الحروف المطورة")
+    enabled_categories = models.JSONField(default=list, blank=True, verbose_name="الفقرات المفعّلة")
+    allow_category_repeat = models.BooleanField(default=False, verbose_name="السماح بتكرار الفقرة")
 
     # ===== حجم الشبكة =====
     GRID_SIZES = [

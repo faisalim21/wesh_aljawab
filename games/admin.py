@@ -21,6 +21,8 @@ import csv, io
 from .models import (
     GamePackage,
     LettersGameQuestion,
+    LettersCellCategory,
+    LettersCategoryQuestion,
     UserPurchase,
     GameSession,
     LettersGameProgress,
@@ -219,6 +221,16 @@ class PictureRiddleInline(admin.TabularInline):
 
 # ========= Admin: حِزم خلية الحروف =========
 
+
+class LettersCategoryQuestionPackageInline(admin.TabularInline):
+    model = LettersCategoryQuestion
+    extra = 1
+    fields = ['category', 'question', 'answer', 'image', 'order']
+    verbose_name = "سؤال فقرة مطورة"
+    verbose_name_plural = "أسئلة الفقرات المطورة"
+
+
+
 @admin.register(LettersPackage)
 class LettersPackageAdmin(admin.ModelAdmin):
     list_display = (
@@ -234,7 +246,7 @@ class LettersPackageAdmin(admin.ModelAdmin):
     )
     list_filter = ('is_free', 'is_active', 'question_theme', 'created_at')
     search_fields = ('package_number', 'description')
-    inlines = [LettersGameQuestionInline]
+    inlines = [LettersGameQuestionInline, LettersCategoryQuestionPackageInline]
     actions = (action_mark_active, action_mark_inactive, action_export_csv, 'open_stats')
     ordering = ('package_number',)
     form = LettersPackageForm
@@ -974,6 +986,30 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
             )
 
         super().save_model(request, obj, form, change)
+
+
+class LettersCategoryQuestionInline(admin.TabularInline):
+    model = LettersCategoryQuestion
+    extra = 1
+    fields = ['question', 'answer', 'image', 'order']
+
+
+@admin.register(LettersCellCategory)
+class LettersCellCategoryAdmin(admin.ModelAdmin):
+    list_display = ['emoji', 'name', 'is_active', 'order']
+    list_editable = ['is_active', 'order']
+    search_fields = ['name']
+    inlines = [LettersCategoryQuestionInline]
+
+
+class LettersCategoryQuestionPackageInline(admin.TabularInline):
+    model = LettersCategoryQuestion
+    extra = 1
+    fields = ['category', 'question', 'answer', 'image', 'order']
+    verbose_name = "سؤال فقرة مطورة"
+    verbose_name_plural = "أسئلة الفقرات المطورة"
+
+
 # ========= Admin: حِزم الصور =========
 
 @admin.register(PictureRiddle)
