@@ -182,6 +182,7 @@ function generateForm() {
 
   // scroll للنموذج
   document.getElementById('formContainer').scrollIntoView({behavior: 'smooth'});
+  document.getElementById('categoriesSection').style.display = 'block';
 }
 
 // بحث تشابه مع debounce
@@ -208,5 +209,44 @@ function checkSimilar(el, letter, qtype) {
     }
   }, 600);
 }
+
+const catRowCount = {};
+
+function addCatRow(catId, inputType) {
+  if (!catRowCount[catId]) catRowCount[catId] = 1;
+  const idx = catRowCount[catId]++;
+  const container = document.getElementById(`cat_rows_${catId}`);
+  const div = document.createElement('div');
+  div.className = 'cat-row';
+  div.style = 'background:#111827;border:1px solid #1f2937;border-radius:10px;padding:12px;margin-bottom:8px;';
+
+  if (inputType === 'image') {
+    div.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">رابط الصورة *</label>
+          <input type="text" name="cat_${catId}_${idx}_image" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;" placeholder="https://..."/></div>
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">الإجابة *</label>
+          <input type="text" name="cat_${catId}_${idx}_answer" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;" placeholder="الإجابة..."/></div>
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">إجابات بديلة</label>
+          <input type="text" name="cat_${catId}_${idx}_accepted" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;" placeholder="إجابة1, إجابة2..."/></div>
+      </div>`;
+  } else {
+    div.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">السؤال *</label>
+          <textarea name="cat_${catId}_${idx}_question" rows="2" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;resize:vertical;" placeholder="أدخل السؤال..."></textarea></div>
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">الإجابة *</label>
+          <input type="text" name="cat_${catId}_${idx}_answer" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;" placeholder="الإجابة..."/></div>
+        <div><label style="color:#64748b;font-size:11px;display:block;margin-bottom:4px;">إجابات بديلة</label>
+          <input type="text" name="cat_${catId}_${idx}_accepted" style="width:100%;padding:8px;border-radius:6px;background:#0b1220;color:#e2e8f0;border:1px solid #374151;font-size:13px;" placeholder="إجابة1, إجابة2..."/></div>
+      </div>`;
+  }
+  container.appendChild(div);
+}
+
+// أظهر قسم الفقرات عند توليد النموذج
+// أضف في نهاية generateForm():
+// document.getElementById('categoriesSection').style.display = 'block';
+
 </script>
 {% endblock %}

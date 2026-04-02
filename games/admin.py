@@ -758,12 +758,13 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
     
     def bulk_add_view(self, request):
         from django.http import JsonResponse
+        from .models import LettersCellCategory, LettersCategoryQuestion
 
         ALL_LETTERS = ['أ','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','هـ','و','ي']
-        TYPE_MAP = {'1': 'main', '2': 'alt1', '3': 'alt2', '4': 'alt3', '5': 'alt4'}
         TYPE_MAP_AR = {'main': 'رئيسي', 'alt1': 'بديل ١', 'alt2': 'بديل ٢', 'alt3': 'بديل ٣', 'alt4': 'بديل ٤'}
 
         packages = GamePackage.objects.filter(game_type='letters').order_by('package_number')
+        categories = LettersCellCategory.objects.filter(is_active=True)
 
         if request.method == 'POST' and request.POST.get('action') == 'save':
             package_id = request.POST.get('package_id')
@@ -772,6 +773,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
             duplicates = []
             errors = []
 
+            # ===== حفظ أسئلة الحروف العادية =====
             for key, value in request.POST.items():
                 if not key.startswith('q_'):
                     continue
@@ -787,18 +789,13 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                 if field != 'question':
                     continue
 
-                answer_key = f'q_{letter}_{qtype}_answer'
-                category_key = f'q_{letter}_{qtype}_category'
-                difficulty_key = f'q_{letter}_{qtype}_difficulty'
-
-                answer = request.POST.get(answer_key, '').strip()
-                category = request.POST.get(category_key, '').strip()
-                difficulty = request.POST.get(difficulty_key, 'unspecified').strip()
+                answer = request.POST.get(f'q_{letter}_{qtype}_answer', '').strip()
+                category = request.POST.get(f'q_{letter}_{qtype}_category', '').strip()
+                difficulty = request.POST.get(f'q_{letter}_{qtype}_difficulty', 'unspecified').strip()
 
                 if not answer:
                     continue
 
-                # تحقق تكرار
                 exact = LettersGameQuestion.objects.filter(
                     package__game_type='letters',
                     question__iexact=value
@@ -818,12 +815,44 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
                 except Exception as e:
                     errors.append(str(e))
 
+            # ===== حفظ أسئلة الفقرات المطورة =====
+            cat_saved = 0
+            for key, value in request.POST.items():
+                if not key.startswith('cat_') or not key.endswith('_answer'):
+                    continue
+                value = value.strip()
+                if not value:
+                    continue
+                parts = key.split('_')
+                if len(parts) < 4:
+                    continue
+                cat_id = parts[1]
+                idx = parts[2]
+                answer = value
+                question = request.POST.get(f'cat_{cat_id}_{idx}_question', '').strip()
+                image = request.POST.get(f'cat_{cat_id}_{idx}_image', '').strip()
+                accepted_raw = request.POST.get(f'cat_{cat_id}_{idx}_accepted', '').strip()
+                accepted = [a.strip() for a in accepted_raw.split(',') if a.strip()] if accepted_raw else []
+                try:
+                    cat_obj = LettersCellCategory.objects.get(id=cat_id)
+                    LettersCategoryQuestion.objects.create(
+                        category=cat_obj,
+                        package=package,
+                        question=question,
+                        answer=answer,
+                        image=image,
+                        accepted_answers=accepted,
+                    )
+                    cat_saved += 1
+                except Exception as e:
+                    errors.append(str(e))
+
             if duplicates:
                 messages.warning(request, f'⚠️ تم تخطي {len(duplicates)} سؤال مكرر.')
             if errors:
                 messages.error(request, f'❌ أخطاء: {len(errors)}')
-            if saved:
-                messages.success(request, f'✅ تم حفظ {saved} سؤال بنجاح.')
+            if saved or cat_saved:
+                messages.success(request, f'✅ تم حفظ {saved} سؤال عادي و {cat_saved} سؤال فقرات.')
 
             return HttpResponseRedirect(reverse('admin:games_lettersgamequestion_changelist'))
 
@@ -833,6 +862,7 @@ class LettersGameQuestionAdmin(admin.ModelAdmin):
             'packages': packages,
             'all_letters': ALL_LETTERS,
             'type_map_ar': TYPE_MAP_AR,
+            'categories': categories,
             'category_choices': [
                 ('', '— غير محدد —'),
                 ('general', 'الثقافة العامة'),
