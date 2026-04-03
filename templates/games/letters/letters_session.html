@@ -2714,7 +2714,10 @@
       const data = await r.json().catch(()=> ({}));
 
       // لو الوضع المطور مفعّل — أعد بناء الخلية المطورة
-      if (window.ENHANCED_MODE) {
+      if (window.ENHANCED_MODE && data.enhanced_grid && data.enhanced_grid.length) {
+        window._enhancedGrid = data.enhanced_grid;
+        createHoneycombCellsEnhanced(data.enhanced_grid);
+      } else if (window.ENHANCED_MODE) {
         await loadEnhancedGridAndRebuild();
       } else if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
         rebuildHoneycomb(data.letters, !!data.reset_progress);
@@ -3142,7 +3145,7 @@ async function loadEnhancedGridAndRebuild() {
     return;
   }
   try {
-    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}&rebuild=1`);
+    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}`);
     const data = await r.json();
     if (!data.success) { createHoneycombCells(); return; }
     window._enhancedGrid = data.grid;
