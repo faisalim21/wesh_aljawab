@@ -3237,35 +3237,21 @@ function onCategoryClick(el, cell, cellIdx) {
 }
 
 let _currentCategoryCell = null;
+let _categoryQuestions = [];
+let _categoryQuestionIndex = 0;
 
 async function showCategoryQuestion(cell, cellIdx) {
   try {
-    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}`);
+    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}&all=1`);
     if (!r.ok) return;
     const data = await r.json();
     if (!data.success) return;
 
     _currentCategoryCell = { cell, cellIdx };
-    renderCategoryQuestion(data);
+    _categoryQuestions = data.questions || [data.question];
+    _categoryQuestionIndex = Math.floor(Math.random() * _categoryQuestions.length);
 
-    try {
-      const q = data.question;
-      await fetch('/games/api/letters-select-letter/', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          session_id: sessionId,
-          letter: cell.display,
-          cell_index: cellIdx,
-          is_category: true,
-          category_id: cell.value,
-          category_name: cell.name,
-          question: q.question,
-          answer: q.answer,
-          image: q.image,
-        })
-      });
-    } catch {}
+    renderCategoryQuestion({ question: _categoryQuestions[_categoryQuestionIndex], category: data.category });
   } catch {}
 }
 
@@ -3274,7 +3260,6 @@ function renderCategoryQuestion(data) {
   const cat = data.category;
 
   document.getElementById('questionPanel').style.display = 'block';
-  // إزالة "حرف" — نعرض اسم الفقرة مباشرة
   document.getElementById('currentLetter').textContent = `${cat.emoji} ${cat.name}`;
   document.getElementById('questionDisplay').textContent = `${cat.emoji} ${cat.name}`;
 
@@ -3290,7 +3275,6 @@ function renderCategoryQuestion(data) {
   const revBtn = document.querySelector('#categoryQuestionPanel .reveal-btn');
   if (revBtn) { revBtn.textContent = 'اكشف'; revBtn.classList.remove('done'); }
 
-  // صورة — تظهر فقط لو فيه صورة
   if (q.image) {
     document.getElementById('catPanelImageWrap').style.display = 'block';
     document.getElementById('catPanelImage').src = q.image;
@@ -3298,7 +3282,6 @@ function renderCategoryQuestion(data) {
     document.getElementById('catPanelImageWrap').style.display = 'none';
   }
 
-  // سؤال نصي — يظهر فقط لو فيه سؤال
   if (q.question) {
     document.getElementById('catPanelQuestionWrap').style.display = 'block';
     document.getElementById('catPanelQuestion').textContent = q.question;
@@ -3307,16 +3290,51 @@ function renderCategoryQuestion(data) {
   }
 }
 
-async function changeCategoryQuestion() {
-  if (!_currentCategoryCell) return;
-  const { cell, cellIdx } = _currentCategoryCell;
-  try {
-    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}`);
-    if (!r.ok) return;
-    const data = await r.json();
-    if (!data.success) return;
-    renderCategoryQuestion(data);
-  } catch {}
+
+function renderCategoryQuestion(data) {
+  const q = data.question;
+  const cat = data.category;
+
+  document.getElementById('questionPanel').style.display = 'block';
+  document.getElementById('currentLetter').textContent = `${cat.emoji} ${cat.name}`;
+  document.getElementById('questionDisplay').textContent = `${cat.emoji} ${cat.name}`;
+
+  document.getElementById('paidRounds')?.classList.add('d-none');
+  document.getElementById('paidAlt34')?.classList.add('d-none');
+  document.getElementById('freeMainBlock')?.classList.add('d-none');
+  document.getElementById('freeAlt12')?.classList.add('d-none');
+  document.getElementById('categoryQuestionPanel').style.display = 'block';
+
+  document.getElementById('catPanelHeader').textContent = `${cat.emoji} ${cat.name}`;
+  document.getElementById('catPanelAnswer').textContent = q.answer || '—';
+  document.getElementById('catPanelAnswer').classList.remove('revealed');
+  const revBtn = document.querySelector('#categoryQuestionPanel .reveal-btn');
+  if (revBtn) { revBtn.textContent = 'اكشف'; revBtn.classList.remove('done'); }
+
+  if (q.image) {
+    document.getElementById('catPanelImageWrap').style.display = 'block';
+    document.getElementById('catPanelImage').src = q.image;
+  } else {
+    document.getElementById('catPanelImageWrap').style.display = 'none';
+  }
+
+  if (q.question) {
+    document.getElementById('catPanelQuestionWrap').style.display = 'block';
+    document.getElementById('catPanelQuestion').textContent = q.question;
+  } else {
+    document.getElementById('catPanelQuestionWrap').style.display = 'none';
+  }
+}
+
+function changeCategoryQuestion() {
+  if (!_currentCategoryCell || !_categoryQuestions.length) return;
+  _categoryQuestionIndex = (_categoryQuestionIndex + 1) % _categoryQuestions.length;
+  const cat = {
+    emoji: _currentCategoryCell.cell.display,
+    name: _currentCategoryCell.cell.name,
+    input_type: _currentCategoryCell.cell.input_type
+  };
+  renderCategoryQuestion({ question: _categoryQuestions[_categoryQuestionIndex], category: cat });
 }
 
 // ============================================================

@@ -846,16 +846,15 @@ def api_get_categories(request):
     
 @require_http_methods(["GET"])
 def api_get_category_question(request):
-    """يجيب سؤال عشوائي من فقرة معينة للحزمة"""
     session_id = request.GET.get('session_id')
     category_id = request.GET.get('category_id')
+    get_all = request.GET.get('all') == '1'
 
     if not session_id or not category_id:
         return JsonResponse({'success': False, 'error': 'المعاملات مطلوبة'}, status=400)
 
     try:
         session = GameSession.objects.get(id=session_id, is_active=True)
-
         if session.is_time_expired:
             return JsonResponse({'success': False, 'error': 'انتهت صلاحية الجلسة', 'session_expired': True}, status=410)
 
@@ -871,23 +870,34 @@ def api_get_category_question(request):
         if not questions:
             return JsonResponse({'success': False, 'error': 'لا توجد أسئلة لهذه الفقرة في الحزمة'}, status=404)
 
-        q = random.choice(questions)
+        cat_data = {
+            'id': category.id,
+            'name': category.name,
+            'emoji': category.emoji,
+            'input_type': category.input_type,
+        }
 
-        return JsonResponse({
-            'success': True,
-            'category': {
-                'id': category.id,
-                'name': category.name,
-                'emoji': category.emoji,
-                'input_type': category.input_type,
-            },
-            'question': {
+        def q_dict(q):
+            return {
                 'id': q.id,
                 'question': q.question,
                 'answer': q.answer,
                 'image': q.image,
                 'accepted_answers': q.accepted_answers or [],
             }
+
+        if get_all:
+            return JsonResponse({
+                'success': True,
+                'category': cat_data,
+                'questions': [q_dict(q) for q in questions],
+                'question': q_dict(random.choice(questions)),
+            })
+
+        return JsonResponse({
+            'success': True,
+            'category': cat_data,
+            'question': q_dict(random.choice(questions)),
         })
 
     except LettersCellCategory.DoesNotExist:
@@ -896,8 +906,7 @@ def api_get_category_question(request):
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
     except Exception as e:
         logger.error(f'Error fetching category question: {e}')
-        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
-    
+        return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)    
 
 @require_http_methods(["GET"])
 def api_get_enhanced_grid(request):
