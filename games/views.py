@@ -1623,19 +1623,14 @@ def api_letters_select_letter(request):
             async_to_sync(channel_layer.group_send)(
                 f"letters_session_{session.id}",
                 {
-                    "type": "broadcast_letter_selected",
-                    "letter": letter,
-                    "cell_index": payload.get("cell_index"),
-                    "is_category": is_category,
-                    "category_id": payload.get("category_id"),
-                    "category_name": payload.get("category_name"),
-                    "question": payload.get("question"),
-                    "answer": payload.get("answer"),
-                    "image": payload.get("image"),
+                    "type": "broadcast_letters_replace",
+                    "letters": new_letters,
+                    "reset_progress": True,
+                    "enhanced_grid": enhanced_grid,
                 }
             )
     except Exception as e:
-        logger.error(f'WS broadcast error (letter_selected): {e}')
+        logger.error(f"WS broadcast error (new round): {e}")
 
     return JsonResponse({'success': True, 'message': 'تم بثّ الحرف', 'letter': letter})
 
