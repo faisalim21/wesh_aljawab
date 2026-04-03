@@ -1495,13 +1495,6 @@ def api_contestant_buzz_http(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def letters_new_round(request):
-    """
-    بدء جولة جديدة للحزم المدفوعة فقط، بدون أي تعديل على النقاط إطلاقًا.
-    - لا يغير نقاط الفريقين مطلقًا.
-    - يبدّل ترتيب الحروف فقط ويفرّغ تقدم الخلايا.
-    - يبث عبر WebSocket: letters_updated لاستبدال الحروف فقط (بدون أي بث للنقاط).
-    - يعيد JSON يحتوي الحروف كـ fallback إن لم يكن WebSocket متاحًا.
-    """
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
@@ -1519,16 +1512,28 @@ def letters_new_round(request):
     if session.package.is_free:
         return JsonResponse({'success': False, 'error': 'الميزة متاحة للحزم المدفوعة فقط'}, status=403)
 
-    # 1) بدّل ترتيب الحروف (لا علاقة للنقاط هنا)
+    # 1) ترتيب حروف جديد
     is_sports = getattr(session.package, 'question_theme', '') == 'sports'
     new_letters = get_paid_order_fresh(is_sports=is_sports)
     set_session_order(session.id, new_letters, is_free=False)
-    # امسح الكاش القديم وابن الجديد فوراً
-    cache.delete(f"enhanced_grid_{sid}")
+
+    # 2) تصفير تقدم الخلايا
+    try:
+        progress = LettersGameProgress.objects.filter(session=session).first()
+        if progress:
+            progress.cell_states = {}
+            progress.used_letters = []
+            progress.save(update_fields=['cell_states', 'used_letters'])
+    except Exception:
+        pass
+
+    # 3) بناء enhanced_grid لو مفعّل
+    enhanced_grid = None
     try:
         from .models import GameSettings, LettersCellCategory, LettersCategoryQuestion
         import random as _random
         _settings = GameSettings.get_or_create_for_session(session)
+        cache.delete(f"enhanced_grid_{sid}")
         if _settings.enhanced_mode:
             _enabled_ids = _settings.enabled_categories or []
             _cats_qs = LettersCellCategory.objects.filter(is_active=True)
@@ -1550,50 +1555,31 @@ def letters_new_round(request):
             _random.shuffle(_grid)
             cache.set(f"enhanced_grid_{sid}", _grid, timeout=3600)
             enhanced_grid = _grid
-        else:
-            enhanced_grid = None
-    except Exception:
-        enhanced_grid = None
+    except Exception as e:
+        logger.error(f"Enhanced grid build error: {e}")
 
-    async_to_sync(channel_layer.group_send)(
-        f"letters_session_{session.id}",
-        {
-            "type": "broadcast_letters_replace",
-            "letters": new_letters,
-            "reset_progress": True,
-            "enhanced_grid": enhanced_grid,
-        }
-    )
-
-
-    # 2) تصفير تقدّم الخلايا فقط
-    try:
-        progress = LettersGameProgress.objects.filter(session=session).first()
-        if progress:
-            progress.cell_states = {}
-            progress.used_letters = []
-            progress.save(update_fields=['cell_states', 'used_letters'])
-    except Exception:
-        pass
-
-    # 3) بثّ: استبدال الحروف فقط (بدون أي بث للنقاط)
+    # 4) بث واحد فقط
     try:
         channel_layer = get_channel_layer()
         if channel_layer:
             async_to_sync(channel_layer.group_send)(
                 f"letters_session_{session.id}",
-                {"type": "broadcast_letters_replace", "letters": new_letters, "reset_progress": True}
+                {
+                    "type": "broadcast_letters_replace",
+                    "letters": new_letters,
+                    "reset_progress": True,
+                    "enhanced_grid": enhanced_grid,
+                }
             )
     except Exception as e:
         logger.error(f"WS broadcast error (new round): {e}")
 
-    # 4) الاستجابة: نعيد الحروف كـ fallback فقط (لا نعيد/نثبت النقاط)
     return JsonResponse({
         'success': True,
         'letters': new_letters,
-        'reset_progress': True
+        'reset_progress': True,
+        'enhanced_grid': enhanced_grid,
     })
-
 
 @csrf_exempt
 @require_http_methods(["POST"])
