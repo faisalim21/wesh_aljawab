@@ -1503,15 +1503,12 @@
       const data = await r.json();
 
       if (Array.isArray(data.arabic_letters)) {
-        const cur = (window.sessionData && window.sessionData.arabicLetters) || [];
-        const changed = (cur.length !== data.arabic_letters.length) ||
-                        (cur.join('|') !== data.arabic_letters.join('|'));
-        if (changed) {
-          if (window._enhancedGrid && window._enhancedGrid.length) {
-            createHoneycombCellsEnhanced(window._enhancedGrid);
-          } else {
-            rebuildHoneycomb(data.arabic_letters, false);
-          }
+        // لو enhanced grid مفعّل — لا تقارن ولا تعيد البناء من هنا
+        if (!window._enhancedGrid || !window._enhancedGrid.length) {
+          const cur = (window.sessionData && window.sessionData.arabicLetters) || [];
+          const changed = (cur.length !== data.arabic_letters.length) ||
+                          (cur.join('|') !== data.arabic_letters.join('|'));
+          if (changed) rebuildHoneycomb(data.arabic_letters, false);
         }
       }
 
