@@ -2588,7 +2588,13 @@
       const newLetters = Array.isArray(data.arabic_letters) ? data.arabic_letters : [];
       const cur = getLetters();
       const changed = (cur.length !== newLetters.length) || (cur.join('|') !== newLetters.join('|'));
-      if (changed) rebuildHoneycomb(newLetters, false);
+      if (changed) {
+        if (window._enhancedGrid && window._enhancedGrid.length) {
+          createHoneycombCellsEnhanced(window._enhancedGrid);
+        } else {
+          rebuildHoneycomb(newLetters, false);
+        }
+      }
 
       if (!isWithinPendingAckWindow()){
         reflectScores(data.team1_score||0, data.team2_score||0);
