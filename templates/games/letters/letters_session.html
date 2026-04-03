@@ -2185,6 +2185,8 @@
           </div>
         </div>
       </div>
+    </div>
+
 
     <!-- النقاط للجوال -->
     <div class="scores-mobile d-md-none">
@@ -2646,7 +2648,12 @@
           onScoresUpdated(d);
           break;
         case 'letters_updated':
-          rebuildHoneycomb(d.letters || [], !!d.reset_progress);
+          if (d.enhanced_grid && d.enhanced_grid.length) {
+            window._enhancedGrid = d.enhanced_grid;
+            createHoneycombCellsEnhanced(d.enhanced_grid);
+          } else {
+            rebuildHoneycomb(d.letters || [], !!d.reset_progress);
+          }
           setTimeout(loadSessionState, 50);
           break;
         case 'buzz_unlocked':

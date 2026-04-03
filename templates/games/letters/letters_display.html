@@ -1573,17 +1573,24 @@
             updateScores(d.team1_score, d.team2_score);
             break;
           case 'letters_updated':
-            if (d.letters && d.letters.length) {
-              window.sessionData = window.sessionData || {};
-              window.sessionData.arabicLetters = d.letters;
-            }
             if (d.reset_progress) {
               if (selectedLetter) clearInlineHighlight(selectedLetter, selectedIndex);
               selectedLetter = null;
               selectedIndex = null;
             }
-            // استخدم المطورة لو مفعّلة
-            loadEnhancedGridAndRebuild();
+            if (d.enhanced_grid && d.enhanced_grid.length) {
+              // استخدم الـ grid المرسل مباشرة بدون طلب API
+              window._enhancedGrid = d.enhanced_grid;
+              window.sessionData = window.sessionData || {};
+              window.sessionData.arabicLetters = d.letters || [];
+              createHoneycombCellsEnhanced(d.enhanced_grid);
+            } else {
+              if (d.letters && d.letters.length) {
+                window.sessionData = window.sessionData || {};
+                window.sessionData.arabicLetters = d.letters;
+              }
+              loadEnhancedGridAndRebuild();
+            }
             setTimeout(loadSessionState, 50);
             break;
           case 'letter_selected':

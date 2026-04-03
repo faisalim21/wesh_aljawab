@@ -993,7 +993,7 @@ def api_get_enhanced_grid(request):
         logger.error(f'Error building enhanced grid: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
-        
+
 
 @require_http_methods(["GET"])
 def get_session_letters(request):
@@ -1523,7 +1523,47 @@ def letters_new_round(request):
     is_sports = getattr(session.package, 'question_theme', '') == 'sports'
     new_letters = get_paid_order_fresh(is_sports=is_sports)
     set_session_order(session.id, new_letters, is_free=False)
+    # امسح الكاش القديم وابن الجديد فوراً
     cache.delete(f"enhanced_grid_{sid}")
+    try:
+        from .models import GameSettings, LettersCellCategory, LettersCategoryQuestion
+        import random as _random
+        _settings = GameSettings.get_or_create_for_session(session)
+        if _settings.enhanced_mode:
+            _enabled_ids = _settings.enabled_categories or []
+            _cats_qs = LettersCellCategory.objects.filter(is_active=True)
+            if _enabled_ids:
+                _cats_qs = _cats_qs.filter(id__in=_enabled_ids)
+            _available = [c for c in _cats_qs if LettersCategoryQuestion.objects.filter(category=c, package=session.package).exists()]
+            _cat_items = [{'type':'category','value':str(c.id),'display':c.emoji,'name':c.name,'input_type':c.input_type} for c in _available]
+            _letter_items = [{'type':'letter','value':l,'display':l} for l in new_letters]
+            _grid_size_map = {'3x3':9,'4x4':16,'5x5':25,'6x6':36,'7x7':49}
+            _total = _grid_size_map.get(_settings.grid_size, 25)
+            _repeat = max(1, _settings.category_repeat_count or 1)
+            _cats_rep = [item.copy() for item in _cat_items for _ in range(_repeat)]
+            _grid = _cats_rep[:_total]
+            _remaining = _total - len(_grid)
+            _lpool = _letter_items.copy()
+            while len(_lpool) < _remaining:
+                _lpool += _letter_items.copy()
+            _grid += _lpool[:_remaining]
+            _random.shuffle(_grid)
+            cache.set(f"enhanced_grid_{sid}", _grid, timeout=3600)
+            enhanced_grid = _grid
+        else:
+            enhanced_grid = None
+    except Exception:
+        enhanced_grid = None
+
+    async_to_sync(channel_layer.group_send)(
+        f"letters_session_{session.id}",
+        {
+            "type": "broadcast_letters_replace",
+            "letters": new_letters,
+            "reset_progress": True,
+            "enhanced_grid": enhanced_grid,
+        }
+    )
 
 
     # 2) تصفير تقدّم الخلايا فقط
