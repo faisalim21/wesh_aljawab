@@ -2159,6 +2159,30 @@
           </div>
         </div>
       </div>
+
+
+      <!-- كارت الفقرات المطورة -->
+      <div id="categoryQuestionPanel" style="display:none;">
+        <div class="round-card h-100" style="border:1.5px solid #6d28d9;background:rgba(109,40,217,0.08);">
+          <div id="catPanelHeader" class="round-title" style="color:#a78bfa;margin-bottom:10px;">— فقرة —</div>
+          <!-- صورة (لفقرات الصور) -->
+          <div id="catPanelImageWrap" style="display:none;text-align:center;margin-bottom:12px;">
+            <img id="catPanelImage" src="" style="max-height:220px;border-radius:10px;object-fit:contain;"/>
+          </div>
+          <!-- سؤال نصي -->
+          <div id="catPanelQuestionWrap" style="display:none;margin-bottom:8px;">
+            <strong>السؤال:</strong> <span id="catPanelQuestion">—</span>
+          </div>
+          <!-- الإجابة -->
+          <div class="mt-1">
+            <strong>الإجابة:</strong>
+            <span class="answer-wrap">
+              <span id="catPanelAnswer" class="answer answer-text">—</span>
+              <button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button>
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- النقاط للجوال -->
@@ -2347,6 +2371,7 @@
       // إخفاء حقل الفقرة لو كان ظاهراً
       const catPanel = document.getElementById('categoryQuestionPanel');
       if (catPanel) catPanel.style.display = 'none';
+      document.getElementById('categoryQuestionPanel').style.display = 'none';
 
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
@@ -2658,7 +2683,7 @@
   // ========= جولة جديدة =========
   let newRoundBusy = false;
   async function startNewRound(){
-    if (isFreeSession) return; // الـAPI سيمنع أيضًا
+    if (isFreeSession) return;
     if (newRoundBusy) return;
     newRoundBusy = true;
 
@@ -2680,8 +2705,11 @@
         return;
       }
       const data = await r.json().catch(()=> ({}));
-      // في حالة عدم وجود WS: نحدّث الخلية فقط — لا نلمس النقاط إطلاقًا
-      if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
+
+      // لو الوضع المطور مفعّل — أعد بناء الخلية المطورة
+      if (window.ENHANCED_MODE) {
+        await loadEnhancedGridAndRebuild();
+      } else if ((!socket || socket.readyState !== 1) && Array.isArray(data.letters)) {
         rebuildHoneycomb(data.letters, !!data.reset_progress);
         setTimeout(loadSessionState, 50);
       }
@@ -3222,35 +3250,28 @@ async function showCategoryQuestion(cell, cellIdx) {
     document.getElementById('currentLetter').textContent = `${cell.display} ${cell.name}`;
     document.getElementById('questionDisplay').textContent = `${cell.display} ${cell.name}`;
 
-    // إخفاء حقل الحروف العادي
+    // إخفاء حقول الحروف العادية
     document.getElementById('paidRounds')?.classList.add('d-none');
     document.getElementById('paidAlt34')?.classList.add('d-none');
     document.getElementById('freeMainBlock')?.classList.add('d-none');
     document.getElementById('freeAlt12')?.classList.add('d-none');
 
-    // إظهار حقل الفقرة
-    let catPanel = document.getElementById('categoryQuestionPanel');
-    if (!catPanel) {
-      catPanel = document.createElement('div');
-      catPanel.id = 'categoryQuestionPanel';
-      catPanel.style = 'background:rgba(109,40,217,0.1);border:1px solid #6d28d9;border-radius:12px;padding:16px;margin-top:12px;';
-      document.getElementById('questionPanel').appendChild(catPanel);
-    }
-    catPanel.style.display = 'block';
+    // إظهار كارت الفقرة
+    document.getElementById('categoryQuestionPanel').style.display = 'block';
+    document.getElementById('catPanelHeader').textContent = `${cat.emoji} ${cat.name}`;
+    document.getElementById('catPanelAnswer').textContent = q.answer || '—';
+    document.getElementById('catPanelAnswer').classList.remove('revealed');
+    const revBtn = document.querySelector('#categoryQuestionPanel .reveal-btn');
+    if (revBtn) { revBtn.textContent = 'اكشف'; revBtn.classList.remove('done'); }
 
     if (cat.input_type === 'image' && q.image) {
-      catPanel.innerHTML = `
-        <div style="text-align:center;margin-bottom:12px;">
-          <img src="${q.image}" style="max-height:200px;border-radius:10px;object-fit:contain;" onerror="this.style.display='none'"/>
-        </div>
-        <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:6px;">${cat.emoji} ${cat.name}</div>
-        <div class="answer-text" style="font-size:15px;color:#e2e8f0;">${q.answer}</div>`;
+      document.getElementById('catPanelImageWrap').style.display = 'block';
+      document.getElementById('catPanelImage').src = q.image;
+      document.getElementById('catPanelQuestionWrap').style.display = 'none';
     } else {
-      catPanel.innerHTML = `
-        <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:8px;">${cat.emoji} ${cat.name}</div>
-        <div style="color:#e2e8f0;font-size:15px;margin-bottom:10px;">${q.question || '—'}</div>
-        <div style="color:#64748b;font-size:12px;margin-bottom:4px;">الإجابة</div>
-        <div class="answer-text" style="font-size:15px;font-weight:700;color:#22c55e;">${q.answer}</div>`;
+      document.getElementById('catPanelImageWrap').style.display = 'none';
+      document.getElementById('catPanelQuestionWrap').style.display = 'block';
+      document.getElementById('catPanelQuestion').textContent = q.question || '—';
     }
 
     // بث
@@ -3273,7 +3294,6 @@ async function showCategoryQuestion(cell, cellIdx) {
     } catch {}
   } catch {}
 }
-
 // ============================================================
 // محرك الشبكة السداسية - النسخة المصححة
 // التعرج على الأعمدة (يمين/يسار) مب الصفوف
