@@ -1584,6 +1584,19 @@
             break;
           case 'letter_selected':
             if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
+            // لو فقرة — أظهر بيانات السؤال في لوحة بدون مقدم
+            if (d.is_category && nohostMode) {
+              const nqpEmpty   = document.getElementById('nqpEmpty');
+              const nqpContent = document.getElementById('nqpContent');
+              const nqpLetter  = document.getElementById('nqpLetter');
+              const nqpQuestion = document.getElementById('nqpQuestion');
+              const nqpAnswer  = document.getElementById('nqpAnswer');
+              if (nqpLetter) nqpLetter.textContent = `${d.letter} ${d.category_name || ''}`;
+              if (nqpQuestion) nqpQuestion.textContent = d.question || d.category_name || '—';
+              if (nqpAnswer) { nqpAnswer.textContent = d.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+              if (nqpEmpty) nqpEmpty.style.display = 'none';
+              if (nqpContent) nqpContent.style.display = 'flex';
+            }
             break;
           case 'auto_host_result':
             clearInterval(countdownInterval);
@@ -1927,13 +1940,13 @@ function showAutoHostResultDisplay(d) {
 
       updateSessionLogoCard();
 
-      createHoneycombCells();
+      loadEnhancedGridAndRebuild();
 
       if (s.nohost_mode) {
         activateNohostMode(s);
       }
     } catch {
-      createHoneycombCells();
+      loadEnhancedGridAndRebuild();
     }
 
     loadSessionState();
@@ -2084,6 +2097,90 @@ function toggleAutoReplay() {
   } else {
     autoReplayInterval = setInterval(() => replayDispLogo(), autoReplaySeconds * 1000);
     if (btn) { btn.textContent = '⏹ إيقاف'; btn.style.background = 'rgba(239,68,68,0.3)'; btn.style.borderColor = 'rgba(239,68,68,0.5)'; btn.style.color = '#fca5a5'; }
+  }
+}
+
+async function loadEnhancedGridAndRebuild() {
+  try {
+    const r = await fetch(`/games/api/settings/?session_id=${encodeURIComponent(sessionId)}`);
+    const data = await r.json();
+    const s = data.settings || {};
+    if (!s.enhanced_mode) { createHoneycombCells(); return; }
+    const r2 = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}`);
+    const grid = await r2.json();
+    if (!grid.success) { createHoneycombCells(); return; }
+    window._enhancedGrid = grid.grid;
+    createHoneycombCellsEnhanced(grid.grid);
+  } catch { createHoneycombCells(); }
+}
+
+function createHoneycombCellsEnhanced(grid) {
+  const svg = document.getElementById('honeycombSvg');
+  const NS = 'http://www.w3.org/2000/svg';
+  const gridSize = window.currentGridSize || '5x5';
+  const t1Color = getComputedStyle(document.documentElement).getPropertyValue('--team1-color').trim() || '#22c55e';
+  const t2Color = getComputedStyle(document.documentElement).getPropertyValue('--team2-color').trim() || '#f97316';
+  const sizeMap = { '3x3':3,'4x4':4,'5x5':5,'6x6':6,'7x7':7 };
+  const cols = sizeMap[gridSize] || 5;
+  const rows = cols;
+  const R = GRID_R[gridSize] || 32;
+  const hexW = R * Math.sqrt(3), hexH = R * 2;
+  const colStep = hexW, rowStep = hexH * 0.75;
+  const pad = R * 1.4;
+  const totalW = colStep * (cols + 0.5) + pad * 2;
+  const totalH = rowStep * (rows - 1) + hexH + pad * 2;
+  const viewW = Math.ceil(Math.max(totalW, 300));
+  const viewH = Math.ceil(Math.max(totalH, 240));
+
+  svg.setAttribute('viewBox', `0 0 ${viewW} ${viewH}`);
+  svg.querySelectorAll('g.hex-cell').forEach(n => n.remove());
+  buildHexBackground(svg, viewW, viewH, t1Color, t2Color);
+
+  const startX = (viewW - colStep * (cols - 0.5)) / 2;
+  const startY = (viewH - (rowStep * (rows-1) + hexH)) / 2 + hexH / 2;
+  const fontSize = Math.round(R * 0.68);
+
+  let idx = 0;
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const cx = startX + col * colStep + (row % 2 === 0 ? 0 : colStep * 0.5);
+      const cy = startY + row * rowStep;
+      const cell = grid[idx] || { type: 'letter', value: '؟', display: '؟' };
+
+      const g = document.createElementNS(NS, 'g');
+      g.setAttribute('class', 'hex-cell');
+      g.setAttribute('data-index', idx);
+      if (cell.type === 'letter') {
+        g.setAttribute('data-letter', cell.value);
+      } else {
+        g.setAttribute('data-category-id', cell.value);
+        g.setAttribute('data-letter', cell.display);
+      }
+
+      const poly = document.createElementNS(NS, 'polygon');
+      poly.setAttribute('class', 'hex-shape');
+      poly.setAttribute('points', hexPoints(cx, cy, R));
+      g.appendChild(poly);
+
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('class', 'hex-text');
+      txt.setAttribute('x', cx.toFixed(1));
+      txt.setAttribute('y', cy.toFixed(1));
+      txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('text-anchor', 'middle');
+      txt.style.fontSize = `${fontSize}px`;
+      txt.textContent = cell.display;
+      g.appendChild(txt);
+
+      ;(function(el, cell) {
+        el.addEventListener('click', function() {
+          if (nohostMode) nohostHandleCellClick(cell.type === 'letter' ? cell.value : cell.display);
+        });
+      })(g, cell);
+
+      svg.appendChild(g);
+      idx++;
+    }
   }
 }
 
