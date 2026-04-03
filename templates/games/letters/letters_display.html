@@ -1374,30 +1374,33 @@
 
   // تطبيق إبراز داخلي واضح للخلية (بدون أي تحريك للنص/الخلية)
   function applySelectedHighlight(letter, cellIndex){
-      if (selectedLetter !== null || selectedIndex !== null){
-        clearInlineHighlight(selectedLetter, selectedIndex);
-      }
-      selectedLetter = letter || null;
-      selectedIndex = (cellIndex !== undefined && cellIndex !== null) ? cellIndex : null;
-      if (!letter && cellIndex == null) return;
+    if (selectedLetter !== null || selectedIndex !== null){
+      clearInlineHighlight(selectedLetter, selectedIndex);
+    }
+    selectedLetter = letter || null;
+    selectedIndex = (cellIndex !== undefined && cellIndex !== null) ? cellIndex : null;
+    if (!letter && cellIndex == null) return;
 
-      ensureInnerGlowFilter();
+    ensureInnerGlowFilter();
 
-      let g;
-      if (cellIndex !== undefined && cellIndex !== null) {
-          g = document.querySelector(`[data-index="${cellIndex}"]`);
-      }
-      if (!g && letter) {
-          g = document.querySelector(`[data-letter="${letter}"]`);
-      }
-      if (!g) return;
-      const poly = g.querySelector('polygon');
-      if (!poly) return;
-      poly.style.filter = 'url(#wjgInnerGlow)';
-      poly.setAttribute('stroke', '#06b6d4');
-      poly.setAttribute('stroke-width', '2.5');
-      poly.setAttribute('stroke-linejoin', 'round');
+    let g = null;
+    // استخدم data-index دائماً لو متوفر — الأدق
+    if (selectedIndex !== null) {
+      g = document.querySelector(`[data-index="${selectedIndex}"]`);
+    }
+    // fallback بالحرف فقط لو ما في index
+    if (!g && letter) {
+      g = document.querySelector(`[data-letter="${letter}"]`);
+    }
+    if (!g) return;
+    const poly = g.querySelector('polygon');
+    if (!poly) return;
+    poly.style.filter = 'url(#wjgInnerGlow)';
+    poly.setAttribute('stroke', '#06b6d4');
+    poly.setAttribute('stroke-width', '2.5');
+    poly.setAttribute('stroke-linejoin', 'round');
   }
+
 
   // ===================== أصوات + عدّ تنازلي =====================
   function tone(freq, durMs) {
@@ -2356,7 +2359,10 @@ function _renderNohostCategoryQuestion(cat, q) {
   const nqpQuestion = document.getElementById('nqpQuestion');
   const nqpAnswer  = document.getElementById('nqpAnswer');
 
-  // زر تغيير السؤال للفقرات
+  // إخفاء زر "غير السؤال" العادي وإظهار زر الفقرة
+  const normalChangeBtn = document.querySelector('.nqp-change-btn:not(#nqpChangeCatBtn)');
+  if (normalChangeBtn) normalChangeBtn.style.display = 'none';
+
   let changeBtn = document.getElementById('nqpChangeCatBtn');
   if (!changeBtn) {
     changeBtn = document.createElement('button');
@@ -2364,7 +2370,7 @@ function _renderNohostCategoryQuestion(cat, q) {
     changeBtn.className = 'nqp-change-btn';
     changeBtn.textContent = '🔀 تغيير السؤال';
     changeBtn.onclick = nohostChangeCategoryQuestion;
-    nqpAnswer?.parentElement?.appendChild(changeBtn);
+    document.querySelector('.nqp-controls')?.appendChild(changeBtn);
   }
   changeBtn.style.display = 'inline-block';
 
@@ -2440,6 +2446,10 @@ async function nohostFetchCategoryQuestion(cellData) {
 
 async function nohostFetchQuestion(letter) {
   try {
+    const normalChangeBtn = document.querySelector('.nqp-change-btn:not(#nqpChangeCatBtn)');
+    if (normalChangeBtn) normalChangeBtn.style.display = 'inline-block';
+    const catChangeBtn = document.getElementById('nqpChangeCatBtn');
+    if (catChangeBtn) catChangeBtn.style.display = 'none';
     // إخفاء زر تغيير سؤال الفقرة لو كان ظاهراً
     const changeBtn = document.getElementById('nqpChangeCatBtn');
     if (changeBtn) changeBtn.style.display = 'none';
