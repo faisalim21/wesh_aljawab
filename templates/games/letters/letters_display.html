@@ -1838,11 +1838,11 @@ function createHoneycombCells() {
       txt.textContent = letter;
       g.appendChild(txt);
 
-      ;(function(el, ltr) {
+      ;(function(el, ltr, idx) {
         el.addEventListener('click', function() {
-          if (nohostMode) nohostHandleCellClick(ltr);
+          if (nohostMode) nohostHandleCellClick(ltr, {type:'letter', value:ltr}, idx);
         });
-      })(g, letter);
+      })(g, letter, idx);
 
       svg.appendChild(g);
       idx++;
@@ -2314,44 +2314,20 @@ function deactivateNohostMode() {
 }
 
 function nohostHandleCellClick(letter, cellData, cellIndex) {
-  const now = Date.now();
   const isCategory = cellData && cellData.type === 'category';
 
-  if (nohostLastLetter === letter && now - nohostLastClickAt < 600) {
-    // ضغطة ثانية = تغيير لون — استخدم data-index
-    let cellEl = cellIndex !== undefined
-      ? document.querySelector(`[data-index="${cellIndex}"]`)
-      : document.querySelector(`[data-letter="${letter}"]`);
+  applySelectedHighlight(letter, cellIndex);
+  window._nohostCategoryCell = isCategory ? cellData : null;
 
-    if (cellEl) {
-      let newState = 'team1';
-      if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
-      else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
-      else                                          { cellEl.classList.add('team1'); }
-      if (socket && socket.readyState === 1) {
-        socket.send(JSON.stringify({
-          type: 'update_cell_state',
-          letter,
-          state: newState,
-          cell_index: cellIndex
-        }));
-      }
-    }
+  if (isCategory) {
+    nohostFetchCategoryQuestion(cellData);
   } else {
-    // ضغطة أولى = عرض السؤال
-    applySelectedHighlight(letter, cellIndex);
-    // مسح حالة الفقرة السابقة لو كنا على حرف
-    if (!isCategory) window._nohostCategoryCell = null;
-    if (isCategory) {
-      nohostFetchCategoryQuestion(cellData);
-    } else {
-      nohostFetchQuestion(letter);
-    }
+    nohostFetchQuestion(letter);
   }
-  nohostLastLetter  = letter;
-  nohostLastClickAt = now;
-}
 
+  nohostLastLetter  = letter;
+  nohostLastClickAt = Date.now();
+}
 function _renderNohostCategoryQuestion(cat, q) {
   const nqpEmpty   = document.getElementById('nqpEmpty');
   const nqpContent = document.getElementById('nqpContent');
