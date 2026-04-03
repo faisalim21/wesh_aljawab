@@ -2380,6 +2380,8 @@ function _renderNohostCategoryQuestion(cat, q) {
   }
 
   if (nqpAnswer) { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+  const revealBtn = document.querySelector('.nqp-reveal-btn');
+  if (revealBtn) { revealBtn.textContent = '👁 اكشف الإجابة'; }
   if (nqpEmpty)   nqpEmpty.style.display  = 'none';
   if (nqpContent) nqpContent.style.display = 'flex';
 }
@@ -2439,11 +2441,7 @@ async function nohostFetchQuestion(letter) {
 
     const types = ['main','alt1','alt2','alt3','alt4'].filter(t => nohostCurrentData[t]?.question);
 
-    if (letter === nohostLastLetter && types.length > 1) {
-      nohostLetterQuestionIndex[letter] = ((nohostLetterQuestionIndex[letter] || 0) + 1) % types.length;
-    } else {
-      if (nohostLetterQuestionIndex[letter] === undefined) nohostLetterQuestionIndex[letter] = 0;
-    }
+    if (nohostLetterQuestionIndex[letter] === undefined) nohostLetterQuestionIndex[letter] = 0;
 
     nohostCurrentRound = types[nohostLetterQuestionIndex[letter]] || 'main';
     const q = nohostCurrentData[nohostCurrentRound] || {};
@@ -2473,6 +2471,9 @@ async function nohostFetchQuestion(letter) {
     }
 
     if (nqpAnswer) { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+    // إعادة زر الكشف لحالته الأصلية
+    const revealBtn = document.querySelector('.nqp-reveal-btn');
+    if (revealBtn) { revealBtn.textContent = '👁 اكشف الإجابة'; }
     if (nqpEmpty)   nqpEmpty.style.display  = 'none';
     if (nqpContent) nqpContent.style.display = 'flex';
 
