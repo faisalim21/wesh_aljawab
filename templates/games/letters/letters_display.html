@@ -2196,7 +2196,13 @@ function createHoneycombCellsEnhanced(grid) {
 
       ;(function(el, cell) {
         el.addEventListener('click', function() {
-          if (nohostMode) nohostHandleCellClick(cell.type === 'letter' ? cell.value : cell.display);
+          if (nohostMode) {
+            if (cell.type === 'category') {
+              nohostHandleCellClick(cell.display, cell);
+            } else {
+              nohostHandleCellClick(cell.value, cell);
+            }
+          }
         });
       })(g, cell);
 
@@ -2304,8 +2310,10 @@ function deactivateNohostMode() {
   nohostCurrentRound = 'main';
 }
 
-function nohostHandleCellClick(letter) {
+function nohostHandleCellClick(letter, cellData) {
   const now = Date.now();
+  const isCategory = cellData && cellData.type === 'category';
+
   if (nohostLastLetter === letter && now - nohostLastClickAt < 600) {
     // ضغطة ثانية = تغيير لون
     const cellEl = document.querySelector(`[data-letter="${letter}"]`);
@@ -2315,57 +2323,139 @@ function nohostHandleCellClick(letter) {
       else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
       else                                          { cellEl.classList.add('team1'); }
       if (socket && socket.readyState === 1) {
-          const allCells = document.querySelectorAll('#honeycombSvg [data-letter]');
-          let cellIndex = null;
-          allCells.forEach((cell, i) => {
-              if (cell === cellEl) cellIndex = i;
-          });
-          socket.send(JSON.stringify({ 
-              type: 'update_cell_state', 
-              letter, 
-              state: newState,
-              cell_index: cellIndex
-          }));
+        const allCells = document.querySelectorAll('#honeycombSvg [data-letter]');
+        let cellIndex = null;
+        allCells.forEach((cell, i) => { if (cell === cellEl) cellIndex = i; });
+        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState, cell_index: cellIndex }));
       }
     }
   } else {
     // ضغطة أولى = عرض السؤال
     applySelectedHighlight(letter);
-    nohostFetchQuestion(letter);
+    if (isCategory) {
+      nohostFetchCategoryQuestion(cellData);
+    } else {
+      nohostFetchQuestion(letter);
+    }
   }
   nohostLastLetter  = letter;
   nohostLastClickAt = now;
 }
+function _renderNohostCategoryQuestion(cat, q) {
+  const nqpEmpty   = document.getElementById('nqpEmpty');
+  const nqpContent = document.getElementById('nqpContent');
+  const nqpLetter  = document.getElementById('nqpLetter');
+  const nqpQuestion = document.getElementById('nqpQuestion');
+  const nqpAnswer  = document.getElementById('nqpAnswer');
+
+  // زر تغيير السؤال للفقرات
+  let changeBtn = document.getElementById('nqpChangeCatBtn');
+  if (!changeBtn) {
+    changeBtn = document.createElement('button');
+    changeBtn.id = 'nqpChangeCatBtn';
+    changeBtn.className = 'nqp-change-btn';
+    changeBtn.textContent = '🔀 تغيير السؤال';
+    changeBtn.onclick = nohostChangeCategoryQuestion;
+    nqpAnswer?.parentElement?.appendChild(changeBtn);
+  }
+  changeBtn.style.display = 'inline-block';
+
+  if (nqpLetter) nqpLetter.textContent = `${cat.emoji} ${cat.name}`;
+
+  // صورة أو سؤال نصي
+  let imgEl = document.getElementById('nqpCategoryImage');
+  if (!imgEl) {
+    imgEl = document.createElement('img');
+    imgEl.id = 'nqpCategoryImage';
+    imgEl.style = 'max-height:180px;border-radius:10px;object-fit:contain;margin-bottom:8px;display:none;';
+    nqpQuestion?.parentElement?.insertBefore(imgEl, nqpQuestion);
+  }
+
+  if (q.image) {
+    imgEl.src = q.image;
+    imgEl.style.display = 'block';
+    if (nqpQuestion) nqpQuestion.textContent = q.question || '';
+  } else {
+    imgEl.style.display = 'none';
+    const questionText = q.question || cat.name;
+    if (nqpQuestion) {
+      if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
+        typewriterSpeed = window.AUTO_HOST_SPEECH ? 100 : (window.TYPEWRITER_SPEED || 80);
+        startTypewriter(questionText, nqpQuestion);
+      } else {
+        nqpQuestion.textContent = questionText;
+      }
+      speakQuestion(questionText);
+    }
+  }
+
+  if (nqpAnswer) { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+  if (nqpEmpty)   nqpEmpty.style.display  = 'none';
+  if (nqpContent) nqpContent.style.display = 'flex';
+}
+
+
+function nohostChangeCategoryQuestion() {
+  if (!window._nohostCategoryQuestions || !window._nohostCategoryCell) return;
+  window._nohostCategoryIndex = (window._nohostCategoryIndex + 1) % window._nohostCategoryQuestions.length;
+  const q = window._nohostCategoryQuestions[window._nohostCategoryIndex];
+  const cat = { emoji: window._nohostCategoryCell.display, name: window._nohostCategoryCell.name };
+  _renderNohostCategoryQuestion(cat, q);
+}
+
+async function nohostFetchCategoryQuestion(cellData) {
+  try {
+    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cellData.value}&all=1`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.success) return;
+
+    // خزّن الأسئلة محلياً للتنقل
+    window._nohostCategoryQuestions = data.questions || [data.question];
+    window._nohostCategoryIndex = 0;
+    window._nohostCategoryCell = cellData;
+
+    _renderNohostCategoryQuestion(data.category, window._nohostCategoryQuestions[0]);
+
+    // بث
+    if (socket && socket.readyState === 1) {
+      socket.send(JSON.stringify({
+        type: 'nohost_letter_select',
+        letter: cellData.display,
+        is_category: true,
+        category_id: cellData.value,
+        category_name: cellData.name,
+      }));
+    }
+  } catch {}
+}
 
 async function nohostFetchQuestion(letter) {
   try {
+    // إخفاء زر تغيير سؤال الفقرة لو كان ظاهراً
+    const changeBtn = document.getElementById('nqpChangeCatBtn');
+    if (changeBtn) changeBtn.style.display = 'none';
+    const imgEl = document.getElementById('nqpCategoryImage');
+    if (imgEl) imgEl.style.display = 'none';
+
     const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
     if (!r.ok) return;
     const data = await r.json();
     nohostCurrentData = data.questions || {};
 
-    // الأنواع المتاحة فقط
     const types = ['main','alt1','alt2','alt3','alt4'].filter(t => nohostCurrentData[t]?.question);
 
-    // لو نفس الحرف السابق — تقدم للسؤال التالي
     if (letter === nohostLastLetter && types.length > 1) {
       nohostLetterQuestionIndex[letter] = ((nohostLetterQuestionIndex[letter] || 0) + 1) % types.length;
     } else {
-      // حرف جديد — ابدأ من آخر موضع محفوظ أو من البداية
-      if (nohostLetterQuestionIndex[letter] === undefined) {
-        nohostLetterQuestionIndex[letter] = 0;
-      }
+      if (nohostLetterQuestionIndex[letter] === undefined) nohostLetterQuestionIndex[letter] = 0;
     }
 
     nohostCurrentRound = types[nohostLetterQuestionIndex[letter]] || 'main';
     const q = nohostCurrentData[nohostCurrentRound] || {};
-    // أبلغ المتسابقين بنوع السؤال الحالي
+
     if (socket && socket.readyState === 1)
-      socket.send(JSON.stringify({ 
-        type: 'nohost_letter_select', 
-        letter,
-        question_type: nohostCurrentRound
-      }));
+      socket.send(JSON.stringify({ type: 'nohost_letter_select', letter, question_type: nohostCurrentRound }));
 
     const nqpEmpty    = document.getElementById('nqpEmpty');
     const nqpContent  = document.getElementById('nqpContent');
@@ -2373,39 +2463,11 @@ async function nohostFetchQuestion(letter) {
     const nqpQuestion = document.getElementById('nqpQuestion');
     const nqpAnswer   = document.getElementById('nqpAnswer');
 
-    if (nqpLetter)   nqpLetter.textContent   = letter;
-    if (nqpQuestion) {
-      const questionText = q.question || '—';
-      if (window.TYPEWRITER_ENABLED) {
-        typewriterSpeed = window.TYPEWRITER_SPEED || 80;
-        startTypewriter(questionText, nqpQuestion);
-      } else {
-        nqpQuestion.textContent = questionText;
-        typewriterFullText = questionText;
-        typewriterIndex = questionText.length;
-      }
-      if (window.TYPEWRITER_ENABLED) {
-        typewriterSpeed = window.TYPEWRITER_SPEED || 80;
-        startTypewriter(questionText, nqpQuestion);
-      } else {
-        nqpQuestion.textContent = questionText;
-        typewriterFullText = questionText;
-        typewriterIndex = questionText.length;
-      }
-      // قراءة السؤال
-      speakQuestion(questionText);
-    }
-    if (nqpAnswer)   { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
-    if (nqpEmpty)    nqpEmpty.style.display   = 'none';
-    if (nqpContent)  nqpContent.style.display = 'flex';
+    if (nqpLetter) nqpLetter.textContent = letter;
 
-    if (socket && socket.readyState === 1)
-      socket.send(JSON.stringify({ type: 'nohost_question_broadcast', letter, question: q.question || '' }));
-
+    const questionText = q.question || '—';
     if (nqpQuestion) {
-      const questionText = q.question || '—';
       if (window.TYPEWRITER_ENABLED || window.AUTO_HOST_SPEECH) {
-        // لو الصوت مفعّل، يتجاهل السرعة المحددة ويتزامن مع النطق
         typewriterSpeed = window.AUTO_HOST_SPEECH ? 100 : (window.TYPEWRITER_SPEED || 80);
         startTypewriter(questionText, nqpQuestion);
       } else {
@@ -2415,10 +2477,17 @@ async function nohostFetchQuestion(letter) {
       }
       speakQuestion(questionText);
     }
+
+    if (nqpAnswer) { nqpAnswer.textContent = q.answer || '—'; nqpAnswer.classList.remove('revealed'); }
+    if (nqpEmpty)   nqpEmpty.style.display  = 'none';
+    if (nqpContent) nqpContent.style.display = 'flex';
+
+    if (socket && socket.readyState === 1)
+      socket.send(JSON.stringify({ type: 'nohost_question_broadcast', letter, question: q.question || '' }));
   } catch {}
-
-
 }
+
+
 function nqpReveal() {
   const el = document.getElementById('nqpAnswer');
   const btn = document.querySelector('.nqp-reveal-btn');
