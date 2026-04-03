@@ -1640,7 +1640,8 @@
 
               if (d.settings.grid_size && d.settings.grid_size !== window.currentGridSize) {
                 window.currentGridSize = d.settings.grid_size;
-                rebuildHoneycomb(window.sessionData?.arabicLetters, false);
+                window._enhancedGrid = null;
+                loadEnhancedGridAndRebuild();
               }
 
               if (d.settings.auto_host_speech_enabled !== undefined) {

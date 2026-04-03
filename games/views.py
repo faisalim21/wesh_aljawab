@@ -2282,6 +2282,10 @@ def api_save_settings(request):
     if 'auto_host_speech_enabled' in data:
         settings.auto_host_speech_enabled = bool(data['auto_host_speech_enabled'])
 
+    # مسح كاش الخلية المطورة لو تغيرت أي إعدادات تؤثر عليها
+    if any(k in data for k in ['grid_size', 'enabled_categories', 'category_repeat_count', 'enhanced_mode']):
+        cache.delete(f"enhanced_grid_{session_id}")
+
     settings.save()
     cache.set(f"buzz_timer_{session_id}", settings.buzz_timer_seconds, timeout=600)
 

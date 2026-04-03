@@ -3103,7 +3103,8 @@ function applySettingsLocally(settings) {
 
   if (settings.grid_size && settings.grid_size !== window.currentGridSize) {
     window.currentGridSize = settings.grid_size;
-    applyGridSize(settings.grid_size);
+    window._enhancedGrid = null;
+    loadEnhancedGridAndRebuild();
   }
 
   // ← شعار الجلسة
@@ -3138,8 +3139,7 @@ function applySettingsLocally(settings) {
   if (settings.enhanced_mode !== undefined) {
     window.ENHANCED_MODE = !!settings.enhanced_mode;
     window.ENABLED_CATEGORIES = settings.enabled_categories || [];
-    window.ALLOW_CATEGORY_REPEAT = !!settings.allow_category_repeat;
-    // أعد بناء الخلية لو تغير الوضع
+    window._enhancedGrid = null;
     loadEnhancedGridAndRebuild();
   }
 }
