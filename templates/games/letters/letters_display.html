@@ -2194,17 +2194,17 @@ function createHoneycombCellsEnhanced(grid) {
       txt.textContent = cell.display;
       g.appendChild(txt);
 
-      ;(function(el, cell) {
+      ;(function(el, cell, cellIdx) {
         el.addEventListener('click', function() {
           if (nohostMode) {
             if (cell.type === 'category') {
-              nohostHandleCellClick(cell.display, cell);
+              nohostHandleCellClick(cell.display, cell, cellIdx);
             } else {
-              nohostHandleCellClick(cell.value, cell);
+              nohostHandleCellClick(cell.value, cell, cellIdx);
             }
           }
         });
-      })(g, cell);
+      })(g, cell, idx);
 
       svg.appendChild(g);
       idx++;
@@ -2310,28 +2310,35 @@ function deactivateNohostMode() {
   nohostCurrentRound = 'main';
 }
 
-function nohostHandleCellClick(letter, cellData) {
+function nohostHandleCellClick(letter, cellData, cellIndex) {
   const now = Date.now();
   const isCategory = cellData && cellData.type === 'category';
 
   if (nohostLastLetter === letter && now - nohostLastClickAt < 600) {
-    // ضغطة ثانية = تغيير لون
-    const cellEl = document.querySelector(`[data-letter="${letter}"]`);
+    // ضغطة ثانية = تغيير لون — استخدم data-index
+    let cellEl = cellIndex !== undefined
+      ? document.querySelector(`[data-index="${cellIndex}"]`)
+      : document.querySelector(`[data-letter="${letter}"]`);
+
     if (cellEl) {
       let newState = 'team1';
       if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
       else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
       else                                          { cellEl.classList.add('team1'); }
       if (socket && socket.readyState === 1) {
-        const allCells = document.querySelectorAll('#honeycombSvg [data-letter]');
-        let cellIndex = null;
-        allCells.forEach((cell, i) => { if (cell === cellEl) cellIndex = i; });
-        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState, cell_index: cellIndex }));
+        socket.send(JSON.stringify({
+          type: 'update_cell_state',
+          letter,
+          state: newState,
+          cell_index: cellIndex
+        }));
       }
     }
   } else {
     // ضغطة أولى = عرض السؤال
-    applySelectedHighlight(letter);
+    applySelectedHighlight(letter, cellIndex);
+    // مسح حالة الفقرة السابقة لو كنا على حرف
+    if (!isCategory) window._nohostCategoryCell = null;
     if (isCategory) {
       nohostFetchCategoryQuestion(cellData);
     } else {
@@ -2341,6 +2348,7 @@ function nohostHandleCellClick(letter, cellData) {
   nohostLastLetter  = letter;
   nohostLastClickAt = now;
 }
+
 function _renderNohostCategoryQuestion(cat, q) {
   const nqpEmpty   = document.getElementById('nqpEmpty');
   const nqpContent = document.getElementById('nqpContent');
@@ -2502,6 +2510,11 @@ function nqpReveal() {
 }
 
 function nohostChangeQuestion() {
+  // لو فقرة — استخدم دالة الفقرات
+  if (window._nohostCategoryCell) {
+    nohostChangeCategoryQuestion();
+    return;
+  }
   if (!nohostCurrentData) return;
   const idx = nohostRounds.indexOf(nohostCurrentRound);
   nohostCurrentRound = nohostRounds[(idx + 1) % nohostRounds.length];
