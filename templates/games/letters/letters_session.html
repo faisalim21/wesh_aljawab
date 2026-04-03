@@ -3135,7 +3135,7 @@ async function loadEnhancedGridAndRebuild() {
     return;
   }
   try {
-    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}`);
+    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}&rebuild=1`);
     const data = await r.json();
     if (!data.success) { createHoneycombCells(); return; }
     window._enhancedGrid = data.grid;

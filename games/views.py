@@ -910,12 +910,8 @@ def api_get_category_question(request):
 
 @require_http_methods(["GET"])
 def api_get_enhanced_grid(request):
-    """
-    يجيب محتوى الخلية المطورة:
-    - حروف عادية + فقرات مطورة مخلوطة
-    - يراعي إعدادات الجلسة (الفقرات المفعّلة، التكرار)
-    """
     session_id = request.GET.get('session_id')
+    force_rebuild = request.GET.get('rebuild') == '1'
     if not session_id:
         return JsonResponse({'success': False, 'error': 'session_id مطلوب'}, status=400)
 
@@ -930,29 +926,29 @@ def api_get_enhanced_grid(request):
 
         settings = GameSettings.get_or_create_for_session(session)
 
-        # لو الوضع المطور مش مفعّل — ارجع الحروف العادية فقط
         if not settings.enhanced_mode:
             letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
             grid = [{'type': 'letter', 'value': l, 'display': l} for l in letters]
             return JsonResponse({'success': True, 'enhanced': False, 'grid': grid})
 
-        # جلب الفقرات المفعّلة في هذه الجلسة واللي عندها أسئلة في الحزمة
+        # تحقق من الكاش أولاً
+        cache_key = f"enhanced_grid_{session_id}"
+        if not force_rebuild:
+            cached = cache.get(cache_key)
+            if cached:
+                return JsonResponse({'success': True, 'enhanced': True, 'grid': cached, 'total': len(cached)})
+
+        # جلب الفقرات المفعّلة
         enabled_ids = settings.enabled_categories or []
         categories_qs = LettersCellCategory.objects.filter(is_active=True)
         if enabled_ids:
             categories_qs = categories_qs.filter(id__in=enabled_ids)
 
-        # فلتر: الفقرات اللي عندها أسئلة فعلاً في هذه الحزمة
         available_categories = []
         for cat in categories_qs:
-            has_q = LettersCategoryQuestion.objects.filter(
-                category=cat,
-                package=session.package
-            ).exists()
-            if has_q:
+            if LettersCategoryQuestion.objects.filter(category=cat, package=session.package).exists():
                 available_categories.append(cat)
 
-        # بناء قائمة الفقرات في الخلية
         cat_items = []
         for cat in available_categories:
             cat_items.append({
@@ -963,15 +959,12 @@ def api_get_enhanced_grid(request):
                 'input_type': cat.input_type,
             })
 
-        # الحروف العادية
         letters = get_session_order(session.id, session.package.is_free) or get_letters_for_session(session)
         letter_items = [{'type': 'letter', 'value': l, 'display': l} for l in letters]
 
-        # حساب حجم الخلية
         grid_size_map = {'3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36, '7x7': 49}
         total_cells = grid_size_map.get(settings.grid_size, 25)
 
-        # دمج: الفقرات مع التكرار ثم الحروف لتملأ الباقي
         repeat = max(1, settings.category_repeat_count or 1)
         cat_items_repeated = []
         for item in cat_items:
@@ -981,22 +974,18 @@ def api_get_enhanced_grid(request):
         grid = cat_items_repeated[:total_cells]
         remaining = total_cells - len(grid)
 
-        # اكمل بالحروف، لو نقصت كررها
         letter_pool = letter_items.copy()
         base_letters = get_session_order(session.id, session.package.is_free) or []
         while len(letter_pool) < remaining:
             letter_pool += [{'type': 'letter', 'value': l, 'display': l} for l in base_letters]
         grid += letter_pool[:remaining]
 
-        # خلط عشوائي
         random.shuffle(grid)
 
-        return JsonResponse({
-            'success': True,
-            'enhanced': True,
-            'grid': grid,
-            'total': len(grid),
-        })
+        # خزّن في الكاش
+        cache.set(cache_key, grid, timeout=3600)
+
+        return JsonResponse({'success': True, 'enhanced': True, 'grid': grid, 'total': len(grid)})
 
     except GameSession.DoesNotExist:
         return JsonResponse({'success': False, 'error': 'الجلسة غير موجودة'}, status=404)
@@ -1004,6 +993,7 @@ def api_get_enhanced_grid(request):
         logger.error(f'Error building enhanced grid: {e}')
         return JsonResponse({'success': False, 'error': f'خطأ داخلي: {str(e)}'}, status=500)
 
+        
 
 @require_http_methods(["GET"])
 def get_session_letters(request):
@@ -1533,6 +1523,8 @@ def letters_new_round(request):
     is_sports = getattr(session.package, 'question_theme', '') == 'sports'
     new_letters = get_paid_order_fresh(is_sports=is_sports)
     set_session_order(session.id, new_letters, is_free=False)
+    cache.delete(f"enhanced_grid_{sid}")
+
 
     # 2) تصفير تقدّم الخلايا فقط
     try:
