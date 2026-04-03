@@ -1621,37 +1621,30 @@
                   </div>
                 </label>
               </div>
-            </div>
+            </div><div id="enhancedSubSettings" style="margin-top:12px;opacity:0.4;pointer-events:none;transition:opacity 0.25s;">
 
-            <!-- خلية الحروف المطورة -->
-            <div class="toggle-setting">
-              <div class="toggle-setting-info">
-                <div class="toggle-setting-title">✨ خلية الحروف المطورة <span class="new-pill">جديد</span></div>
-                <div class="toggle-setting-desc">يدمج الحروف العادية مع فقرات متنوعة في نفس الخلية.</div>
-              </div>
-              <label class="big-toggle">
-                <input type="checkbox" id="enhancedModeToggle" onchange="toggleEnhancedSettings(this.checked)"/>
-                <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
-              </label>
-            </div>
-
-            <div id="enhancedSubSettings" style="margin-top:12px;opacity:0.4;pointer-events:none;transition:opacity 0.25s;">
-              <!-- تكرار الفقرة -->
-              <div class="toggle-setting">
-                <div class="toggle-setting-info">
-                  <div class="toggle-setting-title">تكرار الفقرة</div>
-                  <div class="toggle-setting-desc">يسمح بظهور نفس الفقرة أكثر من مرة في الخلية.</div>
+              <!-- عدد ظهور كل فقرة -->
+              <div class="timer-setting" style="margin-bottom:12px;">
+                <div class="timer-setting-info">
+                  <div class="timer-setting-title">عدد ظهور كل فقرة</div>
+                  <div class="timer-setting-desc">كم مرة تظهر كل فقرة في الخلية — <span class="recommend-pill">⭐ الموصى به: 1</span></div>
                 </div>
-                <label class="big-toggle">
-                  <input type="checkbox" id="allowCategoryRepeat"/>
-                  <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
-                </label>
+                <div class="timer-control">
+                  <button class="timer-btn" onclick="adjustTimer('categoryRepeat', -1)" type="button">−</button>
+                  <div class="timer-display">
+                    <span id="categoryRepeatVal">1</span>
+                    <span class="timer-unit">×</span>
+                  </div>
+                  <button class="timer-btn" onclick="adjustTimer('categoryRepeat', 1)" type="button">+</button>
+                </div>
               </div>
 
               <!-- الفقرات المتاحة -->
-              <div id="categoriesCheckboxes" style="margin-top:12px;">
-                <!-- تُبنى ديناميكياً -->
+              <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">الفقرات المتاحة في هذه الحزمة:</div>
+              <div id="categoriesCheckboxes" style="margin-top:4px;">
+                <div style="color:#64748b;font-size:12px;">جاري التحميل...</div>
               </div>
+
             </div>
       
             <!-- ===== قسم 3: مؤقتات ===== -->
@@ -2336,6 +2329,9 @@
       if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
       if (!r.ok) return;
       const data = await r.json(), q = data.questions || {};
+      // إخفاء حقل الفقرة لو كان ظاهراً
+      const catPanel = document.getElementById('categoryQuestionPanel');
+      if (catPanel) catPanel.style.display = 'none';
 
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
@@ -2835,7 +2831,7 @@ async function loadCurrentSettings() {
     toggleSpeechMode(!!settings.auto_host_speech_enabled);
     document.getElementById('enhancedModeToggle').checked = !!settings.enhanced_mode;
     toggleEnhancedSettings(!!settings.enhanced_mode);
-    document.getElementById('allowCategoryRepeat').checked = !!settings.allow_category_repeat;
+    document.getElementById('categoryRepeatVal').textContent = settings.category_repeat_count || 1;
     loadEnhancedCategories(settings.enabled_categories || []);
 
     const gs = settings.grid_size || '5x5';
@@ -2884,13 +2880,14 @@ document.querySelectorAll('.grid-option').forEach(label => {
 });
  
 // ===== تعديل المؤقتات =====
-const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 }, autoHost: { min:5, max:120 } };
+const timerLimits = { buzz: { min:1, max:30 }, penalty: { min:1, max:120 }, autoHost: { min:5, max:120 }, categoryRepeat: { min:1, max:5 } };
 
 function adjustTimer(type, delta) {
   const idMap = {
     buzz: 'buzzTimerVal',
     penalty: 'penaltyTimerVal',
-    autoHost: 'autoHostTimerVal'
+    autoHost: 'autoHostTimerVal',
+    categoryRepeat: 'categoryRepeatVal'
   };
   const el = document.getElementById(idMap[type]);
   if (!el) return;
@@ -2944,7 +2941,7 @@ async function saveSettings() {
     typewriter_speed: parseInt(document.getElementById('typewriterSpeed').value),
     auto_host_speech_enabled: document.getElementById('autoHostSpeechEnabled').checked,
     enhanced_mode: document.getElementById('enhancedModeToggle').checked,
-    allow_category_repeat: document.getElementById('allowCategoryRepeat').checked,
+    category_repeat_count: parseInt(document.getElementById('categoryRepeatVal').textContent),
     enabled_categories: [...document.querySelectorAll('.cat-checkbox:checked')].map(el => parseInt(el.value)),
 
   };
@@ -3204,17 +3201,44 @@ async function showCategoryQuestion(cell, cellIdx) {
     if (!data.success) return;
 
     const q = data.question;
+    const cat = data.category;
+
     document.getElementById('questionPanel').style.display = 'block';
     document.getElementById('currentLetter').textContent = `${cell.display} ${cell.name}`;
-
-    // عرض السؤال في نفس مكان الحرف العادي
-    if (document.getElementById('r1Question')) {
-      document.getElementById('r1Question').textContent = q.question || cell.name;
-      document.getElementById('r1Answer').textContent = q.answer || '—';
-    }
     document.getElementById('questionDisplay').textContent = `${cell.display} ${cell.name}`;
 
-    // بث اختيار الفقرة
+    // إخفاء حقل الحروف العادي
+    document.getElementById('paidRounds')?.classList.add('d-none');
+    document.getElementById('paidAlt34')?.classList.add('d-none');
+    document.getElementById('freeMainBlock')?.classList.add('d-none');
+    document.getElementById('freeAlt12')?.classList.add('d-none');
+
+    // إظهار حقل الفقرة
+    let catPanel = document.getElementById('categoryQuestionPanel');
+    if (!catPanel) {
+      catPanel = document.createElement('div');
+      catPanel.id = 'categoryQuestionPanel';
+      catPanel.style = 'background:rgba(109,40,217,0.1);border:1px solid #6d28d9;border-radius:12px;padding:16px;margin-top:12px;';
+      document.getElementById('questionPanel').appendChild(catPanel);
+    }
+    catPanel.style.display = 'block';
+
+    if (cat.input_type === 'image' && q.image) {
+      catPanel.innerHTML = `
+        <div style="text-align:center;margin-bottom:12px;">
+          <img src="${q.image}" style="max-height:200px;border-radius:10px;object-fit:contain;" onerror="this.style.display='none'"/>
+        </div>
+        <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:6px;">${cat.emoji} ${cat.name}</div>
+        <div class="answer-text" style="font-size:15px;color:#e2e8f0;">${q.answer}</div>`;
+    } else {
+      catPanel.innerHTML = `
+        <div style="color:#a78bfa;font-size:13px;font-weight:700;margin-bottom:8px;">${cat.emoji} ${cat.name}</div>
+        <div style="color:#e2e8f0;font-size:15px;margin-bottom:10px;">${q.question || '—'}</div>
+        <div style="color:#64748b;font-size:12px;margin-bottom:4px;">الإجابة</div>
+        <div class="answer-text" style="font-size:15px;font-weight:700;color:#22c55e;">${q.answer}</div>`;
+    }
+
+    // بث
     try {
       await fetch('/games/api/letters-select-letter/', {
         method: 'POST',
