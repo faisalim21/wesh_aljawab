@@ -1044,7 +1044,7 @@ class GameSettings(models.Model):
     team2_color = models.CharField(max_length=20, default="#f97316", verbose_name="لون الفريق الثاني")
     enhanced_mode = models.BooleanField(default=False, verbose_name="خلية الحروف المطورة")
     enabled_categories = models.JSONField(default=list, blank=True, verbose_name="الفقرات المفعّلة")
-    allow_category_repeat = models.BooleanField(default=False, verbose_name="السماح بتكرار الفقرة")
+    category_repeat_count = models.PositiveIntegerField(default=1, verbose_name="عدد ظهور كل فقرة")
 
     # ===== حجم الشبكة =====
     GRID_SIZES = [

@@ -3136,7 +3136,6 @@ function createHoneycombCellsEnhanced(grid) {
   const gridH = rowStep * (rows - 1) + hexH;
   const startY = (viewH - gridH) / 2 + hexH / 2;
   const fontSize = Math.round(R * 0.68);
-  const emojiFontSize = Math.round(R * 0.72);
 
   let idx = 0;
   for (let row = 0; row < rows; row++) {
@@ -3161,12 +3160,6 @@ function createHoneycombCellsEnhanced(grid) {
       const poly = document.createElementNS(NS, 'polygon');
       poly.setAttribute('class', 'hex-shape');
       poly.setAttribute('points', hexPoints(cx, cy, R));
-      // لون مميز للفقرات
-      if (cell.type === 'category') {
-        poly.style.fill = 'rgba(109,40,217,0.25)';
-        poly.style.stroke = '#8b5cf6';
-        poly.style.strokeWidth = '2';
-      }
       g.appendChild(poly);
 
       const txt = document.createElementNS(NS, 'text');
@@ -3175,7 +3168,7 @@ function createHoneycombCellsEnhanced(grid) {
       txt.setAttribute('y', cy.toFixed(1));
       txt.setAttribute('dominant-baseline', 'central');
       txt.setAttribute('text-anchor', 'middle');
-      txt.style.fontSize = `${cell.type === 'category' ? emojiFontSize : fontSize}px`;
+      txt.style.fontSize = `${fontSize}px`;
       txt.textContent = cell.display;
       g.appendChild(txt);
 
@@ -3194,7 +3187,6 @@ function createHoneycombCellsEnhanced(grid) {
     }
   }
 }
-
 function onCategoryClick(el, cell, cellIdx) {
   // نفس منطق onCellClick بس للفقرات
   const now = Date.now();

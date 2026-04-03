@@ -962,25 +962,22 @@ def api_get_enhanced_grid(request):
         grid_size_map = {'3x3': 9, '4x4': 16, '5x5': 25, '6x6': 36, '7x7': 49}
         total_cells = grid_size_map.get(settings.grid_size, 25)
 
-        # دمج: الفقرات أولاً ثم الحروف لتملأ الباقي
-        if settings.allow_category_repeat:
-            # مع التكرار: وزّع الفقرات بالتساوي
-            grid = []
-            cat_cycle = cat_items.copy()
-            while len(grid) < total_cells:
-                if cat_cycle:
-                    grid.append(cat_cycle.pop(0))
-                    if not cat_cycle:
-                        cat_cycle = cat_items.copy()
-                elif letter_items:
-                    grid.append(letter_items.pop(0))
-                else:
-                    break
-        else:
-            # بدون تكرار: الفقرات مرة واحدة ثم الحروف
-            grid = cat_items[:total_cells]
-            remaining = total_cells - len(grid)
-            grid += letter_items[:remaining]
+        # دمج: الفقرات مع التكرار ثم الحروف لتملأ الباقي
+        repeat = max(1, settings.category_repeat_count or 1)
+        cat_items_repeated = []
+        for item in cat_items:
+            for _ in range(repeat):
+                cat_items_repeated.append(item.copy())
+
+        grid = cat_items_repeated[:total_cells]
+        remaining = total_cells - len(grid)
+
+        # اكمل بالحروف، لو نقصت كررها
+        letter_pool = letter_items.copy()
+        base_letters = get_session_order(session.id, session.package.is_free) or []
+        while len(letter_pool) < remaining:
+            letter_pool += [{'type': 'letter', 'value': l, 'display': l} for l in base_letters]
+        grid += letter_pool[:remaining]
 
         # خلط عشوائي
         random.shuffle(grid)
@@ -2144,7 +2141,7 @@ def api_get_settings(request):
             'auto_host_speech_enabled': settings.auto_host_speech_enabled,
             'enhanced_mode': settings.enhanced_mode,
             'enabled_categories': settings.enabled_categories,
-            'allow_category_repeat': settings.allow_category_repeat,
+            'category_repeat_count': settings.category_repeat_count,
         }
     })
 
@@ -2239,6 +2236,12 @@ def api_save_settings(request):
         except (ValueError, TypeError):
             pass
 
+    if 'category_repeat_count' in data:
+        try:
+            settings.category_repeat_count = max(1, min(10, int(data['category_repeat_count'])))
+        except (ValueError, TypeError):
+            pass
+
     # لو وضع الآلي مفعّل، buzz_timer = auto_host_timer عشان يتزامنوا
     if settings.auto_host_mode:
         settings.buzz_timer_seconds = settings.auto_host_timer_seconds
@@ -2293,7 +2296,7 @@ def api_save_settings(request):
         'auto_host_speech_enabled': settings.auto_host_speech_enabled,
         'enhanced_mode': settings.enhanced_mode,
         'enabled_categories': settings.enabled_categories,
-        'allow_category_repeat': settings.allow_category_repeat,
+        'category_repeat_count': settings.category_repeat_count,
     }
 
     try:
