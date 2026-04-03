@@ -1621,31 +1621,46 @@
                   </div>
                 </label>
               </div>
-            </div><div id="enhancedSubSettings" style="margin-top:12px;opacity:0.4;pointer-events:none;transition:opacity 0.25s;">
-
-              <!-- عدد ظهور كل فقرة -->
-              <div class="timer-setting" style="margin-bottom:12px;">
-                <div class="timer-setting-info">
-                  <div class="timer-setting-title">عدد ظهور كل فقرة</div>
-                  <div class="timer-setting-desc">كم مرة تظهر كل فقرة في الخلية — <span class="recommend-pill">⭐ الموصى به: 1</span></div>
-                </div>
-                <div class="timer-control">
-                  <button class="timer-btn" onclick="adjustTimer('categoryRepeat', -1)" type="button">−</button>
-                  <div class="timer-display">
-                    <span id="categoryRepeatVal">1</span>
-                    <span class="timer-unit">×</span>
-                  </div>
-                  <button class="timer-btn" onclick="adjustTimer('categoryRepeat', 1)" type="button">+</button>
-                </div>
-              </div>
-
-              <!-- الفقرات المتاحة -->
-              <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">الفقرات المتاحة في هذه الحزمة:</div>
-              <div id="categoriesCheckboxes" style="margin-top:4px;">
-                <div style="color:#64748b;font-size:12px;">جاري التحميل...</div>
-              </div>
-
             </div>
+            
+                        <!-- خلية الحروف المطورة -->
+            <div class="toggle-setting">
+              <div class="toggle-setting-info">
+                <div class="toggle-setting-title">✨ خلية الحروف المطورة <span class="new-pill">جديد</span></div>
+                <div class="toggle-setting-desc">يدمج الحروف العادية مع فقرات متنوعة في نفس الخلية.</div>
+              </div>
+              <label class="big-toggle">
+                <input type="checkbox" id="enhancedModeToggle" onchange="toggleEnhancedSettings(this.checked)"/>
+                <span class="big-toggle-track"><span class="big-toggle-thumb"></span></span>
+              </label>
+            </div>
+
+            
+              <div id="enhancedSubSettings" style="margin-top:12px;opacity:0.4;pointer-events:none;transition:opacity 0.25s;">
+
+                <!-- عدد ظهور كل فقرة -->
+                <div class="timer-setting" style="margin-bottom:12px;">
+                  <div class="timer-setting-info">
+                    <div class="timer-setting-title">عدد ظهور كل فقرة</div>
+                    <div class="timer-setting-desc">كم مرة تظهر كل فقرة في الخلية — <span class="recommend-pill">⭐ الموصى به: 1</span></div>
+                  </div>
+                  <div class="timer-control">
+                    <button class="timer-btn" onclick="adjustTimer('categoryRepeat', -1)" type="button">−</button>
+                    <div class="timer-display">
+                      <span id="categoryRepeatVal">1</span>
+                      <span class="timer-unit">×</span>
+                    </div>
+                    <button class="timer-btn" onclick="adjustTimer('categoryRepeat', 1)" type="button">+</button>
+                  </div>
+                </div>
+
+                <!-- الفقرات المتاحة -->
+                <div style="color:#94a3b8;font-size:13px;margin-bottom:8px;">الفقرات المتاحة في هذه الحزمة:</div>
+                <div id="categoriesCheckboxes" style="margin-top:4px;">
+                  <div style="color:#64748b;font-size:12px;">جاري التحميل...</div>
+                </div>
+
+              </div>
       
             <!-- ===== قسم 3: مؤقتات ===== -->
             <div class="settings-section">
