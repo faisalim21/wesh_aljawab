@@ -2165,15 +2165,12 @@
       <div id="categoryQuestionPanel" style="display:none;">
         <div class="round-card h-100" style="border:1.5px solid #6d28d9;background:rgba(109,40,217,0.08);">
           <div id="catPanelHeader" class="round-title" style="color:#a78bfa;margin-bottom:10px;">— فقرة —</div>
-          <!-- صورة (لفقرات الصور) -->
           <div id="catPanelImageWrap" style="display:none;text-align:center;margin-bottom:12px;">
             <img id="catPanelImage" src="" style="max-height:220px;border-radius:10px;object-fit:contain;"/>
           </div>
-          <!-- سؤال نصي -->
           <div id="catPanelQuestionWrap" style="display:none;margin-bottom:8px;">
             <strong>السؤال:</strong> <span id="catPanelQuestion">—</span>
           </div>
-          <!-- الإجابة -->
           <div class="mt-1">
             <strong>الإجابة:</strong>
             <span class="answer-wrap">
@@ -2181,9 +2178,13 @@
               <button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button>
             </span>
           </div>
+          <div style="margin-top:10px;">
+            <button onclick="changeCategoryQuestion()" style="background:rgba(109,40,217,0.2);color:#a78bfa;border:1px solid #6d28d9;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;">
+              🔀 تغيير السؤال
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
     <!-- النقاط للجوال -->
     <div class="scores-mobile d-md-none">
@@ -2371,7 +2372,6 @@
       // إخفاء حقل الفقرة لو كان ظاهراً
       const catPanel = document.getElementById('categoryQuestionPanel');
       if (catPanel) catPanel.style.display = 'none';
-      document.getElementById('categoryQuestionPanel').style.display = 'none';
 
       document.getElementById('questionPanel').style.display = 'block';
       document.getElementById('currentLetter').textContent = data.letter || letter;
@@ -2901,8 +2901,8 @@ async function loadCurrentSettings() {
     document.getElementById('autoHostTimerVal').textContent = settings.auto_host_timer_seconds ?? 10;
     document.getElementById('autoHostSmartCorrection').checked = settings.auto_host_smart_correction !== false;
     toggleNohostSettings(nohostEnabled);
-    document.getElementById('nohostAllowCellColor').checked = settings.nohost_allow_cell_color !== false;
-    document.getElementById('nohostHideAnswer').checked = settings.nohost_hide_answer !== false;
+    document.getElementById('nohostAllowCellColor')?.checked !== false;
+    document.getElementById('nohostHideAnswer')?.checked !== false;
 
     // شعار الجلسة
     document.getElementById('setting_show_name').value = settings.show_name || '';
@@ -3236,6 +3236,8 @@ function onCategoryClick(el, cell, cellIdx) {
   lastClickedIndex = cellIdx;
 }
 
+let _currentCategoryCell = null;
+
 async function showCategoryQuestion(cell, cellIdx) {
   try {
     const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}`);
@@ -3243,39 +3245,11 @@ async function showCategoryQuestion(cell, cellIdx) {
     const data = await r.json();
     if (!data.success) return;
 
-    const q = data.question;
-    const cat = data.category;
+    _currentCategoryCell = { cell, cellIdx };
+    renderCategoryQuestion(data);
 
-    document.getElementById('questionPanel').style.display = 'block';
-    document.getElementById('currentLetter').textContent = `${cell.display} ${cell.name}`;
-    document.getElementById('questionDisplay').textContent = `${cell.display} ${cell.name}`;
-
-    // إخفاء حقول الحروف العادية
-    document.getElementById('paidRounds')?.classList.add('d-none');
-    document.getElementById('paidAlt34')?.classList.add('d-none');
-    document.getElementById('freeMainBlock')?.classList.add('d-none');
-    document.getElementById('freeAlt12')?.classList.add('d-none');
-
-    // إظهار كارت الفقرة
-    document.getElementById('categoryQuestionPanel').style.display = 'block';
-    document.getElementById('catPanelHeader').textContent = `${cat.emoji} ${cat.name}`;
-    document.getElementById('catPanelAnswer').textContent = q.answer || '—';
-    document.getElementById('catPanelAnswer').classList.remove('revealed');
-    const revBtn = document.querySelector('#categoryQuestionPanel .reveal-btn');
-    if (revBtn) { revBtn.textContent = 'اكشف'; revBtn.classList.remove('done'); }
-
-    if (cat.input_type === 'image' && q.image) {
-      document.getElementById('catPanelImageWrap').style.display = 'block';
-      document.getElementById('catPanelImage').src = q.image;
-      document.getElementById('catPanelQuestionWrap').style.display = 'none';
-    } else {
-      document.getElementById('catPanelImageWrap').style.display = 'none';
-      document.getElementById('catPanelQuestionWrap').style.display = 'block';
-      document.getElementById('catPanelQuestion').textContent = q.question || '—';
-    }
-
-    // بث
     try {
+      const q = data.question;
       await fetch('/games/api/letters-select-letter/', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -3294,6 +3268,57 @@ async function showCategoryQuestion(cell, cellIdx) {
     } catch {}
   } catch {}
 }
+
+function renderCategoryQuestion(data) {
+  const q = data.question;
+  const cat = data.category;
+
+  document.getElementById('questionPanel').style.display = 'block';
+  // إزالة "حرف" — نعرض اسم الفقرة مباشرة
+  document.getElementById('currentLetter').textContent = `${cat.emoji} ${cat.name}`;
+  document.getElementById('questionDisplay').textContent = `${cat.emoji} ${cat.name}`;
+
+  document.getElementById('paidRounds')?.classList.add('d-none');
+  document.getElementById('paidAlt34')?.classList.add('d-none');
+  document.getElementById('freeMainBlock')?.classList.add('d-none');
+  document.getElementById('freeAlt12')?.classList.add('d-none');
+  document.getElementById('categoryQuestionPanel').style.display = 'block';
+
+  document.getElementById('catPanelHeader').textContent = `${cat.emoji} ${cat.name}`;
+  document.getElementById('catPanelAnswer').textContent = q.answer || '—';
+  document.getElementById('catPanelAnswer').classList.remove('revealed');
+  const revBtn = document.querySelector('#categoryQuestionPanel .reveal-btn');
+  if (revBtn) { revBtn.textContent = 'اكشف'; revBtn.classList.remove('done'); }
+
+  // صورة — تظهر فقط لو فيه صورة
+  if (q.image) {
+    document.getElementById('catPanelImageWrap').style.display = 'block';
+    document.getElementById('catPanelImage').src = q.image;
+  } else {
+    document.getElementById('catPanelImageWrap').style.display = 'none';
+  }
+
+  // سؤال نصي — يظهر فقط لو فيه سؤال
+  if (q.question) {
+    document.getElementById('catPanelQuestionWrap').style.display = 'block';
+    document.getElementById('catPanelQuestion').textContent = q.question;
+  } else {
+    document.getElementById('catPanelQuestionWrap').style.display = 'none';
+  }
+}
+
+async function changeCategoryQuestion() {
+  if (!_currentCategoryCell) return;
+  const { cell, cellIdx } = _currentCategoryCell;
+  try {
+    const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.success) return;
+    renderCategoryQuestion(data);
+  } catch {}
+}
+
 // ============================================================
 // محرك الشبكة السداسية - النسخة المصححة
 // التعرج على الأعمدة (يمين/يسار) مب الصفوف
@@ -3946,8 +3971,7 @@ function toggleEnhancedSettings(enabled) {
 
 async function loadEnhancedCategories(enabledIds) {
   try {
-    const r = await fetch(`/games/api/get-enhanced-grid/?session_id=${encodeURIComponent(sessionId)}&categories_only=1`);
-    // نجيب الفقرات من API مختلف
+
     const r2 = await fetch(`/games/api/categories/?session_id=${encodeURIComponent(sessionId)}`);
     if (!r2.ok) return;
     const data = await r2.json();
