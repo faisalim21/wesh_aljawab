@@ -2317,7 +2317,7 @@ function nohostHandleCellClick(letter, cellData, cellIndex) {
   const now = Date.now();
   const isCategory = cellData && cellData.type === 'category';
 
-  if (nohostLastLetter === letter && nohostLastClickAt && now - nohostLastClickAt < 600) {
+  if (window._nohostLastCellIndex !== undefined && window._nohostLastCellIndex === cellIndex) {
     // ضغطة ثانية على نفس الخلية = تغيير اللون فقط
     let cellEl = cellIndex !== undefined
       ? document.querySelector(`[data-index="${cellIndex}"]`)
