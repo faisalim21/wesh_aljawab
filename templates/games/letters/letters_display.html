@@ -2314,26 +2314,11 @@ function deactivateNohostMode() {
 }
 
 function nohostHandleCellClick(letter, cellData, cellIndex) {
-  const now = Date.now();
   const isCategory = cellData && cellData.type === 'category';
   const isSameCell = window._nohostLastCellIndex !== undefined && window._nohostLastCellIndex === cellIndex;
 
-  if (isSameCell) {
-    // نفس الخلية = تغيير اللون
-    let cellEl = document.querySelector(`[data-index="${cellIndex}"]`);
-    if (!cellEl) cellEl = document.querySelector(`[data-letter="${letter}"]`);
-    if (cellEl) {
-      let newState = 'team1';
-      if      (cellEl.classList.contains('team1')) { cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2'; }
-      else if (cellEl.classList.contains('team2')) { cellEl.classList.remove('team2'); newState = 'normal'; }
-      else                                          { cellEl.classList.add('team1'); }
-      if (socket && socket.readyState === 1)
-        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState, cell_index: cellIndex }));
-    }
-    // بعد تغيير اللون، امسح الـ index عشان ضغطة تالية تفتح السؤال
-    window._nohostLastCellIndex = undefined;
-  } else {
-    // خلية جديدة = عرض السؤال
+  if (!isSameCell) {
+    // خلية جديدة — عرض السؤال وتحديد
     applySelectedHighlight(letter, cellIndex);
     window._lastSelectedCellIndex = cellIndex ?? null;
     window._nohostLastCellIndex = cellIndex;
@@ -2343,11 +2328,28 @@ function nohostHandleCellClick(letter, cellData, cellIndex) {
     } else {
       nohostFetchQuestion(letter);
     }
+  } else {
+    // نفس الخلية — دور على الألوان
+    let cellEl = document.querySelector(`[data-index="${cellIndex}"]`);
+    if (!cellEl) cellEl = document.querySelector(`[data-letter="${letter}"]`);
+    if (cellEl) {
+      let newState;
+      if      (!cellEl.classList.contains('team1') && !cellEl.classList.contains('team2')) {
+        cellEl.classList.add('team1'); newState = 'team1';
+      } else if (cellEl.classList.contains('team1')) {
+        cellEl.classList.remove('team1'); cellEl.classList.add('team2'); newState = 'team2';
+      } else {
+        cellEl.classList.remove('team2'); newState = 'normal';
+      }
+      if (socket && socket.readyState === 1)
+        socket.send(JSON.stringify({ type: 'update_cell_state', letter, state: newState, cell_index: cellIndex }));
+    }
   }
 
   nohostLastLetter  = letter;
-  nohostLastClickAt = now;
+  nohostLastClickAt = Date.now();
 }
+
 function _renderNohostCategoryQuestion(cat, q) {
   const nqpEmpty   = document.getElementById('nqpEmpty');
   const nqpContent = document.getElementById('nqpContent');
