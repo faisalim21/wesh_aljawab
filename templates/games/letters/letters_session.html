@@ -2178,9 +2178,15 @@
               <button class="reveal-btn" onclick="revealAnswer(this)">اكشف</button>
             </span>
           </div>
-          <div style="margin-top:10px;">
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
             <button onclick="changeCategoryQuestion()" style="background:rgba(109,40,217,0.2);color:#a78bfa;border:1px solid #6d28d9;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;">
               🔀 تغيير السؤال
+            </button>
+            <button onclick="broadcastCategoryToDisplay()" style="background:rgba(6,182,212,0.15);color:#06b6d4;border:1px solid #0891b2;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;">
+              📺 عرض في الشاشة
+            </button>
+            <button onclick="hideCategoryFromDisplay()" style="background:rgba(239,68,68,0.1);color:#f87171;border:1px solid #dc2626;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700;">
+              ❌ إغلاق من الشاشة
             </button>
           </div>
         </div>
@@ -4023,6 +4029,23 @@ async function loadEnhancedCategories(enabledIds) {
         </label>`;
     });
   } catch {}
+}
+
+function broadcastCategoryToDisplay() {
+  if (!_currentCategoryCell) return;
+  const q = _categoryQuestions[_categoryQuestionIndex] || {};
+  const cell = _currentCategoryCell.cell;
+  sendWS({
+    type: 'show_category_on_display',
+    emoji: cell.display,
+    category_name: cell.name,
+    question: q.question || '',
+    image: q.image || '',
+  }).catch(() => {});
+}
+
+function hideCategoryFromDisplay() {
+  sendWS({ type: 'hide_category_display' }).catch(() => {});
 }
 // تحديث مدة العقوبة من الإعدادات
 window.PENALTY_TIMER_SECONDS = 10;

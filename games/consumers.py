@@ -379,6 +379,21 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
                 if message_type == "auto_host_reveal":
                     await self.handle_auto_host_reveal(data)
                     return
+                
+                if message_type == "show_category_on_display":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_category_display",
+                        "emoji": data.get("emoji", ""),
+                        "category_name": data.get("category_name", ""),
+                        "question": data.get("question", ""),
+                        "image": data.get("image", ""),
+                    })
+                    return
+                if message_type == "hide_category_display":
+                    await self.channel_layer.group_send(self.group_name, {
+                        "type": "broadcast_hide_category_display",
+                    })
+                    return
 
         except Exception as e:
             logger.error(f"WS handler error for {message_type}: {e}")
@@ -877,6 +892,19 @@ class LettersGameConsumer(AsyncWebsocketConsumer):
             'letter': event.get('letter', ''),
             'corrected': event.get('corrected', False),
         }))
+
+
+    async def broadcast_category_display(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "category_display_show",
+            "emoji": event.get("emoji", ""),
+            "category_name": event.get("category_name", ""),
+            "question": event.get("question", ""),
+            "image": event.get("image", ""),
+        }))
+
+    async def broadcast_hide_category_display(self, event):
+        await self.send(text_data=json.dumps({"type": "category_display_hide"}))
 
     async def _get_buzz_lock(self) -> asyncio.Lock:
         global _buzz_locks_meta

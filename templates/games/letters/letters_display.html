@@ -1631,6 +1631,26 @@
             document.getElementById('buzzedOverlay').classList.remove('show');
             showAutoHostResultDisplay(d);
             break;
+
+          case 'category_display_show':
+            const overlay = document.getElementById('categoryDisplayOverlay');
+            if (overlay) {
+              overlay.style.display = 'flex';
+              document.getElementById('cdoHeader').textContent = `${d.emoji} ${d.category_name}`;
+              const img = document.getElementById('cdoImage');
+              const qEl = document.getElementById('cdoQuestion');
+              if (d.image) {
+                img.src = d.image;
+                img.style.display = 'block';
+              } else {
+                img.style.display = 'none';
+              }
+              qEl.textContent = d.question || '';
+            }
+            break;
+          case 'category_display_hide':
+            document.getElementById('categoryDisplayOverlay').style.display = 'none';
+            break;
           case 'settings_updated':
             if (d.settings) {
               applyTeamColors(d.settings);
@@ -3046,6 +3066,14 @@ function rereadQuestion() {
   <span class="ahd-corrected" id="ahdCorrected">
     🔧 النظام صحح الإملاء تلقائياً
   </span>
+</div>
+
+<div id="categoryDisplayOverlay" style="display:none;position:fixed;inset:0;background:rgba(10,5,30,0.92);z-index:5000;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="background:#1e1040;border:2px solid #6d28d9;border-radius:20px;padding:28px;max-width:600px;width:90%;text-align:center;">
+    <div id="cdoHeader" style="color:#a78bfa;font-size:1.3rem;font-weight:900;font-family:'Tajawal',sans-serif;margin-bottom:16px;">—</div>
+    <img id="cdoImage" src="" style="display:none;max-height:300px;border-radius:12px;object-fit:contain;margin-bottom:12px;"/>
+    <div id="cdoQuestion" style="color:#e2e8f0;font-size:1.1rem;font-family:'Tajawal',sans-serif;font-weight:700;"></div>
+  </div>
 </div>
 </body>
 </html>
