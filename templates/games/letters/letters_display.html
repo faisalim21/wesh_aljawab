@@ -1599,7 +1599,11 @@
             setTimeout(loadSessionState, 50);
             break;
           case 'letter_selected':
-            if (d.letter) applySelectedHighlight(d.letter, d.cell_index);
+            if (d.letter && d.cell_index !== undefined && d.cell_index !== null) {
+              applySelectedHighlight(d.letter, d.cell_index);
+            } else if (d.letter && !nohostMode) {
+              applySelectedHighlight(d.letter, null);
+            }
             // لو فقرة — أظهر بيانات السؤال في لوحة بدون مقدم
             if (d.is_category && nohostMode) {
               const nqpEmpty   = document.getElementById('nqpEmpty');
@@ -2331,6 +2335,7 @@ function nohostHandleCellClick(letter, cellData, cellIndex) {
   } else {
     // ضغطة أولى = عرض السؤال + تحديد
     applySelectedHighlight(letter, cellIndex);
+    window._lastSelectedCellIndex = cellIndex ?? null;
     window._nohostCategoryCell = isCategory ? cellData : null;
     if (isCategory) {
       nohostFetchCategoryQuestion(cellData);
@@ -2432,6 +2437,7 @@ async function nohostFetchCategoryQuestion(cellData) {
         is_category: true,
         category_id: cellData.value,
         category_name: cellData.name,
+        cell_index: window._lastSelectedCellIndex ?? null,
       }));
     }
   } catch {}
@@ -2462,7 +2468,7 @@ async function nohostFetchQuestion(letter) {
     const q = nohostCurrentData[nohostCurrentRound] || {};
 
     if (socket && socket.readyState === 1)
-      socket.send(JSON.stringify({ type: 'nohost_letter_select', letter, question_type: nohostCurrentRound }));
+      socket.send(JSON.stringify({ type: 'nohost_letter_select', letter, question_type: nohostCurrentRound, cell_index: window._lastSelectedCellIndex ?? null }));
 
     const nqpEmpty    = document.getElementById('nqpEmpty');
     const nqpContent  = document.getElementById('nqpContent');
