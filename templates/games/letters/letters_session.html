@@ -2374,6 +2374,7 @@
   async function showQuestion(letter, cellIndex) {
     try{
       const r = await fetch(`/games/api/get-question/?session_id=${encodeURIComponent(sessionId)}&letter=${encodeURIComponent(letter)}`);
+      hideCategoryFromDisplay();
       if (r.status === 410) { alert('انتهت صلاحية الجلسة. سيتم إعادتك للصفحة الرئيسية.'); return window.location.href = HOME_URL; }
       if (!r.ok) return;
       const data = await r.json(), q = data.questions || {};
@@ -3264,6 +3265,7 @@ let _categoryQuestionIndex = 0;
 
 async function showCategoryQuestion(cell, cellIdx) {
   try {
+    hideCategoryFromDisplay();
     const r = await fetch(`/games/api/get-category-question/?session_id=${encodeURIComponent(sessionId)}&category_id=${cell.value}&all=1`);
     if (!r.ok) return;
     const data = await r.json();
